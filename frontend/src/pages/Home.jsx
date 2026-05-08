@@ -56,7 +56,7 @@ export default function Home() {
             Более 200 аптек-партнёров в Москве и СПб
           </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.05]">
-            Ищите лекарства <span className="text-emerald-600">быстро</span><br />и по лучшей цене
+            Ищите лекарства <span className="text-emerald-600">быстро</span><br />и по <span className="text-emerald-600">лучшей цене</span>
           </h1>
           <p className="mt-6 text-lg text-slate-600 max-w-2xl mx-auto">
             Сравнивайте наличие и цены на лекарства, БАДы и аптечные товары в аптеках вашего города. Бесплатно и без регистрации.
