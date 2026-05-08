@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, MapPin, ShieldCheck, Clock, Banknote, ArrowRight, Pill } from 'lucide-react';
+import { Search, MapPin, ShieldCheck, ArrowRight, Pill } from 'lucide-react';
 import { useCity } from '../context/CityContext';
 import { CATEGORIES, MEDICATIONS, PRICES } from '../mock';
 import CategoryIcon from '../components/CategoryIcon';
@@ -145,30 +145,6 @@ export default function Home() {
               <span className="text-slate-800 font-medium">{c.title}</span>
             </Link>
           ))}
-        </div>
-      </section>
-
-      {/* Why us */}
-      <section className="bg-slate-50 border-y border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 py-14">
-          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Почему АптекаА</h2>
-          <p className="text-slate-500 mb-8">Несколько причин выбрать наш сервис</p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { icon: Search, title: 'Быстрый поиск', desc: 'Тысячи препаратов в каталоге — ответ появляется за доли секунды' },
-              { icon: Banknote, title: 'Сравнение цен', desc: 'Показываем цену в каждой аптеке и помогаем экономить' },
-              { icon: MapPin, title: 'Аптеки рядом', desc: 'Находите нужные лекарства в ближайших аптеках на карте' },
-              { icon: Clock, title: 'Актуальные данные', desc: 'Ежедневное обновление информации о наличии' },
-            ].map((f, i) => (
-              <div key={i} className="bg-white border border-slate-100 rounded-xl p-5">
-                <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center mb-3">
-                  <f.icon className="w-5 h-5" />
-                </div>
-                <h3 className="font-semibold text-slate-900 mb-1">{f.title}</h3>
-                <p className="text-sm text-slate-600 leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
