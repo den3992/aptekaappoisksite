@@ -28,7 +28,7 @@ export default function ForPharmacies() {
           <div className="inline-flex items-center gap-2 bg-white border border-emerald-100 rounded-full px-3 py-1 mb-5 text-xs text-emerald-800">
             <ShieldCheck className="w-3.5 h-3.5" /> Подключение бесплатное
           </div>
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900">Подключите аптеку<br /><span className="text-emerald-600">к Лекарства.РФ бесплатно</span></h1>
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900">Подключите аптеку<br /><span className="text-emerald-600">к сервису АптекаА бесплатно</span></h1>
           <p className="mt-5 text-lg text-slate-600 max-w-3xl">
             Привлекайте новых клиентов из яндекс-поиска. Наш сервис отображает ваши цены и остатки в карточках препаратов, когда люди ищут лекарство в вашем городе.
           </p>
@@ -80,8 +80,8 @@ export default function ForPharmacies() {
               <h2 className="text-2xl font-bold text-slate-900 mb-2">Подключение к сервису</h2>
               <p className="text-slate-600">Оставьте контакты — мы свяжемся и поможем с настройкой выгрузки.</p>
             </div>
-            <a href="mailto:partners@lekarstva.rf" className="inline-flex items-center gap-2 text-emerald-700 font-medium hover:underline">
-              <Mail className="w-4 h-4" /> partners@lekarstva.rf
+            <a href="mailto:partners@aptekaa.ru" className="inline-flex items-center gap-2 text-emerald-700 font-medium hover:underline">
+              <Mail className="w-4 h-4" /> partners@aptekaa.ru
             </a>
           </div>
           <form onSubmit={submit} className="grid md:grid-cols-2 gap-4">

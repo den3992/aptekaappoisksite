@@ -15,8 +15,8 @@ export default function Contacts() {
       <div className="grid sm:grid-cols-2 gap-3 mb-8">
         {[
           { i: Phone, t: 'Горячая линия', v: '8 (800) 700-70-70', s: 'Бесплатно по РФ' },
-          { i: Mail, t: 'Общая почта', v: 'info@lekarstva.rf', s: 'Для любых вопросов' },
-          { i: Briefcase, t: 'Для аптек-партнёров', v: 'partners@lekarstva.rf', s: 'Подключение и настройка' },
+          { i: Mail, t: 'Общая почта', v: 'info@aptekaa.ru', s: 'Для любых вопросов' },
+          { i: Briefcase, t: 'Для аптек-партнёров', v: 'partners@aptekaa.ru', s: 'Подключение и настройка' },
         ].map((c, i) => (
           <div key={i} className="bg-white border border-slate-100 rounded-xl p-5">
             <div className="flex items-center gap-3 mb-2">
@@ -31,7 +31,7 @@ export default function Contacts() {
 
       <div className="bg-slate-50 border border-slate-100 rounded-xl p-6 text-sm text-slate-600 leading-relaxed">
         <h2 className="text-base font-semibold text-slate-900 mb-2">Реквизиты</h2>
-        <p>ООО «Лекарства.РФ»<br />ИНН 7700000000 · ОГРН 1234567890123</p>
+        <p>ООО «АптекаА»<br />ИНН 7700000000 · ОГРН 1234567890123</p>
       </div>
     </div>
   );

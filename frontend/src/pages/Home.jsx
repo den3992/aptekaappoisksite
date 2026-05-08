@@ -39,12 +39,10 @@ export default function Home() {
         {/* Brand */}
         <div className="relative max-w-7xl mx-auto px-4 pt-7 pb-2 flex justify-center">
           <Link to="/" className="inline-flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center text-white shadow-sm">
-              <Pill className="w-5 h-5" />
-            </div>
+            <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-sm font-extrabold text-lg leading-none">А</div>
             <div className="flex flex-col leading-none">
-              <span className="text-xl font-bold text-slate-900">Лекарства.РФ</span>
-              <span className="text-[12px] text-slate-500 mt-1">быстрый поиск в аптеках</span>
+              <span className="text-xl font-extrabold text-slate-900 tracking-tight">Аптека<span className="text-emerald-600">А</span></span>
+              <span className="text-[12px] text-slate-500 mt-1">агрегатор аптек</span>
             </div>
           </Link>
         </div>
@@ -148,7 +146,7 @@ export default function Home() {
       {/* Why us */}
       <section className="bg-slate-50 border-y border-slate-100">
         <div className="max-w-7xl mx-auto px-4 py-14">
-          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Почему Лекарства.РФ</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Почему АптекаА</h2>
           <p className="text-slate-500 mb-8">Несколько причин выбрать наш сервис</p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[

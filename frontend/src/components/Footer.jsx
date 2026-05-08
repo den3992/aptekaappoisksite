@@ -18,12 +18,10 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div className="col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-3">
-              <div className="w-9 h-9 rounded-lg bg-emerald-600 flex items-center justify-center text-white">
-                <Pill className="w-5 h-5" />
-              </div>
+              <div className="w-9 h-9 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-extrabold leading-none">А</div>
               <div className="flex flex-col leading-none">
-                <span className="text-lg font-bold text-slate-900">Лекарства.РФ</span>
-                <span className="text-[11px] text-slate-500">справочная служба</span>
+                <span className="text-lg font-extrabold text-slate-900 tracking-tight">Аптека<span className="text-emerald-600">А</span></span>
+                <span className="text-[11px] text-slate-500">агрегатор аптек</span>
               </div>
             </Link>
             <p className="text-sm text-slate-600 leading-relaxed max-w-md">
@@ -31,7 +29,7 @@ export default function Footer() {
             </p>
             <div className="mt-4 space-y-1.5 text-sm text-slate-700">
               <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-emerald-600" /> 8 (800) 700-70-70</div>
-              <div className="flex items-center gap-2"><Mail className="w-4 h-4 text-emerald-600" /> info@lekarstva.rf</div>
+              <div className="flex items-center gap-2"><Mail className="w-4 h-4 text-emerald-600" /> info@aptekaa.ru</div>
             </div>
           </div>
 
@@ -57,7 +55,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-10 pt-6 border-t border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-xs text-slate-500">
-          <div>© {new Date().getFullYear()} Лекарства.РФ. Все права защищены.</div>
+          <div>© {new Date().getFullYear()} АптекаА. Все права защищены.</div>
           <div>Сервис соответствует требованиям ФЗ №152 «О персональных данных». 18+</div>
         </div>
       </div>
