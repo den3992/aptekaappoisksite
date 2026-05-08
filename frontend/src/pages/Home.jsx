@@ -39,8 +39,11 @@ export default function Home() {
         {/* Brand */}
         <div className="relative max-w-7xl mx-auto px-4 pt-7 pb-2 flex justify-center">
           <Link to="/" className="inline-flex flex-col items-center leading-none">
-            <span className="text-2xl font-extrabold text-slate-900 tracking-tight">Аптека<span className="text-emerald-600">А</span></span>
-            <span className="text-[12px] text-slate-500 mt-1.5">Актуальное наличие лекарств по всей России</span>
+            <div className="flex items-center gap-2.5">
+              <Pill className="w-7 h-7 text-emerald-600 -rotate-45" strokeWidth={2.2} />
+              <span className="text-2xl font-extrabold text-slate-900 tracking-tight">Аптека<span className="text-emerald-600">А</span></span>
+            </div>
+            <span className="text-sm text-slate-500 mt-2">Актуальное наличие лекарств по всей России</span>
           </Link>
         </div>
 

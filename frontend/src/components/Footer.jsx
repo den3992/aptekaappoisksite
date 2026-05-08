@@ -18,8 +18,11 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div className="col-span-2">
             <Link to="/" className="flex flex-col items-start mb-3 leading-none">
-              <span className="text-lg font-extrabold text-slate-900 tracking-tight">Аптека<span className="text-emerald-600">А</span></span>
-              <span className="text-[11px] text-slate-500 mt-1">Актуальное наличие лекарств</span>
+              <div className="flex items-center gap-2">
+                <Pill className="w-5 h-5 text-emerald-600 -rotate-45" strokeWidth={2.2} />
+                <span className="text-lg font-extrabold text-slate-900 tracking-tight">Аптека<span className="text-emerald-600">А</span></span>
+              </div>
+              <span className="text-[13px] text-slate-500 mt-1.5">Актуальное наличие лекарств</span>
             </Link>
             <p className="text-sm text-slate-600 leading-relaxed max-w-md">
               Информационный сервис по поиску лекарств, бадов и медицинских изделий в аптеках России. Не продаём и не бронируем препараты.
