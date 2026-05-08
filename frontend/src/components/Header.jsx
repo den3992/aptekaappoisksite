@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, MapPin, ChevronDown, Menu, X, Pill } from 'lucide-react';
+import { Search, MapPin, ChevronDown, Menu, X } from 'lucide-react';
 import { useCity } from '../context/CityContext';
+import PillIcon from './PillIcon';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from './ui/dropdown-menu';
@@ -23,8 +24,8 @@ export default function Header() {
       {/* main bar */}
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center gap-3 md:gap-6">
         <Link to="/" className="flex flex-col items-start leading-none shrink-0">
-          <div className="flex items-center gap-2">
-            <Pill className="w-5 h-5 text-emerald-600 -rotate-45" strokeWidth={2.2} />
+          <div className="flex items-center gap-2.5">
+            <PillIcon size={22} />
             <span className="text-lg font-extrabold text-slate-900 tracking-tight">Аптека<span className="text-emerald-600">А</span></span>
           </div>
           <span className="text-[13px] text-slate-500 mt-1.5 hidden sm:inline">Актуальное наличие лекарств</span>

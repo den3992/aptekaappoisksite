@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Pill, Phone, Mail, ShieldCheck } from 'lucide-react';
+import PillIcon from './PillIcon';
 
 export default function Footer() {
   return (
@@ -18,8 +19,8 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div className="col-span-2">
             <Link to="/" className="flex flex-col items-start mb-3 leading-none">
-              <div className="flex items-center gap-2">
-                <Pill className="w-5 h-5 text-emerald-600 -rotate-45" strokeWidth={2.2} />
+              <div className="flex items-center gap-2.5">
+                <PillIcon size={22} />
                 <span className="text-lg font-extrabold text-slate-900 tracking-tight">Аптека<span className="text-emerald-600">А</span></span>
               </div>
               <span className="text-[13px] text-slate-500 mt-1.5">Актуальное наличие лекарств</span>
