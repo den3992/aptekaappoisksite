@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, MapPin, Phone, ChevronDown, Menu, X, Pill } from 'lucide-react';
+import { Search, MapPin, ChevronDown, Menu, X, Pill } from 'lucide-react';
 import { useCity } from '../context/CityContext';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -20,23 +20,6 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-slate-100">
-      {/* top utility bar */}
-      <div className="hidden md:block bg-slate-50 border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 h-9 flex items-center justify-between text-xs text-slate-600">
-          <div className="flex items-center gap-5">
-            <Link to="/o-servise" className="hover:text-emerald-700">О сервисе</Link>
-            <Link to="/dlya-aptek" className="hover:text-emerald-700">Для аптек</Link>
-            <Link to="/kontakty" className="hover:text-emerald-700">Контакты</Link>
-            <Link to="/apteki" className="hover:text-emerald-700">Аптеки</Link>
-          </div>
-          <div className="flex items-center gap-2">
-            <Phone className="w-3.5 h-3.5" />
-            <span className="font-medium">8 (800) 700-70-70</span>
-            <span className="text-slate-400">Бесплатно по РФ</span>
-          </div>
-        </div>
-      </div>
-
       {/* main bar */}
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center gap-3 md:gap-6">
         <Link to="/" className="flex items-center gap-2 shrink-0">
