@@ -18,7 +18,7 @@ export default function Privacy() {
         </section>
         <section>
           <h2 className="text-xl font-bold text-slate-900 mb-2">2. Оператор персональных данных</h2>
-          <p>ООО «Лекарства.РФ», ИНН 7700000000, Юр. адрес: г. Москва, Пресненская наб., 6.</p>
+          <p>ООО «Лекарства.РФ», ИНН 7700000000.</p>
         </section>
         <section>
           <h2 className="text-xl font-bold text-slate-900 mb-2">3. Состав обрабатываемых данных</h2>

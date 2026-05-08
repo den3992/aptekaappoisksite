@@ -17,7 +17,7 @@ export default function PharmaciesList() {
         <Link to="/" className="hover:text-emerald-700">Главная</Link>
         <span className="mx-1.5">/</span><span>Аптеки</span>
       </nav>
-      <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Аптеки в {city.name}</h1>
+      <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Аптеки в {city.inLoc}</h1>
       <p className="text-slate-500 mb-6">{list.length} аптек-партнёров</p>
 
       <div className="input-focus border border-slate-200 rounded-lg flex items-center bg-white max-w-md mb-6 transition">

@@ -147,7 +147,7 @@ export default function MedDetail() {
           <div className="mt-6 bg-emerald-50/60 border border-emerald-100 rounded-xl p-5">
             <div className="flex items-end gap-4">
               <div>
-                <div className="text-xs text-emerald-800/80">Минимальная цена в {city.name}</div>
+                <div className="text-xs text-emerald-800/80">Минимальная цена в {city.inLoc}</div>
                 <div className="text-3xl font-extrabold text-emerald-700">{minPrice} ₽</div>
               </div>
               <div className="text-sm text-slate-600 pb-1">до {maxPrice} ₽ · в {prices.length} аптеках</div>

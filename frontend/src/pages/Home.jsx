@@ -135,7 +135,7 @@ export default function Home() {
             </div>
             <div>
               <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Популярные препараты</h2>
-              <p className="text-slate-500 mt-1 text-sm">Цены и наличие в {city.name}</p>
+              <p className="text-slate-500 mt-1 text-sm">Цены и наличие в {city.inLoc}</p>
             </div>
           </div>
           <Link to="/preparaty" className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1">Смотреть все <ArrowRight className="w-4 h-4" /></Link>

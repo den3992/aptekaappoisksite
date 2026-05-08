@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { MEDICATIONS } from '../mock';
 import { Search } from 'lucide-react';
 
-const LETTERS = ['А','Б','В','Г','Д','Е','Ж','З','И','К','Л','М','Н','О','П','Р','С','Т','У','Ф','Х','Ц','Ч','Ш','Э','Ю','Я','A','B','C','N','O','T','V','Z'];
+const LETTERS = ['А','Б','В','Г','Д','Е','Ж','З','И','К','Л','М','Н','О','П','Р','С','Т','У','Ф','Х','Ц','Ч','Ш','Щ','Э','Ю','Я'];
 
 export default function Catalog() {
   const [q, setQ] = useState('');

@@ -31,7 +31,7 @@ export default function Contacts() {
 
       <div className="bg-slate-50 border border-slate-100 rounded-xl p-6 text-sm text-slate-600 leading-relaxed">
         <h2 className="text-base font-semibold text-slate-900 mb-2">Реквизиты</h2>
-        <p>ООО «Лекарства.РФ»<br />ИНН 7700000000 · ОГРН 1234567890123<br />Юр. адрес: 123100, г. Москва, Пресненская наб., 6</p>
+        <p>ООО «Лекарства.РФ»<br />ИНН 7700000000 · ОГРН 1234567890123</p>
       </div>
     </div>
   );

@@ -19,7 +19,7 @@ export default function About() {
           { i: Search, t: 'Быстрый поиск', d: 'Находите препарат в десятках аптек за секунды' },
           { i: Heart, t: 'Забота о здоровье', d: 'Все данные проверяются и обновляются' },
           { i: ShieldCheck, t: 'Соответствие законодательству РФ', d: 'ФЗ №152, хранение данных в России' },
-          { i: Clock, t: 'Онлайн-остатки', d: 'Аптеки обновляют данные каждые 15 минут' },
+          { i: Clock, t: 'Актуальные данные', d: 'Ежедневное обновление информации о наличии' },
         ].map((f, i) => (
           <div key={i} className="bg-white border border-slate-100 rounded-xl p-5 flex gap-4">
             <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0"><f.i className="w-5 h-5" /></div>
