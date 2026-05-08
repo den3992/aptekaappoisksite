@@ -41,7 +41,7 @@ export default function Home() {
         <div className="relative max-w-7xl mx-auto px-4 pt-7 pb-2 flex justify-center">
           <Link to="/" className="inline-flex flex-col items-center leading-none">
             <div className="flex items-center gap-3">
-              <PillIcon size={30} />
+              <PillIcon size={42} />
               <span className="text-2xl font-extrabold text-slate-900 tracking-tight">Аптека<span className="text-emerald-600">А</span></span>
             </div>
             <span className="text-sm text-slate-500 mt-2">Актуальное наличие лекарств по всей России</span>
