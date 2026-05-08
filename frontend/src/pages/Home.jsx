@@ -25,9 +25,24 @@ export default function Home() {
 
   return (
     <div>
+      {/* Minimal brand strip */}
+      <div className="bg-gradient-to-b from-emerald-50/60 to-emerald-50/30">
+        <div className="max-w-7xl mx-auto px-4 pt-6 pb-2">
+          <Link to="/" className="inline-flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center text-white">
+              <Pill className="w-5 h-5" />
+            </div>
+            <div className="flex flex-col leading-none">
+              <span className="text-xl font-bold text-slate-900">Лекарства.РФ</span>
+              <span className="text-[12px] text-slate-500 mt-1">быстрый поиск в аптеках</span>
+            </div>
+          </Link>
+        </div>
+      </div>
+
       {/* Hero */}
-      <section className="relative bg-gradient-to-b from-emerald-50/60 to-white border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 pt-12 pb-14 md:pt-16 md:pb-20">
+      <section className="relative bg-gradient-to-b from-emerald-50/30 to-white border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 pt-8 pb-14 md:pt-10 md:pb-20">
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 bg-white border border-emerald-100 rounded-full px-3 py-1 mb-5 text-xs text-emerald-800">
               <ShieldCheck className="w-3.5 h-3.5" />
