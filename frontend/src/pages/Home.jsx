@@ -7,7 +7,7 @@ import CategoryIcon from '../components/CategoryIcon';
 import PillIcon from '../components/PillIcon';
 import PartnersMarquee from '../components/PartnersMarquee';
 
-const POPULAR = ['paracetamol-500mg','nurofen','vitamin-d3-2000','kagocel','omeprazol-20mg','smekta','zodak','aquamaris'];
+const POPULAR = ['paracetamol-500mg','nurofen','vitamin-d3-2000','kagocel','omeprazol-20mg','smekta'];
 
 export default function Home() {
   const { city, cities, setCity } = useCity();
@@ -109,9 +109,9 @@ export default function Home() {
 
       {/* Popular meds — minimalistic SEO chips */}
       <section className="max-w-7xl mx-auto px-4 pt-12 pb-2">
-        <div className="flex items-end justify-between mb-4">
+        <div className="flex items-center justify-between gap-3 mb-4">
           <h2 className="text-xl md:text-2xl font-bold text-slate-900">Популярные препараты</h2>
-          <Link to="/preparaty" className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1">Каталог А–Я <ArrowRight className="w-4 h-4" /></Link>
+          <Link to="/preparaty" className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1 whitespace-nowrap shrink-0">Каталог А–Я <ArrowRight className="w-4 h-4" /></Link>
         </div>
         <div className="flex flex-wrap gap-2">
           {popularMeds.map(m => {
@@ -129,12 +129,12 @@ export default function Home() {
 
       {/* Categories — compact SEO chips row */}
       <section className="max-w-7xl mx-auto px-4 pt-8 pb-12">
-        <div className="flex items-end justify-between mb-5">
-          <div>
+        <div className="flex items-center justify-between gap-3 mb-5">
+          <div className="min-w-0">
             <h2 className="text-xl md:text-2xl font-bold text-slate-900">Категории препаратов</h2>
-            <p className="text-slate-500 text-sm mt-1">Найдите препарат по своей задаче</p>
+            <p className="text-slate-500 text-sm mt-1 hidden sm:block">Найдите препарат по своей задаче</p>
           </div>
-          <Link to="/kategorii" className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1">Все категории <ArrowRight className="w-4 h-4" /></Link>
+          <Link to="/kategorii" className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1 whitespace-nowrap shrink-0">Все категории <ArrowRight className="w-4 h-4" /></Link>
         </div>
         <div className="flex flex-wrap gap-2">
           {CATEGORIES.map(c => (
