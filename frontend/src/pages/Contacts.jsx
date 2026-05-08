@@ -17,21 +17,31 @@ export default function Contacts() {
           { i: Phone, t: 'Горячая линия', v: '8 (800) 700-70-70', s: 'Бесплатно по РФ' },
           { i: Mail, t: 'Общая почта', v: 'info@aptekaa.ru', s: 'Для любых вопросов' },
           { i: Briefcase, t: 'Для аптек-партнёров', v: 'partners@aptekaa.ru', s: 'Подключение и настройка' },
+          { i: MapPin, t: 'Юридический адрес', v: '141195, Московская обл., г. Фрязино, ул. Садовая, д. 1, пом. II', s: 'ООО «Идеал-Фарм»' },
         ].map((c, i) => (
           <div key={i} className="bg-white border border-slate-100 rounded-xl p-5">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center"><c.i className="w-4 h-4" /></div>
               <h3 className="font-semibold text-slate-900">{c.t}</h3>
             </div>
-            <div className="text-lg font-semibold text-slate-800">{c.v}</div>
+            <div className="text-base font-semibold text-slate-800 leading-snug">{c.v}</div>
             <div className="text-xs text-slate-500 mt-0.5">{c.s}</div>
           </div>
         ))}
       </div>
 
       <div className="bg-slate-50 border border-slate-100 rounded-xl p-6 text-sm text-slate-600 leading-relaxed">
-        <h2 className="text-base font-semibold text-slate-900 mb-2">Реквизиты</h2>
-        <p>ООО «АптекаА»<br />ИНН 7700000000 · ОГРН 1234567890123</p>
+        <h2 className="text-base font-semibold text-slate-900 mb-3">Реквизиты</h2>
+        <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5">
+          <div><dt className="inline text-slate-500">Полное наименование: </dt><dd className="inline text-slate-800 font-medium">Общество с ограниченной ответственностью «Идеал-Фарм»</dd></div>
+          <div><dt className="inline text-slate-500">Сокращённое: </dt><dd className="inline text-slate-800 font-medium">ООО «Идеал-Фарм»</dd></div>
+          <div><dt className="inline text-slate-500">ИНН: </dt><dd className="inline text-slate-800 font-medium">5050110424</dd></div>
+          <div><dt className="inline text-slate-500">КПП: </dt><dd className="inline text-slate-800 font-medium">505001001</dd></div>
+          <div><dt className="inline text-slate-500">ОГРН: </dt><dd className="inline text-slate-800 font-medium">1145050001942</dd></div>
+          <div><dt className="inline text-slate-500">ОКВЭД: </dt><dd className="inline text-slate-800 font-medium">47.73 — розничная торговля лекарствами в аптеках</dd></div>
+          <div className="sm:col-span-2"><dt className="inline text-slate-500">Юридический адрес: </dt><dd className="inline text-slate-800 font-medium">141195, Московская обл., г. Фрязино, ул. Садовая, д. 1, помещ. II встроенное, этаж 1</dd></div>
+          <div className="sm:col-span-2"><dt className="inline text-slate-500">Генеральный директор: </dt><dd className="inline text-slate-800 font-medium">Файзуллин Данил Валерьевич</dd></div>
+        </dl>
       </div>
     </div>
   );
