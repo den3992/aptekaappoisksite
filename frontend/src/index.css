@@ -123,3 +123,20 @@ code {
 
 /* nice focus ring */
 .input-focus:focus-within { box-shadow: 0 0 0 4px rgba(14,159,110,.15); border-color: #0E9F6E; }
+
+/* Partners marquee */
+.marquee-container { width: 100%; overflow: hidden; }
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 40s linear infinite;
+  will-change: transform;
+}
+.marquee-container:hover .marquee-track { animation-play-state: paused; }
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (max-width: 640px) {
+  .marquee-track { animation-duration: 28s; }
+}

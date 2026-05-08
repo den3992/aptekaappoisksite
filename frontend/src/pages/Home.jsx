@@ -6,6 +6,7 @@ import { CATEGORIES, MEDICATIONS } from '../mock';
 import CategoryIcon from '../components/CategoryIcon';
 import MedCard from '../components/MedCard';
 import PillIcon from '../components/PillIcon';
+import PartnersMarquee from '../components/PartnersMarquee';
 
 const POPULAR = ['paracetamol-500mg','nurofen','vitamin-d3-2000','kagocel','omeprazol-20mg','smekta','zodak','aquamaris'];
 
@@ -104,29 +105,11 @@ export default function Home() {
         </section>
       </div>
 
-      {/* Categories */}
-      <section className="max-w-7xl mx-auto px-4 py-14">
-        <div className="flex items-end justify-between mb-6">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Категории</h2>
-            <p className="text-slate-500 mt-1">Найдите препарат по своей задаче</p>
-          </div>
-          <Link to="/kategorii" className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1">Все категории <ArrowRight className="w-4 h-4" /></Link>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          {CATEGORIES.map(c => (
-            <Link key={c.slug} to={`/kategorii/${c.slug}`} className="cat-card bg-white border border-slate-100 rounded-xl p-4 flex flex-col items-start gap-3">
-              <div className="w-11 h-11 rounded-lg flex items-center justify-center" style={{ background: c.color, color: c.accent }}>
-                <CategoryIcon name={c.icon} className="w-5 h-5" />
-              </div>
-              <div className="text-sm font-semibold text-slate-900 leading-tight">{c.title}</div>
-            </Link>
-          ))}
-        </div>
-      </section>
+      {/* Partners marquee */}
+      <PartnersMarquee />
 
       {/* Popular */}
-      <section className="max-w-7xl mx-auto px-4 pb-16">
+      <section className="max-w-7xl mx-auto px-4 pt-14 pb-6">
         <div className="flex items-end justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
@@ -141,6 +124,27 @@ export default function Home() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {popularMeds.map(m => <MedCard key={m.slug} med={m} />)}
+        </div>
+      </section>
+
+      {/* Categories — compact SEO chips row */}
+      <section className="max-w-7xl mx-auto px-4 pt-8 pb-12">
+        <div className="flex items-end justify-between mb-5">
+          <div>
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900">Категории препаратов</h2>
+            <p className="text-slate-500 text-sm mt-1">Найдите препарат по своей задаче</p>
+          </div>
+          <Link to="/kategorii" className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1">Все категории <ArrowRight className="w-4 h-4" /></Link>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map(c => (
+            <Link key={c.slug} to={`/kategorii/${c.slug}`} className="inline-flex items-center gap-2 bg-white border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/50 transition px-4 py-2 rounded-full text-sm">
+              <span className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: c.color, color: c.accent }}>
+                <CategoryIcon name={c.icon} className="w-3.5 h-3.5" />
+              </span>
+              <span className="text-slate-800 font-medium">{c.title}</span>
+            </Link>
+          ))}
         </div>
       </section>
 
