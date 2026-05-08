@@ -42,7 +42,7 @@ export default function Home() {
             <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-sm font-extrabold text-lg leading-none">А</div>
             <div className="flex flex-col leading-none">
               <span className="text-xl font-extrabold text-slate-900 tracking-tight">Аптека<span className="text-emerald-600">А</span></span>
-              <span className="text-[12px] text-slate-500 mt-1">агрегатор аптек</span>
+              <span className="text-[12px] text-slate-500 mt-1">актуальное наличие лекарств по всей России</span>
             </div>
           </Link>
         </div>

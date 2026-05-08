@@ -26,7 +26,7 @@ export default function Header() {
           <div className="w-9 h-9 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-extrabold leading-none">А</div>
           <div className="flex flex-col leading-none">
             <span className="text-lg font-extrabold text-slate-900 tracking-tight">Аптека<span className="text-emerald-600">А</span></span>
-            <span className="text-[11px] text-slate-500 hidden sm:inline">агрегатор аптек</span>
+            <span className="text-[11px] text-slate-500 hidden sm:inline">актуальное наличие лекарств</span>
           </div>
         </Link>
 
