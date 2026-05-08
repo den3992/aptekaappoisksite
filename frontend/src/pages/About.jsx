@@ -28,13 +28,6 @@ export default function About() {
         ))}
       </div>
 
-      <h2 className="text-xl font-bold text-slate-900 mb-3">Источники данных</h2>
-      <ul className="text-slate-700 leading-relaxed space-y-2 mb-8 list-disc list-inside">
-        <li>Государственный реестр лекарственных средств (ГРЛС) Минздрава России</li>
-        <li>Система МДЛП / «Честный ЗНАК» — официальные GTIN лекарств</li>
-        <li>Прямые выгрузки остатков и цен от аптек-партнёров по FTP</li>
-      </ul>
-
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-sm text-amber-900 leading-relaxed">
         <p><strong>Важно:</strong> Лекарства.РФ не является аптекой и не осуществляет продажу и бронирование лекарств. Сведения о ценах и наличии носят справочный характер. Имеются противопоказания, необходима консультация со специалистом.</p>
       </div>

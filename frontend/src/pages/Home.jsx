@@ -128,13 +128,13 @@ export default function Home() {
       <section className="bg-slate-50 border-y border-slate-100">
         <div className="max-w-7xl mx-auto px-4 py-14">
           <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Почему Лекарства.РФ</h2>
-          <p className="text-slate-500 mb-8">Работаем в соответствии с законодательством РФ</p>
+          <p className="text-slate-500 mb-8">Несколько причин выбрать наш сервис</p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { icon: Search, title: 'Быстрый поиск', desc: 'Тысячи препаратов в индексе — ответ появляется за доли секунды' },
+              { icon: Search, title: 'Быстрый поиск', desc: 'Тысячи препаратов в каталоге — ответ появляется за доли секунды' },
               { icon: Banknote, title: 'Сравнение цен', desc: 'Показываем цену в каждой аптеке и помогаем экономить' },
-              { icon: MapPin, title: 'Адреса рядом', desc: 'Находите ближайшие аптеки на яндекс-карте с ценой препарата' },
-              { icon: Clock, title: 'Актуальные данные', desc: 'Аптеки обновляют остатки в режиме онлайн через FTP' },
+              { icon: MapPin, title: 'Адреса рядом', desc: 'Находите нужные лекарства в ближайших аптеках на карте' },
+              { icon: Clock, title: 'Актуальные данные', desc: 'Ежедневное получение информации о наличии' },
             ].map((f, i) => (
               <div key={i} className="bg-white border border-slate-100 rounded-xl p-5">
                 <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center mb-3">
@@ -153,7 +153,7 @@ export default function Home() {
         <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl p-8 md:p-12 text-white relative overflow-hidden">
           <div className="max-w-2xl relative z-10">
             <div className="inline-block px-3 py-1 bg-white/15 rounded-full text-xs font-medium mb-4">Для аптек</div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-3">Подключите вашу аптеку к сервису</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-3">Привлекайте новых клиентов в вашу аптеку</h2>
             <p className="text-emerald-50 leading-relaxed mb-6">
               Привлекайте новых клиентов из поиска. Простая выгрузка прайс-листа через FTP. Поможем с настройкой.
             </p>

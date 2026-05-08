@@ -17,7 +17,6 @@ export default function Contacts() {
           { i: Phone, t: 'Горячая линия', v: '8 (800) 700-70-70', s: 'Бесплатно по РФ' },
           { i: Mail, t: 'Общая почта', v: 'info@lekarstva.rf', s: 'Для любых вопросов' },
           { i: Briefcase, t: 'Для аптек-партнёров', v: 'partners@lekarstva.rf', s: 'Подключение и настройка' },
-          { i: MapPin, t: 'Адрес офиса', v: 'г. Москва, Пресненская наб., 6, стр. 2', s: 'Москва-Сити' },
         ].map((c, i) => (
           <div key={i} className="bg-white border border-slate-100 rounded-xl p-5">
             <div className="flex items-center gap-3 mb-2">

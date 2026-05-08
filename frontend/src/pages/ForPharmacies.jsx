@@ -28,7 +28,7 @@ export default function ForPharmacies() {
           <div className="inline-flex items-center gap-2 bg-white border border-emerald-100 rounded-full px-3 py-1 mb-5 text-xs text-emerald-800">
             <ShieldCheck className="w-3.5 h-3.5" /> Подключение бесплатное
           </div>
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900">Подключите аптеку<br /><span className="text-emerald-600">к Лекарства.РФ</span></h1>
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900">Подключите аптеку<br /><span className="text-emerald-600">к Лекарства.РФ бесплатно</span></h1>
           <p className="mt-5 text-lg text-slate-600 max-w-3xl">
             Привлекайте новых клиентов из яндекс-поиска. Наш сервис отображает ваши цены и остатки в карточках препаратов, когда люди ищут лекарство в вашем городе.
           </p>
@@ -39,8 +39,8 @@ export default function ForPharmacies() {
         <h2 className="text-2xl font-bold text-slate-900 mb-6">Как это работает</h2>
         <div className="grid md:grid-cols-3 gap-4">
           {[
-            { i: '01', icon: Send, title: 'Оставьте заявку', desc: 'Напишите нам или заполните форму ниже — за сутки мы свяжемся и обсудим детали' },
-            { i: '02', icon: Server, title: 'Настройка FTP', desc: 'Предоставим отдельный FTP-доступ для выгрузки. Поможем с настройкой из вашей учётной системы (1С, M-Аптека)' },
+            { i: '01', icon: Send, title: 'Оставьте заявку', desc: 'Напишите нам или заполните форму ниже — мы свяжемся и обсудим детали' },
+            { i: '02', icon: Server, title: 'Лёгкая выгрузка', desc: 'Предоставим отдельный FTP-доступ для выгрузки. Поможем с настройкой из вашей учётной системы.' },
             { i: '03', icon: FileSpreadsheet, title: 'Выгрузка прайс-листа', desc: 'Аптека регулярно отправляет файл с остатками и ценами — мы обрабатываем и показываем их на сайте' },
           ].map(s => (
             <div key={s.i} className="bg-white border border-slate-100 rounded-xl p-6">
@@ -61,10 +61,10 @@ export default function ForPharmacies() {
           <ul className="space-y-3 text-slate-700">
             {[
               'Поможем настроить автоматическую выгрузку прайс-листа из вашей информационной системы',
-              'Поддержим форматы xls / xlsx / dbf / csv — выбираете удобный',
-              'Отдельный FTP-доступ и логин/пароль для вашей аптеки',
-              'Обработка файлов каждые 15 минут — актуальные остатки и цены',
-              'Карточка вашей аптеки на сайте с полным ассортиментом, контактами и картой',
+              'Поддерживаем любые форматы прайс-листов',
+              'Отдельный FTP-доступ',
+              'Аптеки обновляют данные ежедневно',
+              'Карточка вашей аптеки на сайте с полным ассортиментом, контактами и отображением на карте',
               'Аналитика посещаемости ваших карточек в личном кабинете',
             ].map(t => (
               <li key={t} className="flex items-start gap-2.5"><CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" /><span>{t}</span></li>
@@ -77,7 +77,7 @@ export default function ForPharmacies() {
         <div className="bg-white border border-slate-100 rounded-2xl p-6 md:p-8">
           <div className="grid md:grid-cols-[1fr_auto] gap-6 items-start mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">Связаться для подключения</h2>
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">Подключение к сервису</h2>
               <p className="text-slate-600">Оставьте контакты — мы свяжемся и поможем с настройкой выгрузки.</p>
             </div>
             <a href="mailto:partners@lekarstva.rf" className="inline-flex items-center gap-2 text-emerald-700 font-medium hover:underline">

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ChevronRight, MapPin, Phone, Clock, Pill, ShieldAlert, Tag, Building2, ArrowDownAZ, ArrowUp01 } from 'lucide-react';
+import { ChevronRight, MapPin, Phone, Clock, Pill, ShieldAlert, Tag } from 'lucide-react';
 import { findMedBySlug, PHARMACIES, PRICES, getAnalogs, CATEGORIES } from '../mock';
 import { useCity } from '../context/CityContext';
 import MedCard from '../components/MedCard';
@@ -65,7 +65,7 @@ function PriceMap({ med, prices, pharmacies, cityCenter, onSelect, selected }) {
           balloonContent: `<strong>${ph.name}</strong><br/>${ph.address}<br/><b>${pr.price} ₽</b> · в наличии: ${pr.qty} шт.<br/>${ph.phone}`,
         }, {
           iconLayout: PriceLayout,
-          iconShape: { type: 'Rectangle', coordinates: [[-40, -40], [40, 0]] },
+          iconShape: { type: 'Rectangle', coordinates: [[-50, -50], [50, 0]] },
         });
       }).filter(Boolean);
 
@@ -88,7 +88,6 @@ export default function MedDetail() {
   const { slug } = useParams();
   const med = findMedBySlug(slug);
   const { city } = useCity();
-  const [sortBy, setSortBy] = useState('price');
   const [selectedId, setSelectedId] = useState(null);
 
   const cat = med ? CATEGORIES.find(c => c.slug === med.category) : null;
@@ -96,14 +95,9 @@ export default function MedDetail() {
   const prices = useMemo(() => {
     if (!med) return [];
     const list = [...(PRICES[med.slug]?.[city.id] || [])];
-    if (sortBy === 'price') list.sort((a,b) => a.price - b.price);
-    if (sortBy === 'name') list.sort((a,b) => {
-      const an = PHARMACIES.find(p => p.id === a.pharmacyId)?.name || '';
-      const bn = PHARMACIES.find(p => p.id === b.pharmacyId)?.name || '';
-      return an.localeCompare(bn, 'ru');
-    });
+    list.sort((a, b) => a.price - b.price);
     return list;
-  }, [med, city.id, sortBy]);
+  }, [med, city.id]);
 
   const cityPharms = PHARMACIES.filter(p => p.city === city.id);
   const cityCenter = city.center;
@@ -148,8 +142,6 @@ export default function MedDetail() {
             <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Производитель</div><div className="font-medium text-slate-800">{med.manufacturer}</div></div>
             <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Страна</div><div className="font-medium text-slate-800">{med.country}</div></div>
             <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">МНН</div><div className="font-medium text-slate-800">{med.mnn}</div></div>
-            <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Рег. удост.</div><div className="font-medium text-slate-800">{med.ru}</div></div>
-            <div className="bg-slate-50 rounded-lg p-3 col-span-2"><div className="text-[11px] text-slate-500 uppercase tracking-wide">GTIN · Честный ЗНАК</div><div className="font-medium text-slate-800">{med.gtin}</div></div>
           </div>
 
           <div className="mt-6 bg-emerald-50/60 border border-emerald-100 rounded-xl p-5">
@@ -180,10 +172,7 @@ export default function MedDetail() {
       <section className="mb-12">
         <div className="flex items-end justify-between mb-4">
           <h2 className="text-2xl font-bold text-slate-900">Цены в аптеках</h2>
-          <div className="flex items-center gap-2 text-sm">
-            <button onClick={() => setSortBy('price')} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md ${sortBy === 'price' ? 'bg-emerald-50 text-emerald-800 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}><ArrowUp01 className="w-4 h-4" /> Дешевле</button>
-            <button onClick={() => setSortBy('name')} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md ${sortBy === 'name' ? 'bg-emerald-50 text-emerald-800 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}><ArrowDownAZ className="w-4 h-4" /> По алфавиту</button>
-          </div>
+          <div className="text-sm text-slate-500">Сортировка: сначала дешевле</div>
         </div>
         <div className="bg-white border border-slate-100 rounded-xl divide-y divide-slate-100 overflow-hidden">
           {prices.map(pr => {

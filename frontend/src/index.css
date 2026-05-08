@@ -73,29 +73,36 @@ code {
 /* Yandex Map balloon override */
 .ymap-price-pill {
   background: #ffffff;
-  border: 1.5px solid #0E9F6E;
+  border: 2px solid #0E9F6E;
   color: #047857;
-  padding: 6px 10px;
+  padding: 8px 14px;
   border-radius: 999px;
-  font-weight: 600;
-  font-size: 13px;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
   white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(2,32,18,.12);
+  box-shadow: 0 6px 16px rgba(2,32,18,.18);
   cursor: pointer;
   transform: translate(-50%, -100%);
   position: relative;
+  display: inline-block;
+  min-width: 56px;
+  text-align: center;
+}
+.ymap-price-pill:hover {
+  background: #0E9F6E;
+  color: #ffffff;
 }
 .ymap-price-pill::after {
   content: '';
   position: absolute;
   bottom: -7px;
   left: 50%;
-  transform: translateX(-50%);
-  width: 10px; height: 10px;
-  background: #ffffff;
-  border-right: 1.5px solid #0E9F6E;
-  border-bottom: 1.5px solid #0E9F6E;
-  rotate: 45deg;
+  transform: translateX(-50%) rotate(45deg);
+  width: 12px; height: 12px;
+  background: inherit;
+  border-right: 2px solid #0E9F6E;
+  border-bottom: 2px solid #0E9F6E;
 }
 
 /* legal disclaimer band */
