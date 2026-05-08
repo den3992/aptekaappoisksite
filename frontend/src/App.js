@@ -4,6 +4,7 @@ import { CityProvider } from './context/CityContext';
 import { Toaster } from './components/ui/toaster';
 
 import Layout from './components/Layout';
+import ScrollToTop from './components/ScrollToTop';
 import Home from './pages/Home';
 import Search from './pages/Search';
 import MedDetail from './pages/MedDetail';
@@ -24,6 +25,7 @@ function App() {
     <CityProvider>
       <div className="App">
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<Layout />}>
               <Route index element={<Home />} />
