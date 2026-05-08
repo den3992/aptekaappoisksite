@@ -107,28 +107,28 @@ export default function Home() {
       {/* Partners marquee */}
       <PartnersMarquee />
 
-      {/* Popular meds — minimalistic SEO chips */}
+      {/* Popular meds — uniform grid */}
       <section className="max-w-7xl mx-auto px-4 pt-12 pb-2">
-        <div className="flex items-center justify-between gap-3 mb-4">
+        <div className="flex items-center justify-between gap-3 mb-5">
           <h2 className="text-xl md:text-2xl font-bold text-slate-900">Популярные препараты</h2>
           <Link to="/preparaty" className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1 whitespace-nowrap shrink-0">Каталог А–Я <ArrowRight className="w-4 h-4" /></Link>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
           {popularMeds.map(m => {
             const prices = (PRICES[m.slug]?.[city.id] || []).map(p => p.price);
             const min = prices.length ? Math.min(...prices) : null;
             return (
-              <Link key={m.slug} to={`/preparaty/${m.slug}`} className="group inline-flex items-center gap-2 bg-white border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/40 transition px-4 py-2 rounded-full text-sm">
-                <span className="font-medium text-slate-800">{m.name}</span>
-                {min !== null && <span className="text-emerald-700 font-semibold">от {min} ₽</span>}
+              <Link key={m.slug} to={`/preparaty/${m.slug}`} className="group flex flex-col justify-between bg-white border border-slate-200 hover:border-emerald-400 hover:shadow-sm transition rounded-xl px-4 py-3.5 min-h-[72px]">
+                <span className="font-semibold text-slate-900 text-sm leading-tight">{m.name}</span>
+                {min !== null && <span className="text-emerald-700 font-bold text-sm mt-1">от {min} ₽</span>}
               </Link>
             );
           })}
         </div>
       </section>
 
-      {/* Categories — compact SEO chips row */}
-      <section className="max-w-7xl mx-auto px-4 pt-8 pb-12">
+      {/* Categories — uniform grid */}
+      <section className="max-w-7xl mx-auto px-4 pt-10 pb-12">
         <div className="flex items-center justify-between gap-3 mb-5">
           <div className="min-w-0">
             <h2 className="text-xl md:text-2xl font-bold text-slate-900">Категории препаратов</h2>
@@ -136,13 +136,13 @@ export default function Home() {
           </div>
           <Link to="/kategorii" className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1 whitespace-nowrap shrink-0">Все категории <ArrowRight className="w-4 h-4" /></Link>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
           {CATEGORIES.map(c => (
-            <Link key={c.slug} to={`/kategorii/${c.slug}`} className="inline-flex items-center gap-2 bg-white border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/50 transition px-4 py-2 rounded-full text-sm">
-              <span className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: c.color, color: c.accent }}>
-                <CategoryIcon name={c.icon} className="w-3.5 h-3.5" />
+            <Link key={c.slug} to={`/kategorii/${c.slug}`} className="cat-card flex flex-col items-start gap-2.5 bg-white border border-slate-200 hover:border-emerald-400 transition rounded-xl px-4 py-3.5 min-h-[96px]">
+              <span className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: c.color, color: c.accent }}>
+                <CategoryIcon name={c.icon} className="w-4.5 h-4.5" />
               </span>
-              <span className="text-slate-800 font-medium">{c.title}</span>
+              <span className="text-slate-900 font-semibold text-sm leading-tight">{c.title}</span>
             </Link>
           ))}
         </div>
