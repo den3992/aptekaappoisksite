@@ -27,9 +27,9 @@ export default function Home() {
     <div>
       {/* Minimal brand strip */}
       <div className="bg-gradient-to-b from-emerald-50/60 to-emerald-50/30">
-        <div className="max-w-7xl mx-auto px-4 pt-6 pb-2">
+        <div className="max-w-7xl mx-auto px-4 pt-6 pb-2 flex justify-center">
           <Link to="/" className="inline-flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center text-white">
+            <div className="w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center text-white shadow-sm">
               <Pill className="w-5 h-5" />
             </div>
             <div className="flex flex-col leading-none">
@@ -41,60 +41,67 @@ export default function Home() {
       </div>
 
       {/* Hero */}
-      <section className="relative bg-gradient-to-b from-emerald-50/30 to-white border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 pt-8 pb-14 md:pt-10 md:pb-20">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-white border border-emerald-100 rounded-full px-3 py-1 mb-5 text-xs text-emerald-800">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Более 200 аптек-партнёров в Москве и СПб
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.05]">
-              Ищите лекарства <span className="text-emerald-600">быстро</span><br />и по лучшей цене
-            </h1>
-            <p className="mt-5 text-lg text-slate-600 max-w-2xl">
-              Сравнивайте наличие и цены на лекарства, БАДы и аптечные товары в аптеках вашего города. Бесплатно и без регистрации.
-            </p>
+      <section className="relative bg-gradient-to-b from-emerald-50/30 to-white border-b border-slate-100 overflow-hidden">
+        {/* decorative shapes */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-emerald-200/30 blur-3xl" />
+          <div className="absolute -bottom-32 -right-24 w-[28rem] h-[28rem] rounded-full bg-emerald-100/40 blur-3xl" />
+          <div className="absolute top-1/3 right-12 w-3 h-3 rounded-full bg-emerald-400/60" />
+          <div className="absolute top-24 right-1/4 w-2 h-2 rounded-full bg-emerald-500/50" />
+          <div className="absolute bottom-32 left-1/4 w-2.5 h-2.5 rounded-full bg-emerald-400/50" />
+        </div>
 
-            <form onSubmit={submit} className="mt-8 bg-white shadow-card border border-slate-100 rounded-2xl p-2 flex flex-col sm:flex-row gap-2 input-focus">
-              <div className="flex items-center gap-2 sm:border-r sm:border-slate-100 px-3 py-2 sm:py-0">
-                <MapPin className="w-4 h-4 text-emerald-600" />
-                <select value={city.id} onChange={(e) => setCity(cities.find(c => c.id === e.target.value))} className="text-sm font-medium text-slate-800 bg-transparent outline-none cursor-pointer">
-                  {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-              <div className="flex-1 flex items-center gap-2 px-3 relative">
-                <Search className="w-4 h-4 text-slate-400" />
-                <input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="Название препарата, вещества или симптома…"
-                  className="w-full text-base py-3 bg-transparent outline-none"
-                />
-                {suggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-100 rounded-xl shadow-card overflow-hidden z-10">
-                    {suggestions.map(s => (
-                      <Link key={s.slug} to={`/preparaty/${s.slug}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-emerald-50 transition" onClick={() => setQ('')}>
-                        <Pill className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-slate-900 truncate">{s.name}</div>
-                          <div className="text-xs text-slate-500 truncate">{s.form} · {s.manufacturer}</div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-3 rounded-xl transition">
-                Найти лекарство
-              </button>
-            </form>
+        <div className="relative max-w-4xl mx-auto px-4 pt-10 pb-16 md:pt-14 md:pb-24 text-center">
+          <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur border border-emerald-100 rounded-full px-3.5 py-1.5 mb-6 text-xs font-medium text-emerald-800 shadow-sm">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            Более 200 аптек-партнёров в Москве и СПб
+          </div>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.05]">
+            Ищите лекарства <span className="text-emerald-600">быстро</span><br />и по лучшей цене
+          </h1>
+          <p className="mt-6 text-lg text-slate-600 max-w-2xl mx-auto">
+            Сравнивайте наличие и цены на лекарства, БАДы и аптечные товары в аптеках вашего города. Бесплатно и без регистрации.
+          </p>
 
-            <div className="mt-4 flex items-center gap-2 flex-wrap text-xs text-slate-500">
-              <span>Часто ищут:</span>
-              {['Парацетамол','Нурофен','Арбидол','Витамин D3','Смекта','Зодак'].map(t => (
-                <button key={t} type="button" onClick={() => navigate(`/poisk?q=${encodeURIComponent(t)}`)} className="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-emerald-300 hover:text-emerald-700 transition">{t}</button>
-              ))}
+          <form onSubmit={submit} className="mt-10 mx-auto max-w-3xl bg-white shadow-card border border-slate-100 rounded-2xl p-2 flex flex-col sm:flex-row gap-2 input-focus text-left">
+            <div className="flex items-center gap-2 sm:border-r sm:border-slate-100 px-3 py-2 sm:py-0">
+              <MapPin className="w-4 h-4 text-emerald-600" />
+              <select value={city.id} onChange={(e) => setCity(cities.find(c => c.id === e.target.value))} className="text-sm font-medium text-slate-800 bg-transparent outline-none cursor-pointer">
+                {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
             </div>
+            <div className="flex-1 flex items-center gap-2 px-3 relative">
+              <Search className="w-4 h-4 text-slate-400" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Название препарата, вещества или симптома…"
+                className="w-full text-base py-3 bg-transparent outline-none"
+              />
+              {suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-100 rounded-xl shadow-card overflow-hidden z-10 text-left">
+                  {suggestions.map(s => (
+                    <Link key={s.slug} to={`/preparaty/${s.slug}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-emerald-50 transition" onClick={() => setQ('')}>
+                      <Pill className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-slate-900 truncate">{s.name}</div>
+                        <div className="text-xs text-slate-500 truncate">{s.form} · {s.manufacturer}</div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+            <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-3 rounded-xl transition">
+              Найти лекарство
+            </button>
+          </form>
+
+          <div className="mt-5 flex items-center gap-2 flex-wrap justify-center text-xs text-slate-500">
+            <span>Часто ищут:</span>
+            {['Парацетамол','Нурофен','Арбидол','Витамин D3','Смекта','Зодак'].map(t => (
+              <button key={t} type="button" onClick={() => navigate(`/poisk?q=${encodeURIComponent(t)}`)} className="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-emerald-300 hover:text-emerald-700 transition">{t}</button>
+            ))}
           </div>
         </div>
       </section>
