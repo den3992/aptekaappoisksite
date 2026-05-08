@@ -1,0 +1,112 @@
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Mail, FileSpreadsheet, Server, ShieldCheck, ArrowRight, CheckCircle2, Send } from 'lucide-react';
+import { useToast } from '../hooks/use-toast';
+
+export default function ForPharmacies() {
+  const { toast } = useToast();
+  const [form, setForm] = useState({ chain: '', city: '', email: '', phone: '', count: '', comment: '' });
+  const onChange = (k) => (e) => setForm(s => ({ ...s, [k]: e.target.value }));
+  const submit = (e) => {
+    e.preventDefault();
+    if (!form.email || !form.chain) {
+      toast({ title: 'Заполните обязательные поля', description: 'Название и e-mail' });
+      return;
+    }
+    toast({ title: 'Заявка отправлена', description: 'Мы свяжемся в ближайшее время.' });
+    setForm({ chain: '', city: '', email: '', phone: '', count: '', comment: '' });
+  };
+
+  return (
+    <div>
+      <section className="bg-gradient-to-b from-emerald-50/60 to-white border-b border-slate-100">
+        <div className="max-w-5xl mx-auto px-4 pt-12 pb-12">
+          <nav className="text-xs text-slate-500 mb-4">
+            <Link to="/" className="hover:text-emerald-700">Главная</Link>
+            <span className="mx-1.5">/</span><span>Для аптек</span>
+          </nav>
+          <div className="inline-flex items-center gap-2 bg-white border border-emerald-100 rounded-full px-3 py-1 mb-5 text-xs text-emerald-800">
+            <ShieldCheck className="w-3.5 h-3.5" /> Подключение бесплатное
+          </div>
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900">Подключите аптеку<br /><span className="text-emerald-600">к Лекарства.РФ</span></h1>
+          <p className="mt-5 text-lg text-slate-600 max-w-3xl">
+            Привлекайте новых клиентов из яндекс-поиска. Наш сервис отображает ваши цены и остатки в карточках препаратов, когда люди ищут лекарство в вашем городе.
+          </p>
+        </div>
+      </section>
+
+      <section className="max-w-5xl mx-auto px-4 py-12">
+        <h2 className="text-2xl font-bold text-slate-900 mb-6">Как это работает</h2>
+        <div className="grid md:grid-cols-3 gap-4">
+          {[
+            { i: '01', icon: Send, title: 'Оставьте заявку', desc: 'Напишите нам или заполните форму ниже — за сутки мы свяжемся и обсудим детали' },
+            { i: '02', icon: Server, title: 'Настройка FTP', desc: 'Предоставим отдельный FTP-доступ для выгрузки. Поможем с настройкой из вашей учётной системы (1С, M-Аптека)' },
+            { i: '03', icon: FileSpreadsheet, title: 'Выгрузка прайс-листа', desc: 'Аптека регулярно отправляет файл с остатками и ценами — мы обрабатываем и показываем их на сайте' },
+          ].map(s => (
+            <div key={s.i} className="bg-white border border-slate-100 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center"><s.icon className="w-5 h-5" /></div>
+                <div className="text-3xl font-extrabold text-emerald-100">{s.i}</div>
+              </div>
+              <h3 className="font-semibold text-slate-900 mb-1">{s.title}</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="max-w-5xl mx-auto px-4 pb-12">
+        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-8">
+          <h2 className="text-2xl font-bold text-slate-900 mb-3">Что мы предоставляем</h2>
+          <ul className="space-y-3 text-slate-700">
+            {[
+              'Поможем настроить автоматическую выгрузку прайс-листа из вашей информационной системы',
+              'Поддержим форматы xls / xlsx / dbf / csv — выбираете удобный',
+              'Отдельный FTP-доступ и логин/пароль для вашей аптеки',
+              'Обработка файлов каждые 15 минут — актуальные остатки и цены',
+              'Карточка вашей аптеки на сайте с полным ассортиментом, контактами и картой',
+              'Аналитика посещаемости ваших карточек в личном кабинете',
+            ].map(t => (
+              <li key={t} className="flex items-start gap-2.5"><CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" /><span>{t}</span></li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section className="max-w-5xl mx-auto px-4 pb-16">
+        <div className="bg-white border border-slate-100 rounded-2xl p-6 md:p-8">
+          <div className="grid md:grid-cols-[1fr_auto] gap-6 items-start mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">Связаться для подключения</h2>
+              <p className="text-slate-600">Оставьте контакты — мы свяжемся и поможем с настройкой выгрузки.</p>
+            </div>
+            <a href="mailto:partners@lekarstva.rf" className="inline-flex items-center gap-2 text-emerald-700 font-medium hover:underline">
+              <Mail className="w-4 h-4" /> partners@lekarstva.rf
+            </a>
+          </div>
+          <form onSubmit={submit} className="grid md:grid-cols-2 gap-4">
+            <Field label="Название аптеки / сети*" value={form.chain} onChange={onChange('chain')} placeholder="ООО «Аптека»" />
+            <Field label="Город" value={form.city} onChange={onChange('city')} placeholder="Москва" />
+            <Field label="E-mail*" type="email" value={form.email} onChange={onChange('email')} placeholder="manager@apteka.ru" />
+            <Field label="Телефон" value={form.phone} onChange={onChange('phone')} placeholder="+7 (___) ___-__-__" />
+            <Field label="Количество точек" value={form.count} onChange={onChange('count')} placeholder="5" />
+            <Field label="Учётная система" value={form.comment} onChange={onChange('comment')} placeholder="1С, M-Аптека…" />
+            <div className="md:col-span-2 flex items-center justify-between gap-3 pt-2">
+              <p className="text-xs text-slate-500">Нажимая «Отправить», вы соглашаетесь с <Link to="/soglasie-na-obrabotku-pd" className="underline">обработкой перс. данных</Link></p>
+              <button type="submit" className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-3 rounded-lg transition">Отправить <ArrowRight className="w-4 h-4" /></button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function Field({ label, value, onChange, placeholder, type = 'text' }) {
+  return (
+    <label className="block">
+      <span className="block text-xs font-medium text-slate-600 mb-1.5">{label}</span>
+      <input type={type} value={value} onChange={onChange} placeholder={placeholder} className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100" />
+    </label>
+  );
+}

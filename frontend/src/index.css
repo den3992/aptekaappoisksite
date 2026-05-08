@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: #0f172a;
+    background: #ffffff;
+}
+
+code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+@layer base {
+  :root {
+        --background: 0 0% 100%;
+        --foreground: 222 47% 11%;
+        --card: 0 0% 100%;
+        --card-foreground: 222 47% 11%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 222 47% 11%;
+        --primary: 152 69% 31%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 142 76% 96%;
+        --secondary-foreground: 152 69% 20%;
+        --muted: 210 40% 96%;
+        --muted-foreground: 215 16% 47%;
+        --accent: 142 76% 92%;
+        --accent-foreground: 152 69% 20%;
+        --destructive: 0 84% 60%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 214 32% 91%;
+        --input: 214 32% 91%;
+        --ring: 152 69% 31%;
+        --radius: 0.625rem;
+    }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Brand colors helpers */
+.brand-green { color: #0E9F6E; }
+.bg-brand-green { background-color: #0E9F6E; }
+.bg-brand-green-light { background-color: #ECFDF5; }
+.bg-brand-green-dark { background-color: #047857; }
+
+/* subtle shadows */
+.shadow-soft { box-shadow: 0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06); }
+.shadow-card { box-shadow: 0 4px 16px rgba(2,32,18,.06); }
+.shadow-card-hover { box-shadow: 0 12px 32px rgba(2,32,18,.10); }
+
+/* link */
+.brand-link { color: #0E9F6E; text-decoration: none; }
+.brand-link:hover { text-decoration: underline; }
+
+/* hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Yandex Map balloon override */
+.ymap-price-pill {
+  background: #ffffff;
+  border: 1.5px solid #0E9F6E;
+  color: #047857;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(2,32,18,.12);
+  cursor: pointer;
+  transform: translate(-50%, -100%);
+  position: relative;
+}
+.ymap-price-pill::after {
+  content: '';
+  position: absolute;
+  bottom: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px; height: 10px;
+  background: #ffffff;
+  border-right: 1.5px solid #0E9F6E;
+  border-bottom: 1.5px solid #0E9F6E;
+  rotate: 45deg;
+}
+
+/* legal disclaimer band */
+.legal-band { font-size: 12px; color: #64748b; }
+
+/* category card */
+.cat-card {
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.cat-card:hover {
+  transform: translateY(-2px);
+  border-color: #0E9F6E;
+  box-shadow: 0 8px 24px rgba(14,159,110,.12);
+}
+
+.med-card { transition: transform .2s ease, box-shadow .2s ease; }
+.med-card:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(2,32,18,.10); }
+
+/* nice focus ring */
+.input-focus:focus-within { box-shadow: 0 0 0 4px rgba(14,159,110,.15); border-color: #0E9F6E; }
