@@ -25,9 +25,19 @@ export default function Home() {
 
   return (
     <div>
-      {/* Minimal brand strip */}
-      <div className="bg-gradient-to-b from-emerald-50/60 to-emerald-50/30">
-        <div className="max-w-7xl mx-auto px-4 pt-6 pb-2 flex justify-center">
+      {/* Hero block (brand + hero combined with single smooth gradient) */}
+      <div className="relative bg-gradient-to-b from-emerald-50/70 via-emerald-50/40 to-white overflow-hidden border-b border-slate-100">
+        {/* decorative shapes */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+          <div className="absolute top-20 -left-16 w-96 h-96 rounded-full bg-emerald-200/25 blur-3xl" />
+          <div className="absolute bottom-0 -right-16 w-[28rem] h-[28rem] rounded-full bg-emerald-100/35 blur-3xl" />
+          <div className="absolute top-1/3 right-12 w-3 h-3 rounded-full bg-emerald-400/60" />
+          <div className="absolute top-40 right-1/4 w-2 h-2 rounded-full bg-emerald-500/50" />
+          <div className="absolute bottom-32 left-1/4 w-2.5 h-2.5 rounded-full bg-emerald-400/50" />
+        </div>
+
+        {/* Brand */}
+        <div className="relative max-w-7xl mx-auto px-4 pt-7 pb-2 flex justify-center">
           <Link to="/" className="inline-flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center text-white shadow-sm">
               <Pill className="w-5 h-5" />
@@ -38,20 +48,9 @@ export default function Home() {
             </div>
           </Link>
         </div>
-      </div>
 
-      {/* Hero */}
-      <section className="relative bg-gradient-to-b from-emerald-50/30 to-white border-b border-slate-100 overflow-hidden">
-        {/* decorative shapes */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-emerald-200/30 blur-3xl" />
-          <div className="absolute -bottom-32 -right-24 w-[28rem] h-[28rem] rounded-full bg-emerald-100/40 blur-3xl" />
-          <div className="absolute top-1/3 right-12 w-3 h-3 rounded-full bg-emerald-400/60" />
-          <div className="absolute top-24 right-1/4 w-2 h-2 rounded-full bg-emerald-500/50" />
-          <div className="absolute bottom-32 left-1/4 w-2.5 h-2.5 rounded-full bg-emerald-400/50" />
-        </div>
-
-        <div className="relative max-w-4xl mx-auto px-4 pt-10 pb-16 md:pt-14 md:pb-24 text-center">
+        {/* Hero */}
+        <section className="relative max-w-4xl mx-auto px-4 pt-10 pb-16 md:pt-14 md:pb-24 text-center">
           <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur border border-emerald-100 rounded-full px-3.5 py-1.5 mb-6 text-xs font-medium text-emerald-800 shadow-sm">
             <ShieldCheck className="w-3.5 h-3.5" />
             Более 200 аптек-партнёров в Москве и СПб
@@ -100,11 +99,11 @@ export default function Home() {
           <div className="mt-5 flex items-center gap-2 flex-wrap justify-center text-xs text-slate-500">
             <span>Часто ищут:</span>
             {['Парацетамол','Нурофен','Арбидол','Витамин D3','Смекта','Зодак'].map(t => (
-              <button key={t} type="button" onClick={() => navigate(`/poisk?q=${encodeURIComponent(t)}`)} className="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-emerald-300 hover:text-emerald-700 transition">{t}</button>
+              <button key={t} type="button" onClick={() => navigate(`/poisk?q=${encodeURIComponent(t)}`)} className="px-2.5 py-1 rounded-full bg-white/70 backdrop-blur border border-slate-200 hover:border-emerald-300 hover:text-emerald-700 transition">{t}</button>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
       {/* Categories */}
       <section className="max-w-7xl mx-auto px-4 py-14">
