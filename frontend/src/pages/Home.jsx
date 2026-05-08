@@ -136,8 +136,8 @@ export default function Home() {
           </div>
           <Link to="/kategorii" className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1 whitespace-nowrap shrink-0">Все категории <ArrowRight className="w-4 h-4" /></Link>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
-          {CATEGORIES.map(c => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-2.5">
+          {CATEGORIES.slice(0, 8).map(c => (
             <Link key={c.slug} to={`/kategorii/${c.slug}`} className="cat-card flex flex-col items-start gap-2.5 bg-white border border-slate-200 hover:border-emerald-400 transition rounded-xl px-4 py-3.5 min-h-[96px]">
               <span className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: c.color, color: c.accent }}>
                 <CategoryIcon name={c.icon} className="w-4.5 h-4.5" />
