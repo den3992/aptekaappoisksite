@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, MapPin, ShieldCheck, Clock, Banknote, ArrowRight, TrendingUp, Pill } from 'lucide-react';
+import { Search, MapPin, ShieldCheck, Clock, Banknote, ArrowRight, Pill } from 'lucide-react';
 import { useCity } from '../context/CityContext';
-import { CATEGORIES, MEDICATIONS } from '../mock';
+import { CATEGORIES, MEDICATIONS, PRICES } from '../mock';
 import CategoryIcon from '../components/CategoryIcon';
-import MedCard from '../components/MedCard';
 import PillIcon from '../components/PillIcon';
 import PartnersMarquee from '../components/PartnersMarquee';
 
@@ -108,22 +107,23 @@ export default function Home() {
       {/* Partners marquee */}
       <PartnersMarquee />
 
-      {/* Popular */}
-      <section className="max-w-7xl mx-auto px-4 pt-14 pb-6">
-        <div className="flex items-end justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Популярные препараты</h2>
-              <p className="text-slate-500 mt-1 text-sm">Цены и наличие в {city.inLoc}</p>
-            </div>
-          </div>
-          <Link to="/preparaty" className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1">Смотреть все <ArrowRight className="w-4 h-4" /></Link>
+      {/* Popular meds — minimalistic SEO chips */}
+      <section className="max-w-7xl mx-auto px-4 pt-12 pb-2">
+        <div className="flex items-end justify-between mb-4">
+          <h2 className="text-xl md:text-2xl font-bold text-slate-900">Популярные препараты</h2>
+          <Link to="/preparaty" className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1">Каталог А–Я <ArrowRight className="w-4 h-4" /></Link>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {popularMeds.map(m => <MedCard key={m.slug} med={m} />)}
+        <div className="flex flex-wrap gap-2">
+          {popularMeds.map(m => {
+            const prices = (PRICES[m.slug]?.[city.id] || []).map(p => p.price);
+            const min = prices.length ? Math.min(...prices) : null;
+            return (
+              <Link key={m.slug} to={`/preparaty/${m.slug}`} className="group inline-flex items-center gap-2 bg-white border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/40 transition px-4 py-2 rounded-full text-sm">
+                <span className="font-medium text-slate-800">{m.name}</span>
+                {min !== null && <span className="text-emerald-700 font-semibold">от {min} ₽</span>}
+              </Link>
+            );
+          })}
         </div>
       </section>
 
