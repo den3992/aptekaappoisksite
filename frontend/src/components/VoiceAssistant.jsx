@@ -20,18 +20,6 @@ function getOrCreateSessionId() {
   return sid;
 }
 
-function pickRussianVoice() {
-  if (typeof window === 'undefined' || !window.speechSynthesis) return null;
-  const voices = window.speechSynthesis.getVoices();
-  // Prefer Russian voices
-  return (
-    voices.find(v => /ru[-_]RU/i.test(v.lang)) ||
-    voices.find(v => /^ru/i.test(v.lang)) ||
-    voices.find(v => /russian|русский/i.test(v.name)) ||
-    null
-  );
-}
-
 export default function VoiceAssistant() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -42,17 +30,18 @@ export default function VoiceAssistant() {
   const [listening, setListening] = useState(false);
   const [ttsEnabled, setTtsEnabled] = useState(true);
   const [error, setError] = useState('');
-  const [supported, setSupported] = useState({ stt: false, tts: false });
+  const [supported, setSupported] = useState({ stt: false });
 
   const recognitionRef = useRef(null);
   const messagesEndRef = useRef(null);
   const sessionIdRef = useRef(getOrCreateSessionId());
+  const audioRef = useRef(null);
+  const audioUrlRef = useRef(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const tts = !!window.speechSynthesis;
-    setSupported({ stt: !!SR, tts });
+    setSupported({ stt: !!SR });
 
     if (SR) {
       const rec = new SR();
@@ -64,7 +53,6 @@ export default function VoiceAssistant() {
         const text = e.results[0][0].transcript;
         setInput(text);
         setListening(false);
-        // auto-send recognized text
         setTimeout(() => sendMessage(text), 50);
       };
       rec.onerror = (e) => {
@@ -79,15 +67,12 @@ export default function VoiceAssistant() {
       recognitionRef.current = rec;
     }
 
-    // Warm up voices list (some browsers load asynchronously)
-    if (tts) {
-      window.speechSynthesis.getVoices();
-      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-    }
+    // Prepare a single Audio element for TTS playback
+    audioRef.current = new Audio();
 
     return () => {
       try { recognitionRef.current && recognitionRef.current.abort(); } catch (_) {}
-      try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (_) {}
+      stopSpeaking();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -96,22 +81,42 @@ export default function VoiceAssistant() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, sending]);
 
-  const speak = (text) => {
-    if (!ttsEnabled || !window.speechSynthesis || !text) return;
+  const stopSpeaking = () => {
     try {
-      window.speechSynthesis.cancel();
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = 'ru-RU';
-      const v = pickRussianVoice();
-      if (v) utter.voice = v;
-      utter.rate = 1.0;
-      utter.pitch = 1.0;
-      window.speechSynthesis.speak(utter);
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+      }
+      if (audioUrlRef.current) {
+        URL.revokeObjectURL(audioUrlRef.current);
+        audioUrlRef.current = null;
+      }
     } catch (_) {}
   };
 
-  const stopSpeaking = () => {
-    try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (_) {}
+  const speak = async (text) => {
+    if (!ttsEnabled || !text || !audioRef.current) return;
+    try {
+      stopSpeaking();
+      const resp = await axios.post(
+        `${API}/voice/tts`,
+        { text, voice: 'alena', emotion: 'good' },
+        { responseType: 'blob', timeout: 25000 }
+      );
+      const url = URL.createObjectURL(resp.data);
+      audioUrlRef.current = url;
+      audioRef.current.src = url;
+      // Some browsers require play() to be triggered from user gesture; the
+      // interaction (sending msg / opening dialog) usually counts as one.
+      const p = audioRef.current.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch(() => {/* ignore autoplay blocks */});
+      }
+    } catch (e) {
+      // Soft fail – text is still shown on screen
+      // eslint-disable-next-line no-console
+      console.warn('TTS error', e?.message || e);
+    }
   };
 
   const sendMessage = async (overrideText) => {
@@ -145,9 +150,7 @@ export default function VoiceAssistant() {
     try {
       recognitionRef.current.start();
       setListening(true);
-    } catch (_) {
-      // already started
-    }
+    } catch (_) {}
   };
 
   const stopListening = () => {
