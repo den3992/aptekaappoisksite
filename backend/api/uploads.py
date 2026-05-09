@@ -20,6 +20,7 @@ from __future__ import annotations
 import csv
 import io
 import re
+import uuid
 from datetime import datetime, timezone, date
 from typing import Optional, List, Dict, Any, Tuple
 
@@ -324,14 +325,8 @@ def make_uploads_router(db: AsyncIOMotorDatabase) -> APIRouter:
                 {"_id": 0, "gtin": 1, "trade_name": 1, "manufacturer": 1, "dosage_std": 1, "form_std": 1},
             )
             raw_records = {d["gtin"]: d async for d in cursor if d.get("gtin")}
-            # gtins → card slug (via medications collection)
             if raw_records:
-                # We'll resolve slug by trade_name+manufacturer+dosage+form key.
-                from .pharmacies_seed import CITIES  # noqa
-                # Use the same key logic as the importer.
                 rt = list(raw_records.keys())
-                # batch fetch matching cards
-                # We map: gtin -> card_key string -> slug. Easier: variants.gtin search.
                 cards = db.medications.find(
                     {"variants.gtin": {"$in": rt}},
                     {"_id": 0, "slug": 1, "variants": 1},
@@ -343,7 +338,12 @@ def make_uploads_router(db: AsyncIOMotorDatabase) -> APIRouter:
                         if g in rt:
                             gtin_to_slug[g] = slug
 
-        upload_id = f"up-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}-{pharmacy_id}"
+        # Generate a sub-second unique upload id (uuid suffix prevents collisions
+        # when a partner uploads two files within the same second).
+        upload_id = (
+            f"up-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
+            f"-{pharmacy_id}-{uuid.uuid4().hex[:8]}"
+        )
         now = datetime.now(timezone.utc).isoformat()
 
         # Persist prices (matched) and unmatched (manual review)
@@ -367,6 +367,16 @@ def make_uploads_router(db: AsyncIOMotorDatabase) -> APIRouter:
             else:
                 unmatched_docs.append(base)
 
+        # Clear stale unmatched rows for this pharmacy & GTINs being re-uploaded
+        # so the "Требуют разбора" tab does not accumulate duplicates after
+        # partial re-uploads.
+        if unmatched_docs:
+            await db.unmatched_items.delete_many({
+                "pharmacy_id": pharmacy_id,
+                "gtin": {"$in": [d["gtin"] for d in unmatched_docs]},
+            })
+            await db.unmatched_items.insert_many(unmatched_docs, ordered=False)
+
         if matched_docs:
             # Replace prices for this pharmacy & gtin pair (latest upload wins)
             for doc in matched_docs:
@@ -375,8 +385,11 @@ def make_uploads_router(db: AsyncIOMotorDatabase) -> APIRouter:
                     {"$set": doc},
                     upsert=True,
                 )
-        if unmatched_docs:
-            await db.unmatched_items.insert_many(unmatched_docs, ordered=False)
+            # If a previously-unmatched GTIN now matches (mdlp updated), remove it
+            await db.unmatched_items.delete_many({
+                "pharmacy_id": pharmacy_id,
+                "gtin": {"$in": [d["gtin"] for d in matched_docs]},
+            })
 
         # Persist upload meta
         await db.pharmacy_uploads.insert_one({

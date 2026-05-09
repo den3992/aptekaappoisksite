@@ -322,6 +322,19 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+@app.on_event("startup")
+async def ensure_indexes():
+    """Create indexes once on startup (idempotent). Avoids per-request overhead."""
+    try:
+        await db.prices.create_index([("pharmacy_id", 1), ("gtin", 1)], unique=True)
+        await db.prices.create_index([("slug", 1)])
+        await db.unmatched_items.create_index([("upload_id", 1)])
+        await db.unmatched_items.create_index([("pharmacy_id", 1), ("gtin", 1)])
+        await db.pharmacy_uploads.create_index([("pharmacy_id", 1), ("uploaded_at", -1)])
+    except Exception as e:
+        logger.warning(f"Index creation skipped: {e}")
+
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()

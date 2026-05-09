@@ -52,10 +52,29 @@ MVP сайта-агрегатора аптек по образцу lekmos / 003m
 - `GET /api/categories` — 11 категорий с реальными счётчиками
 - `GET /api/search?q=&category=&rx=&page=&page_size=` — поиск с пагинацией (стабильная сортировка по textScore + slug tiebreaker)
 - `GET /api/search/suggest?q=` — typeahead (regex по name/mnn)
-- `GET /api/medications/{slug}` — карточка + варианты + детерминированные mock-цены
+- `GET /api/medications/{slug}` — карточка + варианты + цены (с полем `prices_source: real|demo`)
 - `GET /api/medications/{slug}/analogs` — аналоги по МНН (sorted by name)
 - `GET /api/pharmacies?city=` — аптеки города
 - `GET /api/pharmacies/{id}` — карточка аптеки
+
+### Загрузка прайс-листов аптек (✅ 2026-02-09)
+- **Скрытый кабинет аптеки**: `/partner-upload?token=XXXX` (НЕ слинкован с основного сайта)
+- **Авторизация по токену** в коллекции `pharmacy_tokens` (3 партнёра засеяно)
+- `POST /api/upload/me/{token}` — данные аптеки по токену
+- `POST /api/upload/prices/{token}` — загрузка XLSX/CSV (мультипарт, до 25 МБ)
+  - Принимает английские (`gtin, name, qty, price`) и русские (`штрихкод, название, количество, цена`) заголовки в любом порядке
+  - Опциональные: `pharmacy_id` (код точки), `expiry_date` (срок годности)
+  - CSV в UTF-8 или Windows-1251, разделитель `,` или `;` (auto-sniff)
+  - Парсит цены типа `125,50` (запятая=точка), очищает `1 500 ₽`
+  - Матчит GTIN против `medications_raw` (72k SKU) → пишет в `prices` (upsert по pharmacy_id+gtin)
+  - Не сматченные GTIN → `unmatched_items` (вкладка «Требуют разбора»)
+  - Возвращает summary: total_rows, valid_rows, invalid_rows, matched, unmatched + sample_errors
+  - Уникальный `upload_id` с UUID-суффиксом (защита от двойной загрузки в одну секунду)
+- `GET /api/upload/history/{token}` — последние 20 загрузок аптеки
+- `GET /api/upload/unmatched/{token}` — товары без сопоставления с реестром
+- **Frontend**: `/app/frontend/src/pages/PartnerUpload.jsx` — drag&drop, прогресс, 3 вкладки (Загрузка / История / Требуют разбора)
+- Цены сразу видны в `/api/medications/{slug}` с флагом `prices_source: "real"`
+- Скрипт сидинга токенов: `python -m scripts.seed_pharmacy_tokens`
 
 ### SEO‑фундамент (✅ 2026-02-09)
 - `GET /api/seo/robots.txt` — с `Sitemap`, `Host`, `Clean-param` для Yandex
