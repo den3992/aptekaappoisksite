@@ -4,22 +4,7 @@ import { ChevronRight, MapPin, Phone, Clock, Pill, ShieldAlert, Tag } from 'luci
 import { findMedBySlug, PHARMACIES, PRICES, getAnalogs, CATEGORIES } from '../mock';
 import { useCity } from '../context/CityContext';
 import MedCard from '../components/MedCard';
-
-// Load Yandex Maps JS API once
-let ymapsPromise = null;
-function loadYmaps() {
-  if (ymapsPromise) return ymapsPromise;
-  ymapsPromise = new Promise((resolve, reject) => {
-    if (window.ymaps) return window.ymaps.ready(() => resolve(window.ymaps));
-    const s = document.createElement('script');
-    s.src = 'https://api-maps.yandex.ru/2.1/?lang=ru_RU';
-    s.async = true;
-    s.onload = () => window.ymaps.ready(() => resolve(window.ymaps));
-    s.onerror = reject;
-    document.head.appendChild(s);
-  });
-  return ymapsPromise;
-}
+import { loadYmaps } from '../lib/ymaps';
 
 function PriceMap({ med, prices, pharmacies, cityCenter, onSelect, selected }) {
   const ref = useRef(null);

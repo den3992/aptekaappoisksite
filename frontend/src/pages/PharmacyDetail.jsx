@@ -2,21 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { MapPin, Phone, Clock, ChevronRight, Star, Search } from 'lucide-react';
 import { findPharmacyById, MEDICATIONS, PRICES } from '../mock';
-
-let ymapsPromise = null;
-function loadYmaps() {
-  if (ymapsPromise) return ymapsPromise;
-  ymapsPromise = new Promise((resolve, reject) => {
-    if (window.ymaps) return window.ymaps.ready(() => resolve(window.ymaps));
-    const s = document.createElement('script');
-    s.src = 'https://api-maps.yandex.ru/2.1/?lang=ru_RU';
-    s.async = true;
-    s.onload = () => window.ymaps.ready(() => resolve(window.ymaps));
-    s.onerror = reject;
-    document.head.appendChild(s);
-  });
-  return ymapsPromise;
-}
+import { loadYmaps } from '../lib/ymaps';
 
 export default function PharmacyDetail() {
   const { id } = useParams();
