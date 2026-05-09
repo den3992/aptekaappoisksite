@@ -21,7 +21,7 @@ export default function MedCard({ med }) {
       </div>
       <div className="flex-1">
         {med.rx && (
-          <span className="inline-block text-[10px] font-semibold uppercase tracking-wide bg-rose-50 text-rose-700 px-2 py-0.5 rounded mb-1.5">По рецепту</span>
+          <span className="inline-block text-[10px] font-semibold uppercase tracking-wide bg-rose-50 text-rose-700 px-2 py-0.5 rounded mb-1.5">Отпускается по рецепту</span>
         )}
         <h3 className="text-sm font-semibold text-slate-900 line-clamp-2 leading-snug">{med.name}</h3>
         <p className="text-xs text-slate-500 mt-1 line-clamp-1">{med.form}, {med.pack}</p>

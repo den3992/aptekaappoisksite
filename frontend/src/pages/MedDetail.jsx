@@ -117,7 +117,7 @@ export default function MedDetail() {
         <div>
           {med.rx && (
             <div className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide bg-rose-50 text-rose-700 px-2.5 py-1 rounded mb-3">
-              <ShieldAlert className="w-3.5 h-3.5" /> Отпуск по рецепту
+              <ShieldAlert className="w-3.5 h-3.5" /> Отпускается по рецепту
             </div>
           )}
           <h1 className="text-3xl md:text-4xl font-bold text-slate-900">{med.name}</h1>
