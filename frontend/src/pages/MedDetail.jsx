@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ChevronRight, MapPin, Phone, Clock, Pill, ShieldAlert, Tag } from 'lucide-react';
-import { findMedBySlug, PHARMACIES, PRICES, getAnalogs, CATEGORIES } from '../mock';
 import { useCity } from '../context/CityContext';
-import MedCard from '../components/MedCard';
+import { fetchMed, fetchAnalogs, fetchPharmacies } from '../api/client';
+import SEOHead from '../components/SEOHead';
+import { medSEO } from '../seo';
 import { loadYmaps } from '../lib/ymaps';
 
 function PriceMap({ med, prices, pharmacies, cityCenter, onSelect, selected }) {
@@ -42,7 +43,7 @@ function PriceMap({ med, prices, pharmacies, cityCenter, onSelect, selected }) {
       );
 
       const placemarks = prices.map(pr => {
-        const ph = pharmacies.find(p => p.id === pr.pharmacyId);
+        const ph = pharmacies.find(p => p.id === pr.pharmacy_id);
         if (!ph) return null;
         return new ymaps.Placemark([ph.lat, ph.lng], {
           price: pr.price,
@@ -64,156 +65,264 @@ function PriceMap({ med, prices, pharmacies, cityCenter, onSelect, selected }) {
       if (mapRef.current) { mapRef.current.destroy(); mapRef.current = null; }
     };
     // eslint-disable-next-line
-  }, [med.slug, cityCenter[0], cityCenter[1], prices.length]);
+  }, [med?.slug, cityCenter[0], cityCenter[1], prices.length]);
 
   return <div ref={ref} className="w-full h-[460px] rounded-xl overflow-hidden border border-slate-100" />;
 }
 
 export default function MedDetail() {
-  const { slug } = useParams();
-  const med = findMedBySlug(slug);
-  const { city } = useCity();
+  const { slug, city: cityParam } = useParams();
+  const { city, cities, setCity } = useCity();
   const [selectedId, setSelectedId] = useState(null);
+  const [med, setMed] = useState(null);
+  const [analogs, setAnalogs] = useState([]);
+  const [pharmacies, setPharmacies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
-  const cat = med ? CATEGORIES.find(c => c.slug === med.category) : null;
+  // Sync URL city → context
+  useEffect(() => {
+    if (cityParam && cities) {
+      const found = cities.find(c => c.id === cityParam);
+      if (found && found.id !== city.id) setCity(found);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cityParam]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setNotFound(false);
+    Promise.all([fetchMed(slug), fetchAnalogs(slug, 8), fetchPharmacies(city.id)])
+      .then(([m, a, ph]) => {
+        if (cancelled) return;
+        setMed(m);
+        setAnalogs(a);
+        setPharmacies(ph);
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setNotFound(e?.response?.status === 404);
+          setMed(null);
+        }
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [slug, city.id]);
 
   const prices = useMemo(() => {
     if (!med) return [];
-    const list = [...(PRICES[med.slug]?.[city.id] || [])];
+    const list = [...((med.prices_by_city || {})[city.id] || [])];
     list.sort((a, b) => a.price - b.price);
     return list;
   }, [med, city.id]);
 
-  const cityPharms = PHARMACIES.filter(p => p.city === city.id);
-  const cityCenter = city.center;
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-16 text-center text-slate-500">Загрузка препарата…</div>
+    );
+  }
 
-  if (!med) return (
+  if (notFound || !med) return (
     <div className="max-w-7xl mx-auto px-4 py-16 text-center">
       <h1 className="text-2xl font-bold mb-2">Препарат не найден</h1>
-      <Link to="/preparaty" className="text-emerald-700 hover:underline">К каталогу</Link>
+      <Link to={`/${city.id}/preparaty`} className="text-emerald-700 hover:underline">К каталогу</Link>
     </div>
   );
 
-  const minPrice = Math.min(...prices.map(p => p.price));
-  const maxPrice = Math.max(...prices.map(p => p.price));
-  const analogs = getAnalogs(med);
+  const minPrice = prices.length ? Math.min(...prices.map(p => p.price)) : null;
+  const maxPrice = prices.length ? Math.max(...prices.map(p => p.price)) : null;
+  const seo = medSEO(city.id, med);
+  const formLower = (med.form || '').toLowerCase();
+
+  // Schema.org Drug
+  const drugJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Drug',
+    name: med.name,
+    nonProprietaryName: med.mnn || undefined,
+    manufacturer: med.manufacturer ? { '@type': 'Organization', name: med.manufacturer } : undefined,
+    dosageForm: formLower || undefined,
+    description: seo.description,
+    prescriptionStatus: med.rx ? 'PrescriptionOnly' : 'OTC',
+    url: seo.canonical,
+  };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-8" data-testid="med-detail-page">
+      <SEOHead seo={{ ...seo, jsonLd: drugJsonLd }} />
+
       <nav className="text-xs text-slate-500 mb-4 flex items-center flex-wrap gap-x-1.5">
-        <Link to="/" className="hover:text-emerald-700">Главная</Link>
+        <Link to={`/${city.id}`} className="hover:text-emerald-700">Главная</Link>
         <ChevronRight className="w-3 h-3" />
-        <Link to="/preparaty" className="hover:text-emerald-700">Каталог</Link>
-        {cat && <><ChevronRight className="w-3 h-3" /><Link to={`/kategorii/${cat.slug}`} className="hover:text-emerald-700">{cat.title}</Link></>}
+        <Link to={`/${city.id}/preparaty`} className="hover:text-emerald-700">Каталог</Link>
+        {med.category && med.category !== 'other' && (
+          <>
+            <ChevronRight className="w-3 h-3" />
+            <Link to={`/${city.id}/kategorii/${med.category}`} className="hover:text-emerald-700 capitalize">{med.category.replace(/-/g, ' ')}</Link>
+          </>
+        )}
         <ChevronRight className="w-3 h-3" /><span className="text-slate-700">{med.name}</span>
       </nav>
 
       <div className="grid lg:grid-cols-[380px_1fr] gap-8 mb-10">
         <div className="bg-white border border-slate-100 rounded-2xl p-6">
           <div className="aspect-square rounded-xl bg-slate-50 overflow-hidden flex items-center justify-center">
-            {med.image ? <img src={med.image} alt={med.name} className="w-full h-full object-cover" /> : <Pill className="w-16 h-16 text-emerald-300" />}
+            <Pill className="w-24 h-24 text-emerald-300" />
           </div>
-        </div>
-        <div>
-          {med.rx && (
-            <div className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide bg-rose-50 text-rose-700 px-2.5 py-1 rounded mb-3">
-              <ShieldAlert className="w-3.5 h-3.5" /> Отпускается по рецепту
+          {med.limit_price && (
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-900">
+              <div className="font-semibold mb-0.5">Государственная предельная цена</div>
+              <div>{Number(med.limit_price).toFixed(2)} ₽</div>
+              <div className="text-[10px] text-blue-700/80 mt-1">Препарат входит в перечень ЖНВЛП</div>
             </div>
           )}
+        </div>
+        <div>
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {med.rx && (
+              <div className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide bg-rose-50 text-rose-700 px-2.5 py-1 rounded">
+                <ShieldAlert className="w-3.5 h-3.5" /> Отпускается по рецепту
+              </div>
+            )}
+            {med.vital && (
+              <div className="inline-flex items-center text-xs font-semibold uppercase tracking-wide bg-amber-50 text-amber-800 px-2.5 py-1 rounded">
+                ЖНВЛП
+              </div>
+            )}
+          </div>
           <h1 className="text-3xl md:text-4xl font-bold text-slate-900">{med.name}</h1>
-          <p className="text-slate-600 mt-1.5">{med.form}, {med.pack}</p>
+          <p className="text-slate-600 mt-1.5">{[formLower, med.dosage].filter(Boolean).join(', ')}</p>
 
           <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-            <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Производитель</div><div className="font-medium text-slate-800">{med.manufacturer}</div></div>
-            <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Страна</div><div className="font-medium text-slate-800">{med.country}</div></div>
-            <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">МНН</div><div className="font-medium text-slate-800">{med.mnn}</div></div>
+            <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Производитель</div><div className="font-medium text-slate-800">{med.manufacturer || '—'}</div></div>
+            <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Страна</div><div className="font-medium text-slate-800">{med.manufacturer_country || '—'}</div></div>
+            {med.mnn && <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">МНН</div><div className="font-medium text-slate-800">{med.mnn.toLowerCase()}</div></div>}
           </div>
 
-          <div className="mt-6 bg-emerald-50/60 border border-emerald-100 rounded-xl p-5">
-            <div className="flex items-end gap-4">
-              <div>
-                <div className="text-xs text-emerald-800/80">Минимальная цена в {city.inLoc}</div>
-                <div className="text-3xl font-extrabold text-emerald-700">{minPrice} ₽</div>
+          {minPrice !== null && (
+            <div className="mt-6 bg-emerald-50/60 border border-emerald-100 rounded-xl p-5">
+              <div className="flex items-end gap-4">
+                <div>
+                  <div className="text-xs text-emerald-800/80">Минимальная цена в {city.inLoc}</div>
+                  <div className="text-3xl font-extrabold text-emerald-700">{minPrice} ₽</div>
+                </div>
+                <div className="text-sm text-slate-600 pb-1">до {maxPrice} ₽ · в {prices.length} аптеках</div>
               </div>
-              <div className="text-sm text-slate-600 pb-1">до {maxPrice} ₽ · в {prices.length} аптеках</div>
+              <p className="legal-band mt-3">Сведения о ценах и остатках носят справочный характер. Не является публичной офертой.</p>
             </div>
-            <p className="legal-band mt-3">Сведения о ценах и остатках носят справочный характер. Не является публичной офертой.</p>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Map block */}
-      <section className="mb-10">
-        <div className="flex items-end justify-between mb-3">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900">{med.name} на карте — {city.name}</h2>
-            <p className="text-sm text-slate-500 mt-1">Нажмите на облачко с ценой, чтобы увидеть адрес и наличие</p>
+      {/* Map */}
+      {prices.length > 0 && (
+        <section className="mb-10">
+          <div className="flex items-end justify-between mb-3">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">{med.name} на карте — {city.name}</h2>
+              <p className="text-sm text-slate-500 mt-1">Нажмите на облачко с ценой, чтобы увидеть адрес и наличие</p>
+            </div>
           </div>
-        </div>
-        <PriceMap med={med} prices={prices} pharmacies={cityPharms} cityCenter={cityCenter} onSelect={setSelectedId} selected={selectedId} />
-      </section>
+          <PriceMap med={med} prices={prices} pharmacies={pharmacies} cityCenter={city.center} onSelect={setSelectedId} selected={selectedId} />
+        </section>
+      )}
 
       {/* Prices list */}
-      <section className="mb-12">
-        <div className="flex items-end justify-between mb-4">
-          <h2 className="text-2xl font-bold text-slate-900">Цены в аптеках</h2>
-          <div className="text-sm text-slate-500">Сортировка: сначала дешевле</div>
-        </div>
-        <div className="bg-white border border-slate-100 rounded-xl divide-y divide-slate-100 overflow-hidden">
-          {prices.map(pr => {
-            const ph = PHARMACIES.find(p => p.id === pr.pharmacyId);
-            if (!ph) return null;
-            return (
-              <div key={pr.pharmacyId} className={`grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_120px_140px_120px] items-center gap-3 px-4 py-3 hover:bg-emerald-50/30 transition ${selectedId === ph.id ? 'bg-emerald-50/50' : ''}`}>
-                <div>
-                  <Link to={`/apteki/${ph.id}`} className="font-semibold text-slate-900 hover:text-emerald-700">{ph.name}</Link>
-                  <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {ph.address}{ph.metro && <span className="text-emerald-600"> · м. {ph.metro}</span>}</div>
+      {prices.length > 0 && (
+        <section className="mb-12">
+          <div className="flex items-end justify-between mb-4">
+            <h2 className="text-2xl font-bold text-slate-900">Цены в аптеках</h2>
+            <div className="text-sm text-slate-500">Сортировка: сначала дешевле</div>
+          </div>
+          <div className="bg-white border border-slate-100 rounded-xl divide-y divide-slate-100 overflow-hidden">
+            {prices.map(pr => {
+              const ph = pharmacies.find(p => p.id === pr.pharmacy_id);
+              if (!ph) return null;
+              return (
+                <div key={pr.pharmacy_id} className={`grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_120px_140px_120px] items-center gap-3 px-4 py-3 hover:bg-emerald-50/30 transition ${selectedId === ph.id ? 'bg-emerald-50/50' : ''}`}>
+                  <div>
+                    <Link to={`/${city.id}/apteki/${ph.id}`} className="font-semibold text-slate-900 hover:text-emerald-700">{ph.name}</Link>
+                    <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {ph.address}{ph.metro && <span className="text-emerald-600"> · м. {ph.metro}</span>}</div>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500"><Clock className="w-3.5 h-3.5" /> {ph.hours}</div>
+                  <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500"><Phone className="w-3.5 h-3.5" /> {ph.phone}</div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-emerald-700">{pr.price} ₽</div>
+                    <div className="text-[11px] text-slate-500">в наличии: {pr.qty} шт</div>
+                  </div>
                 </div>
-                <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500"><Clock className="w-3.5 h-3.5" /> {ph.hours}</div>
-                <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500"><Phone className="w-3.5 h-3.5" /> {ph.phone}</div>
-                <div className="text-right">
-                  <div className="text-lg font-bold text-emerald-700">{pr.price} ₽</div>
-                  <div className="text-[11px] text-slate-500">в наличии: {pr.qty} шт</div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
-      {/* Description */}
-      <section className="grid lg:grid-cols-2 gap-6 mb-12">
-        <div className="bg-white border border-slate-100 rounded-xl p-6">
-          <h2 className="text-xl font-bold text-slate-900 mb-3">О препарате</h2>
-          <p className="text-slate-700 leading-relaxed">{med.description}</p>
-          <h3 className="font-semibold text-slate-900 mt-5 mb-2 text-sm uppercase tracking-wide">Показания</h3>
-          <ul className="text-slate-700 space-y-1 text-sm list-disc list-inside marker:text-emerald-500">
-            {med.indications.map(x => <li key={x}>{x}</li>)}
-          </ul>
-        </div>
-        <div className="bg-white border border-slate-100 rounded-xl p-6">
-          <h2 className="text-xl font-bold text-slate-900 mb-3">Противопоказания</h2>
-          <ul className="text-slate-700 space-y-1 text-sm list-disc list-inside marker:text-rose-400">
-            {med.contraindications.map(x => <li key={x}>{x}</li>)}
-          </ul>
-          <h3 className="font-semibold text-slate-900 mt-5 mb-2 text-sm uppercase tracking-wide">Хранение</h3>
-          <p className="text-slate-700 text-sm">{med.storage}</p>
-          <div className="mt-5 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
-            <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-            <p className="text-xs text-amber-900">Имеются противопоказания. Перед применением обязательно проконсультируйтесь с врачом.</p>
+      {/* Variants block */}
+      {med.variants && med.variants.length > 1 && (
+        <section className="mb-12">
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">Доступные упаковки и формы выпуска</h2>
+          <div className="bg-white border border-slate-100 rounded-xl overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                <tr>
+                  <th className="px-4 py-3 text-left">Упаковка</th>
+                  <th className="px-4 py-3 text-left hidden md:table-cell">GTIN</th>
+                  <th className="px-4 py-3 text-left hidden md:table-cell">Регистрационное удостоверение</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {med.variants.slice(0, 30).map((v, i) => (
+                  <tr key={v.gtin || i} className="hover:bg-slate-50/50">
+                    <td className="px-4 py-2.5">{v.label_name || v.primary_pack_desc || v.pack_size || '—'}</td>
+                    <td className="px-4 py-2.5 font-mono text-xs hidden md:table-cell">{v.gtin || '—'}</td>
+                    <td className="px-4 py-2.5 text-xs hidden md:table-cell">{v.ru_number || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {med.variants.length > 30 && (
+              <div className="px-4 py-2 text-xs text-slate-500 bg-slate-50">+ ещё {med.variants.length - 30} упаковок</div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Disclaimer */}
+      <section className="mb-12">
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 flex items-start gap-3">
+          <ShieldAlert className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+          <div className="text-sm text-amber-900">
+            <strong>Имеются противопоказания.</strong> Информация на странице носит справочный характер и не является
+            рекомендацией к применению. Перед приёмом препарата обязательно проконсультируйтесь с врачом или фармацевтом.
           </div>
         </div>
       </section>
 
       {/* Analogs */}
       {analogs.length > 0 && (
-        <section className="mb-12">
+        <section className="mb-12" data-testid="analogs-section">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center"><Tag className="w-5 h-5" /></div>
-            <h2 className="text-2xl font-bold text-slate-900">Аналоги и похожие препараты</h2>
+            <h2 className="text-2xl font-bold text-slate-900">Аналоги по МНН: {med.mnn ? med.mnn.toLowerCase() : '—'}</h2>
           </div>
           <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {analogs.map(a => <MedCard key={a.slug} med={a} />)}
+            {analogs.map(a => (
+              <Link
+                key={a.slug}
+                to={`/${city.id}/preparaty/${a.slug}`}
+                className="bg-white border border-slate-100 rounded-xl p-3 hover:border-emerald-300 transition"
+              >
+                {a.rx && (
+                  <span className="inline-block text-[10px] font-semibold uppercase tracking-wide bg-rose-50 text-rose-700 px-2 py-0.5 rounded mb-1.5">
+                    Отпускается по рецепту
+                  </span>
+                )}
+                <h3 className="font-semibold text-slate-900 text-sm leading-tight line-clamp-2">{a.name}</h3>
+                <p className="text-[11px] text-slate-500 mt-1 line-clamp-1">{[a.form?.toLowerCase(), a.dosage].filter(Boolean).join(', ')}</p>
+                <p className="text-[11px] text-slate-400 mt-1">{a.manufacturer}</p>
+              </Link>
+            ))}
           </div>
         </section>
       )}

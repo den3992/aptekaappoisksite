@@ -1,0 +1,41 @@
+{
+  "summary": "Validated catalog migration end-to-end on real mdlp DB (23,303 meds). Backend pytest: 20/21 pass (1 real bug: pagination overlap on text-score search). Frontend: home, search (/msk/poisk?q=нурофен → 12 cards), med detail (/msk/preparaty/nurofen-200-mg-tabletki-pokrytye-obolochkoy with ЖНВЛП badge, 90.07₽, manufacturer, MNN, Yandex map with 12 prices, variants table, 8 analogs, voice launcher) all render correctly. Backward-compat /preparaty and /poisk do not 404. SEO endpoints (robots, sitemap index, sitemap_meds_1, render home/med/pharmacy) return valid HTML/XML with schema.org. Voice chat + TTS smoke pass.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "/api/search?q=...&page=N",
+        "issue": "When sort is by MongoDB textScore, ties are not broken by a stable secondary key, so skip+limit pagination yields overlapping items between page 1 and page 2 (test_search_paracetamol_pagination FAILED). Fix: append a stable secondary sort, e.g. sort=[('score', {'$meta':'textScore'}), ('slug', 1)] or ('_id', 1)."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_catalog_api.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Fix /api/search pagination stability for text-score queries: add a deterministic secondary sort key (e.g., slug or _id) so page 1 and page 2 don't overlap when many docs share the same textScore."
+  ],
+  "critical_code_review_comments": [
+    "/api/search uses MongoDB textScore sort without a stable tiebreaker → unstable pagination (confirmed via test).",
+    "api/__init__.py: when q is provided but len < 2, the term is silently ignored (no $text filter) — consider returning a 400 or falling back to regex search so users get feedback instead of an unfiltered list of all 23k meds.",
+    "api/seo.py sitemap_meds_{idx}.xml emits 50,000 URLs * 2 cities = 100,000 <url> entries per sitemap, which exceeds the 50k limit per Sitemap protocol. Either chunk by 25,000 medications (so 2 cities * 25k = 50k urls) or split per city.",
+    "/api/seo/render returns 200 even for /msk/preparaty/<unknown-slug> wrapped in render_med_for_bot which returns 404; verified working. Good.",
+    "/api/medications/{slug}/analogs has no ordering — could return inconsistent analogs across calls; consider .sort('name', 1) for determinism."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_catalog_api.py (new)"
+  ],
+  "success_rate": {"backend": "95%", "frontend": "100%"},
+  "test_credentials": "n/a (public catalog)",
+  "seed_data_creation": "None — used existing imported mdlp data (23,303 meds, 72,054 SKUs).",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend test file at /app/backend/tests/test_catalog_api.py covers all catalog + SEO + voice smoke flows. Run: pytest /app/backend/tests/test_catalog_api.py -v. The only failure (test_search_paracetamol_pagination) requires a backend fix (stable tiebreaker on textScore sort). Frontend home title, /msk/poisk?q= flow, med-detail page with ЖНВЛП/government price/map/variants/analogs, and backward-compat /preparaty + /poisk verified visually.",
+  "rca of the issue": "Pagination overlap RCA: api/__init__.py line 117 sets sort = [('score', {'$meta': 'textScore'})]. When many medications match the search term with identical text scores (very common for prefix matches like 'парацетамол' across 100+ variants), MongoDB does not guarantee stable order across separate skip/limit queries, so page=1 and page=2 can return overlapping documents. Mitigation: change to sort = [('score', {'$meta': 'textScore'}), ('slug', 1)] so ties break on slug deterministically."
+}

@@ -1,5 +1,5 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Response
-from fastapi.responses import StreamingResponse
+from fastapi import FastAPI, APIRouter, HTTPException, Response, Request
+from fastapi.responses import StreamingResponse, HTMLResponse, RedirectResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -15,6 +15,15 @@ from datetime import datetime, timezone
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 from voice_data import build_context_text
+from api import make_router as make_catalog_router
+from api.seo import (
+    make_seo_router,
+    is_bot,
+    render_med_for_bot,
+    render_home_for_bot,
+    render_pharmacy_for_bot,
+    render_category_for_bot,
+)
 
 
 ROOT_DIR = Path(__file__).parent
@@ -252,6 +261,46 @@ async def voice_tts(req: TTSRequest):
 
 # Include the router in the main app
 app.include_router(api_router)
+
+# Catalog API (search, medications, pharmacies, categories) under /api/*
+app.include_router(make_catalog_router(db), prefix="/api")
+
+# SEO endpoints (robots.txt, sitemap*.xml). Mounted under /api/ because the
+# k8s ingress only routes /api/* to the backend. Production CF rewrite rules:
+#   aptekaa.ru/robots.txt        → backend /api/seo/robots.txt
+#   aptekaa.ru/sitemap.xml       → backend /api/seo/sitemap.xml
+#   aptekaa.ru/sitemap_*.xml     → backend /api/seo/sitemap_*.xml
+#   aptekaa.ru/<path>  (bot UA)  → backend /api/seo/render?path=<path>
+app.include_router(make_seo_router(db), prefix="/api/seo")
+
+
+@app.get("/api/seo/render", response_class=HTMLResponse)
+async def seo_render(path: str, request: Request):
+    """Single entry point for crawler-rendered HTML.
+
+    The CF Worker / nginx detects bot User-Agent and forwards the original
+    request path to /api/seo/render?path=<original>.
+
+    For preview we accept a `?path=...&force=1` query so we can debug.
+    """
+    # Parse path: /<city>/<section>/<slug?>
+    p = (path or "/").lstrip("/")
+    parts = [x for x in p.split("/") if x]
+    if not parts:
+        return await render_home_for_bot(db, "msk", request)
+    city = parts[0] if parts[0] in ("msk", "spb") else "msk"
+    rest = parts[1:] if parts[0] in ("msk", "spb") else parts
+    if not rest:
+        return await render_home_for_bot(db, city, request)
+    section = rest[0]
+    if section == "preparaty" and len(rest) >= 2:
+        return await render_med_for_bot(db, city, rest[1], request)
+    if section == "apteki" and len(rest) >= 2:
+        return await render_pharmacy_for_bot(db, city, rest[1], request)
+    if section == "kategorii" and len(rest) >= 2:
+        return await render_category_for_bot(db, city, rest[1], request)
+    return await render_home_for_bot(db, city, request)
+
 
 app.add_middleware(
     CORSMiddleware,

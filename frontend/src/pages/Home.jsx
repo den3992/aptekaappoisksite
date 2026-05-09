@@ -1,31 +1,71 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Search, MapPin, ShieldCheck, ArrowRight, Pill } from 'lucide-react';
 import { useCity } from '../context/CityContext';
 import { CATEGORIES, MEDICATIONS, PRICES } from '../mock';
 import CategoryIcon from '../components/CategoryIcon';
 import PillIcon from '../components/PillIcon';
 import PartnersMarquee from '../components/PartnersMarquee';
+import SEOHead from '../components/SEOHead';
+import { homeSEO } from '../seo';
+import { suggestMeds } from '../api/client';
 
 const POPULAR = ['paracetamol-500mg','nurofen','vitamin-d3-2000','kagocel','omeprazol-20mg','smekta'];
 
 export default function Home() {
   const { city, cities, setCity } = useCity();
+  const { city: cityParam } = useParams();
   const [q, setQ] = useState('');
+  const [apiSuggestions, setApiSuggestions] = useState([]);
   const navigate = useNavigate();
 
+  // Sync URL city → context
+  useEffect(() => {
+    if (cityParam && cities) {
+      const found = cities.find(c => c.id === cityParam);
+      if (found && found.id !== city.id) setCity(found);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cityParam]);
+
+  // API-backed suggestions
+  useEffect(() => {
+    if (!q || q.trim().length < 2) { setApiSuggestions([]); return; }
+    let cancelled = false;
+    const t = setTimeout(() => {
+      suggestMeds(q.trim()).then((d) => { if (!cancelled) setApiSuggestions(d); }).catch(() => {});
+    }, 200);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [q]);
+
   const popularMeds = POPULAR.map(slug => MEDICATIONS.find(m => m.slug === slug)).filter(Boolean);
-  const suggestions = q.length >= 2
-    ? MEDICATIONS.filter(m => m.name.toLowerCase().includes(q.toLowerCase()) || m.mnn.toLowerCase().includes(q.toLowerCase())).slice(0, 6)
-    : [];
+  const suggestions = apiSuggestions.length > 0
+    ? apiSuggestions
+    : (q.length >= 2
+      ? MEDICATIONS.filter(m => m.name.toLowerCase().includes(q.toLowerCase()) || m.mnn.toLowerCase().includes(q.toLowerCase())).slice(0, 6)
+      : []);
 
   const submit = (e) => {
     e.preventDefault();
-    if (q.trim()) navigate(`/poisk?q=${encodeURIComponent(q.trim())}`);
+    if (q.trim()) navigate(`/${city.id}/poisk?q=${encodeURIComponent(q.trim())}`);
+  };
+
+  const seo = homeSEO(city.id);
+  const websiteJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'АптекаА',
+    url: seo.canonical,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${seo.canonical}/poisk?q={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
   };
 
   return (
     <div>
+      <SEOHead seo={{ ...seo, jsonLd: websiteJsonLd }} />
       {/* Hero block (brand + hero combined with single smooth gradient) */}
       <div className="relative bg-gradient-to-b from-emerald-50/70 via-emerald-50/40 to-white overflow-hidden border-b border-slate-100">
         {/* decorative shapes */}
@@ -77,13 +117,13 @@ export default function Home() {
                 className="w-full text-base py-3 bg-transparent outline-none"
               />
               {suggestions.length > 0 && (
-                <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-100 rounded-xl shadow-card overflow-hidden z-10 text-left">
+                <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-100 rounded-xl shadow-card overflow-hidden z-10 text-left" data-testid="search-suggestions">
                   {suggestions.map(s => (
-                    <Link key={s.slug} to={`/preparaty/${s.slug}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-emerald-50 transition" onClick={() => setQ('')}>
+                    <Link key={s.slug} to={`/${city.id}/preparaty/${s.slug}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-emerald-50 transition" onClick={() => setQ('')}>
                       <Pill className="w-4 h-4 text-emerald-600 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-slate-900 truncate">{s.name}</div>
-                        <div className="text-xs text-slate-500 truncate">{s.form} · {s.manufacturer}</div>
+                        <div className="text-xs text-slate-500 truncate">{[s.form, s.dosage, s.manufacturer].filter(Boolean).join(' · ')}</div>
                       </div>
                     </Link>
                   ))}
@@ -98,7 +138,7 @@ export default function Home() {
           <div className="mt-5 flex items-center gap-2 flex-wrap justify-center text-xs text-slate-500">
             <span>Часто ищут:</span>
             {['Парацетамол','Нурофен','Арбидол','Витамин D3','Смекта','Зодак'].map(t => (
-              <button key={t} type="button" onClick={() => navigate(`/poisk?q=${encodeURIComponent(t)}`)} className="px-2.5 py-1 rounded-full bg-white/70 backdrop-blur border border-slate-200 hover:border-emerald-300 hover:text-emerald-700 transition">{t}</button>
+              <button key={t} type="button" onClick={() => navigate(`/${city.id}/poisk?q=${encodeURIComponent(t)}`)} className="px-2.5 py-1 rounded-full bg-white/70 backdrop-blur border border-slate-200 hover:border-emerald-300 hover:text-emerald-700 transition">{t}</button>
             ))}
           </div>
         </section>
@@ -111,14 +151,14 @@ export default function Home() {
       <section className="max-w-7xl mx-auto px-4 pt-12 pb-2">
         <div className="flex items-center justify-between gap-3 mb-5">
           <h2 className="text-xl md:text-2xl font-bold text-slate-900">Популярные препараты</h2>
-          <Link to="/preparaty" className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1 whitespace-nowrap shrink-0">Каталог А–Я <ArrowRight className="w-4 h-4" /></Link>
+          <Link to={`/${city.id}/preparaty`} className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1 whitespace-nowrap shrink-0">Каталог А–Я <ArrowRight className="w-4 h-4" /></Link>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
           {popularMeds.map(m => {
             const prices = (PRICES[m.slug]?.[city.id] || []).map(p => p.price);
             const min = prices.length ? Math.min(...prices) : null;
             return (
-              <Link key={m.slug} to={`/preparaty/${m.slug}`} className="group flex flex-col justify-between bg-white border border-slate-200 hover:border-emerald-400 hover:shadow-sm transition rounded-xl px-4 py-3.5 min-h-[72px]">
+              <Link key={m.slug} to={`/${city.id}/preparaty/${m.slug}`} className="group flex flex-col justify-between bg-white border border-slate-200 hover:border-emerald-400 hover:shadow-sm transition rounded-xl px-4 py-3.5 min-h-[72px]">
                 <span className="font-semibold text-slate-900 text-sm leading-tight">{m.name}</span>
                 {min !== null && <span className="text-emerald-700 font-bold text-sm mt-1">от {min} ₽</span>}
               </Link>
@@ -134,11 +174,11 @@ export default function Home() {
             <h2 className="text-xl md:text-2xl font-bold text-slate-900">Категории препаратов</h2>
             <p className="text-slate-500 text-sm mt-1 hidden sm:block">Найдите препарат по своей задаче</p>
           </div>
-          <Link to="/kategorii" className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1 whitespace-nowrap shrink-0">Все категории <ArrowRight className="w-4 h-4" /></Link>
+          <Link to={`/${city.id}/kategorii`} className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1 whitespace-nowrap shrink-0">Все категории <ArrowRight className="w-4 h-4" /></Link>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-2.5">
           {CATEGORIES.slice(0, 8).map(c => (
-            <Link key={c.slug} to={`/kategorii/${c.slug}`} className="cat-card flex flex-col items-start gap-2.5 bg-white border border-slate-200 hover:border-emerald-400 transition rounded-xl px-4 py-3.5 min-h-[96px]">
+            <Link key={c.slug} to={`/${city.id}/kategorii/${c.slug}`} className="cat-card flex flex-col items-start gap-2.5 bg-white border border-slate-200 hover:border-emerald-400 transition rounded-xl px-4 py-3.5 min-h-[96px]">
               <span className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: c.color, color: c.accent }}>
                 <CategoryIcon name={c.icon} className="w-4.5 h-4.5" />
               </span>
