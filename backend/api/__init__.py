@@ -97,7 +97,9 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
             # Use text index for non-trivial queries
             if len(term) >= 2:
                 flt["$text"] = {"$search": term}
-                sort = [("score", {"$meta": "textScore"})]
+                # Tiebreak ordering on slug so skip/limit pagination is stable
+                # across pages even when many docs share the same textScore.
+                sort = [("score", {"$meta": "textScore"}), ("slug", 1)]
         if category:
             flt["category"] = category
         if rx is not None:
@@ -175,7 +177,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
             flt,
             {"_id": 0, "slug": 1, "name": 1, "manufacturer": 1, "dosage": 1,
              "form": 1, "rx": 1, "category": 1, "mnn": 1},
-        ).limit(limit)
+        ).sort([("name", 1), ("slug", 1)]).limit(limit)
         return [d async for d in cursor]
 
     return router

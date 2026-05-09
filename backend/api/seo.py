@@ -91,9 +91,10 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
     async def sitemap_index():
         host = f"https://{CANONICAL_HOST}"
         now = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        # Count meds for chunking
+        # Each sitemap chunk holds 25k slugs × 2 cities = 50k URLs (the per-sitemap limit)
+        per_chunk_slugs = 25000
         total = await db.medications.count_documents({})
-        chunks = max(1, (total + 49999) // 50000)
+        chunks = max(1, (total + per_chunk_slugs - 1) // per_chunk_slugs)
         items = [
             f"<sitemap><loc>{host}/sitemap_static.xml</loc><lastmod>{now}</lastmod></sitemap>",
             f"<sitemap><loc>{host}/sitemap_pharmacies.xml</loc><lastmod>{now}</lastmod></sitemap>",
@@ -144,9 +145,10 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
     @router.get("/sitemap_meds_{idx}.xml")
     async def sitemap_meds(idx: int):
         host = f"https://{CANONICAL_HOST}"
-        per = 50000
+        # 25,000 slugs * 2 cities = 50,000 URLs (per-sitemap protocol limit)
+        per = 25000
         skip = (idx - 1) * per
-        cursor = db.medications.find({}, {"_id": 0, "slug": 1}).skip(skip).limit(per)
+        cursor = db.medications.find({}, {"_id": 0, "slug": 1}).sort("slug", 1).skip(skip).limit(per)
         urls = []
         async for d in cursor:
             slug = d.get("slug")
