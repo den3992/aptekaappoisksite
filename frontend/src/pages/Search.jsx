@@ -171,11 +171,6 @@ function MedListCard({ med, cityId }) {
           Отпускается по рецепту
         </span>
       )}
-      {med.vital && (
-        <span className="inline-block text-[10px] font-semibold uppercase tracking-wide bg-amber-50 text-amber-800 px-2 py-0.5 rounded mb-1.5 ml-1">
-          ЖНВЛП
-        </span>
-      )}
       <h3 className="font-semibold text-slate-900 text-base leading-tight">{med.name}</h3>
       <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">
         {[formLower, med.dosage].filter(Boolean).join(', ')}

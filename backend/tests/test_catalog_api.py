@@ -192,8 +192,6 @@ class TestSEO:
         h = r.text
         assert "<title>" in h
         assert '"@type": "Drug"' in h or '"@type":"Drug"' in h
-        # Nurofen is OTC + ЖНВЛП per problem statement
-        assert ("ЖНВЛП" in h) or ("ЖНВЛ" in h)
 
     def test_seo_render_pharmacy(self, s):
         r = s.get(f"{API}/seo/render", params={"path": "/msk/apteki/p1"}, timeout=20)

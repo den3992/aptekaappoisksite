@@ -170,24 +170,12 @@ export default function MedDetail() {
           <div className="aspect-square rounded-xl bg-slate-50 overflow-hidden flex items-center justify-center">
             <Pill className="w-24 h-24 text-emerald-300" />
           </div>
-          {med.limit_price && (
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-900">
-              <div className="font-semibold mb-0.5">Государственная предельная цена</div>
-              <div>{Number(med.limit_price).toFixed(2)} ₽</div>
-              <div className="text-[10px] text-blue-700/80 mt-1">Препарат входит в перечень ЖНВЛП</div>
-            </div>
-          )}
         </div>
         <div>
           <div className="flex flex-wrap gap-1.5 mb-3">
             {med.rx && (
               <div className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide bg-rose-50 text-rose-700 px-2.5 py-1 rounded">
                 <ShieldAlert className="w-3.5 h-3.5" /> Отпускается по рецепту
-              </div>
-            )}
-            {med.vital && (
-              <div className="inline-flex items-center text-xs font-semibold uppercase tracking-wide bg-amber-50 text-amber-800 px-2.5 py-1 rounded">
-                ЖНВЛП
               </div>
             )}
           </div>

@@ -40,7 +40,6 @@ export function medSEO(city, med) {
     (med.dosage ? `, ${med.dosage}` : '') +
     ` в аптеках ${cnGenitive(city)}. Аналоги, наличие, адреса. ` +
     (med.rx ? 'Отпускается по рецепту. ' : '') +
-    (med.vital ? 'Входит в перечень ЖНВЛП. ' : '') +
     'Бесплатный поиск.'
   ).slice(0, 300);
   return {

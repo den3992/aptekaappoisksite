@@ -286,7 +286,6 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
         + (f", {dosage}" if dosage else "")
         + f" в аптеках {cn_genitive(cn)}. Аналоги, наличие, адреса. "
         + ("Отпускается по рецепту. " if rx else "")
-        + ("Входит в перечень ЖНВЛП. " if vital else "")
         + "Бесплатный поиск без бронирования."
     )[:300]
 
@@ -295,10 +294,6 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
     body = []
     if rx:
         body.append('<p><strong>⚠️ Отпускается по рецепту.</strong> Препарат отпускается строго по назначению врача.</p>')
-    if vital:
-        body.append('<p>📋 Препарат входит в перечень <strong>ЖНВЛП</strong> (жизненно необходимых и важнейших лекарственных препаратов).</p>')
-    if limit_price:
-        body.append(f'<p>💰 <strong>Государственная предельная отпускная цена</strong>: {limit_price:.2f} ₽</p>')
     body.append("<h2>Описание препарата</h2>")
     body.append(f"<dl>")
     if mnn: body.append(f"<dt>Международное непатентованное наименование (МНН)</dt><dd>{html.escape(mnn)}</dd>")
