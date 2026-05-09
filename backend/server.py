@@ -1,9 +1,12 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, Response
+from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
+import hashlib
+import httpx
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
@@ -156,6 +159,95 @@ async def voice_chat(req: VoiceChatRequest):
     })
 
     return VoiceChatResponse(session_id=req.session_id, reply=reply)
+
+
+# ===========================
+# Yandex SpeechKit TTS
+# ===========================
+
+YANDEX_TTS_URL = "https://tts.api.cloud.yandex.net/speech/v1/tts:synthesize"
+SUPPORTED_VOICES = {"alena", "jane", "omazh", "zahar", "ermil", "filipp", "madirus"}
+SUPPORTED_EMOTIONS = {"neutral", "good", "evil"}
+
+
+class TTSRequest(BaseModel):
+    text: str = Field(..., min_length=1, max_length=5000)
+    voice: str = Field(default="alena")
+    emotion: str = Field(default="good")  # warm/friendly default
+    speed: float = Field(default=1.0, ge=0.5, le=2.0)
+
+
+def _tts_cache_key(text: str, voice: str, emotion: str, speed: float) -> str:
+    raw = f"{voice}|{emotion}|{speed:.2f}|{text.strip()}".encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()
+
+
+@api_router.post("/voice/tts")
+async def voice_tts(req: TTSRequest):
+    api_key = os.environ.get("YANDEX_API_KEY")
+    folder_id = os.environ.get("YANDEX_FOLDER_ID")
+    if not api_key or not folder_id:
+        raise HTTPException(status_code=500, detail="Yandex SpeechKit is not configured")
+
+    voice = req.voice if req.voice in SUPPORTED_VOICES else "alena"
+    emotion = req.emotion if req.emotion in SUPPORTED_EMOTIONS else "good"
+    speed = max(0.5, min(2.0, req.speed))
+    text = req.text.strip()
+
+    cache_key = _tts_cache_key(text, voice, emotion, speed)
+
+    # Check cache
+    cached = await db.tts_cache.find_one({"_id": cache_key}, {"_id": 0, "audio_b64": 1, "format": 1})
+    if cached and cached.get("audio_b64"):
+        import base64
+        audio_bytes = base64.b64decode(cached["audio_b64"])
+        media_type = "audio/ogg" if cached.get("format") == "oggopus" else "audio/mpeg"
+        return Response(content=audio_bytes, media_type=media_type, headers={"X-Cache": "HIT"})
+
+    # Call Yandex SpeechKit
+    data = {
+        "text": text,
+        "voice": voice,
+        "emotion": emotion,
+        "speed": str(speed),
+        "format": "oggopus",
+        "lang": "ru-RU",
+        "folderId": folder_id,
+    }
+    headers = {"Authorization": f"Api-Key {api_key}"}
+
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            resp = await client.post(YANDEX_TTS_URL, data=data, headers=headers)
+            if resp.status_code != 200:
+                logger.error(f"Yandex TTS error {resp.status_code}: {resp.text[:300]}")
+                raise HTTPException(status_code=502, detail=f"TTS provider error: {resp.status_code}")
+            audio_bytes = resp.content
+    except httpx.HTTPError as e:
+        logger.exception("TTS request failed")
+        raise HTTPException(status_code=502, detail=f"TTS request failed: {e}")
+
+    if not audio_bytes:
+        raise HTTPException(status_code=502, detail="Empty audio from TTS provider")
+
+    # Save cache (ignore errors silently)
+    try:
+        import base64
+        await db.tts_cache.insert_one({
+            "_id": cache_key,
+            "audio_b64": base64.b64encode(audio_bytes).decode("ascii"),
+            "format": "oggopus",
+            "voice": voice,
+            "emotion": emotion,
+            "speed": speed,
+            "text_preview": text[:200],
+            "size": len(audio_bytes),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+    except Exception:
+        pass
+
+    return Response(content=audio_bytes, media_type="audio/ogg", headers={"X-Cache": "MISS"})
 
 
 # Include the router in the main app
