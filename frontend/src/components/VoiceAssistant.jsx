@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-import { MessageCircle, X, Mic, Send, Volume2, VolumeX, Loader2 } from 'lucide-react';
+import { MessageCircle, X, Mic, Send, Volume2, VolumeX, Loader2, Phone } from 'lucide-react';
+import CallView from './CallView';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -22,6 +23,7 @@ function getOrCreateSessionId() {
 
 export default function VoiceAssistant() {
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState('chat'); // 'chat' | 'call'
   const [messages, setMessages] = useState([
     { role: 'assistant', content: 'Здравствуйте! Я голосовой помощник АптекаА. Назовите лекарство или задайте вопрос — я подскажу цены и ближайшие аптеки.' },
   ]);
@@ -196,23 +198,45 @@ export default function VoiceAssistant() {
           <div className="flex items-center justify-between px-4 py-3 bg-brand-green text-white">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                <MessageCircle className="w-4 h-4" />
+                {mode === 'call' ? <Phone className="w-4 h-4" /> : <MessageCircle className="w-4 h-4" />}
               </div>
               <div>
                 <div className="text-sm font-semibold leading-tight">Помощник АптекаА</div>
-                <div className="text-[11px] text-white/80 leading-tight">Подскажу цены и аптеки</div>
+                <div className="text-[11px] text-white/80 leading-tight">
+                  {mode === 'call' ? 'Беседа голосом, как по телефону' : 'Подскажу цены и аптеки'}
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <button
-                data-testid="voice-assistant-toggle-tts"
-                onClick={() => { setTtsEnabled((t) => { if (t) stopSpeaking(); return !t; }); }}
-                className="p-1.5 rounded hover:bg-white/15"
-                title={ttsEnabled ? 'Выключить озвучивание' : 'Включить озвучивание'}
-                aria-label="Озвучивание"
-              >
-                {ttsEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-              </button>
+              {mode === 'chat' ? (
+                <button
+                  data-testid="voice-assistant-switch-call"
+                  onClick={() => { stopSpeaking(); setMode('call'); }}
+                  className="px-2 py-1 text-[11px] rounded-full bg-white/20 hover:bg-white/30 font-semibold flex items-center gap-1"
+                  title="Беспрерывная беседа голосом"
+                >
+                  <Phone className="w-3 h-3" /> Беседа
+                </button>
+              ) : (
+                <button
+                  data-testid="voice-assistant-switch-chat"
+                  onClick={() => setMode('chat')}
+                  className="px-2 py-1 text-[11px] rounded-full bg-white/20 hover:bg-white/30 font-semibold flex items-center gap-1"
+                >
+                  <MessageCircle className="w-3 h-3" /> Чат
+                </button>
+              )}
+              {mode === 'chat' && (
+                <button
+                  data-testid="voice-assistant-toggle-tts"
+                  onClick={() => { setTtsEnabled((t) => { if (t) stopSpeaking(); return !t; }); }}
+                  className="p-1.5 rounded hover:bg-white/15"
+                  title={ttsEnabled ? 'Выключить озвучивание' : 'Включить озвучивание'}
+                  aria-label="Озвучивание"
+                >
+                  {ttsEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                </button>
+              )}
               <button
                 data-testid="voice-assistant-close"
                 onClick={toggleOpen}
@@ -224,6 +248,12 @@ export default function VoiceAssistant() {
             </div>
           </div>
 
+          {mode === 'call' ? (
+            <div className="flex-1 min-h-[420px]">
+              <CallView onClose={() => setMode('chat')} />
+            </div>
+          ) : (
+          <>
           {/* Messages */}
           <div data-testid="voice-assistant-messages" className="flex-1 overflow-y-auto px-3 py-3 space-y-2 bg-slate-50">
             {messages.map((m, i) => (
@@ -315,6 +345,8 @@ export default function VoiceAssistant() {
           <div className="px-3 pb-2 text-[10px] text-slate-400 leading-tight bg-white">
             Ответы носят информационный характер. По приёму лекарств — обратитесь к врачу.
           </div>
+          </>
+          )}
         </div>
       )}
     </>
