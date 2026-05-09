@@ -50,6 +50,9 @@ export default function CallView({ onClose }) {
   const elapsedTimerRef = useRef(null);
   const restartGuardRef = useRef(0);
   const stateRef = useRef('idle');
+  // Mute mic while the bot is speaking to avoid the bot hearing itself
+  // through the speakers (acoustic feedback loop).
+  const muteRef = useRef(false);
 
   const setStateBoth = useCallback((s) => {
     stateRef.current = s;
@@ -84,20 +87,49 @@ export default function CallView({ onClose }) {
       const url = URL.createObjectURL(resp.data);
       audioUrlRef.current = url;
       audioRef.current.src = url;
+
+      // Mute microphone while the bot speaks so it doesn't hear itself.
+      muteRef.current = true;
+      // Drop any partial transcripts buffered before/while we started speaking
+      finalRef.current = '';
+      interimRef.current = '';
+      setPartial('');
+      if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
+      if (utteranceTimerRef.current) { clearTimeout(utteranceTimerRef.current); utteranceTimerRef.current = null; }
+      utteranceStartRef.current = 0;
+      // Stop recognition; rec.onend will fire and we won't auto-restart
+      // because muteRef.current === true. We'll explicitly restart in onended.
+      try { recognitionRef.current && recognitionRef.current.stop(); } catch (_) {}
+
       audioRef.current.onended = () => {
         speakingRef.current = false;
-        if (callActiveRef.current && stateRef.current !== 'idle') {
-          setStateBoth('listening');
-        }
+        // small grace period so the tail of the audio playing through speakers
+        // is no longer captured by the mic.
+        setTimeout(() => {
+          if (!callActiveRef.current) return;
+          muteRef.current = false;
+          finalRef.current = '';
+          interimRef.current = '';
+          setPartial('');
+          // Restart recognition
+          try { recognitionRef.current && recognitionRef.current.start(); } catch (_) {}
+          if (stateRef.current !== 'idle') setStateBoth('listening');
+        }, 250);
       };
       speakingRef.current = true;
       setStateBoth('speaking');
       const p = audioRef.current.play();
       if (p && typeof p.catch === 'function') {
-        p.catch(() => { speakingRef.current = false; });
+        p.catch(() => {
+          speakingRef.current = false;
+          muteRef.current = false;
+          try { recognitionRef.current && recognitionRef.current.start(); } catch (_) {}
+        });
       }
     } catch (e) {
       speakingRef.current = false;
+      muteRef.current = false;
+      try { recognitionRef.current && recognitionRef.current.start(); } catch (_) {}
       setStateBoth('listening');
     }
   }, [setStateBoth]);
@@ -155,22 +187,20 @@ export default function CallView({ onClose }) {
 
     rec.onresult = (e) => {
       if (!callActiveRef.current) return;
+      // While bot is speaking we mute the microphone path entirely so that
+      // the bot doesn't hear itself through the speakers and falsely interrupt.
+      if (muteRef.current || speakingRef.current) return;
       let interim = '';
       let finalChunk = '';
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const tr = e.results[i][0].transcript;
         if (e.results[i].isFinal) finalChunk += tr; else interim += tr;
       }
-      // barge-in: kill bot voice as soon as we hear meaningful speech
-      const haveSpeech = (interim.trim().length + finalChunk.trim().length) >= 2;
-      if (haveSpeech && speakingRef.current) {
-        stopAudio();
-        if (callActiveRef.current) setStateBoth('listening');
-      }
       if (interim) interimRef.current = interim;
       if (finalChunk) finalRef.current = (finalRef.current + ' ' + finalChunk).trim();
       setPartial((finalRef.current + ' ' + interimRef.current).trim());
 
+      const haveSpeech = (interimRef.current.trim().length + finalRef.current.trim().length) >= 2;
       if (haveSpeech && !utteranceStartRef.current) {
         utteranceStartRef.current = Date.now();
         utteranceTimerRef.current = setTimeout(flushUtterance, MAX_UTTERANCE_MS);
@@ -191,8 +221,8 @@ export default function CallView({ onClose }) {
     };
 
     rec.onend = () => {
-      // Browser auto-stops periodically; restart while call is active
-      if (callActiveRef.current) {
+      // Browser auto-stops periodically; restart while call is active and not muted
+      if (callActiveRef.current && !muteRef.current && !speakingRef.current) {
         const now = Date.now();
         if (now - restartGuardRef.current < 200) return; // avoid tight loop
         restartGuardRef.current = now;
@@ -302,7 +332,7 @@ export default function CallView({ onClose }) {
             <span data-testid="call-partial" className="italic text-slate-700">«{partial}»</span>
           )}
           {callState === 'speaking' && (
-            <span className="text-emerald-700">Алёна отвечает… можете перебить голосом</span>
+            <span className="text-emerald-700">Алёна отвечает… дождитесь окончания фразы</span>
           )}
         </div>
 
