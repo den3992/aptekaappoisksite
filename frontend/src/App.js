@@ -20,6 +20,7 @@ import Contacts from './pages/Contacts';
 import Privacy from './pages/Privacy';
 import Consent from './pages/Consent';
 import NotFound from './pages/NotFound';
+import PartnerUpload from './pages/PartnerUpload';
 
 function App() {
   return (
@@ -64,6 +65,8 @@ function App() {
                 <Route path="kontakty" element={<Contacts />} />
                 <Route path="politika-konfidencialnosti" element={<Privacy />} />
                 <Route path="soglasie-na-obrabotku-pd" element={<Consent />} />
+                {/* Hidden partner upload page — NOT linked from main site */}
+                <Route path="partner-upload" element={<PartnerUpload />} />
                 <Route path="*" element={<NotFound />} />
               </Route>
             </Routes>

@@ -1,0 +1,57 @@
+{
+  "summary": "Tested partner price-list upload feature end-to-end. Backend: 12/13 new pytest tests pass + 21/21 catalog regression pass. Frontend: hidden /partner-upload page works fully — bad token shows 'Доступ запрещён', valid token shows pharmacy H1 + 3 tabs, drag-drop+file-pick uploads /tmp/test_prices.xlsx successfully (13/11/2/10/1 totals match server), History tab shows new entry, Unmatched tab lists GTINs. /partner-upload is NOT linked from Header/Footer/Home/Search/MedDetail (verified by HTML scan). Regression on Home, /msk/poisk?q=нурофен, /msk/preparaty/<nurofen> all OK; voice launcher visible. Found 1 backend bug: duplicate-key 500 when two uploads happen in the same wall-clock second (upload_id is second-precision).",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "POST /api/upload/prices/{token}",
+        "issue": "Two rapid uploads (within the same UTC second) crash with HTTP 500 — DuplicateKeyError on pharmacy_uploads._id. RCA: upload_id = f\"up-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}-{pharmacy_id}\" (uploads.py line 346) is not unique sub-second. Fix: append a short uuid4 suffix or microseconds, e.g. f\"up-{ts}-{pharmacy_id}-{uuid.uuid4().hex[:6]}\".",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": [
+      {
+        "endpoint": "POST /api/upload/prices/{token}",
+        "issue": "create_index calls run on every successful upload (lines 398-400 inside the request handler). Idempotent, but wasted RTT. Move to startup."
+      },
+      {
+        "endpoint": "POST /api/upload/prices/{token}",
+        "issue": "When a re-upload supplies an updated price for the same (pharmacy_id, gtin), db.unmatched_items is still appended (insert_many) — never cleaned. After many partial re-uploads the unmatched table accumulates duplicates. Consider deleting prior unmatched docs for the pharmacy at the start of each upload, or upserting by (pharmacy_id, gtin) like prices does."
+      },
+      {
+        "endpoint": "POST /api/upload/prices/{token}",
+        "issue": "from .pharmacies_seed import CITIES is imported inside the request handler (line 330) on every call but the value is unused. Dead code; can be removed."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_uploads_api.py",
+    "/app/backend/tests/test_catalog_api.py",
+    "/app/test_reports/pytest/uploads_results.xml"
+  ],
+  "action_items": [
+    "Fix DuplicateKeyError on pharmacy_uploads._id by making upload_id unique sub-second (uuid suffix or microseconds).",
+    "Optional: clear or upsert db.unmatched_items per (pharmacy_id, gtin) on re-upload so the 'Требуют разбора' tab does not show stale duplicates.",
+    "Optional: remove unused 'from .pharmacies_seed import CITIES' inside upload_prices and move create_index calls to app startup."
+  ],
+  "critical_code_review_comments": [
+    "uploads.py: upload_id collisions cause 500. Use uuid4 suffix.",
+    "uploads.py: indexes created on every upload — should be at startup.",
+    "uploads.py: unmatched_items grows monotonically; no upsert / cleanup on re-upload.",
+    "uploads.py: dead import 'from .pharmacies_seed import CITIES'."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_uploads_api.py (new — 13 tests)"
+  ],
+  "success_rate": {"backend": "92% (12/13 new + 21/21 regression)", "frontend": "100% on tested flows"},
+  "test_credentials": "Pharmacy tokens (seeded): p1 pHAmm6vzzz2HBHdiZmbkTdMbY8GAFR-3, p2 -bwJQeGqV19YILpoWeFzAJyilQjNoDLF, p13 rfbhqHut0y3iaIsnCyGMiBL-6PwsPahU.",
+  "seed_data_creation": "None — re-used /tmp/test_prices.xlsx and seeded tokens. Tests upload generated XLSX/CSV in-memory.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Run pytest /app/backend/tests/test_uploads_api.py -v. Only failing test is test_reupload_updates_price which exposes the duplicate _id bug; once main agent fixes upload_id uniqueness, all 13 should pass. Frontend fully verified — bad-token denial, valid-token page (H1=pharmacy name, 3 tabs, file-pick upload, success summary, history & unmatched tables) all work; /partner-upload is not in Header/Footer/Home/Search/MedDetail HTML.",
+  "rca of the issue": "POST /api/upload/prices/{token} returns 500 on rapid successive uploads. RCA: api/uploads.py line 346 builds upload_id = 'up-<UTC YYYYMMDDHHMMSS>-<pharmacy_id>' which collides when two requests for the same pharmacy land in the same wall-clock second. Stored as Mongo _id in pharmacy_uploads → DuplicateKeyError → 500. Reproduction: POST two valid uploads with the same token within ~1s (e.g., the upsert test). Mitigation: include microseconds or a short uuid hex, e.g. f'up-{datetime.now(timezone.utc).strftime(\"%Y%m%d%H%M%S%f\")}-{pharmacy_id}-{uuid.uuid4().hex[:6]}'."
+}

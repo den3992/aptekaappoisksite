@@ -157,8 +157,30 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         if not med:
             raise HTTPException(404, "Medication not found")
 
-        # Build mock prices for now (per-pharmacy, deterministic per slug)
-        med["prices_by_city"] = _mock_prices(slug)
+        # Try real pharmacy prices first (uploaded via /api/upload/prices).
+        # Fallback to deterministic mock when no pharmacy has uploaded yet.
+        real_prices = {"msk": [], "spb": []}
+        cursor = db.prices.find(
+            {"slug": slug},
+            {"_id": 0, "pharmacy_id": 1, "price": 1, "qty": 1, "expiry_date": 1, "uploaded_at": 1},
+        )
+        async for p in cursor:
+            ph = find_pharmacy_by_id(p["pharmacy_id"])
+            if not ph:
+                continue
+            real_prices.setdefault(ph["city"], []).append({
+                "pharmacy_id": p["pharmacy_id"],
+                "price": p["price"],
+                "qty": p.get("qty", 0),
+                "expiry_date": p.get("expiry_date"),
+            })
+
+        if real_prices["msk"] or real_prices["spb"]:
+            med["prices_by_city"] = real_prices
+            med["prices_source"] = "real"
+        else:
+            med["prices_by_city"] = _mock_prices(slug)
+            med["prices_source"] = "demo"
         return med
 
     @router.get("/medications/{slug}/analogs")
