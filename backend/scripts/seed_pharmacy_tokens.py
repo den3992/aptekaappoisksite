@@ -20,9 +20,12 @@ load_dotenv(ROOT / ".env")
 # so you can share it with the partner. Re-running this script does NOT
 # rotate existing tokens (so the partner's link keeps working).
 PARTNERS = [
-    {"pharmacy_id": "p1", "pharmacy_name": "Аптека «Здоровье»", "city": "msk", "chain": "Здоровье"},
-    {"pharmacy_id": "p2", "pharmacy_name": "Аптека «36,6»", "city": "msk", "chain": "36,6"},
-    {"pharmacy_id": "p13", "pharmacy_name": "Аптека «Первая помощь»", "city": "spb", "chain": "Первая помощь"},
+    {"pharmacy_id": "p1", "pharmacy_name": "Аптека «Здоровье»", "city": "msk", "chain": "Здоровье",
+     "allowed_emails": []},
+    {"pharmacy_id": "p2", "pharmacy_name": "Аптека «36,6»", "city": "msk", "chain": "36,6",
+     "allowed_emails": []},
+    {"pharmacy_id": "p13", "pharmacy_name": "Аптека «Первая помощь»", "city": "spb",
+     "chain": "Первая помощь", "allowed_emails": []},
 ]
 
 
@@ -32,10 +35,17 @@ def main():
     print(f"→ Seeding pharmacy_tokens in {os.environ['DB_NAME']}")
     db.pharmacy_tokens.create_index([("token", 1)], unique=True)
     db.pharmacy_tokens.create_index([("pharmacy_id", 1)], unique=True)
+    db.pharmacy_tokens.create_index([("allowed_emails", 1)])
 
     for p in PARTNERS:
         existing = db.pharmacy_tokens.find_one({"pharmacy_id": p["pharmacy_id"]})
         if existing:
+            # Backfill allowed_emails if missing on legacy records.
+            if "allowed_emails" not in existing:
+                db.pharmacy_tokens.update_one(
+                    {"_id": existing["_id"]},
+                    {"$set": {"allowed_emails": []}},
+                )
             print(f"  · {p['pharmacy_name']:30} → token: {existing['token']}  (kept)")
             continue
         token = secrets.token_urlsafe(24)
@@ -45,6 +55,11 @@ def main():
     print()
     print("Partner upload URL pattern (hidden, not linked from main site):")
     print("  https://aptekaa.ru/partner-upload?token=<TOKEN>")
+    print()
+    print("Add allowed_emails to a pharmacy with:")
+    print("  db.pharmacy_tokens.updateOne(")
+    print("    {pharmacy_id: 'p1'},")
+    print("    {$addToSet: {allowed_emails: 'sales@apteka36.ru'}})")
 
 
 if __name__ == "__main__":
