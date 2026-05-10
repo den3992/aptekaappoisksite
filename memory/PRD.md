@@ -130,22 +130,29 @@ MVP сайта-агрегатора аптек по образцу lekmos / 003m
 - Расширение LLM-обогащения с 200 до 1000-2000 препаратов
 
 ## Changelog (latest)
-- **2026-05-10 (Сессия 3) — Security hardening перед деплоем**:
-  - **CORS** ограничен списком (`aptekaa.ru`, `www.aptekaa.ru`, `аптекаа.рф/xn--80aerl0afi.xn--p1ai`, preview, localhost:3000) — больше не `*`
-  - **Security headers** на каждый ответ: `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Strict-Transport-Security: max-age=31536000`, **Content-Security-Policy** (с разрешением Yandex Maps/SpeechKit)
-  - **Admin auth** через `X-Admin-Token` header + `secrets.compare_digest` (защита от timing-атак); legacy URL-path сохранён для backward-compat
-  - **Rate limits** (in-memory sliding window per IP):
-    - `POST /api/voice/chat` — 20/мин
-    - `POST /api/voice/tts` — 30/мин
-    - `POST /api/partner-requests` — 5/час
-    - `POST /api/upload/prices/{token}` — 10/час
-  - **Sanitized errors** — больше не светим LLM/TTS stack-trace в API responses
-  - **Validation** session_id (regex `[A-Za-z0-9_\-]{1,64}`), filename uploads (whitelist regex)
-  - **`.gitignore`** — добавлены `.env`, `backend/.env`, `frontend/.env` чтобы секреты не попали в репо
-  - Тесты: 18 новых security + регрессия = **88/88 ✅**
+- **2026-05-10 (Сессия 4) — Подготовка к prod-деплою**:
+  - Настроен Yandex 360: 3 ящика (`info@`, `partners@`, `price@`)
+  - App Password для `price@aptekaa.ru` создан и проверен (IMAP+SMTP auth ✅)
+  - Куплен второй домен `аптекаа.рф` (REG.RU, до 26.04.2027)
+  - Создана VM в Yandex Cloud: `89.169.137.36`, Ubuntu 22.04, 2 vCPU / 3 GB / 40 GB SSD
+  - Сервер защищён: UFW, fail2ban, swap 2 GB, отключён парольный SSH
+  - Docker + docker compose установлены
+  - **Полный deploy-стек готов** в `/app/deploy/`:
+    - `docker-compose.yml` (mongo + backend + frontend + imap_worker + edge-nginx + certbot)
+    - `deploy.sh` (один скрипт — bootstrap → SSL → full HTTPS → cron renewal/backup)
+    - `backup.sh` (mongodump → /var/backups/aptekaa, retention 14 дней)
+    - `nginx/edge-bootstrap.conf` + `nginx/edge-ssl.conf` (HTTP-only → HTTPS с CSP, HSTS, 301 со старых URL)
+    - `nginx/static.conf` (фронтенд-контейнер — SPA fallback + cache headers)
+    - `DNS.md` (инструкция по REG.RU: A, MX Я.360, SPF, DKIM, DMARC)
+    - `README.md` (пошаговая инструкция)
+    - `.env.example` (с пред-заполненными значениями кроме секретов)
+  - Удалена страница «Доступные упаковки и формы выпуска» из MedDetail
+  - Поправлен текст hero-блока на главной (`Привлекайте новых клиентов...`)
+  - Опечатка `partner@` → `partners@` в PartnerUpload.jsx
 
-- **2026-05-10 (Сессия 2)**: LLM-обогащение топ-200 препаратов (gpt-4o-mini), admin-UI заявок партнёров. 48/48 ✅
-- **2026-05-10 (Сессия 1)**: Миграция Frontend → API, удалён mock.js. 39/39 ✅
+- **2026-05-10 (Сессия 3) — Security hardening**: CORS whitelist, security headers (CSP/HSTS/X-Frame), constant-time admin auth, rate-limits, sanitized errors. 88/88 ✅
+- **2026-05-10 (Сессия 2)**: LLM-обогащение топ-200, admin-UI заявок партнёров. 48/48 ✅
+- **2026-05-10 (Сессия 1)**: Миграция Frontend → API. 39/39 ✅
 
 ## Files of reference
 - `/app/backend/server.py` — FastAPI: voice/chat, voice/tts, catalog router, SEO router
