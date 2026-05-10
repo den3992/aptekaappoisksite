@@ -11,21 +11,28 @@ import secrets
 from datetime import datetime, timezone
 from typing import Optional, List
 
-from fastapi import APIRouter, HTTPException, Header, Query, Path
+from fastapi import APIRouter, HTTPException, Header, Query, Path, Request, Depends
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
+from security import verify_admin, verify_admin_path
 
-def _admin_token() -> str:
-    # Stable across restarts via env. If not set, generate once at process start
-    # so the value is at least available in logs (developer should set ADMIN_TOKEN
-    # explicitly before going prod).
-    tok = os.environ.get("ADMIN_TOKEN")
-    if tok:
-        return tok
-    # Fall back to a deterministic dev token derived from MONGO URL host so two
-    # restarts give the same one. Only use in dev — production must set env.
-    return "dev-admin-token-change-me"
+import time
+from collections import defaultdict
+_RATE_BUCKETS = defaultdict(list)
+
+
+def _rate_limit_or_429(request: Request, key: str, limit: int, per_seconds: int) -> None:
+    ip = request.client.host if request.client else "anon"
+    bkey = f"{key}:{ip}"
+    now = time.time()
+    bucket = _RATE_BUCKETS[bkey]
+    cutoff = now - per_seconds
+    while bucket and bucket[0] < cutoff:
+        bucket.pop(0)
+    if len(bucket) >= limit:
+        raise HTTPException(429, "Слишком много запросов. Попробуйте позже.")
+    bucket.append(now)
 
 
 class PartnerRequestIn(BaseModel):
@@ -53,12 +60,9 @@ class PartnerRequestOut(BaseModel):
 def make_partner_router(db: AsyncIOMotorDatabase) -> APIRouter:
     router = APIRouter()
 
-    def _check_admin(token: str):
-        if token != _admin_token():
-            raise HTTPException(403, "Bad admin token")
-
     @router.post("/partner-requests", response_model=PartnerRequestOut)
-    async def submit_request(payload: PartnerRequestIn):
+    async def submit_request(request: Request, payload: PartnerRequestIn):
+        _rate_limit_or_429(request, "partner_req", limit=5, per_seconds=3600)
         rid = f"pr-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}-{secrets.token_hex(4)}"
         doc = {
             "_id": rid,
@@ -70,9 +74,21 @@ def make_partner_router(db: AsyncIOMotorDatabase) -> APIRouter:
         await db.partner_requests.create_index([("status", 1), ("created_at", -1)])
         return PartnerRequestOut(id=rid, status="new", created_at=doc["created_at"])
 
+    # ---- Admin endpoints -----------------------------------------------------
+    # Two ways to authenticate (both backwards-compatible):
+    #   • X-Admin-Token header  (preferred — no log/referrer leak)
+    #   • path token            (legacy, kept for the existing admin UI)
+
     @router.get("/admin/partner-requests/{admin_token}")
-    async def list_requests(admin_token: str, status: Optional[str] = Query(None)):
-        _check_admin(admin_token)
+    async def list_requests_legacy(admin_token: str, status: Optional[str] = Query(None)):
+        verify_admin_path(admin_token)
+        return await _list_requests(status)
+
+    @router.get("/admin/partner-requests")
+    async def list_requests(_: None = Depends(verify_admin), status: Optional[str] = Query(None)):
+        return await _list_requests(status)
+
+    async def _list_requests(status: Optional[str]):
         flt = {}
         if status:
             flt["status"] = status
@@ -85,7 +101,14 @@ def make_partner_router(db: AsyncIOMotorDatabase) -> APIRouter:
 
     @router.post("/admin/partner-requests/{admin_token}/{rid}/approve")
     async def approve_request(admin_token: str, rid: str):
-        _check_admin(admin_token)
+        verify_admin_path(admin_token)
+        return await _approve(rid)
+
+    @router.post("/admin/partner-requests/{rid}/approve")
+    async def approve_request_v2(rid: str, _: None = Depends(verify_admin)):
+        return await _approve(rid)
+
+    async def _approve(rid: str):
         req = await db.partner_requests.find_one({"_id": rid})
         if not req:
             raise HTTPException(404, "Request not found")
@@ -94,9 +117,6 @@ def make_partner_router(db: AsyncIOMotorDatabase) -> APIRouter:
                     "token": req.get("issued_token"),
                     "pharmacy_id": req.get("issued_pharmacy_id")}
 
-        # Generate a token-based pharmacy entry. The pharmacy will live under
-        # an auto-generated id like 'partner-2026-05-10-abcd' until manually
-        # re-mapped to a curated p1/p2 record (admin step, not auto).
         pharmacy_id = f"partner-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{secrets.token_hex(3)}"
         upload_token = secrets.token_urlsafe(24)
         await db.pharmacy_tokens.insert_one({
@@ -124,7 +144,14 @@ def make_partner_router(db: AsyncIOMotorDatabase) -> APIRouter:
 
     @router.post("/admin/partner-requests/{admin_token}/{rid}/reject")
     async def reject_request(admin_token: str, rid: str, reason: Optional[str] = ""):
-        _check_admin(admin_token)
+        verify_admin_path(admin_token)
+        return await _reject(rid, reason)
+
+    @router.post("/admin/partner-requests/{rid}/reject")
+    async def reject_request_v2(rid: str, reason: Optional[str] = "", _: None = Depends(verify_admin)):
+        return await _reject(rid, reason)
+
+    async def _reject(rid: str, reason: str):
         res = await db.partner_requests.update_one(
             {"_id": rid},
             {"$set": {"status": "rejected", "reject_reason": reason or "",

@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
+import re
 import logging
 import hashlib
 import httpx
@@ -26,6 +27,24 @@ from api.seo import (
     render_pharmacy_for_bot,
     render_category_for_bot,
 )
+from security import SecurityHeadersMiddleware
+
+import time as _time
+from collections import defaultdict as _defaultdict
+_RL_BUCKETS = _defaultdict(list)
+
+
+def _rate_limit(request, key: str, limit: int, per_seconds: int):
+    ip = request.client.host if request.client else "anon"
+    bkey = f"{key}:{ip}"
+    now = _time.time()
+    bucket = _RL_BUCKETS[bkey]
+    cutoff = now - per_seconds
+    while bucket and bucket[0] < cutoff:
+        bucket.pop(0)
+    if len(bucket) >= limit:
+        raise HTTPException(429, "Слишком много запросов. Попробуйте позже.")
+    bucket.append(now)
 
 
 ROOT_DIR = Path(__file__).parent
@@ -38,6 +57,9 @@ db = client[os.environ['DB_NAME']]
 
 # Create the main app without a prefix
 app = FastAPI()
+
+# Security headers on every response
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -104,24 +126,30 @@ VOICE_SYSTEM_PROMPT = (
 )
 
 class VoiceChatRequest(BaseModel):
-    session_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    message: str
+    session_id: str = Field(default_factory=lambda: str(uuid.uuid4()), max_length=64)
+    message: str = Field(..., min_length=1, max_length=2000)
 
 class VoiceChatResponse(BaseModel):
     session_id: str
     reply: str
 
 @api_router.post("/voice/chat", response_model=VoiceChatResponse)
-async def voice_chat(req: VoiceChatRequest):
+async def voice_chat(request: Request, req: VoiceChatRequest):
+    _rate_limit(request, "voice_chat", limit=20, per_seconds=60)
     api_key = os.environ.get('EMERGENT_LLM_KEY')
     if not api_key:
         raise HTTPException(status_code=500, detail="LLM key is not configured")
     if not req.message or not req.message.strip():
         raise HTTPException(status_code=400, detail="Empty message")
+    # Reject session_ids that are not safe identifiers — defense in depth
+    # against unbounded session-id explosion in the DB.
+    sid = req.session_id.strip()
+    if not re.fullmatch(r"[A-Za-z0-9_\-]{1,64}", sid):
+        raise HTTPException(status_code=400, detail="Invalid session_id")
 
     # Persist user message
     user_doc = {
-        "session_id": req.session_id,
+        "session_id": sid,
         "role": "user",
         "content": req.message.strip(),
         "ts": datetime.now(timezone.utc).isoformat(),
@@ -130,7 +158,7 @@ async def voice_chat(req: VoiceChatRequest):
 
     # Load prior history (excluding the just-inserted message we already have in memory? we will rebuild via chat)
     history_docs = await db.voice_messages.find(
-        {"session_id": req.session_id}, {"_id": 0}
+        {"session_id": sid}, {"_id": 0}
     ).sort("ts", 1).to_list(100)
 
     try:
@@ -150,26 +178,27 @@ async def voice_chat(req: VoiceChatRequest):
 
         chat = LlmChat(
             api_key=api_key,
-            session_id=req.session_id,
+            session_id=sid,
             system_message=VOICE_SYSTEM_PROMPT,
         ).with_model("openai", "gpt-4o-mini")
 
         reply = await chat.send_message(UserMessage(text=composed))
         if not isinstance(reply, str):
             reply = str(reply)
-    except Exception as e:
+    except Exception:
         logger.exception("LLM error")
-        raise HTTPException(status_code=502, detail=f"LLM error: {e}")
+        # Don't leak stack traces / model details to clients in prod
+        raise HTTPException(status_code=502, detail="Сервис временно недоступен")
 
     # Persist bot reply
     await db.voice_messages.insert_one({
-        "session_id": req.session_id,
+        "session_id": sid,
         "role": "assistant",
         "content": reply,
         "ts": datetime.now(timezone.utc).isoformat(),
     })
 
-    return VoiceChatResponse(session_id=req.session_id, reply=reply)
+    return VoiceChatResponse(session_id=sid, reply=reply)
 
 
 # ===========================
@@ -194,7 +223,8 @@ def _tts_cache_key(text: str, voice: str, emotion: str, speed: float) -> str:
 
 
 @api_router.post("/voice/tts")
-async def voice_tts(req: TTSRequest):
+async def voice_tts(request: Request, req: TTSRequest):
+    _rate_limit(request, "voice_tts", limit=30, per_seconds=60)
     api_key = os.environ.get("YANDEX_API_KEY")
     folder_id = os.environ.get("YANDEX_FOLDER_ID")
     if not api_key or not folder_id:
@@ -232,11 +262,11 @@ async def voice_tts(req: TTSRequest):
             resp = await client.post(YANDEX_TTS_URL, data=data, headers=headers)
             if resp.status_code != 200:
                 logger.error(f"Yandex TTS error {resp.status_code}: {resp.text[:300]}")
-                raise HTTPException(status_code=502, detail=f"TTS provider error: {resp.status_code}")
+                raise HTTPException(status_code=502, detail="Сервис озвучки временно недоступен")
             audio_bytes = resp.content
-    except httpx.HTTPError as e:
+    except httpx.HTTPError:
         logger.exception("TTS request failed")
-        raise HTTPException(status_code=502, detail=f"TTS request failed: {e}")
+        raise HTTPException(status_code=502, detail="Сервис озвучки временно недоступен")
 
     if not audio_bytes:
         raise HTTPException(status_code=502, detail="Empty audio from TTS provider")
@@ -313,10 +343,10 @@ async def seo_render(path: str, request: Request):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=False,
+    allow_origins=[o.strip() for o in os.environ.get('CORS_ORIGINS', '*').split(',') if o.strip()],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Admin-Token"],
 )
 
 # Configure logging

@@ -23,7 +23,8 @@ export default function PartnerAdmin() {
   const refresh = async () => {
     setLoading(true); setError('');
     try {
-      const { data } = await axios.get(`${API}/admin/partner-requests/${token}`, {
+      const { data } = await axios.get(`${API}/admin/partner-requests`, {
+        headers: { 'X-Admin-Token': token },
         params: filter !== 'all' ? { status: filter } : {},
       });
       setItems(data);
@@ -40,7 +41,9 @@ export default function PartnerAdmin() {
   const approve = async (rid) => {
     setBusyId(rid);
     try {
-      const { data } = await axios.post(`${API}/admin/partner-requests/${token}/${rid}/approve`);
+      const { data } = await axios.post(`${API}/admin/partner-requests/${rid}/approve`, null, {
+        headers: { 'X-Admin-Token': token },
+      });
       setIssued(prev => ({ ...prev, [rid]: { token: data.token, pharmacy_id: data.pharmacy_id } }));
       await refresh();
     } catch (e) {
@@ -54,7 +57,9 @@ export default function PartnerAdmin() {
     if (!window.confirm('Отклонить заявку?')) return;
     setBusyId(rid);
     try {
-      await axios.post(`${API}/admin/partner-requests/${token}/${rid}/reject`);
+      await axios.post(`${API}/admin/partner-requests/${rid}/reject`, null, {
+        headers: { 'X-Admin-Token': token },
+      });
       await refresh();
     } catch (e) {
       alert('Ошибка отклонения');

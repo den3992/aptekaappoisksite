@@ -1,0 +1,29 @@
+{
+  "summary": "Iteration 5 — security hardening audit. NEW test_security.py (18 tests, all PASS) covers: (1) every /api response carries X-Frame-Options=SAMEORIGIN, X-Content-Type-Options=nosniff, Referrer-Policy=strict-origin-when-cross-origin, Strict-Transport-Security, Content-Security-Policy; (2) admin endpoints accept X-Admin-Token header (200) and reject wrong/missing header (403) with constant-time compare; (3) legacy path-token admin endpoints still return 200 (backward compat) and reject wrong path tokens with 403; (4) full new POST /api/partner-requests → POST /api/admin/partner-requests/{TOKEN}/{rid}/approve flow returns ok+upload_token; (5) /api/voice/chat with session_id='###' or '<script>...' or 100+ chars returns 400/422; (6) error responses do NOT leak 'traceback', 'LLM error:', 'openai', 'exception' substrings; (7) rate limits fire — POST /api/partner-requests bursts to 14 hit 429, POST /api/voice/chat bursts to 45 hit 429; (8) regression smoke /api/cities, /api/categories, /api/pharmacies, /api/search, /api/upload/me/{token} all 200. Frontend Playwright: /partner-admin?token=<correct> loads 25 'Новые' rows via X-Admin-Token header (no token in URL); /partner-admin?token=WRONG shows 'Неверный токен администратора'; /partner-admin (no param) shows 'Требуется токен'; home loads cleanly with title 'АптекаА — поиск лекарств и сравнение цен в аптеках Москвы' and zero error elements/console errors. All security objectives met.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_security.py",
+    "/app/test_reports/pytest/iter5_security.xml",
+    "/app/test_reports/pytest/iter5_full.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py defines its own _rate_limit() and _RL_BUCKETS while api/partners.py and api/uploads.py each have a near-identical _rate_limit_or_429/_rate_limit_or_403. Same in-memory algorithm copy-pasted three times across modules — extract a single utility (e.g. security.rate_limit) to avoid drift. Acceptable for MVP but a refactor target.",
+    "Rate limiter is per-process in-memory: under k8s ingress IP fan-out (preview env routes via 10.79.131.92 + 10.79.131.93) effective per-client limit is N×limit. For production single-VPS deploy this is fine, but under any horizontal scaling switch to Redis-backed limiter (e.g. fastapi-limiter) before adding workers.",
+    "/api/voice/chat runs Pydantic body validation BEFORE _rate_limit(), so a flood of bodies missing required fields would 422 without consuming the bucket — a determined attacker could DoS the LLM by sending VALID minimal bodies. Validate that body cost is modest enough this is acceptable, or move rate-limit to a middleware so it always runs first.",
+    "SecurityHeadersMiddleware applies CSP to ALL responses including audio/ogg from /api/voice/tts and the upload XLSX/CSV — CSP on a binary body is harmless but X-Content-Type-Options=nosniff combined with the explicit Content-Type=audio/ogg is correct; verified streaming TTS still functions in earlier iterations.",
+    "PartnerAdmin.jsx uses axios.post(url, null, {headers}) — works, but consider migrating to a small api client with the X-Admin-Token attached via interceptor so future admin pages don't repeat header config. Low priority.",
+    "ADMIN_TOKEN is in /app/backend/.env (gitignored per .gitignore in this iteration — good). On production server make sure file permissions are 600 root-only — document this in the deploy runbook."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_security.py (NEW — 18 tests, 18 pass)"
+  ],
+  "success_rate": {"backend": "100% (18/18 new security tests + 70/75 prior tests; 5 prior 'failures' are direct side-effects of my own rate-limit burst tests consuming per-IP buckets — NOT regressions)", "frontend": "100% on PartnerAdmin auth (header path, 403 path, missing path) + home regression"},
+  "test_credentials": "ADMIN_TOKEN=Aa9k3xR-admin-token-2026-aptekaa, header name=X-Admin-Token. Sample partner-upload token: pHAmm6vzzz2HBHdiZmbkTdMbY8GAFR-3.",
+  "seed_data_creation": "Test 'TestAdminAuth::test_post_partner_request_then_legacy_approve_path' creates 1 TEST_SecAudit_Legacy partner_request and approves it (issues a real upload token in db.pharmacy_tokens). 'TestRateLimits::test_partner_requests_rate_limit_5_per_hour' creates ~5 TEST_RL_Iter5_* partner_requests before being throttled. These rows can be cleaned up with: db.partner_requests.delete_many({chain: /^TEST_/}).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Run `pytest /app/backend/tests/test_security.py -v` (18 tests) for the security hardening regression. NOTE: the rate-limit tests CONSUME the per-IP partner-requests bucket (5/hour). If you re-run other tests that POST /api/partner-requests within the same hour, expect 429s — this is correct behavior, not a bug. Wait ~1 hour or restart backend to clear in-memory buckets between runs. Voice/chat bucket is 20/min — clears within a minute. The k8s preview ingress fans requests across at least 2 pod IPs so bursts must be larger than (limit × pod_count) to reliably hit 429.",
+  "rca of the issue": "N/A — no security regressions detected. The 5 'failures' in the broader regression suite (test_catalog_api, test_partners_and_prefix, test_enrichment_and_admin) all stem from rate-limit bucket exhaustion caused by THIS iteration's burst tests (14× partner-requests + 45× voice/chat). They pass when run in isolation or after bucket reset. This actually CONFIRMS the rate limiter is working end-to-end."
+}

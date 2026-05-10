@@ -19,15 +19,31 @@ from __future__ import annotations
 
 import csv
 import io
+import os
 import re
 import uuid
 from datetime import datetime, timezone, date
 from typing import Optional, List, Dict, Any, Tuple
 
 import openpyxl
-from fastapi import APIRouter, HTTPException, UploadFile, File, Path
+from fastapi import APIRouter, HTTPException, UploadFile, File, Path, Request
 from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorDatabase
+
+import time
+from collections import defaultdict
+_RATE_BUCKETS: Dict[str, List[float]] = defaultdict(list)
+
+
+async def _rate_limit_or_403(request: Request, key: str, limit: int, per_seconds: int) -> None:
+    now = time.time()
+    bucket = _RATE_BUCKETS[key]
+    cutoff = now - per_seconds
+    while bucket and bucket[0] < cutoff:
+        bucket.pop(0)
+    if len(bucket) >= limit:
+        raise HTTPException(429, "Слишком много загрузок, попробуйте позже")
+    bucket.append(now)
 
 
 # ---------- Column header normalization ----------
@@ -301,9 +317,16 @@ def make_uploads_router(db: AsyncIOMotorDatabase) -> APIRouter:
         }
 
     @router.post("/prices/{token}", response_model=UploadResponse)
-    async def upload_prices(token: str, file: UploadFile = File(...)):
+    async def upload_prices(request: Request, token: str, file: UploadFile = File(...)):
+        # Rate-limit manually (slowapi decorator conflicts with UploadFile signature)
+        await _rate_limit_or_403(request, key=f"upload:{token}", limit=10, per_seconds=3600)
         rec = await _resolve_token(token)
         pharmacy_id = rec["pharmacy_id"]
+
+        # Sanitize filename — strip path components, keep only the basename
+        safe_name = os.path.basename(file.filename or "")
+        if not safe_name or not re.fullmatch(r"[\w\-. \(\)А-Яа-яЁё]{1,200}\.(xlsx|csv)", safe_name, re.IGNORECASE):
+            raise HTTPException(400, "Имя файла содержит недопустимые символы или неверное расширение")
 
         content = await file.read()
         if len(content) > 25 * 1024 * 1024:
@@ -311,7 +334,7 @@ def make_uploads_router(db: AsyncIOMotorDatabase) -> APIRouter:
         if not content:
             raise HTTPException(400, "Пустой файл")
 
-        hmap, rows = parse_file(file.filename or "", content)
+        hmap, rows = parse_file(safe_name, content)
 
         valid_rows = [r for r in rows if not r.error]
         invalid_rows = [r for r in rows if r.error]
@@ -395,7 +418,7 @@ def make_uploads_router(db: AsyncIOMotorDatabase) -> APIRouter:
         await db.pharmacy_uploads.insert_one({
             "_id": upload_id,
             "pharmacy_id": pharmacy_id,
-            "filename": file.filename,
+            "filename": safe_name,
             "size": len(content),
             "uploaded_at": now,
             "summary": {
