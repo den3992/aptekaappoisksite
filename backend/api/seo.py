@@ -289,11 +289,34 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
         + "Бесплатный поиск без бронирования."
     )[:300]
 
+    enrichment = med.get("enrichment") or {}
+    if enrichment.get("summary"):
+        desc = f"{enrichment['summary']} Сравните цены и наличие в аптеках {cn_genitive(cn)}."[:300]
+
     canonical = f"{base_url(request)}/{city}/preparaty/{slug}"
 
     body = []
     if rx:
         body.append('<p><strong>⚠️ Отпускается по рецепту.</strong> Препарат отпускается строго по назначению врача.</p>')
+
+    # LLM-enriched block (top-200) — placed early so crawlers see real content first
+    if enrichment.get("summary") or enrichment.get("indications") or enrichment.get("how_to_take"):
+        body.append("<h2>О препарате</h2>")
+        if enrichment.get("summary"):
+            body.append(f"<p>{html.escape(enrichment['summary'])}</p>")
+        if enrichment.get("indications"):
+            body.append("<h3>Показания</h3><ul>")
+            for ind in enrichment["indications"][:8]:
+                body.append(f"<li>{html.escape(str(ind))}</li>")
+            body.append("</ul>")
+        if enrichment.get("contraindications"):
+            body.append("<h3>Противопоказания</h3><ul>")
+            for c in enrichment["contraindications"][:6]:
+                body.append(f"<li>{html.escape(str(c))}</li>")
+            body.append("</ul>")
+        if enrichment.get("how_to_take"):
+            body.append(f"<h3>Способ применения</h3><p>{html.escape(enrichment['how_to_take'])}</p>")
+
     body.append("<h2>Описание препарата</h2>")
     body.append(f"<dl>")
     if mnn: body.append(f"<dt>Международное непатентованное наименование (МНН)</dt><dd>{html.escape(mnn)}</dd>")

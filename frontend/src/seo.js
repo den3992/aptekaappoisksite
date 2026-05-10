@@ -33,14 +33,19 @@ export function medSEO(city, med) {
   if (med.dosage) parts.push(med.dosage);
   parts.push(`купить в ${cnPrepositional(city)} — цены и наличие в аптеках | АптекаА`);
   const title = parts.join(' ');
+  const enrichedSummary = med.enrichment?.summary;
   const description = (
-    `Сравните цены на ${med.name}` +
-    (med.mnn ? ` (${med.mnn.toLowerCase()})` : '') +
-    (med.form ? `, ${med.form.toLowerCase()}` : '') +
-    (med.dosage ? `, ${med.dosage}` : '') +
-    ` в аптеках ${cnGenitive(city)}. Аналоги, наличие, адреса. ` +
-    (med.rx ? 'Отпускается по рецепту. ' : '') +
-    'Бесплатный поиск.'
+    enrichedSummary
+      ? `${enrichedSummary} Сравните цены и наличие в аптеках ${cnGenitive(city)}.`
+      : (
+        `Сравните цены на ${med.name}` +
+        (med.mnn ? ` (${med.mnn.toLowerCase()})` : '') +
+        (med.form ? `, ${med.form.toLowerCase()}` : '') +
+        (med.dosage ? `, ${med.dosage}` : '') +
+        ` в аптеках ${cnGenitive(city)}. Аналоги, наличие, адреса. ` +
+        (med.rx ? 'Отпускается по рецепту. ' : '') +
+        'Бесплатный поиск.'
+      )
   ).slice(0, 300);
   return {
     title,

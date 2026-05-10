@@ -68,6 +68,7 @@ function App() {
                 <Route path="soglasie-na-obrabotku-pd" element={<Consent />} />
                 {/* Hidden partner upload page — NOT linked from main site */}
                 <Route path="partner-upload" element={<PartnerUpload />} />
+                <Route path="partner-admin" element={<PartnerAdmin />} />
                 <Route path="*" element={<NotFound />} />
               </Route>
             </Routes>

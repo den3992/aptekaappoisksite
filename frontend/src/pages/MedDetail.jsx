@@ -286,6 +286,49 @@ export default function MedDetail() {
         </section>
       )}
 
+      {/* LLM-enriched description (top-200 popular meds) */}
+      {med.enrichment && (
+        <section className="mb-12" data-testid="enrichment-section">
+          <div className="bg-white border border-slate-100 rounded-2xl p-6 md:p-8">
+            <h2 className="text-2xl font-bold text-slate-900 mb-3">О препарате</h2>
+            {med.enrichment.summary && (
+              <p className="text-slate-700 leading-relaxed mb-6">{med.enrichment.summary}</p>
+            )}
+            <div className="grid md:grid-cols-2 gap-6">
+              {med.enrichment.indications?.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-emerald-800 uppercase tracking-wide mb-2">Показания</h3>
+                  <ul className="space-y-1.5 text-sm text-slate-700">
+                    {med.enrichment.indications.map((t, i) => (
+                      <li key={i} className="flex gap-2"><span className="text-emerald-500 shrink-0">•</span><span>{t}</span></li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {med.enrichment.contraindications?.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-rose-800 uppercase tracking-wide mb-2">Противопоказания</h3>
+                  <ul className="space-y-1.5 text-sm text-slate-700">
+                    {med.enrichment.contraindications.map((t, i) => (
+                      <li key={i} className="flex gap-2"><span className="text-rose-500 shrink-0">•</span><span>{t}</span></li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            {med.enrichment.how_to_take && (
+              <div className="mt-6 pt-6 border-t border-slate-100">
+                <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-2">Способ применения</h3>
+                <p className="text-sm text-slate-700 leading-relaxed">{med.enrichment.how_to_take}</p>
+              </div>
+            )}
+            <p className="mt-5 text-xs text-slate-500 italic">
+              Справочная информация. {med.enrichment.disclaimer || 'Имеются противопоказания. Перед применением проконсультируйтесь с врачом.'}
+            </p>
+          </div>
+        </section>
+      )}
+
       {/* Disclaimer */}
       <section className="mb-12">
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 flex items-start gap-3">
