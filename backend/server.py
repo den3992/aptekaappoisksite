@@ -17,6 +17,7 @@ from emergentintegrations.llm.chat import LlmChat, UserMessage
 from voice_data import build_context_text
 from api import make_router as make_catalog_router
 from api.uploads import make_uploads_router
+from api.partners import make_partner_router
 from api.seo import (
     make_seo_router,
     is_bot,
@@ -269,6 +270,9 @@ app.include_router(make_catalog_router(db), prefix="/api")
 # Pharmacy uploads (HTTP web upload). Hidden route — partners get a token URL,
 # nothing on the main site links to /partner-upload.
 app.include_router(make_uploads_router(db), prefix="/api/upload")
+
+# Partner request form + admin approval flow.
+app.include_router(make_partner_router(db), prefix="/api")
 
 # SEO endpoints (robots.txt, sitemap*.xml). Mounted under /api/ because the
 # k8s ingress only routes /api/* to the backend. Production CF rewrite rules:

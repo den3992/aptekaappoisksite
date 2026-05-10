@@ -21,6 +21,7 @@ import Privacy from './pages/Privacy';
 import Consent from './pages/Consent';
 import NotFound from './pages/NotFound';
 import PartnerUpload from './pages/PartnerUpload';
+import PartnerAdmin from './pages/PartnerAdmin';
 
 function App() {
   return (
@@ -76,6 +77,10 @@ function App() {
       </CityProvider>
     </HelmetProvider>
   );
+}
+
+export default App;
+;
 }
 
 export default App;

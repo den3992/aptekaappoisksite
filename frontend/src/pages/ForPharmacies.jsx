@@ -1,20 +1,34 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, FileSpreadsheet, Server, ShieldCheck, ArrowRight, CheckCircle2, Send } from 'lucide-react';
+import axios from 'axios';
 import { useToast } from '../hooks/use-toast';
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function ForPharmacies() {
   const { toast } = useToast();
   const [form, setForm] = useState({ chain: '', city: '', email: '', phone: '', count: '', comment: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState(false);
   const onChange = (k) => (e) => setForm(s => ({ ...s, [k]: e.target.value }));
-  const submit = (e) => {
+
+  const submit = async (e) => {
     e.preventDefault();
     if (!form.email || !form.chain) {
       toast({ title: 'Заполните обязательные поля', description: 'Название и e-mail' });
       return;
     }
-    toast({ title: 'Заявка отправлена', description: 'Мы свяжемся в ближайшее время.' });
-    setForm({ chain: '', city: '', email: '', phone: '', count: '', comment: '' });
+    setSubmitting(true);
+    try {
+      await axios.post(`${API}/partner-requests`, form, { timeout: 15000 });
+      setDone(true);
+      setForm({ chain: '', city: '', email: '', phone: '', count: '', comment: '' });
+    } catch (err) {
+      toast({ title: 'Ошибка отправки', description: err?.response?.data?.detail?.[0]?.msg || 'Попробуйте ещё раз' });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -84,7 +98,12 @@ export default function ForPharmacies() {
               <Mail className="w-4 h-4" /> partners@aptekaa.ru
             </a>
           </div>
-          <form onSubmit={submit} className="grid md:grid-cols-2 gap-4">
+          <form onSubmit={submit} className="grid md:grid-cols-2 gap-4" data-testid="partner-request-form">
+            {done && (
+              <div className="md:col-span-2 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 text-sm text-emerald-800 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4" /> Заявка отправлена! Мы свяжемся с вами в ближайшее время.
+              </div>
+            )}
             <Field label="Название аптеки / сети*" value={form.chain} onChange={onChange('chain')} placeholder="ООО «Аптека»" />
             <Field label="Город" value={form.city} onChange={onChange('city')} placeholder="Москва" />
             <Field label="E-mail*" type="email" value={form.email} onChange={onChange('email')} placeholder="manager@apteka.ru" />
@@ -93,7 +112,9 @@ export default function ForPharmacies() {
             <Field label="Учётная система" value={form.comment} onChange={onChange('comment')} placeholder="1С, M-Аптека…" />
             <div className="md:col-span-2 flex items-center justify-between gap-3 pt-2">
               <p className="text-xs text-slate-500">Нажимая «Отправить», вы соглашаетесь с <Link to="/soglasie-na-obrabotku-pd" className="underline">обработкой перс. данных</Link></p>
-              <button type="submit" className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-3 rounded-lg transition">Отправить <ArrowRight className="w-4 h-4" /></button>
+              <button type="submit" disabled={submitting} data-testid="partner-request-submit" className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-medium px-6 py-3 rounded-lg transition">
+                {submitting ? 'Отправляем…' : 'Отправить'} <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
           </form>
         </div>
