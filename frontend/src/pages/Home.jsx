@@ -211,7 +211,7 @@ export default function Home() {
             <div className="inline-block px-3 py-1 bg-white/15 rounded-full text-xs font-medium mb-4">Для аптек</div>
             <h2 className="text-3xl md:text-4xl font-bold mb-3">Привлекайте новых клиентов в вашу аптеку</h2>
             <p className="text-emerald-50 leading-relaxed mb-6">
-              Привлекайте новых клиентов в свою аптеку. Простая выгрузка ассортимента. Поможем с настройкой.
+              Простая выгрузка ассортимента. Поможем с настройкой.
             </p>
             <Link to="/dlya-aptek" className="inline-flex items-center gap-2 bg-white text-emerald-700 hover:bg-emerald-50 font-semibold px-6 py-3 rounded-xl transition">
               Подробнее <ArrowRight className="w-4 h-4" />
