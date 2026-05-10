@@ -70,7 +70,7 @@ export default function PartnerUpload() {
         <h1 className="text-xl font-bold text-slate-900 mb-2">Доступ запрещён</h1>
         <p className="text-slate-600 text-sm">{meError}</p>
         <p className="text-xs text-slate-400 mt-4">
-          Если вы партнёрская аптека и не получили рабочую ссылку — напишите на partner@aptekaa.ru
+          Если вы партнёрская аптека и не получили рабочую ссылку — напишите на partners@aptekaa.ru
         </p>
       </div>
     );
