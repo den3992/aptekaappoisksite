@@ -111,21 +111,25 @@ MVP сайта-агрегатора аптек по образцу lekmos / 003m
 - ~~Импорт mdlp~~ ✅
 - ~~SEO-фундамент~~ ✅
 - ~~Каталог API + Search + MedDetail~~ ✅
+- ~~Полная миграция Frontend на API (удалён `mock.js`, `MedCard.jsx`)~~ ✅ 2026-05-10
+- ~~Форма заявки партнёров `/api/partner-requests` + admin approve/reject~~ ✅ 2026-05-10
+- ~~`prefix` фильтр в `/api/search` для каталога А–Я~~ ✅ 2026-05-10
 
 ### P1
-- Загрузка прайс-листов аптек (xls, xlsx, csv, dbf), парсинг и upsert в `prices` collection
-- Простой кабинет аптеки (по токену или JWT)
-- Дополнительная миграция: Categories.jsx, CategoryDetail.jsx, PharmacyDetail.jsx, PharmaciesList.jsx, Catalog.jsx, NotFound.jsx — на реальный API
-- LLM-обогащение топ-500 препаратов (описания, показания) через gpt-4o-mini ~50₽
+- LLM-обогащение топ-200 препаратов (описания, показания) через gpt-4o-mini ~50₽
+- Mail.ru IMAP-воркер: ждём от пользователя App Password (DNS уже подтверждён?)
+- Простая admin-страница `/partner-admin?token=...` для удобного просмотра/одобрения заявок
+- Расширение базы партнёров-аптек с 20 до сотен
 
 ### P2
-- Авторизация для аптек (Emergent Google Auth или JWT)
-- Расширение базы партнёров-аптек с 20 до сотен
+- SFTP-выгрузка прайсов (после деплоя на VPS)
 - Аналитика поисковых запросов
-- Админка для контента
-- Реальный деплой на aptekaa.ru: DNS Cloudflare, CF Worker для бот-маршрутизации (`/sitemap.xml` → `/api/seo/sitemap.xml`, бот UA → `/api/seo/render`)
+- Реальный деплой на aptekaa.ru: DNS Cloudflare, CF Worker для бот-маршрутизации
 - Регистрация в Яндекс.Вебмастере и Яндекс.Бизнесе после деплоя
 - Покупка `аптекаа.рф` (~190 ₽/год) с 301 на `aptekaa.ru`
+
+## Changelog (latest)
+- **2026-05-10**: Миграция завершена. Удалены `/app/frontend/src/mock.js` и `/app/frontend/src/components/MedCard.jsx` (был не использован). Все страницы (Home, Catalog, Categories, CategoryDetail, PharmaciesList, PharmacyDetail, ForPharmacies) работают на реальном API. Стиль иконок категорий вынесен в `/app/frontend/src/lib/categoryStyles.js`. Бэкенд: добавлен фильтр `?prefix=А` в `/api/search`. Подключен `partner_router` (`POST /api/partner-requests`, `/admin/partner-requests/{token}/...`). Тесты: 18 новых + 21 регрессионных = 39/39 ✅
 
 ## Files of reference
 - `/app/backend/server.py` — FastAPI: voice/chat, voice/tts, catalog router, SEO router

@@ -104,12 +104,12 @@ export default function ForPharmacies() {
                 <CheckCircle2 className="w-4 h-4" /> Заявка отправлена! Мы свяжемся с вами в ближайшее время.
               </div>
             )}
-            <Field label="Название аптеки / сети*" value={form.chain} onChange={onChange('chain')} placeholder="ООО «Аптека»" />
-            <Field label="Город" value={form.city} onChange={onChange('city')} placeholder="Москва" />
-            <Field label="E-mail*" type="email" value={form.email} onChange={onChange('email')} placeholder="manager@apteka.ru" />
-            <Field label="Телефон" value={form.phone} onChange={onChange('phone')} placeholder="+7 (___) ___-__-__" />
-            <Field label="Количество точек" value={form.count} onChange={onChange('count')} placeholder="5" />
-            <Field label="Учётная система" value={form.comment} onChange={onChange('comment')} placeholder="1С, M-Аптека…" />
+            <Field label="Название аптеки / сети*" name="chain" testId="partner-chain-input" value={form.chain} onChange={onChange('chain')} placeholder="ООО «Аптека»" />
+            <Field label="Город" name="city" testId="partner-city-input" value={form.city} onChange={onChange('city')} placeholder="Москва" />
+            <Field label="E-mail*" name="email" testId="partner-email-input" type="email" value={form.email} onChange={onChange('email')} placeholder="manager@apteka.ru" />
+            <Field label="Телефон" name="phone" testId="partner-phone-input" value={form.phone} onChange={onChange('phone')} placeholder="+7 (___) ___-__-__" />
+            <Field label="Количество точек" name="count" testId="partner-count-input" value={form.count} onChange={onChange('count')} placeholder="5" />
+            <Field label="Учётная система" name="comment" testId="partner-comment-input" value={form.comment} onChange={onChange('comment')} placeholder="1С, M-Аптека…" />
             <div className="md:col-span-2 flex items-center justify-between gap-3 pt-2">
               <p className="text-xs text-slate-500">Нажимая «Отправить», вы соглашаетесь с <Link to="/soglasie-na-obrabotku-pd" className="underline">обработкой перс. данных</Link></p>
               <button type="submit" disabled={submitting} data-testid="partner-request-submit" className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-medium px-6 py-3 rounded-lg transition">
@@ -123,11 +123,19 @@ export default function ForPharmacies() {
   );
 }
 
-function Field({ label, value, onChange, placeholder, type = 'text' }) {
+function Field({ label, value, onChange, placeholder, type = 'text', testId, name }) {
   return (
     <label className="block">
       <span className="block text-xs font-medium text-slate-600 mb-1.5">{label}</span>
-      <input type={type} value={value} onChange={onChange} placeholder={placeholder} className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100" />
+      <input
+        name={name}
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        data-testid={testId}
+        className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+      />
     </label>
   );
 }
