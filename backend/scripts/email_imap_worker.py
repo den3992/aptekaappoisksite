@@ -275,16 +275,8 @@ async def process_message(db, raw_bytes: bytes, dry: bool) -> str:
             f"с ошибками {len(invalid)}"
         )
 
-    body = (
-        f"Здравствуйте, {pharmacy_name}!\n\n"
-        "Прайс-лист принят и обработан:\n\n" +
-        "\n".join(summary_lines) +
-        "\n\n"
-        "Полную историю и список товаров без сопоставления можно посмотреть в личном кабинете "
-        f"(ссылка с вашим персональным токеном).\n\n"
-        "С уважением, АптекаА"
-    )
-    send_reply(sender_email, "АптекаА — прайс-лист принят", body, dry=dry)
+    # Silent on success — partner doesn't need a confirmation when the file is fine.
+    log.info(f"processed from {sender_email}: " + " | ".join(summary_lines))
     return "processed"
 
 
