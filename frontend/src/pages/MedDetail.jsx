@@ -256,36 +256,6 @@ export default function MedDetail() {
         </section>
       )}
 
-      {/* Variants block */}
-      {med.variants && med.variants.length > 1 && (
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">Доступные упаковки и формы выпуска</h2>
-          <div className="bg-white border border-slate-100 rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-                <tr>
-                  <th className="px-4 py-3 text-left">Упаковка</th>
-                  <th className="px-4 py-3 text-left hidden md:table-cell">GTIN</th>
-                  <th className="px-4 py-3 text-left hidden md:table-cell">Регистрационное удостоверение</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {med.variants.slice(0, 30).map((v, i) => (
-                  <tr key={v.gtin || i} className="hover:bg-slate-50/50">
-                    <td className="px-4 py-2.5">{v.label_name || v.primary_pack_desc || v.pack_size || '—'}</td>
-                    <td className="px-4 py-2.5 font-mono text-xs hidden md:table-cell">{v.gtin || '—'}</td>
-                    <td className="px-4 py-2.5 text-xs hidden md:table-cell">{v.ru_number || '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {med.variants.length > 30 && (
-              <div className="px-4 py-2 text-xs text-slate-500 bg-slate-50">+ ещё {med.variants.length - 30} упаковок</div>
-            )}
-          </div>
-        </section>
-      )}
-
       {/* LLM-enriched description (top-200 popular meds) */}
       {med.enrichment && (
         <section className="mb-12" data-testid="enrichment-section">
