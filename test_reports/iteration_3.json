@@ -1,0 +1,36 @@
+{
+  "summary": "Validated mock.js → real-API migration end-to-end. Backend: 18/18 new tests pass (prefix filter А/Б/Я, case-insensitivity, POST /api/partner-requests happy + 422 cases, admin list/approve/reject/bad-token, regression on /api/categories /pharmacies /search /medications). Existing test_catalog_api.py: 21/21 pass. Frontend: home (6 popular + 8 cats), /msk/preparaty (48 items, 'Б' filter shows 'Б-190…' first), /msk/kategorii (cards render, click → /msk/kategorii/ot-prostudy shows 24 meds), /msk/apteki (12 cards), /dlya-aptek partner form fills via Russian placeholders, submit fires POST /api/partner-requests (200), green success banner 'Заявка отправлена!' visible. ZERO console errors on every page → confirms no leftover mock.js imports.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/dlya-aptek partner form", "issues": ["Form inputs lack name/id/data-testid attributes — relied on Russian placeholder selectors. Adding data-testid (e.g. partner-chain-input, partner-email-input, partner-submit-btn) would make the form more testable and screenreader-friendly."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_partners_and_prefix.py",
+    "/app/test_reports/pytest/partners_results.xml",
+    "/app/backend/tests/test_catalog_api.py"
+  ],
+  "action_items": [
+    "(Optional) Add data-testid attributes to /dlya-aptek partner form inputs and submit button so future Playwright tests can use stable selectors instead of placeholder text.",
+    "(Optional, carried over from iteration_2 — not retested) uploads.py upload_id sub-second collision still pending; not in scope this iteration."
+  ],
+  "critical_code_review_comments": [
+    "api/__init__.py /api/search prefix filter uses a properly anchored re.escape regex with case-insensitive flag — clean and injection-safe.",
+    "api/partners.py: PartnerRequestIn uses pydantic EmailStr + length limits + strip validator — solid input validation.",
+    "api/partners.py: /admin endpoints embed the admin token in the URL path. Functional but unconventional; consider also accepting via header (X-Admin-Token) for less log leakage. Low priority.",
+    "api/partners.py: approve flow is idempotent (returns existing token) — good. Reject flow is NOT idempotent (re-rejecting an already-rejected req returns 200 silently with no signal); minor.",
+    "Frontend /dlya-aptek form inputs missing name/id/data-testid attributes — testability gap (mentioned above)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_partners_and_prefix.py (new — 18 tests)"
+  ],
+  "success_rate": {"backend": "100% (18/18 new + 21/21 regression = 39/39)", "frontend": "100% on tested flows"},
+  "test_credentials": "ADMIN_TOKEN read from /app/backend/.env = 'Aa9k3xR-admin-token-2026-aptekaa' (NOT the 'dev-admin-token-change-me' default mentioned in review_request — env override is set). Tests auto-detect by reading backend/.env.",
+  "seed_data_creation": "Tests created TEST_-prefixed partner_requests rows (TEST_AptekaChain, TEST_ToApprove, TEST_ToReject) plus one E2E row from the live form (TEST_E2E_Chain). All persist in db.partner_requests; cleanup not implemented since data is namespaced and harmless.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Run `pytest /app/backend/tests/test_partners_and_prefix.py -v` for prefix + partner endpoints (18 tests). Run `pytest /app/backend/tests/test_catalog_api.py -v` for catalog regression (21 tests). ADMIN_TOKEN is auto-read from /app/backend/.env so the suite works in any preview env that has it set. Pager UI on /msk/preparaty was not exercised (only letter filter); covered indirectly via items=48 page-size assertion. Voice/upload flows out of scope per main agent."
+}

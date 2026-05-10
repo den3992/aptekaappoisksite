@@ -2,21 +2,23 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Search, MapPin, ShieldCheck, ArrowRight, Pill } from 'lucide-react';
 import { useCity } from '../context/CityContext';
-import { CATEGORIES, MEDICATIONS, PRICES } from '../mock';
 import CategoryIcon from '../components/CategoryIcon';
 import PillIcon from '../components/PillIcon';
 import PartnersMarquee from '../components/PartnersMarquee';
 import SEOHead from '../components/SEOHead';
 import { homeSEO } from '../seo';
-import { suggestMeds } from '../api/client';
+import { suggestMeds, fetchCategories } from '../api/client';
+import { getCategoryStyle } from '../lib/categoryStyles';
 
-const POPULAR = ['paracetamol-500mg','nurofen','vitamin-d3-2000','kagocel','omeprazol-20mg','smekta'];
+const POPULAR_QUERIES = ['Парацетамол', 'Нурофен', 'Витамин D3', 'Омепразол', 'Кагоцел', 'Смекта'];
 
 export default function Home() {
   const { city, cities, setCity } = useCity();
   const { city: cityParam } = useParams();
   const [q, setQ] = useState('');
   const [apiSuggestions, setApiSuggestions] = useState([]);
+  const [popularMeds, setPopularMeds] = useState([]);
+  const [categories, setCategories] = useState([]);
   const navigate = useNavigate();
 
   // Sync URL city → context
@@ -28,7 +30,7 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cityParam]);
 
-  // API-backed suggestions
+  // API-backed suggestions (typeahead in search box)
   useEffect(() => {
     if (!q || q.trim().length < 2) { setApiSuggestions([]); return; }
     let cancelled = false;
@@ -38,12 +40,27 @@ export default function Home() {
     return () => { cancelled = true; clearTimeout(t); };
   }, [q]);
 
-  const popularMeds = POPULAR.map(slug => MEDICATIONS.find(m => m.slug === slug)).filter(Boolean);
-  const suggestions = apiSuggestions.length > 0
-    ? apiSuggestions
-    : (q.length >= 2
-      ? MEDICATIONS.filter(m => m.name.toLowerCase().includes(q.toLowerCase()) || m.mnn.toLowerCase().includes(q.toLowerCase())).slice(0, 6)
-      : []);
+  // Popular medications: pick the best match from /api/search/suggest for each curated query
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all(
+      POPULAR_QUERIES.map(query =>
+        suggestMeds(query).then(arr => arr && arr[0]).catch(() => null)
+      )
+    ).then(arr => {
+      if (!cancelled) setPopularMeds(arr.filter(Boolean));
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Categories for the homepage block
+  useEffect(() => {
+    fetchCategories()
+      .then(arr => setCategories(arr.filter(c => c.slug !== 'other')))
+      .catch(() => setCategories([]));
+  }, []);
+
+  const suggestions = apiSuggestions;
 
   const submit = (e) => {
     e.preventDefault();
@@ -153,17 +170,13 @@ export default function Home() {
           <h2 className="text-xl md:text-2xl font-bold text-slate-900">Популярные препараты</h2>
           <Link to={`/${city.id}/preparaty`} className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1 whitespace-nowrap shrink-0">Каталог А–Я <ArrowRight className="w-4 h-4" /></Link>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-          {popularMeds.map(m => {
-            const prices = (PRICES[m.slug]?.[city.id] || []).map(p => p.price);
-            const min = prices.length ? Math.min(...prices) : null;
-            return (
-              <Link key={m.slug} to={`/${city.id}/preparaty/${m.slug}`} className="group flex flex-col justify-between bg-white border border-slate-200 hover:border-emerald-400 hover:shadow-sm transition rounded-xl px-4 py-3.5 min-h-[72px]">
-                <span className="font-semibold text-slate-900 text-sm leading-tight">{m.name}</span>
-                {min !== null && <span className="text-emerald-700 font-bold text-sm mt-1">от {min} ₽</span>}
-              </Link>
-            );
-          })}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5" data-testid="popular-meds">
+          {popularMeds.map(m => (
+            <Link key={m.slug} to={`/${city.id}/preparaty/${m.slug}`} className="group flex flex-col justify-between bg-white border border-slate-200 hover:border-emerald-400 hover:shadow-sm transition rounded-xl px-4 py-3.5 min-h-[72px]">
+              <span className="font-semibold text-slate-900 text-sm leading-tight line-clamp-2">{m.name}</span>
+              <span className="text-xs text-slate-500 mt-1 truncate">{[m.form?.toLowerCase(), m.dosage].filter(Boolean).join(', ')}</span>
+            </Link>
+          ))}
         </div>
       </section>
 
@@ -177,14 +190,17 @@ export default function Home() {
           <Link to={`/${city.id}/kategorii`} className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1 whitespace-nowrap shrink-0">Все категории <ArrowRight className="w-4 h-4" /></Link>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-2.5">
-          {CATEGORIES.slice(0, 8).map(c => (
-            <Link key={c.slug} to={`/${city.id}/kategorii/${c.slug}`} className="cat-card flex flex-col items-start gap-2.5 bg-white border border-slate-200 hover:border-emerald-400 transition rounded-xl px-4 py-3.5 min-h-[96px]">
-              <span className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: c.color, color: c.accent }}>
-                <CategoryIcon name={c.icon} className="w-4.5 h-4.5" />
-              </span>
-              <span className="text-slate-900 font-semibold text-sm leading-tight">{c.title}</span>
-            </Link>
-          ))}
+          {categories.slice(0, 8).map(c => {
+            const style = getCategoryStyle(c.slug);
+            return (
+              <Link key={c.slug} to={`/${city.id}/kategorii/${c.slug}`} className="cat-card flex flex-col items-start gap-2.5 bg-white border border-slate-200 hover:border-emerald-400 transition rounded-xl px-4 py-3.5 min-h-[96px]">
+                <span className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: style.color, color: style.accent }}>
+                  <CategoryIcon name={style.icon} className="w-4.5 h-4.5" />
+                </span>
+                <span className="text-slate-900 font-semibold text-sm leading-tight">{c.title}</span>
+              </Link>
+            );
+          })}
         </div>
       </section>
 

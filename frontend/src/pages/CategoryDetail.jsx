@@ -6,9 +6,7 @@ import { fetchCategories, searchMeds } from '../api/client';
 import CategoryIcon from '../components/CategoryIcon';
 import SEOHead from '../components/SEOHead';
 import { categorySEO } from '../seo';
-import { CATEGORIES as STATIC_CATS } from '../mock';
-
-const ICON_BY_SLUG = STATIC_CATS.reduce((m, c) => { m[c.slug] = c; return m; }, {});
+import { getCategoryStyle } from '../lib/categoryStyles';
 const PAGE_SIZE = 24;
 
 export default function CategoryDetail() {
@@ -47,7 +45,7 @@ export default function CategoryDetail() {
     <div className="max-w-7xl mx-auto px-4 py-16 text-center text-slate-500">Загрузка категории…</div>
   );
 
-  const icon = ICON_BY_SLUG[slug] || { icon: 'Pill', color: '#F1F5F9', accent: '#475569' };
+  const icon = getCategoryStyle(slug);
   const seo = categorySEO(city.id, cat);
 
   return (

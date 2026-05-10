@@ -38,11 +38,12 @@ export async function fetchPharmacy(id) {
   return data;
 }
 
-export async function searchMeds({ q, category, rx, page = 1, pageSize = 24 } = {}) {
+export async function searchMeds({ q, category, rx, prefix, page = 1, pageSize = 24 } = {}) {
   const params = { page, page_size: pageSize };
   if (q) params.q = q;
   if (category) params.category = category;
   if (rx !== undefined) params.rx = rx;
+  if (prefix) params.prefix = prefix;
   const { data } = await http.get('/search', { params });
   return data;
 }

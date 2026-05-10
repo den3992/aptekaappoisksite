@@ -4,9 +4,7 @@ import { useCity } from '../context/CityContext';
 import { fetchCategories } from '../api/client';
 import CategoryIcon from '../components/CategoryIcon';
 import SEOHead from '../components/SEOHead';
-import { CATEGORIES as STATIC_CATS } from '../mock';
-
-const ICON_BY_SLUG = STATIC_CATS.reduce((m, c) => { m[c.slug] = c; return m; }, {});
+import { getCategoryStyle } from '../lib/categoryStyles';
 
 export default function Categories() {
   const { city, cities, setCity } = useCity();
@@ -40,7 +38,7 @@ export default function Categories() {
 
       <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3" data-testid="categories-grid">
         {cats.filter(c => c.slug !== 'other').map(c => {
-          const icon = ICON_BY_SLUG[c.slug] || { icon: 'Pill', color: '#F1F5F9', accent: '#475569' };
+          const icon = getCategoryStyle(c.slug);
           return (
             <Link key={c.slug} to={`/${city.id}/kategorii/${c.slug}`} className="cat-card bg-white border border-slate-100 rounded-xl p-5 flex flex-col">
               <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{ background: icon.color, color: icon.accent }}>

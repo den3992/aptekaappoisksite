@@ -87,6 +87,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         q: Optional[str] = Query(None, description="Поисковый запрос"),
         category: Optional[str] = Query(None),
         rx: Optional[bool] = Query(None),
+        prefix: Optional[str] = Query(None, description="Первая буква названия (А–Я / A–Z)"),
         page: int = Query(1, ge=1),
         page_size: int = Query(24, ge=1, le=100),
     ):
@@ -104,6 +105,9 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
             flt["category"] = category
         if rx is not None:
             flt["rx"] = rx
+        if prefix and prefix.strip():
+            ch = prefix.strip()[:1]
+            flt["name"] = {"$regex": f"^{re.escape(ch)}", "$options": "i"}
 
         projection = {
             "_id": 0,
