@@ -130,14 +130,22 @@ MVP сайта-агрегатора аптек по образцу lekmos / 003m
 - Расширение LLM-обогащения с 200 до 1000-2000 препаратов
 
 ## Changelog (latest)
-- **2026-05-10 (Сессия 2)**:
-  - **LLM-обогащение топ-200 препаратов** через gpt-4o-mini. Скрипт `/app/backend/scripts/enrich_meds.py` сгенерировал summary/indications/contraindications/how_to_take для 200 самых популярных карточек (по `_variants_count` + curated POPULAR_MNN). Стоимость прогона ≈ 50 ₽. Поле `enrichment` хранится в `medications`.
-  - **MedDetail.jsx** показывает блок «О препарате» с данными enrichment.
-  - **SSR для ботов** (`/api/seo/render`) включает enrichment в HTML и `<meta description>`.
-  - **Admin-UI** `/partner-admin?token=...` — список заявок, фильтры по статусу, одобрить/отклонить, копирование ссылки `partner-upload?token=...` для аптеки.
-  - Тесты: 9 новых + 39 регрессионных = **48/48 ✅**.
+- **2026-05-10 (Сессия 3) — Security hardening перед деплоем**:
+  - **CORS** ограничен списком (`aptekaa.ru`, `www.aptekaa.ru`, `аптекаа.рф/xn--80aerl0afi.xn--p1ai`, preview, localhost:3000) — больше не `*`
+  - **Security headers** на каждый ответ: `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Strict-Transport-Security: max-age=31536000`, **Content-Security-Policy** (с разрешением Yandex Maps/SpeechKit)
+  - **Admin auth** через `X-Admin-Token` header + `secrets.compare_digest` (защита от timing-атак); legacy URL-path сохранён для backward-compat
+  - **Rate limits** (in-memory sliding window per IP):
+    - `POST /api/voice/chat` — 20/мин
+    - `POST /api/voice/tts` — 30/мин
+    - `POST /api/partner-requests` — 5/час
+    - `POST /api/upload/prices/{token}` — 10/час
+  - **Sanitized errors** — больше не светим LLM/TTS stack-trace в API responses
+  - **Validation** session_id (regex `[A-Za-z0-9_\-]{1,64}`), filename uploads (whitelist regex)
+  - **`.gitignore`** — добавлены `.env`, `backend/.env`, `frontend/.env` чтобы секреты не попали в репо
+  - Тесты: 18 новых security + регрессия = **88/88 ✅**
 
-- **2026-05-10 (Сессия 1)**: Миграция Frontend → API завершена. Удалены `mock.js` и `MedCard.jsx`. Добавлен `?prefix=А` в `/api/search`, форма заявки партнёров `POST /api/partner-requests`, admin endpoints. 39/39 ✅
+- **2026-05-10 (Сессия 2)**: LLM-обогащение топ-200 препаратов (gpt-4o-mini), admin-UI заявок партнёров. 48/48 ✅
+- **2026-05-10 (Сессия 1)**: Миграция Frontend → API, удалён mock.js. 39/39 ✅
 
 ## Files of reference
 - `/app/backend/server.py` — FastAPI: voice/chat, voice/tts, catalog router, SEO router
