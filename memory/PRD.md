@@ -116,9 +116,9 @@ MVP сайта-агрегатора аптек по образцу lekmos / 003m
 - ~~`prefix` фильтр в `/api/search` для каталога А–Я~~ ✅ 2026-05-10
 
 ### P1
-- LLM-обогащение топ-200 препаратов (описания, показания) через gpt-4o-mini ~50₽
-- Mail.ru IMAP-воркер: ждём от пользователя App Password (DNS уже подтверждён?)
-- Простая admin-страница `/partner-admin?token=...` для удобного просмотра/одобрения заявок
+- ~~Простая admin-страница `/partner-admin?token=...` для одобрения заявок~~ ✅ 2026-05-10
+- ~~LLM-обогащение топ-200 препаратов (описания, показания, противопоказания, способ применения) через gpt-4o-mini~~ ✅ 2026-05-10
+- Mail.ru IMAP-воркер: ждём от пользователя App Password (DKIM на проверке)
 - Расширение базы партнёров-аптек с 20 до сотен
 
 ### P2
@@ -127,9 +127,17 @@ MVP сайта-агрегатора аптек по образцу lekmos / 003m
 - Реальный деплой на aptekaa.ru: DNS Cloudflare, CF Worker для бот-маршрутизации
 - Регистрация в Яндекс.Вебмастере и Яндекс.Бизнесе после деплоя
 - Покупка `аптекаа.рф` (~190 ₽/год) с 301 на `aptekaa.ru`
+- Расширение LLM-обогащения с 200 до 1000-2000 препаратов
 
 ## Changelog (latest)
-- **2026-05-10**: Миграция завершена. Удалены `/app/frontend/src/mock.js` и `/app/frontend/src/components/MedCard.jsx` (был не использован). Все страницы (Home, Catalog, Categories, CategoryDetail, PharmaciesList, PharmacyDetail, ForPharmacies) работают на реальном API. Стиль иконок категорий вынесен в `/app/frontend/src/lib/categoryStyles.js`. Бэкенд: добавлен фильтр `?prefix=А` в `/api/search`. Подключен `partner_router` (`POST /api/partner-requests`, `/admin/partner-requests/{token}/...`). Тесты: 18 новых + 21 регрессионных = 39/39 ✅
+- **2026-05-10 (Сессия 2)**:
+  - **LLM-обогащение топ-200 препаратов** через gpt-4o-mini. Скрипт `/app/backend/scripts/enrich_meds.py` сгенерировал summary/indications/contraindications/how_to_take для 200 самых популярных карточек (по `_variants_count` + curated POPULAR_MNN). Стоимость прогона ≈ 50 ₽. Поле `enrichment` хранится в `medications`.
+  - **MedDetail.jsx** показывает блок «О препарате» с данными enrichment.
+  - **SSR для ботов** (`/api/seo/render`) включает enrichment в HTML и `<meta description>`.
+  - **Admin-UI** `/partner-admin?token=...` — список заявок, фильтры по статусу, одобрить/отклонить, копирование ссылки `partner-upload?token=...` для аптеки.
+  - Тесты: 9 новых + 39 регрессионных = **48/48 ✅**.
+
+- **2026-05-10 (Сессия 1)**: Миграция Frontend → API завершена. Удалены `mock.js` и `MedCard.jsx`. Добавлен `?prefix=А` в `/api/search`, форма заявки партнёров `POST /api/partner-requests`, admin endpoints. 39/39 ✅
 
 ## Files of reference
 - `/app/backend/server.py` — FastAPI: voice/chat, voice/tts, catalog router, SEO router
