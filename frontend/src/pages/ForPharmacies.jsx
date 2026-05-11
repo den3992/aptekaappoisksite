@@ -94,9 +94,13 @@ export default function ForPharmacies() {
               <h2 className="text-2xl font-bold text-slate-900 mb-2">Подключение к сервису</h2>
               <p className="text-slate-600">Оставьте контакты — мы свяжемся и поможем с настройкой выгрузки.</p>
             </div>
-            <a href="mailto:partners@aptekaa.ru" className="inline-flex items-center gap-2 text-emerald-700 font-medium hover:underline">
-              <Mail className="w-4 h-4" /> partners@aptekaa.ru
+            <a href="mailto:partner@aptekaa.ru" className="inline-flex items-center gap-2 text-emerald-700 font-medium hover:underline">
+              <Mail className="w-4 h-4" /> partner@aptekaa.ru
             </a>
+            <div className="mt-2 text-sm text-slate-600">
+              Подключены и есть техвопрос? Пишите на{' '}
+              <a href="mailto:support@aptekaa.ru" className="text-emerald-700 font-medium hover:underline">support@aptekaa.ru</a>
+            </div>
           </div>
           <form onSubmit={submit} className="grid md:grid-cols-2 gap-4" data-testid="partner-request-form">
             {done && (

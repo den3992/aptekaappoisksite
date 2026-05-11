@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Clock, Briefcase } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Briefcase, LifeBuoy } from 'lucide-react';
 
 export default function Contacts() {
   return (
@@ -10,13 +10,15 @@ export default function Contacts() {
         <span className="mx-1.5">/</span><span>Контакты</span>
       </nav>
       <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">Контакты</h1>
-      <p className="text-slate-600 mb-8">Отвечаем в рабочие дни с 9:00 до 18:00 до МСК</p>
+      <p className="text-slate-600 mb-8">Отвечаем в рабочие дни с 9:00 до 18:00 МСК</p>
 
       <div className="grid sm:grid-cols-2 gap-3 mb-8">
         {[
           { i: Phone, t: 'Горячая линия', v: '8 (800) 700-70-70', s: 'Бесплатно по РФ' },
-          { i: Mail, t: 'Общая почта', v: 'info@aptekaa.ru', s: 'Для любых вопросов' },
-          { i: Briefcase, t: 'Для аптек-партнёров', v: 'partners@aptekaa.ru', s: 'Подключение и настройка' },
+          { i: Mail, t: 'Общая почта', v: 'info@aptekaa.ru', s: 'Для любых вопросов от посетителей сайта' },
+          { i: Briefcase, t: 'Для аптек-партнёров', v: 'partner@aptekaa.ru', s: 'Подключение и настройка' },
+          { i: LifeBuoy, t: 'Техподдержка для аптек', v: 'support@aptekaa.ru', s: 'Уже подключённым партнёрам' },
+          { i: Mail, t: 'Загрузка прайс-листов', v: 'price@aptekaa.ru', s: 'Отправка XLSX/CSV прайсов' },
           { i: MapPin, t: 'Юридический адрес', v: '141195, Московская обл., г. Фрязино, ул. Садовая, д. 1, пом. II', s: 'ООО «Идеал-Фарм»' },
         ].map((c, i) => (
           <div key={i} className="bg-white border border-slate-100 rounded-xl p-5">

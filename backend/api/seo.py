@@ -542,7 +542,8 @@ async def render_contacts_for_bot(db, city: str, request: Request) -> HTMLRespon
         "<dl>",
         "<dt>Горячая линия</dt><dd>8 (800) 700-70-70 — бесплатно по России</dd>",
         "<dt>Общая почта</dt><dd>info@aptekaa.ru — для пользователей сервиса</dd>",
-        "<dt>Для аптек-партнёров</dt><dd>partners@aptekaa.ru — подключение и настройка</dd>",
+        "<dt>Для аптек-партнёров</dt><dd>partner@aptekaa.ru — подключение и настройка</dd>",
+        "<dt>Техподдержка для аптек</dt><dd>support@aptekaa.ru — для уже подключённых партнёров</dd>",
         "<dt>Приём прайс-листов от аптек</dt><dd>price@aptekaa.ru</dd>",
         "<dt>Юридический адрес</dt>"
         "<dd>141195, Московская область, г. Фрязино, ул. Садовая, д. 1, пом. II</dd>",
@@ -595,9 +596,16 @@ async def render_contacts_for_bot(db, city: str, request: Request) -> HTMLRespon
             },
             {
                 "@type": "ContactPoint",
-                "email": "partners@aptekaa.ru",
+                "email": "partner@aptekaa.ru",
                 "contactType": "sales",
                 "areaServed": "RU",
+            },
+            {
+                "@type": "ContactPoint",
+                "email": "support@aptekaa.ru",
+                "contactType": "technical support",
+                "areaServed": "RU",
+                "availableLanguage": ["Russian"],
             },
         ],
     }
@@ -690,8 +698,9 @@ async def render_for_pharmacies_for_bot(db, city: str, request: Request) -> HTML
         "<li>Прозрачная статистика по показам и переходам</li>",
         "<li>Простая интеграция: достаточно XLSX/CSV-выгрузки</li>",
         "</ul>",
-        '<p>Для подключения напишите на <strong>partners@aptekaa.ru</strong> '
-        'или оставьте заявку через форму на сайте.</p>',
+        '<p>Для подключения напишите на <strong>partner@aptekaa.ru</strong> '
+        'или оставьте заявку через форму на сайте. Уже подключены и '
+        'нужна техническая помощь? Пишите на <strong>support@aptekaa.ru</strong>.</p>',
     ]
     return HTMLResponse(render_seo_html(
         title=title,
