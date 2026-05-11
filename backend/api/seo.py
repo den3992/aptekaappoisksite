@@ -520,6 +520,192 @@ async def render_category_for_bot(db, city: str, cat_slug: str, request: Request
     ))
 
 
+async def render_contacts_for_bot(db, city: str, request: Request) -> HTMLResponse:
+    """SSR for /kontakty (and /msk/kontakty, /spb/kontakty). Returns a
+    crawler-friendly page with the same contact data shown in the React
+    Contacts page. This is the URL we point Yandex.Webmaster at for the
+    site regionality binding — moderator needs to see a real contacts page,
+    not the homepage."""
+    cn = city_name(city)
+    title = "Контакты — АптекаА: телефон, email, юридический адрес"
+    desc = (
+        "Контакты сервиса АптекаА: телефон горячей линии 8 (800) 700-70-70, "
+        "почта info@aptekaa.ru. Юридический адрес: Московская область, г. Фрязино. "
+        f"Сервис работает в {cn_prepositional(cn)} и Санкт-Петербурге."
+    )
+    canonical = f"{base_url(request)}/kontakty"
+    body = [
+        '<p>АптекаА — информационный сервис по поиску и сравнению цен на лекарства '
+        f'в аптеках {cn_genitive(cn)} и Санкт-Петербурга. Свяжитесь с нами удобным '
+        'способом:</p>',
+        "<h2>Связь с нами</h2>",
+        "<dl>",
+        "<dt>Горячая линия</dt><dd>8 (800) 700-70-70 — бесплатно по России</dd>",
+        "<dt>Общая почта</dt><dd>info@aptekaa.ru — для пользователей сервиса</dd>",
+        "<dt>Для аптек-партнёров</dt><dd>partners@aptekaa.ru — подключение и настройка</dd>",
+        "<dt>Приём прайс-листов от аптек</dt><dd>price@aptekaa.ru</dd>",
+        "<dt>Юридический адрес</dt>"
+        "<dd>141195, Московская область, г. Фрязино, ул. Садовая, д. 1, пом. II</dd>",
+        "<dt>Юридическое лицо</dt><dd>ООО «Идеал-Фарм»</dd>",
+        "<dt>Режим работы поддержки</dt><dd>Пн-Пт, 9:00–18:00 (МСК)</dd>",
+        "</dl>",
+        "<h2>География работы сервиса</h2>",
+        '<p>Сервис АптекаА предоставляет информацию о наличии и ценах препаратов '
+        'в аптеках следующих регионов:</p>',
+        "<ul>",
+        "<li><strong>Москва и Московская область</strong> — основной регион работы сервиса</li>",
+        "<li><strong>Санкт-Петербург и Ленинградская область</strong></li>",
+        "</ul>",
+        '<p>Юридическое лицо ООО «Идеал-Фарм» зарегистрировано в Московской '
+        'области и осуществляет деятельность на территории Российской Федерации '
+        'в соответствии с действующим законодательством.</p>',
+    ]
+
+    import json as _json
+    org_schema = {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "АптекаА",
+        "legalName": "ООО «Идеал-Фарм»",
+        "url": f"{base_url(request)}",
+        "logo": f"{base_url(request)}/logo.png",
+        "email": "info@aptekaa.ru",
+        "telephone": "+7-800-700-70-70",
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "ул. Садовая, д. 1, пом. II",
+            "addressLocality": "Фрязино",
+            "addressRegion": "Московская область",
+            "postalCode": "141195",
+            "addressCountry": "RU",
+        },
+        "areaServed": [
+            {"@type": "AdministrativeArea", "name": "Москва"},
+            {"@type": "AdministrativeArea", "name": "Московская область"},
+            {"@type": "AdministrativeArea", "name": "Санкт-Петербург"},
+        ],
+        "contactPoint": [
+            {
+                "@type": "ContactPoint",
+                "telephone": "+7-800-700-70-70",
+                "contactType": "customer service",
+                "email": "info@aptekaa.ru",
+                "areaServed": "RU",
+                "availableLanguage": ["Russian"],
+            },
+            {
+                "@type": "ContactPoint",
+                "email": "partners@aptekaa.ru",
+                "contactType": "sales",
+                "areaServed": "RU",
+            },
+        ],
+    }
+    return HTMLResponse(render_seo_html(
+        title=title,
+        description=desc,
+        canonical_url=canonical,
+        h1="Контакты сервиса АптекаА",
+        body_html="\n".join(body),
+        schema_jsonld=_json.dumps(org_schema, ensure_ascii=False),
+        breadcrumbs=[
+            ("Главная", f"{base_url(request)}/{city}"),
+            ("Контакты", canonical),
+        ],
+    ))
+
+
+async def render_about_for_bot(db, city: str, request: Request) -> HTMLResponse:
+    """SSR for /o-servise — about page."""
+    cn = city_name(city)
+    title = "О сервисе АптекаА — информационный поисковик лекарств в аптеках"
+    desc = (
+        "АптекаА — бесплатный информационный сервис по поиску лекарственных "
+        f"препаратов и сравнению цен в аптеках {cn_genitive(cn)} и Санкт-Петербурга. "
+        "Соответствует законодательству РФ, хранение данных в России."
+    )
+    canonical = f"{base_url(request)}/o-servise"
+    body = [
+        '<p>АптекаА — информационный сервис по поиску лекарственных препаратов, '
+        'биологически активных добавок и медицинских изделий в аптеках России. '
+        'Мы помогаем людям быстро находить нужные препараты по лучшей цене и '
+        'в ближайших аптеках.</p>',
+        "<h2>Возможности сервиса</h2>",
+        "<ul>",
+        "<li><strong>Быстрый поиск:</strong> находите препарат в десятках аптек за секунды</li>",
+        "<li><strong>Сравнение цен:</strong> цены и наличие во всех подключённых аптеках в одном месте</li>",
+        "<li><strong>Карта аптек:</strong> найдите ближайшую аптеку с нужным препаратом</li>",
+        "<li><strong>Аналоги препаратов:</strong> подберите более доступный аналог</li>",
+        "<li><strong>Ежедневное обновление:</strong> цены и наличие обновляются регулярно</li>",
+        "</ul>",
+        "<h2>Соответствие законодательству</h2>",
+        '<p>АптекаА работает в полном соответствии с законодательством Российской '
+        'Федерации, включая ФЗ-152 «О персональных данных». Все данные '
+        'пользователей хранятся на серверах в России.</p>',
+        "<h2>География</h2>",
+        f"<p>Основные регионы работы сервиса: <strong>{cn_genitive(cn)} и Московская "
+        "область</strong>, <strong>Санкт-Петербург и Ленинградская область</strong>.</p>",
+        '<div><p><strong>Важно:</strong> АптекаА не является аптекой и не '
+        'осуществляет продажу или бронирование лекарств. Сведения о ценах и '
+        'наличии носят справочный характер. Имеются противопоказания, '
+        'необходима консультация со специалистом.</p></div>',
+    ]
+    return HTMLResponse(render_seo_html(
+        title=title,
+        description=desc,
+        canonical_url=canonical,
+        h1="О сервисе АптекаА",
+        body_html="\n".join(body),
+        breadcrumbs=[
+            ("Главная", f"{base_url(request)}/{city}"),
+            ("О сервисе", canonical),
+        ],
+    ))
+
+
+async def render_for_pharmacies_for_bot(db, city: str, request: Request) -> HTMLResponse:
+    """SSR for /dlya-aptek — landing for pharmacy partners."""
+    cn = city_name(city)
+    title = "Для аптек — подключение к сервису АптекаА | Партнёрство"
+    desc = (
+        "Подключите вашу аптеку к сервису АптекаА бесплатно. Загружайте прайс-листы, "
+        f"получайте дополнительных клиентов из {cn_genitive(cn)} и других регионов."
+    )
+    canonical = f"{base_url(request)}/dlya-aptek"
+    body = [
+        '<p>Сервис АптекаА предлагает аптекам-партнёрам бесплатный канал '
+        'привлечения клиентов через сравнение цен. Тысячи пользователей '
+        f"ежедневно ищут лекарства в {cn_prepositional(cn)} и других городах.</p>",
+        "<h2>Как это работает</h2>",
+        "<ol>",
+        "<li>Оставьте заявку — мы свяжемся с вами в течение рабочего дня</li>",
+        "<li>Получите токен для загрузки прайс-листа (XLSX/CSV)</li>",
+        "<li>Загружайте обновления через web-форму или по email на price@aptekaa.ru</li>",
+        "<li>Ваши цены становятся доступны в поиске сервиса АптекаА</li>",
+        "</ol>",
+        "<h2>Что это даёт аптеке</h2>",
+        "<ul>",
+        "<li>Дополнительный поток клиентов из поиска</li>",
+        "<li>Бесплатное размещение для начинающих партнёров</li>",
+        "<li>Прозрачная статистика по показам и переходам</li>",
+        "<li>Простая интеграция: достаточно XLSX/CSV-выгрузки</li>",
+        "</ul>",
+        '<p>Для подключения напишите на <strong>partners@aptekaa.ru</strong> '
+        'или оставьте заявку через форму на сайте.</p>',
+    ]
+    return HTMLResponse(render_seo_html(
+        title=title,
+        description=desc,
+        canonical_url=canonical,
+        h1="АптекаА для аптек-партнёров",
+        body_html="\n".join(body),
+        breadcrumbs=[
+            ("Главная", f"{base_url(request)}/{city}"),
+            ("Для аптек", canonical),
+        ],
+    ))
+
+
 def _render_404(request: Request, city: str) -> str:
     return render_seo_html(
         title="Страница не найдена | АптекаА",

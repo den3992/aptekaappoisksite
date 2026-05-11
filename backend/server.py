@@ -26,6 +26,9 @@ from api.seo import (
     render_home_for_bot,
     render_pharmacy_for_bot,
     render_category_for_bot,
+    render_contacts_for_bot,
+    render_about_for_bot,
+    render_for_pharmacies_for_bot,
 )
 from security import SecurityHeadersMiddleware
 
@@ -338,6 +341,15 @@ async def seo_render(path: str, request: Request):
         return await render_pharmacy_for_bot(db, city, rest[1], request)
     if section == "kategorii" and len(rest) >= 2:
         return await render_category_for_bot(db, city, rest[1], request)
+    # Static pages: /kontakty, /o-servise, /dlya-aptek (with or without city prefix).
+    # These have their own SSR templates so search bots see unique title/h1/content
+    # — critical for Yandex.Webmaster regionality verification (contacts page).
+    if section == "kontakty":
+        return await render_contacts_for_bot(db, city, request)
+    if section == "o-servise":
+        return await render_about_for_bot(db, city, request)
+    if section == "dlya-aptek":
+        return await render_for_pharmacies_for_bot(db, city, request)
     return await render_home_for_bot(db, city, request)
 
 
