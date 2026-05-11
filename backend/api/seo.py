@@ -359,6 +359,22 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
         body.append(f'<li><a href="{u}">{html.escape(p["name"])}</a> — {html.escape(p["address"])}</li>')
     body.append("</ul>")
 
+    # Mandatory medical disclaimer (ФЗ-38 «О рекламе», ст. 24).
+    # Mirrors what real users see via Footer + MedDetail page, so SSR vs React are
+    # consistent (no cloaking). Uses LLM-provided disclaimer if present, otherwise
+    # the standard wording matching the React UI.
+    disclaimer_text = enrichment.get("disclaimer") or (
+        "Имеются противопоказания. Перед применением проконсультируйтесь с врачом "
+        "или фармацевтом. Информация на странице носит справочный характер и не "
+        "является рекомендацией к применению, не заменяет назначение специалиста. "
+        "АптекаА не является аптекой и не осуществляет продажу лекарственных средств."
+    )
+    body.append(
+        '<div role="note" aria-label="Медицинское предупреждение">'
+        f'<p><strong>Важно:</strong> {html.escape(disclaimer_text)}</p>'
+        '</div>'
+    )
+
     # Schema.org Drug
     import json as _json
     drug_schema = {
