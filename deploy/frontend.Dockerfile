@@ -1,8 +1,10 @@
 # Frontend Dockerfile — multi-stage: yarn build → nginx static
 FROM node:20-alpine AS build
 WORKDIR /app
-COPY frontend/package.json frontend/yarn.lock /app/
-RUN yarn install --frozen-lockfile --network-timeout 600000
+# yarn.lock не закоммичен (gitignore ловит .yarn/* и т.п.), поэтому копируем
+# только package.json и даём yarn создать свой lock внутри образа.
+COPY frontend/package.json /app/
+RUN yarn install --network-timeout 600000
 COPY frontend /app
 ARG REACT_APP_BACKEND_URL=https://aptekaa.ru
 ARG REACT_APP_YANDEX_MAPS_KEY
