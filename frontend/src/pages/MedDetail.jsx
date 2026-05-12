@@ -226,10 +226,19 @@ export default function MedDetail() {
           </h1>
           <p className="text-slate-600 mt-1.5">{formLower}</p>
 
-          <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+          <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
             <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Производитель</div><div className="font-medium text-slate-800">{med.manufacturer || '—'}</div></div>
             <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Страна</div><div className="font-medium text-slate-800">{med.manufacturer_country || '—'}</div></div>
             {med.mnn && <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">МНН</div><div className="font-medium text-slate-800">{med.mnn.toLowerCase()}</div></div>}
+            {med.variants && med.variants.length > 0 && (
+              <div className="bg-slate-50 rounded-lg p-3" data-testid="med-variants-cell">
+                <div className="text-[11px] text-slate-500 uppercase tracking-wide">Фасовка</div>
+                <div className="font-medium text-slate-800">
+                  {simplifyPack(med.variants[0].pack_size) || med.variants[0].pack_size || '—'}
+                  {med.variants.length > 1 && <span className="text-slate-500 font-normal"> +{med.variants.length - 1}</span>}
+                </div>
+              </div>
+            )}
           </div>
 
 
