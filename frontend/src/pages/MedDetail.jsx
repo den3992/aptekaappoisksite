@@ -198,6 +198,22 @@ export default function MedDetail() {
             {med.mnn && <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">МНН</div><div className="font-medium text-slate-800">{med.mnn.toLowerCase()}</div></div>}
           </div>
 
+          {med.variants && med.variants.length > 0 && (
+            <div className="mt-4 bg-slate-50/60 rounded-lg p-4" data-testid="med-variants">
+              <div className="text-[11px] text-slate-500 uppercase tracking-wide mb-2">
+                Фасовка{med.variants.length > 1 ? ` (${med.variants.length} вариантов)` : ''}
+              </div>
+              <ul className="space-y-1 text-sm text-slate-800">
+                {med.variants.slice(0, 12).map((v, i) => (
+                  <li key={v.gtin || i} className="flex items-baseline gap-2">
+                    <span className="text-emerald-700">•</span>
+                    <span>{v.pack_size || v.primary_pack_desc || v.label_name || `Вариант ${i + 1}`}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {minPrice !== null && (
             <div className="mt-6 bg-emerald-50/60 border border-emerald-100 rounded-xl p-5">
               <div className="flex items-end gap-4">
