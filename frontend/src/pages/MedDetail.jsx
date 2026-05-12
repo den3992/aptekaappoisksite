@@ -23,16 +23,65 @@ function titleCase(s) {
 //   "ФЛАКОН 100 мл"  -> "100 мл"
 function simplifyPack(s) {
   if (!s) return '';
-  const txt = String(s).trim();
+  // Strip ЕСКЛП encoding artifacts: 'см[3*];^мл' is just 'мл'.
+  // Also drop trailing/inline footnote markers and the ';^' field separator.
+  let txt = String(s).trim()
+    .replace(/\s*см\s*\[3\*\]\s*;?\s*\^?\s*мл/gi, ' мл')
+    .replace(/\s*л\s*;\s*\^?\s*дм\s*\[3\*\]/gi, ' л')
+    .replace(/м\s*\[3\*\]/gi, 'м³')
+    .replace(/\[\*\]/g, '')
+    .replace(/;\^/g, ' ')
+    .replace(/\bусл\.?\s*ед\b/gi, 'усл.ед.')
+    .replace(/\s+/g, ' ')
+    .trim();
+  // N x <CONTAINER> по M [unit]  →  'N × M <unit>' style.
+  // Covers ампулы, флаконы, шприцы, банки, блистеры, упаковки, стрипы, картриджи, тубы.
+  let amp = txt.match(/^(\\d+|НЕ УКАЗАНО)\\s*[xх×]\\s*(АМПУЛ\S*|ФЛАКОН\S*|ШПРИЦ\S*|БАНК\S*|БЛИСТЕР\S*|УПАКОВК\S*|СТРИП\S*|КАРТРИДЖ\S*|ТУБ\S*)[^\\d]*\\s*по\\s*(\\d+(?:[\\.,]\\d+)?)\\s*(?:тысяч.?\\s*)?(\\S+)?/i);
+  if (amp) {
+    const n = amp[1] === 'НЕ УКАЗАНО' ? '1' : amp[1];
+    let m = amp[3].replace(',', '.');
+    if (m.endsWith('.000')) m = m.slice(0, -4);
+    let u = (amp[4] || '').replace(/[.,]/g, '').toLowerCase();
+    // common synonyms
+    if (u === 'миллиграмм') u = 'мг';
+    if (u === 'миллилитр') u = 'мл';
+    if (u === 'грамм') u = 'г';
+    const unit = ['мл','г','мг','мкг','л','шт'].includes(u) ? u : 'шт';
+    txt = `${n} × ${m} ${unit}`;
+  }
+  // Lone 'CONTAINER по M [unit]' (no leading count) — treat as 1 × M
+  else {
+    let solo = txt.match(/^(АМПУЛ\S*|ФЛАКОН\S*|ШПРИЦ\S*|БАНК\S*|БЛИСТЕР\S*|УПАКОВК\S*|СТРИП\S*|КАРТРИДЖ\S*|ТУБ\S*)[^\\d]*\\s*по\\s*(\\d+(?:[\\.,]\\d+)?)\\s*(\\S+)?/i);
+    if (solo) {
+      let m = solo[2].replace(',', '.');
+      if (m.endsWith('.000')) m = m.slice(0, -4);
+      let u = (solo[3] || '').replace(/[.,]/g, '').toLowerCase();
+      if (u === 'миллиграмм') u = 'мг';
+      if (u === 'миллилитр') u = 'мл';
+      if (u === 'грамм') u = 'г';
+      const unit = ['мл','г','мг','мкг','л','шт'].includes(u) ? u : 'шт';
+      txt = `${m} ${unit}`;
+    }
+  }
   // "A × B шт" or "A x B шт"  -> A*B
-  let m = txt.match(/(\d+)\s*[×xх]\s*(\d+(?:[\.,]\d+)?)\s*(шт|табл?\.?|капс?\.?)/i);
-  if (m) return `${m[1]} × ${m[2].replace(',', '.')} шт`;
+  let m = txt.match(/(\d+)\s*[×xх]\s*(\d+(?:[\.,]\d+)?)\s*(шт|табл?\.?|капс?\.?|доз\S*|усл\.?\s*ед\.?)/i);
+  if (m) {
+    const u = m[3].toLowerCase();
+    const unit = u.startsWith('доз') ? 'доз' : (u.startsWith('усл') ? 'усл.ед.' : 'шт');
+    return `${m[1]} × ${m[2].replace(',', '.')} ${unit}`;
+  }
   // "по N <unit>" or contains "N <unit>"
-  m = txt.match(/(?:по\s+)?(\d+(?:[\.,]\d+)?)\s*(шт|табл?\.?|капс?\.?|г|мг|мл|мкг|МЕ|%)/i);
+  m = txt.match(/(?:по\s+)?(\d+(?:[\.,]\d+)?)\s*(шт|табл?\.?|капс?\.?|доз\S*|усл\.?\s*ед\.?|г|мг|мл|мкг|МЕ|ЕД|м³|%)/i);
   if (m) {
     const v = m[1].replace(',', '.');
     const u = (m[2] || 'шт').toLowerCase().replace(/\./g, '');
-    const unit = u.startsWith('табл') || u.startsWith('капс') ? 'шт' : (m[2] === 'МЕ' ? 'МЕ' : u);
+    let unit;
+    if (u.startsWith('табл') || u.startsWith('капс')) unit = 'шт';
+    else if (u.startsWith('доз')) unit = 'доз';
+    else if (u.startsWith('усл')) unit = 'усл.ед.';
+    else if (m[2] === 'МЕ' || m[2] === 'ЕД') unit = m[2];
+    else if (m[2] === 'м³') unit = 'м³';
+    else unit = u;
     return `${parseFloat(v) % 1 === 0 ? parseInt(v, 10) : v} ${unit}`;
   }
   // "№20"
@@ -227,9 +276,11 @@ export default function MedDetail() {
           <h1 className="text-3xl md:text-4xl font-bold text-slate-900" data-testid="med-h1">
             {med.name}
             {med.dosage && <span className="text-slate-700"> {med.dosage}</span>}
-            {med.variants && med.variants.length === 1 && simplifyPack(med.variants[0].pack_size) && (
-              <span className="text-slate-700">, {simplifyPack(med.variants[0].pack_size)}</span>
-            )}
+            {(() => {
+              if (!med.variants || med.variants.length === 0) return null;
+              const uniq = [...new Set(med.variants.map(v => simplifyPack(v.pack_size)).filter(Boolean))];
+              return uniq.length === 1 ? <span className="text-slate-700">, {uniq[0]}</span> : null;
+            })()}
           </h1>
           <p className="text-slate-600 mt-1.5">{formLower}</p>
 
@@ -237,15 +288,20 @@ export default function MedDetail() {
             <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Производитель</div><div className="font-medium text-slate-800">{med.manufacturer || '—'}</div></div>
             <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Страна</div><div className="font-medium text-slate-800">{titleCase(med.manufacturer_country) || '—'}</div></div>
             {med.mnn && <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">МНН</div><div className="font-medium text-slate-800">{titleCase(med.mnn)}</div></div>}
-            {med.variants && med.variants.length > 0 && (
-              <div className="bg-slate-50 rounded-lg p-3" data-testid="med-variants-cell">
-                <div className="text-[11px] text-slate-500 uppercase tracking-wide">Фасовка</div>
-                <div className="font-medium text-slate-800">
-                  {simplifyPack(med.variants[0].pack_size) || med.variants[0].pack_size || '—'}
-                  {med.variants.length > 1 && <span className="text-slate-500 font-normal"> +{med.variants.length - 1}</span>}
+            {(() => {
+              if (!med.variants || med.variants.length === 0) return null;
+              const uniq = [...new Set(med.variants.map(v => simplifyPack(v.pack_size)).filter(Boolean))];
+              if (uniq.length === 0) return null;
+              return (
+                <div className="bg-slate-50 rounded-lg p-3" data-testid="med-variants-cell">
+                  <div className="text-[11px] text-slate-500 uppercase tracking-wide">Фасовка</div>
+                  <div className="font-medium text-slate-800">
+                    {uniq[0]}
+                    {uniq.length > 1 && <span className="text-slate-500 font-normal"> +{uniq.length - 1}</span>}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
 
 

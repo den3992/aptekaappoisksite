@@ -260,20 +260,62 @@ def render_seo_html(
 def _simplify_pack(s):
     """Mirrors simplifyPack() in MedDetail.jsx for SSR consistency."""
     if not s: return ""
-    txt = str(s).strip()
     import re as _re
-    m = _re.search(r"(\d+)\s*[×xх]\s*(\d+(?:[\.,]\d+)?)\s*(шт|табл?\.?|капс?\.?)", txt, _re.I)
+    txt = str(s).strip()
+    # Strip ЕСКЛП encoding artifacts: 'см[3*];^мл' → 'мл'
+    txt = _re.sub(r"\s*см\s*\[3\*\]\s*;?\s*\^?\s*мл", " мл", txt, flags=_re.I)
+    txt = _re.sub(r"\s*л\s*;\s*\^?\s*дм\s*\[3\*\]", " л", txt, flags=_re.I)
+    txt = _re.sub(r"м\s*\[3\*\]", "м³", txt, flags=_re.I)
+    txt = _re.sub(r"\[\*\]", "", txt)
+    txt = _re.sub(r";\^", " ", txt)
+    txt = _re.sub(r"\bусл\.?\s*ед\b", "усл.ед.", txt, flags=_re.I)
+    txt = _re.sub(r"\s+", " ", txt).strip()
+    # N x <CONTAINER> по M [unit]
+    amp = _re.match(r"^(\d+|НЕ УКАЗАНО)\s*[xх×]\s*(АМПУЛ\\S*|ФЛАКОН\\S*|ШПРИЦ\\S*|БАНК\\S*|БЛИСТЕР\\S*|УПАКОВК\\S*|СТРИП\\S*|КАРТРИДЖ\\S*|ТУБ\\S*)[^\d]*\s*по\s*(\d+(?:[\.,]\d+)?)\s*(?:тысяч.?\s*)?(\S+)?", txt, _re.I)
+    if amp:
+        n = "1" if amp.group(1) == "НЕ УКАЗАНО" else amp.group(1)
+        m_val = amp.group(3).replace(",", ".")
+        if m_val.endswith(".000"): m_val = m_val[:-4]
+        u_raw = (amp.group(4) or "").replace(".", "").replace(",", "").lower()
+        synonyms = {"миллиграмм": "мг", "миллилитр": "мл", "грамм": "г"}
+        u_raw = synonyms.get(u_raw, u_raw)
+        unit = u_raw if u_raw in ("мл","г","мг","мкг","л","шт") else "шт"
+        txt = f"{n} × {m_val} {unit}"
+    else:
+        solo = _re.match(r"^(АМПУЛ\\S*|ФЛАКОН\\S*|ШПРИЦ\\S*|БАНК\\S*|БЛИСТЕР\\S*|УПАКОВК\\S*|СТРИП\\S*|КАРТРИДЖ\\S*|ТУБ\\S*)[^\d]*\s*по\s*(\d+(?:[\.,]\d+)?)\s*(\S+)?", txt, _re.I)
+        if solo:
+            m_val = solo.group(2).replace(",", ".")
+            if m_val.endswith(".000"): m_val = m_val[:-4]
+            u_raw = (solo.group(3) or "").replace(".", "").replace(",", "").lower()
+            synonyms = {"миллиграмм": "мг", "миллилитр": "мл", "грамм": "г"}
+            u_raw = synonyms.get(u_raw, u_raw)
+            unit = u_raw if u_raw in ("мл","г","мг","мкг","л","шт") else "шт"
+            txt = f"{m_val} {unit}"
+    m = _re.search(r"(\d+)\s*[×xх]\s*(\d+(?:[\.,]\d+)?)\s*(шт|табл?\.?|капс?\.?|доз\S*|усл\.?\s*ед\.?)", txt, _re.I)
     if m:
-        return f"{m.group(1)} × {m.group(2).replace(',', '.')} шт"
-    m = _re.search(r"(?:по\s+)?(\d+(?:[\.,]\d+)?)\s*(шт|табл?\.?|капс?\.?|г|мг|мл|мкг|МЕ|%)", txt, _re.I)
+        u = m.group(3).lower()
+        if u.startswith("доз"):
+            unit = "доз"
+        elif u.startswith("усл"):
+            unit = "усл.ед."
+        else:
+            unit = "шт"
+        return f"{m.group(1)} × {m.group(2).replace(',', '.')} {unit}"
+    m = _re.search(r"(?:по\s+)?(\d+(?:[\.,]\d+)?)\s*(шт|табл?\.?|капс?\.?|доз\S*|усл\.?\s*ед\.?|г|мг|мл|мкг|МЕ|ЕД|м³|%)", txt, _re.I)
     if m:
         v = m.group(1).replace(",", ".")
         u_raw = (m.group(2) or "шт")
         u = u_raw.lower().replace(".", "")
         if u.startswith("табл") or u.startswith("капс"):
             unit = "шт"
-        elif u_raw == "МЕ":
-            unit = "МЕ"
+        elif u.startswith("доз"):
+            unit = "доз"
+        elif u.startswith("усл"):
+            unit = "усл.ед."
+        elif u_raw in ("МЕ", "ЕД"):
+            unit = u_raw
+        elif u_raw == "м³":
+            unit = "м³"
         else:
             unit = u
         fv = float(v)
@@ -304,12 +346,13 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
     image_path = med.get("image_url") or ""
     image_abs = f"{base_url(request)}{image_path}" if image_path and image_path.startswith("/") else (image_path or None)
 
+    _uniq_packs = sorted({_simplify_pack(v.get("pack_size")) for v in variants if _simplify_pack(v.get("pack_size"))})
+    pack_short = _uniq_packs[0] if len(_uniq_packs) == 1 else ""
+
     title_pieces = [name]
     if dosage: title_pieces.append(dosage)
-    if len(variants) == 1:
-        ps = _simplify_pack(variants[0].get("pack_size"))
-        if ps:
-            title_pieces.append(ps)
+    if pack_short:
+        title_pieces.append(pack_short)
     title_pieces.append(f"купить в {cn_prepositional(cn)}")
     title_pieces.append(f"— цены и наличие в аптеках | АптекаА")
     title = " ".join(title_pieces)
@@ -433,7 +476,6 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
         (name, canonical),
     ]
 
-    pack_short = _simplify_pack(variants[0].get("pack_size")) if len(variants) == 1 else ""
     h1 = " ".join(filter(None, [name, dosage])) or name
     if pack_short:
         h1 = f"{h1}, {pack_short}"
