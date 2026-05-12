@@ -272,6 +272,8 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
     vital = med.get("vital", False)
     limit_price = med.get("limit_price")
     variants = med.get("variants", []) or []
+    image_path = med.get("image_url") or ""
+    image_abs = f"{base_url(request)}{image_path}" if image_path and image_path.startswith("/") else (image_path or None)
 
     title_pieces = [name]
     if dosage: title_pieces.append(dosage)
@@ -386,6 +388,7 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
         "dosageForm": form or None,
         "description": desc,
         "prescriptionStatus": "PrescriptionOnly" if rx else "OTC",
+        "image": image_abs,
         "url": canonical,
     }
     drug_schema = {k: v for k, v in drug_schema.items() if v}
@@ -398,6 +401,13 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
     ]
 
     h1 = " ".join(filter(None, [name, dosage, form])) or name
+    if image_abs:
+        body.insert(0, (
+            f'<figure><img src="{html.escape(image_abs)}" '
+            f'alt="{html.escape(h1)}" loading="eager" '
+            f'style="max-width:320px;height:auto;" />'
+            f'<figcaption>{html.escape(name)}</figcaption></figure>'
+        ))
     return HTMLResponse(render_seo_html(
         title=title,
         description=desc,
@@ -406,6 +416,7 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
         body_html="\n".join(body),
         schema_jsonld=schema_jsonld,
         breadcrumbs=crumbs,
+        image=image_abs,
     ))
 
 

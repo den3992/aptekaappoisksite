@@ -168,7 +168,17 @@ export default function MedDetail() {
       <div className="grid lg:grid-cols-[380px_1fr] gap-8 mb-10">
         <div className="bg-white border border-slate-100 rounded-2xl p-6">
           <div className="aspect-square rounded-xl bg-slate-50 overflow-hidden flex items-center justify-center">
-            <Pill className="w-24 h-24 text-emerald-300" />
+            {med.image_url ? (
+              <img
+                src={med.image_url}
+                alt={[med.name, med.dosage, med.form].filter(Boolean).join(", ")}
+                className="max-w-full max-h-full object-contain p-4"
+                loading="eager"
+                data-testid="med-image"
+              />
+            ) : (
+              <Pill className="w-24 h-24 text-emerald-300" />
+            )}
           </div>
         </div>
         <div>
