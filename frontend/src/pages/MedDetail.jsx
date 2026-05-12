@@ -137,6 +137,15 @@ function formatPackList(items) {
   return `${items[0]}, ${items[1]}, … (${items.length} шт)`;
 }
 
+// Sort unique pack labels by leading numeric value ascending.
+function sortPacks(items) {
+  return [...items].sort((a, b) => {
+    const na = parseFloat(String(a).match(/^(\d+(?:[\.,]\d+)?)/)?.[1]?.replace(',', '.') || '0');
+    const nb = parseFloat(String(b).match(/^(\d+(?:[\.,]\d+)?)/)?.[1]?.replace(',', '.') || '0');
+    return na - nb;
+  });
+}
+
 function PriceMap({ med, prices, pharmacies, cityCenter, onSelect, selected }) {
   const ref = useRef(null);
   const mapRef = useRef(null);
@@ -244,7 +253,7 @@ export default function MedDetail() {
   // Unique pack list (computed once per med).
   const packs = useMemo(() => {
     if (!med?.variants) return [];
-    return [...new Set(med.variants.map(v => simplifyPack(v.pack_size)).filter(Boolean))];
+    return sortPacks([...new Set(med.variants.map(v => simplifyPack(v.pack_size)).filter(Boolean))]);
   }, [med]);
 
   // Active pack = explicit selection || first pack || null.
@@ -387,7 +396,7 @@ export default function MedDetail() {
             {med.dosage && <span className="text-slate-700"> {med.dosage}</span>}
             {(() => {
               if (!med.variants || med.variants.length === 0) return null;
-              const uniq = [...new Set(med.variants.map(v => simplifyPack(v.pack_size)).filter(Boolean))];
+              const uniq = sortPacks([...new Set(med.variants.map(v => simplifyPack(v.pack_size)).filter(Boolean))]);
               return uniq.length === 1 ? <span className="text-slate-700">, {uniq[0]}</span> : null;
             })()}
           </h1>
@@ -401,7 +410,7 @@ export default function MedDetail() {
 
           {(() => {
             if (!med.variants || med.variants.length === 0) return null;
-            const uniq = [...new Set(med.variants.map(v => simplifyPack(v.pack_size)).filter(Boolean))];
+            const uniq = sortPacks([...new Set(med.variants.map(v => simplifyPack(v.pack_size)).filter(Boolean))]);
             if (uniq.length < 2) return null;
             return (
               <div className="mt-5" data-testid="med-pack-chips">

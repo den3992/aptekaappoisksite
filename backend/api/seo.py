@@ -369,7 +369,11 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
     image_path = med.get("image_url") or ""
     image_abs = f"{base_url(request)}{image_path}" if image_path and image_path.startswith("/") else (image_path or None)
 
-    _uniq_packs = sorted({_simplify_pack(v.get("pack_size")) for v in variants if _simplify_pack(v.get("pack_size"))})
+    def _pack_sort_key(p):
+        import re as _re
+        m = _re.match(r"^(\d+(?:[\.,]\d+)?)", p)
+        return float(m.group(1).replace(",", ".")) if m else 0.0
+    _uniq_packs = sorted({_simplify_pack(v.get("pack_size")) for v in variants if _simplify_pack(v.get("pack_size"))}, key=_pack_sort_key)
     pack_short = _uniq_packs[0] if len(_uniq_packs) == 1 else ""
 
     title_pieces = [name]
