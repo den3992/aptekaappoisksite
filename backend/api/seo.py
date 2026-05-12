@@ -711,6 +711,119 @@ async def render_category_for_bot(db, city: str, cat_slug: str, request: Request
     ))
 
 
+
+# ---------------------------------------------------------------------------
+# Index-pages SSR for crawlers (/<city>/preparaty, /<city>/apteki,
+# /<city>/kategorii). These URLs are listed in sitemap_static.xml; without
+# their own SSR the dispatcher fell through to 404, causing soft-404 warnings
+# in Yandex.Webmaster.
+# ---------------------------------------------------------------------------
+
+async def render_catalog_index_for_bot(db, city: str, request: Request) -> HTMLResponse:
+    cn = city_name(city)
+    title = f"Каталог лекарств А–Я — аптеки {cn_genitive(cn)} | АптекаА"
+    desc = (
+        f"Полный каталог зарегистрированных лекарственных препаратов в аптеках {cn_genitive(cn)}. "
+        f"Цены, наличие, аналоги. Бесплатный поиск без регистрации."
+    )
+    canonical = f"{base_url(request)}/{city}/preparaty"
+    total = await db.medications.count_documents({"is_canonical": {"$ne": False}})
+    body = [
+        f"<p>В каталоге <strong>{total:,}</strong> препаратов с актуальной информацией о наличии в аптеках {cn_genitive(cn)}.</p>".replace(",", " "),
+        "<h2>Категории препаратов</h2><ul>",
+    ]
+    for cat in CATEGORIES:
+        if cat["slug"] == "other":
+            continue
+        u = f"{base_url(request)}/{city}/kategorii/{cat['slug']}"
+        body.append(f'<li><a href="{u}">{html.escape(cat["title"])}</a></li>')
+    body.append("</ul>")
+    # Sample popular meds (alphabetical, first 24)
+    cursor = db.medications.find(
+        {"is_canonical": {"$ne": False}},
+        {"_id": 0, "slug": 1, "name": 1, "dosage": 1, "manufacturer": 1},
+    ).sort("name", 1).limit(24)
+    body.append("<h2>Препараты А–Я</h2><ul>")
+    async for m in cursor:
+        u = f"{base_url(request)}/{city}/preparaty/{m['slug']}"
+        label = " · ".join(filter(None, [m.get("name"), m.get("dosage"), m.get("manufacturer")]))
+        body.append(f'<li><a href="{u}">{html.escape(label)}</a></li>')
+    body.append("</ul>")
+    return HTMLResponse(render_seo_html(
+        title=title,
+        description=desc,
+        canonical_url=canonical,
+        h1=f"Каталог лекарств в {cn_genitive(cn)}",
+        body_html="\n".join(body),
+        breadcrumbs=[
+            ("Главная", f"{base_url(request)}/{city}"),
+            ("Каталог препаратов", canonical),
+        ],
+    ))
+
+
+async def render_pharmacies_index_for_bot(db, city: str, request: Request) -> HTMLResponse:
+    cn = city_name(city)
+    pharms = [p for p in PHARMACIES if p.get("city") == city]
+    title = f"Аптеки {cn_genitive(cn)} — адреса, телефоны, наличие лекарств | АптекаА"
+    desc = (
+        f"Аптеки-партнёры в {cn}: {len(pharms)} точек. Адреса, телефоны, "
+        f"график работы, актуальное наличие препаратов."
+    )
+    canonical = f"{base_url(request)}/{city}/apteki"
+    body = [
+        f"<p>В {cn_genitive(cn)} с нашим сервисом сотрудничают <strong>{len(pharms)}</strong> аптек. Выберите ближайшую и проверьте наличие нужного препарата.</p>",
+        "<ul>",
+    ]
+    for p in pharms:
+        u = f"{base_url(request)}/{city}/apteki/{p['id']}"
+        addr = p.get("address", "")
+        label = " — ".join(filter(None, [p.get("name"), addr]))
+        body.append(f'<li><a href="{u}">{html.escape(label)}</a></li>')
+    body.append("</ul>")
+    return HTMLResponse(render_seo_html(
+        title=title,
+        description=desc,
+        canonical_url=canonical,
+        h1=f"Аптеки {cn_genitive(cn)}",
+        body_html="\n".join(body),
+        breadcrumbs=[
+            ("Главная", f"{base_url(request)}/{city}"),
+            ("Аптеки", canonical),
+        ],
+    ))
+
+
+async def render_categories_index_for_bot(db, city: str, request: Request) -> HTMLResponse:
+    cn = city_name(city)
+    title = f"Категории лекарств — аптеки {cn_genitive(cn)} | АптекаА"
+    desc = (
+        f"Категории препаратов: от простуды, обезболивающие, витамины, для сердца и сосудов, "
+        f"аллергия, для матери и ребёнка. Наличие в аптеках {cn_genitive(cn)}."
+    )
+    canonical = f"{base_url(request)}/{city}/kategorii"
+    body = ["<ul>"]
+    for cat in CATEGORIES:
+        if cat["slug"] == "other":
+            continue
+        u = f"{base_url(request)}/{city}/kategorii/{cat['slug']}"
+        body.append(f'<li><a href="{u}">{html.escape(cat["title"])}</a></li>')
+    body.append("</ul>")
+    return HTMLResponse(render_seo_html(
+        title=title,
+        description=desc,
+        canonical_url=canonical,
+        h1=f"Категории лекарств в {cn_genitive(cn)}",
+        body_html="\n".join(body),
+        breadcrumbs=[
+            ("Главная", f"{base_url(request)}/{city}"),
+            ("Категории", canonical),
+        ],
+    ))
+
+
+
+
 async def render_contacts_for_bot(db, city: str, request: Request) -> HTMLResponse:
     """SSR for /kontakty (and /msk/kontakty, /spb/kontakty). Returns a
     crawler-friendly page with the same contact data shown in the React

@@ -26,6 +26,9 @@ from api.seo import (
     render_home_for_bot,
     render_pharmacy_for_bot,
     render_category_for_bot,
+    render_catalog_index_for_bot,
+    render_pharmacies_index_for_bot,
+    render_categories_index_for_bot,
     render_contacts_for_bot,
     render_about_for_bot,
     render_for_pharmacies_for_bot,
@@ -350,10 +353,16 @@ async def seo_render(path: str, request: Request):
     section = rest[0]
     if section == "preparaty" and len(rest) >= 2:
         return await render_med_for_bot(db, city, rest[1], request)
+    if section == "preparaty" and len(rest) == 1:
+        return await render_catalog_index_for_bot(db, city, request)
     if section == "apteki" and len(rest) >= 2:
         return await render_pharmacy_for_bot(db, city, rest[1], request)
+    if section == "apteki" and len(rest) == 1:
+        return await render_pharmacies_index_for_bot(db, city, request)
     if section == "kategorii" and len(rest) >= 2:
         return await render_category_for_bot(db, city, rest[1], request)
+    if section == "kategorii" and len(rest) == 1:
+        return await render_categories_index_for_bot(db, city, request)
     # Static pages: /kontakty, /o-servise, /dlya-aptek (with or without city prefix).
     # These have their own SSR templates so search bots see unique title/h1/content
     # — critical for Yandex.Webmaster regionality verification (contacts page).
