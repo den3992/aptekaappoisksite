@@ -187,6 +187,7 @@ export default function MedDetail() {
   const [analogs, setAnalogs] = useState([]);
   const [pharmacies, setPharmacies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedPack, setSelectedPack] = useState(null);
   const [notFound, setNotFound] = useState(false);
 
   // Sync URL city → context
@@ -309,23 +310,43 @@ export default function MedDetail() {
           </h1>
           <p className="text-slate-600 mt-1.5">{formLower}</p>
 
-          <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+          <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
             <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Производитель</div><div className="font-medium text-slate-800">{med.manufacturer || '—'}</div></div>
             <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Страна</div><div className="font-medium text-slate-800">{titleCase(med.manufacturer_country) || '—'}</div></div>
             {med.mnn && <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">МНН</div><div className="font-medium text-slate-800">{titleCase(med.mnn)}</div></div>}
-            {(() => {
-              if (!med.variants || med.variants.length === 0) return null;
-              const uniq = [...new Set(med.variants.map(v => simplifyPack(v.pack_size)).filter(Boolean))];
-              if (uniq.length === 0) return null;
-              const display = formatPackList(uniq);
-              return (
-                <div className="bg-slate-50 rounded-lg p-3" data-testid="med-variants-cell">
-                  <div className="text-[11px] text-slate-500 uppercase tracking-wide">Фасовка</div>
-                  <div className="font-medium text-slate-800">{display}</div>
-                </div>
-              );
-            })()}
           </div>
+
+          {(() => {
+            if (!med.variants || med.variants.length === 0) return null;
+            const uniq = [...new Set(med.variants.map(v => simplifyPack(v.pack_size)).filter(Boolean))];
+            if (uniq.length < 2) return null;
+            return (
+              <div className="mt-5" data-testid="med-pack-chips">
+                <div className="text-[11px] text-slate-500 uppercase tracking-wide mb-2">Фасовка</div>
+                <div className="flex flex-wrap gap-2">
+                  {uniq.map((p, i) => {
+                    const active = selectedPack === p || (selectedPack === null && i === 0);
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setSelectedPack(p)}
+                        data-testid={`pack-chip-${i}`}
+                        className={
+                          "px-3.5 py-1.5 rounded-full text-sm border transition " +
+                          (active
+                            ? "bg-emerald-600 border-emerald-600 text-white shadow-sm"
+                            : "bg-white border-slate-200 text-slate-700 hover:border-emerald-300 hover:text-emerald-700")
+                        }
+                      >
+                        {p}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
 
 
           {minPrice !== null && (

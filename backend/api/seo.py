@@ -474,6 +474,13 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
         '</div>'
     )
 
+    # Pack-size list (visible to bots so they see the assortment)
+    if len(_uniq_packs) >= 2:
+        chips_html = " · ".join(html.escape(p) for p in _uniq_packs)
+        body.append(
+            f'<div class="pack-sizes"><strong>Фасовка:</strong> {chips_html}</div>'
+        )
+
     # Schema.org Drug
     import json as _json
     drug_schema = {
@@ -488,6 +495,15 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
         "image": image_abs,
         "url": canonical,
     }
+    if _uniq_packs:
+        drug_schema["isVariantOf"] = {
+            "@type": "ProductGroup",
+            "name": name,
+            "hasVariant": [
+                {"@type": "Product", "name": f"{name} {p}", "size": p}
+                for p in _uniq_packs
+            ],
+        }
     drug_schema = {k: v for k, v in drug_schema.items() if v}
     schema_jsonld = _json.dumps(drug_schema, ensure_ascii=False)
 
