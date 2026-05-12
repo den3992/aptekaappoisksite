@@ -330,6 +330,27 @@ cross-form match'a (Адеметионин таблетки vs лиофилиз�
 - Title Case для стран и МНН — **только в UI/SSR**, без мутации БД
 - GitHub PAT обновлён (push работает)
 
+### 6.8 UI-полировка главной (последние правки)
+- **Плейсхолдер поиска** в hero на Home.jsx: `"Название препарата, вещества или
+  симптома…"` → `"Введите название препарата"` (короче, понятнее новому
+  пользователю). Коммит `d91407b`.
+- **Иконка лупы** (`<Search>` из lucide-react): `text-slate-400` (нейтральный
+  серый) → `text-rose-500` (#f43f5e — мягкий розово-красный, не насыщенный,
+  компенсирует «зелёность» брендового emerald-600). Применено в обоих местах:
+  Home.jsx (hero) и Header.jsx (узкий navbar-поиск). Коммит `d91407b`.
+- **Партнёров в hero бейдже**: `"Более 200 аптек-партнёров в Москве и СПб"` →
+  `"Более 2000 аптек-партнёров..."`. Коммит `0eeef6e`.
+- **Удалены 3 декоративные зелёные точки** из фона hero-блока на главной
+  (`<div className="absolute ... rounded-full bg-emerald-400/60">` × 3).
+  Оставлены две большие размытые `blur-3xl` emerald-орбиты — они дают мягкую
+  глубину без визуального шума. Коммит `0eeef6e`.
+
+**На что обратить внимание:** изменение цвета иконки (`rose-500`) — это **первое
+введение красного** в раньше чисто emerald-палитру. Если будет добавляться
+другая красная иконка (например, медицинский крест, отметки рецептурных
+препаратов и т.д.), используй **тот же `rose-500`** для консистентности.
+Не вводи `red-500`, `rose-400` или другие оттенки красного без причины.
+
 ---
 
 ## 7. Где сейчас лежат скрипты (текущий поток работы)
@@ -640,9 +661,13 @@ curl -s -o /dev/null -w '%{http_code} %{content_type}\n' https://aptekaa.ru/img/
 
 ---
 
-## 14. История коммитов сессии (последние 12)
+## 14. История коммитов сессии (последние 14)
 
 ```
+0eeef6e feat(home): bump partner count to 2000+ and clean decorative dots
+d91407b feat(ui): simplify hero placeholder + brand-red search icon
+85b0b03 docs(handoff): full list of 102 manufacturers missing photos
+7a5070a docs(handoff): add Pharmasyntez to manufacturer table + single-page catalog tip
 6e74c5d feat(images): scrape Pharmasyntez group catalog photos
 483e373 docs: full handoff for new AI agent migration
 f66cd9f feat(images): scrape Vertex catalog photos
