@@ -89,9 +89,6 @@ export default function Home() {
         <div aria-hidden="true" className="pointer-events-none absolute inset-0">
           <div className="absolute top-20 -left-16 w-96 h-96 rounded-full bg-emerald-200/25 blur-3xl" />
           <div className="absolute bottom-0 -right-16 w-[28rem] h-[28rem] rounded-full bg-emerald-100/35 blur-3xl" />
-          <div className="absolute top-1/3 right-12 w-3 h-3 rounded-full bg-emerald-400/60" />
-          <div className="absolute top-40 right-1/4 w-2 h-2 rounded-full bg-emerald-500/50" />
-          <div className="absolute bottom-32 left-1/4 w-2.5 h-2.5 rounded-full bg-emerald-400/50" />
         </div>
 
         {/* Brand */}
@@ -109,7 +106,7 @@ export default function Home() {
         <section className="relative max-w-4xl mx-auto px-4 pt-10 pb-16 md:pt-14 md:pb-24 text-center">
           <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur border border-emerald-100 rounded-full px-3.5 py-1.5 mb-6 text-xs font-medium text-emerald-800 shadow-sm">
             <ShieldCheck className="w-3.5 h-3.5" />
-            Более 200 аптек-партнёров в Москве и СПб
+            Более 2000 аптек-партнёров в Москве и СПб
           </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.05]">
             Ищите лекарства <span className="text-emerald-600">быстро</span><br />и по <span className="text-emerald-600">лучшей цене</span>
