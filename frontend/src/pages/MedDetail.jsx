@@ -241,12 +241,74 @@ export default function MedDetail() {
     return () => { cancelled = true; };
   }, [slug, city.id]);
 
+  // Unique pack list (computed once per med).
+  const packs = useMemo(() => {
+    if (!med?.variants) return [];
+    return [...new Set(med.variants.map(v => simplifyPack(v.pack_size)).filter(Boolean))];
+  }, [med]);
+
+  // Active pack = explicit selection || first pack || null.
+  const activePack = selectedPack || packs[0] || null;
+
+  // Parse leading number from pack label ('30 шт' → 30, '50 г' → 50, '1.5 мл' → 1.5).
+  function packQty(p) {
+    if (!p) return null;
+    const m = String(p).match(/^(\d+(?:\.\d+)?)/);
+    return m ? parseFloat(m[1]) : null;
+  }
+
+  // Deterministic 32-bit hash of a string.
+  function hashStr(s) {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+    return Math.abs(h);
+  }
+
   const prices = useMemo(() => {
     if (!med) return [];
     const list = [...((med.prices_by_city || {})[city.id] || [])];
+
+    // Scale prices proportionally to active pack vs first pack.
+    // Each pack also has a deterministic subset of pharmacies (popular small
+    // packs sold in more aptekas; large packs in fewer). This is MOCKED until
+    // real per-pack price feeds arrive.
+    if (packs.length >= 2 && activePack) {
+      const baseQty = packQty(packs[0]) || 1;
+      const activeQty = packQty(activePack) || baseQty;
+      const ratio = activeQty / baseQty;
+      const packSeed = hashStr(med.slug + '|' + activePack);
+
+      // Sublinear scaling: 2× pack ≈ 1.7× price (volume discount).
+      const priceFactor = Math.pow(ratio, 0.78);
+
+      // How many of the 12 pharmacies stock this pack: 12 for smallest, ~6 for largest.
+      const packIdx = packs.indexOf(activePack);
+      const ofMax = packs.length - 1 || 1;
+      const stockCount = Math.max(3, Math.round(12 - (packIdx / ofMax) * 6));
+
+      const scaled = list.map((p, i) => {
+        // Jitter ±8% per (pharmacy_id × pack) so each pharmacy varies independently.
+        const j = ((packSeed + i * 2654435761) >>> 0) % 1000;
+        const jitter = 0.92 + (j / 1000) * 0.16;
+        const newPrice = Math.max(5, Math.round((p.price * priceFactor * jitter) / 5) * 5);
+        const newQty = ((packSeed >>> 1) + i * 16807) % 30 + 1;
+        return { ...p, price: newPrice, qty: newQty };
+      });
+
+      // Keep top stockCount pharmacies for this pack (deterministic subset).
+      const sortedByHash = scaled
+        .map((p, i) => ({ p, h: ((packSeed ^ hashStr(p.pharmacy_id)) >>> 0) }))
+        .sort((a, b) => a.h - b.h)
+        .slice(0, stockCount)
+        .map(x => x.p);
+
+      sortedByHash.sort((a, b) => a.price - b.price);
+      return sortedByHash;
+    }
+
     list.sort((a, b) => a.price - b.price);
     return list;
-  }, [med, city.id]);
+  }, [med, city.id, packs, activePack]);
 
   if (loading) {
     return (
