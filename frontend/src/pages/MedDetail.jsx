@@ -7,6 +7,34 @@ import SEOHead from '../components/SEOHead';
 import { medSEO } from '../seo';
 import { loadYmaps } from '../lib/ymaps';
 
+// Normalize pack_size text to a short user-facing label.
+// Examples:
+//   "3 × 10 шт"      -> "30 шт"
+//   "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт"  -> "30 шт"
+//   "№20" / "20 шт"  -> "20 шт"
+//   "ТУБА по 50 г"   -> "50 г"
+//   "ФЛАКОН 100 мл"  -> "100 мл"
+function simplifyPack(s) {
+  if (!s) return '';
+  const txt = String(s).trim();
+  // "A × B шт" or "A x B шт"  -> A*B
+  let m = txt.match(/(\d+)\s*[×xх]\s*(\d+(?:[\.,]\d+)?)\s*(шт|табл?\.?|капс?\.?)/i);
+  if (m) return `${Math.round(parseInt(m[1], 10) * parseFloat(m[2].replace(',', '.')))} шт`;
+  // "по N <unit>" or contains "N <unit>"
+  m = txt.match(/(?:по\s+)?(\d+(?:[\.,]\d+)?)\s*(шт|табл?\.?|капс?\.?|г|мг|мл|мкг|МЕ|%)/i);
+  if (m) {
+    const v = m[1].replace(',', '.');
+    const u = (m[2] || 'шт').toLowerCase().replace(/\./g, '');
+    const unit = u.startsWith('табл') || u.startsWith('капс') ? 'шт' : (m[2] === 'МЕ' ? 'МЕ' : u);
+    return `${parseFloat(v) % 1 === 0 ? parseInt(v, 10) : v} ${unit}`;
+  }
+  // "№20"
+  m = txt.match(/№\s*(\d+)/);
+  if (m) return `${m[1]} шт`;
+  // fallback — just return the original text trimmed and shortened
+  return txt.length > 24 ? txt.slice(0, 22) + '…' : txt;
+}
+
 function PriceMap({ med, prices, pharmacies, cityCenter, onSelect, selected }) {
   const ref = useRef(null);
   const mapRef = useRef(null);
@@ -189,8 +217,14 @@ export default function MedDetail() {
               </div>
             )}
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900">{med.name}</h1>
-          <p className="text-slate-600 mt-1.5">{[formLower, med.dosage].filter(Boolean).join(', ')}</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-slate-900" data-testid="med-h1">
+            {med.name}
+            {med.dosage && <span className="text-slate-700"> {med.dosage}</span>}
+            {med.variants && med.variants.length === 1 && simplifyPack(med.variants[0].pack_size) && (
+              <span className="text-slate-700">, {simplifyPack(med.variants[0].pack_size)}</span>
+            )}
+          </h1>
+          <p className="text-slate-600 mt-1.5">{formLower}</p>
 
           <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
             <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Производитель</div><div className="font-medium text-slate-800">{med.manufacturer || '—'}</div></div>

@@ -257,6 +257,35 @@ def render_seo_html(
 """
 
 
+def _simplify_pack(s):
+    """Mirrors simplifyPack() in MedDetail.jsx for SSR consistency."""
+    if not s: return ""
+    txt = str(s).strip()
+    import re as _re
+    m = _re.search(r"(\d+)\s*[×xх]\s*(\d+(?:[\.,]\d+)?)\s*(шт|табл?\.?|капс?\.?)", txt, _re.I)
+    if m:
+        return f"{int(int(m.group(1)) * float(m.group(2).replace(',', '.')))} шт"
+    m = _re.search(r"(?:по\s+)?(\d+(?:[\.,]\d+)?)\s*(шт|табл?\.?|капс?\.?|г|мг|мл|мкг|МЕ|%)", txt, _re.I)
+    if m:
+        v = m.group(1).replace(",", ".")
+        u_raw = (m.group(2) or "шт")
+        u = u_raw.lower().replace(".", "")
+        if u.startswith("табл") or u.startswith("капс"):
+            unit = "шт"
+        elif u_raw == "МЕ":
+            unit = "МЕ"
+        else:
+            unit = u
+        fv = float(v)
+        vs = str(int(fv)) if fv.is_integer() else v
+        return f"{vs} {unit}"
+    m = _re.search(r"№\s*(\d+)", txt)
+    if m:
+        return f"{m.group(1)} шт"
+    return txt if len(txt) <= 24 else (txt[:22] + "…")
+
+
+
 async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, request: Request) -> HTMLResponse:
     med = await db.medications.find_one({"slug": slug}, {"_id": 0})
     if not med:
@@ -277,6 +306,10 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
 
     title_pieces = [name]
     if dosage: title_pieces.append(dosage)
+    if len(variants) == 1:
+        ps = _simplify_pack(variants[0].get("pack_size"))
+        if ps:
+            title_pieces.append(ps)
     title_pieces.append(f"купить в {cn_prepositional(cn)}")
     title_pieces.append(f"— цены и наличие в аптеках | АптекаА")
     title = " ".join(title_pieces)
@@ -400,7 +433,10 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
         (name, canonical),
     ]
 
-    h1 = " ".join(filter(None, [name, dosage, form])) or name
+    pack_short = _simplify_pack(variants[0].get("pack_size")) if len(variants) == 1 else ""
+    h1 = " ".join(filter(None, [name, dosage])) or name
+    if pack_short:
+        h1 = f"{h1}, {pack_short}"
     if image_abs:
         body.insert(0, (
             f'<figure><img src="{html.escape(image_abs)}" '
