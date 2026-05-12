@@ -478,7 +478,7 @@ export default function MedDetail() {
                     <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {ph.address}{ph.metro && <span className="text-emerald-600"> · м. {ph.metro}</span>}</div>
                   </div>
                   <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 whitespace-nowrap"><Clock className="w-3.5 h-3.5 shrink-0" /> {ph.hours}</div>
-                  <a href={`tel:${(ph.phone || "").replace(/[^+\d]/g, "")}`} data-testid="med-pharmacy-phone" className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-slate-700 hover:text-emerald-700 whitespace-nowrap"><Phone className="w-4 h-4 text-emerald-600 shrink-0" /> {ph.phone}</a>
+                  <a href={`tel:${(ph.phone || "").replace(/[^+\d]/g, "")}`} data-testid="med-pharmacy-phone" className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-slate-700 hover:text-emerald-700 whitespace-nowrap border-l border-slate-200 pl-3"><Phone className="w-4 h-4 text-emerald-600 shrink-0" /> {ph.phone}</a>
                   <div className="text-right">
                     <div className="text-lg font-bold text-emerald-700">{pr.price} ₽</div>
                     <div className="text-[11px] text-slate-500">в наличии: {pr.qty} шт</div>
