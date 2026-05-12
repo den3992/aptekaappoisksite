@@ -472,13 +472,13 @@ export default function MedDetail() {
               const ph = pharmacies.find(p => p.id === pr.pharmacy_id);
               if (!ph) return null;
               return (
-                <div key={pr.pharmacy_id} className={`grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_120px_140px_120px_140px] items-center gap-3 px-4 py-3 hover:bg-emerald-50/30 transition ${selectedId === ph.id ? 'bg-emerald-50/50' : ''}`}>
+                <div key={pr.pharmacy_id} className={`grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_130px_170px_110px_130px] items-center gap-3 px-4 py-3 hover:bg-emerald-50/30 transition ${selectedId === ph.id ? 'bg-emerald-50/50' : ''}`}>
                   <div>
                     <Link to={`/${city.id}/apteki/${ph.id}`} className="font-semibold text-slate-900 hover:text-emerald-700">{ph.name}</Link>
                     <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {ph.address}{ph.metro && <span className="text-emerald-600"> · м. {ph.metro}</span>}</div>
                   </div>
-                  <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500"><Clock className="w-3.5 h-3.5" /> {ph.hours}</div>
-                  <a href={`tel:${(ph.phone || "").replace(/[^+\d]/g, "")}`} data-testid="med-pharmacy-phone" className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-slate-700 hover:text-emerald-700"><Phone className="w-4 h-4 text-emerald-600" /> {ph.phone}</a>
+                  <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 whitespace-nowrap"><Clock className="w-3.5 h-3.5 shrink-0" /> {ph.hours}</div>
+                  <a href={`tel:${(ph.phone || "").replace(/[^+\d]/g, "")}`} data-testid="med-pharmacy-phone" className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-slate-700 hover:text-emerald-700 whitespace-nowrap"><Phone className="w-4 h-4 text-emerald-600 shrink-0" /> {ph.phone}</a>
                   <div className="text-right">
                     <div className="text-lg font-bold text-emerald-700">{pr.price} ₽</div>
                     <div className="text-[11px] text-slate-500">в наличии: {pr.qty} шт</div>
