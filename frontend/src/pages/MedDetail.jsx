@@ -7,6 +7,13 @@ import SEOHead from '../components/SEOHead';
 import { medSEO } from '../seo';
 import { loadYmaps } from '../lib/ymaps';
 
+// Capitalize first letter, lowercase the rest.
+function titleCase(s) {
+  if (!s) return '';
+  const t = String(s).trim();
+  return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+}
+
 // Normalize pack_size text to a short user-facing label.
 // Examples:
 //   "3 × 10 шт"      -> "30 шт"
@@ -228,8 +235,8 @@ export default function MedDetail() {
 
           <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
             <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Производитель</div><div className="font-medium text-slate-800">{med.manufacturer || '—'}</div></div>
-            <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Страна</div><div className="font-medium text-slate-800">{med.manufacturer_country || '—'}</div></div>
-            {med.mnn && <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">МНН</div><div className="font-medium text-slate-800">{med.mnn.toLowerCase()}</div></div>}
+            <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Страна</div><div className="font-medium text-slate-800">{titleCase(med.manufacturer_country) || '—'}</div></div>
+            {med.mnn && <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">МНН</div><div className="font-medium text-slate-800">{titleCase(med.mnn)}</div></div>}
             {med.variants && med.variants.length > 0 && (
               <div className="bg-slate-50 rounded-lg p-3" data-testid="med-variants-cell">
                 <div className="text-[11px] text-slate-500 uppercase tracking-wide">Фасовка</div>
@@ -369,7 +376,7 @@ export default function MedDetail() {
         <section className="mb-12" data-testid="analogs-section">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center"><Tag className="w-5 h-5" /></div>
-            <h2 className="text-2xl font-bold text-slate-900">Аналоги по МНН: {med.mnn ? med.mnn.toLowerCase() : '—'}</h2>
+            <h2 className="text-2xl font-bold text-slate-900">Аналоги по МНН: {med.mnn ? titleCase(med.mnn) : '—'}</h2>
           </div>
           <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {analogs.map(a => (

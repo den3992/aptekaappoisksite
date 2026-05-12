@@ -354,12 +354,12 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
 
     body.append("<h2>Описание препарата</h2>")
     body.append(f"<dl>")
-    if mnn: body.append(f"<dt>Международное непатентованное наименование (МНН)</dt><dd>{html.escape(mnn)}</dd>")
+    if mnn: body.append(f"<dt>Международное непатентованное наименование (МНН)</dt><dd>{html.escape(_title_case(mnn))}</dd>")
     if form: body.append(f"<dt>Лекарственная форма</dt><dd>{html.escape(form)}</dd>")
     if dosage: body.append(f"<dt>Дозировка</dt><dd>{html.escape(dosage)}</dd>")
     if manufacturer: body.append(f"<dt>Производитель</dt><dd>{html.escape(manufacturer)}</dd>")
     if med.get("manufacturer_country"):
-        body.append(f"<dt>Страна производства</dt><dd>{html.escape(med['manufacturer_country'])}</dd>")
+        body.append(f"<dt>Страна производства</dt><dd>{html.escape(_title_case(med['manufacturer_country']))}</dd>")
     if med.get("ru_number"): body.append(f"<dt>Номер регистрационного удостоверения</dt><dd>{html.escape(med['ru_number'])}</dd>")
     body.append("</dl>")
 
