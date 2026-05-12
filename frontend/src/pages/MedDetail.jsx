@@ -26,7 +26,7 @@ function simplifyPack(s) {
   const txt = String(s).trim();
   // "A × B шт" or "A x B шт"  -> A*B
   let m = txt.match(/(\d+)\s*[×xх]\s*(\d+(?:[\.,]\d+)?)\s*(шт|табл?\.?|капс?\.?)/i);
-  if (m) return `${Math.round(parseInt(m[1], 10) * parseFloat(m[2].replace(',', '.')))} шт`;
+  if (m) return `${m[1]} × ${m[2].replace(',', '.')} шт`;
   // "по N <unit>" or contains "N <unit>"
   m = txt.match(/(?:по\s+)?(\d+(?:[\.,]\d+)?)\s*(шт|табл?\.?|капс?\.?|г|мг|мл|мкг|МЕ|%)/i);
   if (m) {

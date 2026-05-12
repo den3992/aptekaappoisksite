@@ -264,7 +264,7 @@ def _simplify_pack(s):
     import re as _re
     m = _re.search(r"(\d+)\s*[×xх]\s*(\d+(?:[\.,]\d+)?)\s*(шт|табл?\.?|капс?\.?)", txt, _re.I)
     if m:
-        return f"{int(int(m.group(1)) * float(m.group(2).replace(',', '.')))} шт"
+        return f"{m.group(1)} × {m.group(2).replace(',', '.')} шт"
     m = _re.search(r"(?:по\s+)?(\d+(?:[\.,]\d+)?)\s*(шт|табл?\.?|капс?\.?|г|мг|мл|мкг|МЕ|%)", txt, _re.I)
     if m:
         v = m.group(1).replace(",", ".")
