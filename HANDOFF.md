@@ -1,532 +1,520 @@
-# Handoff Document — АптекаА (поисковик-агрегатор лекарств)
+# HANDOFF — АптекаА (aptekaa.ru)
 
-**Дата хендовера:** 10 мая 2026
-**Состояние:** Сайт развёрнут в продакшн на https://aptekaa.ru, работает, идёт первая неделя жизни.
+**Дата:** 13 февраля 2026
+**Состояние:** production, https://aptekaa.ru работает стабильно.
+**Предыдущий handoff:** см. `HANDOFF_2026-05-10.md` (заархивирован, содержит подробный контекст начального запуска).
 
----
-
-## 1. О проекте
-
-**АптекаА** — это веб-сервис типа агрегатора цен на лекарства в аптеках Москвы и Санкт-Петербурга. Аналоги: lekmos.ru, 003ms.ru, 009рф, aptekamos.ru.
-
-### Бизнес-модель
-- Пользователь ищет препарат → видит карточку → видит цены в **разных аптеках** + карту с пинами → выбирает удобную аптеку
-- Аптеки **загружают свои прайс-листы** (XLSX/CSV через web-форму с токеном или через email на price@aptekaa.ru) → сайт показывает их цены
-- Монетизация (в будущем): комиссия с аптек / реклама / премиум-размещение
-
-### Целевая аудитория
-- Жители Москвы и СПб, ищущие конкретное лекарство «где купить дешевле»
-- Аптеки-партнёры, которые хотят больше клиентов
-
-### Юридический и SEO-фокус
-- Ориентация на **Яндекс** (95%+ поискового трафика в России)
-- Соответствие законам РФ (нет «ЖНВЛП», нет «государственных предельных цен» в UI — пользователь явно просил это убрать)
-- Никаких дозировок и медсоветов в LLM-описаниях — только справочная информация и обязательный disclaimer «проконсультируйтесь с врачом»
-
-### Стек
-- **Frontend:** React 19, Tailwind CSS, Shadcn/UI, Yandex Maps API
-- **Backend:** FastAPI 0.110, Motor (async MongoDB), Python 3.11
-- **DB:** MongoDB 7.0 (с auth, в Docker)
-- **AI:** OpenAI gpt-4o-mini (через Emergent LLM Key в dev / нужен прямой ключ для продакшена), Yandex SpeechKit TTS (голос «Алёна»)
-- **DNS:** REG.RU (оба домена)
-- **Хостинг:** Yandex Cloud (Compute Cloud VM)
-- **Почта:** Yandex 360 (для бизнеса)
+> Этот документ — **полная передача** нового AI-агента: контекст проекта, что
+> уже сделано, как устроена инфраструктура, какие есть скрипты, какие плановые
+> задачи. Читай целиком прежде чем начинать работу.
 
 ---
 
-## 2. Production Environment
+## 1. Что такое АптекаА (одним абзацем)
 
-### VPS — Yandex Cloud
-| Параметр | Значение |
+Бесплатный поисковик-агрегатор лекарств для Москвы и Санкт-Петербурга. Пользователь
+вводит название препарата → получает карточку с фото / описанием / составом / страной /
+МНН → видит **цены и наличие в 12 аптеках-партнёрах** на карте города → переходит в
+выбранную аптеку. Сейчас **цены MOCKED** (заглушки), потому что аптеки ещё не подключали
+прайс-листы. Когда партнёры начнут заливать прайсы, MOCK сменится на реальные данные
+автоматически.
+
+Ниша: аналог `aptekamos.ru`, `lekmos.ru`, `apteka.ru` — но только справочный поиск +
+карта, без онлайн-заказа. Юридически безопасная позиция: **не аптека**, не торгуем,
+не даём медицинских рекомендаций.
+
+**Главная цель сейчас — SEO в Яндексе.** Каждое решение, которое ты принимаешь, должно
+учитывать «как это повлияет на индексацию и ранжирование в Яндексе». 95% трафика придёт
+оттуда. Google — второстепенно.
+
+**Язык общения с пользователем — РУССКИЙ.** Всегда. Не переходи на английский.
+
+---
+
+## 2. Стек
+
+| Слой | Технология |
 |---|---|
-| **IP (ОБРАТИ ВНИМАНИЕ — ДИНАМИЧЕСКИЙ!)** | `89.169.137.36` |
-| **Имя ВМ** | `aptekaa-app` |
-| **Зона** | `ru-central1-a` (Москва) |
-| **Конфиг** | 2 vCPU 50% (Ice Lake) / 3 GB RAM / 40 GB SSD |
-| **ОС** | Ubuntu 22.04 LTS |
-| **SSH** | `ssh ubuntu@89.169.137.36` (ключ ed25519, у владельца на Mac) |
-| **Стоимость** | ~2793 ₽/мес (тариф май 2026 г.) |
-| **Грант Я.Cloud** | 4000 ₽ при регистрации (сейчас тратится) |
-
-⚠️ **Критично:** IP **динамический**. Запрос на статический IP в поддержку Я.Cloud **отправлен**, ждём ответа человека-оператора (робот отказал автоматически — это известный паттерн для свежих аккаунтов). Пока не получили статус «статический» — **не нажимать `Stop`/`Start` ВМ через консоль**, иначе IP сменится и сайт пропадёт. Перезагрузки изнутри (`reboot`) допустимы — IP сохраняется.
-
-### Домены — REG.RU
-| Домен | Статус |
-|---|---|
-| `aptekaa.ru` | ✅ работает на HTTPS, SSL Let's Encrypt |
-| `www.aptekaa.ru` | ✅ работает на HTTPS |
-| `xn--80aerl0afi.xn--p1ai` (`аптекаа.рф`) | 🟡 куплен (срок до 26.04.2027), DNS пропагирует, SSL пока **не выпущен** |
-
-### DNS-записи (REG.RU, для aptekaa.ru)
-```
-A     | @                | 89.169.137.36
-A     | www              | 89.169.137.36
-MX    | @                | 10 mx.yandex.net.
-TXT   | @                | yandex-verification: e6a0b158c0131253
-TXT   | @                | v=spf1 redirect=_spf.yandex.net
-TXT   | _dmarc           | v=DMARC1; p=none; rua=mailto:info@aptekaa.ru
-TXT   | mail._domainkey  | v=DKIM1; k=rsa; p=...   ← НУЖНО ПРОВЕРИТЬ, ДОБАВЛЕНО ЛИ ОНО
-```
-
-⚠️ **DKIM:** на момент хендовера пользователь добавлял запись DKIM из Я.360 → нужно **проверить** что она прописана. Без DKIM Gmail/Outlook будут метить письма от @aptekaa.ru как спам. См. `https://360.yandex.ru/business` → Домены → DKIM.
-
-### DNS аптекаа.рф (REG.RU)
-```
-A | @   | 89.169.137.36
-A | www | 89.169.137.36
-```
-(MX/SPF/DKIM не нужны — почты на этом домене нет, делает 301 на aptekaa.ru)
-
-### Email — Yandex 360 (тариф «Базовый», бесплатно, 1 пользователь = 3 ящика)
-
-⚠️ **На самом деле в Я.360 «Базовый» = 1 сотрудник.** У пользователя создано 3 ящика (`info@`, `partners@`, `price@`) — возможно через создание нескольких сотрудников, надо уточнить лимиты при росте команды. Если упрётся в лимит — переход на «Оптимальный» (~249 ₽/мес/пользователь).
-
-| Ящик | Назначение | Где показывается |
-|---|---|---|
-| `info@aptekaa.ru` | Общие вопросы пользователей | Главная, футер, контакты, юр. страницы |
-| `partners@aptekaa.ru` | Связь с аптеками-партнёрами | Страница «Для аптек», подвал |
-| `price@aptekaa.ru` | Приём прайс-листов от аптек (IMAP-парсер) | Скрытый, выдаём в личке аптекам |
-
-### IMAP/SMTP креды для price@aptekaa.ru
-- IMAP: `imap.yandex.ru:993` (SSL)
-- SMTP: `smtp.yandex.ru:465` (SSL)
-- App Password: `wpsmkmksenpuxhvl` (16 символов, в `.env` на сервере)
-- Подключение проверено ✅
-
-⚠️ **Старая почта на Mail.ru** — была настроена параллельно, но **MX переключены на Я.360**, Mail.ru-почта больше не получает письма на `@aptekaa.ru`. Пользователь сам сказал «забываем».
+| Frontend | React 19, Tailwind, Shadcn/UI, Yandex Maps API |
+| Backend | FastAPI 0.110, Motor (async MongoDB driver), Python 3.11 |
+| DB | MongoDB 7.0 (в Docker, with auth) |
+| AI | OpenAI gpt-4o-mini (через Emergent LLM Key) + Yandex SpeechKit TTS |
+| Hosting | Yandex Cloud VM, Ubuntu, Docker Compose |
+| Edge | Nginx 1.27-alpine + Let's Encrypt |
+| Email | Mail.ru for Business (IMAP/SMTP), `partner@`, `support@aptekaa.ru` |
+| DNS | REG.RU (`aptekaa.ru` живой, `аптекаа.рф` — НЕ зарегистрирован в реестре) |
+| Аналитика | Yandex.Metrika (counter `109146716`) |
 
 ---
 
-## 3. Учётные данные (внутренние, никуда наружу не пускаются)
-
-### `/app/memory/test_credentials.md` — самый актуальный источник
-
-### Admin URL — управление заявками партнёров
-- URL: `https://aptekaa.ru/partner-admin?token=Aa9k3xR-admin-token-2026-aptekaa`
-
-⚠️ Старый dev-токен в Mongo (`Aa9k3xR-admin-token-2026-aptekaa`). На проде в `/home/ubuntu/aptekaa/deploy/.env` сейчас стоит **новый** токен `TCkwKsYaekNAJiBHoL8qjxNGsx4XX7PsiQye7WPy` — фронт скомпилирован с этим. **Используй новый.**
-
-### Mongo (на проде, в Docker, доступ только из контейнеров)
-- User: `aptekaa_admin`
-- Password: `OkGaeGlcEqdsyGClit9BmphgiRTFeep50rwVgpcO`
-- DB: `aptekaa`
-- Команда подключения с сервера:
-  ```bash
-  cd ~/aptekaa/deploy && sudo docker compose exec -T mongo mongosh \
-    --quiet --username aptekaa_admin \
-    --password "OkGaeGlcEqdsyGClit9BmphgiRTFeep50rwVgpcO" \
-    --authenticationDatabase admin aptekaa --eval "db.medications.countDocuments({})"
-  ```
-
-### Yandex API
-- Yandex Maps API key: `7944c49c-fc62-4d36-ba40-b20f6fbf0461` (в `frontend/.env` и в `.env` на сервере)
-- Yandex SpeechKit API key: `AQVNxtHJbWmC9hZhIPllev9Ef6jUVZCSCyTsebDK`
-- Yandex Folder ID: `b1gspgmnrl8f6vkll8oc`
-
-### Emergent LLM Key
-- `sk-emergent-621E4C65aF48cF6528`
-- ⚠️⚠️⚠️ **РАБОТАЕТ ТОЛЬКО ВНУТРИ EMERGENT-ИНФРАСТРУКТУРЫ** (preview-окружения). С production-сервера в Я.Cloud **отдаёт 403 Forbidden**. Это известное ограничение Emergent — ключ привязан к их IP-сетям.
-
-### GitHub
-- Репо: `https://github.com/den3992/aptekaappoisksite` (приватный)
-- На момент хендовера PAT для клонирования был передан в чат (`github_pat_11AZUHSTI...`) — **обязательно отозвать** на `github.com/settings/tokens` и сгенерировать новый при необходимости.
-
----
-
-## 4. Архитектура кода
-
-### Backend (`/app/backend/`)
-
-```
-backend/
-├── server.py                         # FastAPI app, voice/chat, voice/tts, основные роуты
-├── security.py                       # SecurityHeadersMiddleware, verify_admin (X-Admin-Token)
-├── voice_data.py                     # System prompts для AI-ассистента
-├── api/
-│   ├── __init__.py                   # Catalog API: /api/search, /api/categories, /api/medications/{slug}, /api/cities, /api/pharmacies
-│   ├── seo.py                        # /api/seo/sitemap.xml, /api/seo/robots.txt, SSR для YandexBot/Googlebot
-│   ├── uploads.py                    # POST /api/upload/prices/{token} — XLSX/CSV upload, парсинг, обновление prices[]
-│   └── partners.py                   # POST /api/partner-requests, admin endpoints
-├── scripts/
-│   ├── import_mdlp.py                # Импорт реестра ЛС (XLSX) → 23303 препарата
-│   ├── seed_pharmacy_tokens.py       # Сидинг 20 партнёрских аптек (Москва + СПб)
-│   ├── enrich_meds.py                # LLM-обогащение: показания, противопоказания (gpt-4o-mini)
-│   └── email_imap_worker.py          # IMAP-воркер для приёма прайсов на price@aptekaa.ru
-├── data/                             # XLSX реестр MDLP (большой, в репо НЕ лежит — генерируется import_mdlp)
-└── requirements.txt
-```
-
-### Frontend (`/app/frontend/`)
-
-```
-frontend/src/
-├── App.js                            # Router, layout
-├── api/client.js                     # axios + searchMeds, fetchCategories, suggestMeds, etc.
-├── pages/
-│   ├── Home.jsx                      # Главная: поиск, популярные препараты, категории, аптеки
-│   ├── Search.jsx                    # /search?q=...
-│   ├── MedDetail.jsx                 # Карточка препарата + Y.Maps + блок «О препарате» (LLM)
-│   ├── Catalog.jsx                   # А-Я каталог с пагинацией
-│   ├── Categories.jsx, CategoryDetail.jsx
-│   ├── PharmaciesList.jsx, PharmacyDetail.jsx
-│   ├── ForPharmacies.jsx             # Лендинг + форма заявки партнёра
-│   ├── PartnerUpload.jsx             # /partner-upload?token=... — загрузка XLSX
-│   ├── PartnerAdmin.jsx              # /partner-admin?token=ADMIN_TOKEN — модерация заявок
-│   └── (юр. страницы: Privacy, Terms, About, Contacts)
-├── components/
-│   ├── VoiceAssistant.jsx, CallView.jsx   # AI-ассистент с голосом «Алёна»
-│   ├── SEOHead.jsx                   # SEO-метатеги
-│   ├── CategoryIcon.jsx, PartnersMarquee.jsx, PillIcon.jsx
-│   └── ui/                           # Shadcn компоненты
-├── lib/
-│   ├── ymaps.js                      # Загрузка Yandex Maps API
-│   └── categoryStyles.js             # Иконки/цвета категорий (статика)
-├── context/CityContext.jsx           # Москва/СПб
-└── seo.js                            # SEO-генераторы для каждой страницы
-```
-
-### Ключевые API endpoints
-```
-GET  /api/cities
-GET  /api/categories
-GET  /api/search?q=...&category=...&prefix=А&page=1&page_size=24
-GET  /api/search/suggest?q=...
-GET  /api/medications/{slug}
-GET  /api/pharmacies?city=msk
-GET  /api/pharmacies/{id}
-
-POST /api/voice/chat              # AI-ассистент, rate-limit 20/min
-POST /api/voice/tts               # Yandex SpeechKit TTS, rate-limit 30/min
-
-POST /api/partner-requests        # Форма «Для аптек», rate-limit 5/час
-GET  /api/admin/partner-requests             # X-Admin-Token header
-POST /api/admin/partner-requests/{rid}/approve
-POST /api/admin/partner-requests/{rid}/reject
-GET  /api/admin/partner-requests/{token}     # legacy (для совместимости PartnerAdmin.jsx)
-
-GET  /api/upload/me/{token}       # Аптека: проверка токена
-POST /api/upload/prices/{token}   # Аптека: загрузка XLSX/CSV (rate-limit 10/час)
-GET  /api/upload/history/{token}
-GET  /api/upload/unmatched/{token}
-
-GET  /api/seo/sitemap.xml
-GET  /api/seo/robots.txt
-GET  /api/seo/render?path=/msk/preparaty/<slug>   # SSR для YandexBot
-```
-
-### Схема Mongo
-```
-medications: {
-  slug, name, mnn, form, dosage, manufacturer, manufacturer_country,
-  category, rx, vital,
-  variants: [{gtin, label_name, ru_number, primary_pack_desc, pack_size}],
-  prices: [{pharmacy_id, city, price, qty, updated_at}],
-  enrichment: {
-    summary, indications[], contraindications[], how_to_take,
-    disclaimer, generated_at, model
-  }
-}
-
-pharmacy_tokens: {pharmacy_id, pharmacy_name, city, chain, token, active, allowed_emails[]}
-pharmacy_uploads: {_id, pharmacy_id, filename, size, uploaded_at, parsed_rows, matched, unmatched}
-partner_requests: {_id, status, created_at, chain, city, email, phone, count, comment, issued_token, issued_pharmacy_id}
-voice_messages: {session_id, role, content, ts}
-```
-
----
-
-## 5. История работы — что сделано (хронология)
-
-### Сессия 1 (10 мая, утро) — Завершение MVP
-- Импорт **23 303 препаратов** из MDLP-реестра (грузится скриптом `import_mdlp.py`, ~3 минуты на VPS)
-- Полная миграция фронта с `mock.js` на реальное API (Home, Catalog, Categories, Pharmacies, MedDetail). Удалены `mock.js` и `MedCard.jsx`
-- Добавлен `?prefix=А` фильтр в `/api/search` для алфавитного каталога
-- Создан backend `partner_router` (`POST /api/partner-requests`)
-- Тесты: 39/39 ✅
-
-### Сессия 2 (10 мая) — LLM-обогащение и admin-UI
-- LLM-обогащение топ-200 препаратов через gpt-4o-mini (показания, противопоказания, способ применения, summary). Скрипт `enrich_meds.py`
-- Admin-UI `/partner-admin?token=...` для одобрения/отклонения заявок партнёров
-- SSR-блок `«О препарате»` для YandexBot
-- Тесты: 48/48 ✅
-
-### Сессия 3 (10 мая) — Security hardening перед деплоем
-- **CORS** ограничен whitelist
-- **Security headers**: HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
-- **Admin auth** через `X-Admin-Token` header + `secrets.compare_digest` (защита от timing-атак); legacy URL-path сохранён
-- **Rate limits** (in-memory sliding window per IP):
-  - `/api/voice/chat` 20/мин
-  - `/api/voice/tts` 30/мин
-  - `/api/partner-requests` 5/час
-  - `/api/upload/prices/{token}` 10/час
-- **Sanitized errors** — больше не светим LLM/TTS stack-trace
-- Validation `session_id`, filename uploads
-- `.env` теперь в `.gitignore`
-- Тесты: 88/88 ✅
-
-### Сессия 4 (10 мая, день) — Подготовка инфраструктуры
-- Создана VM в Yandex Cloud (`89.169.137.36`)
-- Настроен сервер: UFW, fail2ban, swap 2GB, Docker
-- Куплен 2-й домен `аптекаа.рф` (REG.RU, до 26.04.2027)
-- Настроен Yandex 360 (3 ящика: info@, partners@, price@)
-- Получен App Password для `price@` → IMAP/SMTP проверены
-- Создан полный deploy-стек в `/app/deploy/`:
-  - `docker-compose.yml` (mongo + backend + frontend + imap_worker + edge-nginx + certbot)
-  - `deploy.sh`, `backup.sh`, `nginx/edge-bootstrap.conf`, `nginx/edge-ssl.conf`, `nginx/static.conf`
-  - `DNS.md`, `README.md`, `.env.example`
-- Удалена страница «Доступные упаковки и формы выпуска» из MedDetail
-- Поправлен текст hero-блока на главной
-
-### Сессия 5 (10 мая, вечер) — РЕАЛЬНЫЙ ДЕПЛОЙ
-- Push на GitHub
-- На сервере: clone, .env, DNS-настройки в REG.RU
-- Запуск deploy.sh — несколько проблем устранили на ходу:
-  - `.env.example` не попал в репо (gitignore) → создан вручную через `cat > .env << EOF`
-  - `frontend/yarn.lock` не было в репо → убрали `--frozen-lockfile` из Dockerfile, yarn создал заново
-  - `openpyxl, httpx, imapclient` не было в `requirements.txt` (на Emergent стояли глобально) → добавлены
-  - certbot в docker-compose не запускался через `run --rm certbot` → пришлось запросить SSL напрямую через `docker run`
-  - SSL получен только для `aptekaa.ru + www`, для `аптекаа.рф` — позже (DNS пропагирует)
-  - nginx после переключения на SSL-конфиг не запускался — sed «съел» закрывающую скобку → исправлено awk
-  - IMAP-worker падал с `SMTPRecipientsRefused: noreply@id.yandex.ru` → захотфикшено: skip noreply отправители + try/except
-- **Импорт MDLP**: 23 303 препарата загружены ✅
-- **Перенос enrichment 200→890 документов** (115 уникальных препаратов × все формы): через дамп JSON из preview → push в GitHub → pull на сервер → mongo update_many
-- Сайт работает на HTTPS ✅
-
----
-
-## 6. Текущее состояние
-
-### ✅ Работает
-- Сайт `https://aptekaa.ru` (HTTP/2, SSL)
-- 23 303 препарата в каталоге
-- 890 страниц препаратов с уникальными описаниями (LLM)
-- 20 партнёрских аптек с ценами в Москве и СПб
-- Голосовой AI-ассистент «Алёна» (Yandex SpeechKit + gpt-4o-mini через Emergent LLM Key)
-- Yandex Maps на карточках препаратов
-- IMAP-приёмник прайсов от аптек на `price@aptekaa.ru`
-- Sitemap + robots.txt + SSR для YandexBot
-- Admin-UI заявок партнёров
-- Cron на автообновление SSL и автобэкап Mongo
-
-### 🟡 Частично работает / ждёт
-- `аптекаа.рф` — DNS пропагирует, SSL ещё не выдан, редирект на основной домен пока через HTTP
-- Статический IP — в очереди на одобрение Я.Cloud (запрос отправлен)
-- DKIM-запись для Я.360 — не подтверждено, что пользователь добавил в REG.RU
-- Регистрация в Яндекс.Вебмастере и Яндекс.Бизнесе — **НЕ сделана**, это критично для индексации
-
-### 🔴 Не работает / ограничения
-- **LLM-обогащение с прода невозможно** через Emergent LLM Key (403 Forbidden из РФ-IP). Решения:
-  1. Запускать обогащение в preview-окружении Emergent → переливать в прод через JSON-дамп (текущий процесс)
-  2. Купить прямой OpenAI-ключ (нужна зарубежная карта) или ProxyAPI (~250 ₽ за $1)
-
----
-
-## 7. Pending Tasks (приоритезация)
-
-### 🔴 P0 — Срочно (сегодня-завтра)
-
-1. **Регистрация в Яндекс.Вебмастере** (`https://webmaster.yandex.ru`):
-   - Добавить сайт `https://aptekaa.ru`
-   - Подтвердить владение через TXT-запись в DNS REG.RU
-   - Указать sitemap: `https://aptekaa.ru/sitemap.xml`
-   - Без этого Яндекс не начнёт индексацию.
-
-2. **Проверить DKIM** для Я.360 (`360.yandex.ru/business` → Домены → DKIM-подпись). Если не подтверждён — взять значение и добавить TXT `mail._domainkey` в REG.RU.
-
-3. **Дождаться квоты на статический IP** Я.Cloud → конвертировать `89.169.137.36` в статический. Очень критично — без этого при любой остановке ВМ сайт ляжет.
-
-4. **Отозвать GitHub PAT** (`github.com/settings/tokens` → найти `aptekaa-server-deploy` → Revoke).
-
-### 🟡 P1 — На неделе
-
-5. **SSL для аптекаа.рф** (когда DNS пропагирует глобально, проверять `dig @8.8.8.8 xn--80aerl0afi.xn--p1ai +short`):
-   ```bash
-   sudo docker run --rm \
-     -v deploy_certbot_etc:/etc/letsencrypt \
-     -v deploy_certbot_webroot:/var/www/certbot \
-     certbot/certbot:latest \
-     certonly --webroot -w /var/www/certbot \
-     -d aptekaa.ru -d www.aptekaa.ru -d xn--80aerl0afi.xn--p1ai \
-     --email info@aptekaa.ru --agree-tos --non-interactive --no-eff-email --expand
-   ```
-   Затем добавить server-блок в `/home/ubuntu/aptekaa/deploy/nginx/active.conf` (см. `edge-ssl.conf` — там есть готовый блок для аптекаа.рф) и `sudo docker compose restart edge`.
-
-6. **Регистрация в Яндекс.Бизнесе** (`business.yandex.ru`) — для попадания в Карты + повышение доверия.
-
-7. **Регистрация в Яндекс.Метрике** — счётчик трафика для аналитики поиска (`metrika.yandex.ru`). Нужно установить JS-снипет в `index.html` или через React-компонент.
-
-8. **Удалить из репо файл `deploy/data/enrichment-200.json`** — был временным, сделал своё дело. Также `frontend/public/enrichment-dump.json`.
-
-9. **Проверить `/app/test_credentials.md` на сервере и в Emergent** — синхронизированы ли данные.
-
-### 🟢 P2 — В среднесрочной перспективе
-
-10. **Расширить LLM-обогащение** — сейчас 890 документов / ~115 уникальных препаратов. Можно довести до 1000-2000 уникальных. **Варианты:**
-    - Запускать `enrich_meds.py` в Emergent preview → дампить → переливать на прод (как уже делали)
-    - Купить прямой OpenAI-ключ (зарубежная карта) или через `proxyapi.ru` (РФ-карта). После этого `EMERGENT_LLM_KEY` в `.env` на сервере заменить на `OPENAI_API_KEY`, и `enrich_meds.py` заработает прямо с продакшена.
-
-11. **Привлечение партнёрских аптек** — холодные продажи, рассылки, посещение аптек. Сейчас 20 партнёров (мокковые/полу-реальные).
-
-12. **Аналитика поисковых запросов** — после Метрики и неделю работы → смотреть какие запросы реально приводят на сайт → обогащать **именно те препараты** (а не все 10 327 наугад).
-
-13. **SFTP-выгрузка прайсов** — для крупных аптечных сетей, у которых уже есть автоматизация.
-
-14. **Покупка трафика?** — пользователь сам сказал «реклама через 3-4 месяца», начинаем с органики.
-
----
-
-## 8. Operations Cheatsheet (как работать с сервером)
+## 3. Доступы и инфраструктура
 
 ### SSH
-```bash
-ssh ubuntu@89.169.137.36
-cd ~/aptekaa/deploy
+- **Хост:** `89.169.137.36` (Yandex Cloud VM, Ubuntu 24.04)
+- **Юзер:** `ubuntu`
+- **Ключ:** `~/.ssh/aptekaa_key` (в текущем поде агента)
+- Пример: `ssh -i ~/.ssh/aptekaa_key ubuntu@89.169.137.36`
+
+### Структура на сервере
+```
+/home/ubuntu/aptekaa/         ← основной репо (git, den3992/aptekaappoisksite)
+├── backend/                  ← FastAPI приложение
+│   ├── server.py             ← entry-point, dispatcher SSR-роутов
+│   ├── api/
+│   │   ├── __init__.py       ← /api/search, /api/medications, /api/categories, ...
+│   │   ├── seo.py            ← все SSR-рендереры для ботов (robots.txt, sitemap, медкарты)
+│   │   ├── partners.py       ← админка для прайс-листов
+│   │   ├── pharmacies_seed.py  ← хардкод PHARMACIES (12 аптек × 2 города)
+│   │   └── uploads.py        ← загрузка XLSX/CSV прайсов
+│   ├── data/
+│   │   └── enrichment-200.json  ← LLM-обогащение топ-200 препаратов
+│   └── tests/
+├── frontend/
+│   ├── src/
+│   │   ├── pages/            ← MedDetail.jsx, Home.jsx, Catalog.jsx, ... (15 страниц)
+│   │   ├── components/ui/    ← shadcn компоненты
+│   │   └── api/client.js     ← axios клиент, базовый URL = REACT_APP_BACKEND_URL
+│   └── public/
+│       └── img/meds/         ← ~2400 WebP файлов (фото препаратов)
+├── deploy/                   ← Docker Compose инфра
+│   ├── docker-compose.yml    ← 5 сервисов: mongo, backend, imap_worker, frontend, edge
+│   ├── backend.Dockerfile
+│   ├── frontend.Dockerfile
+│   ├── nginx/active.conf     ← конфиг nginx с bot-detection (см. ниже)
+│   ├── deploy.sh             ← разворачивание + certbot
+│   └── .env                  ← все секреты (НЕ в git)
+├── scripts/                  ← разовые миграции и матчинг фото
+│   ├── dedup_migration.py    ← см. п. 6.4
+│   └── merge_variants.py     ← см. п. 6.5
+├── memory/
+│   ├── PRD.md                ← краткий лог изменений (поддерживай его)
+│   └── test_credentials.md
+├── HANDOFF.md                ← этот файл
+└── HANDOFF_2026-05-10.md     ← архив прошлого handoff
 ```
 
-### Просмотр логов
+### Docker-сервисы (после `cd deploy && docker compose ps`)
+- `deploy-mongo-1` — MongoDB, volume `mongo_data`
+- `deploy-backend-1` — FastAPI на порту 8001 (внутри сети)
+- `deploy-imap_worker-1` — фоновая выгрузка прайсов из писем
+- `deploy-frontend-1` — Nginx со статикой React + папкой `/img/meds/`
+- `deploy-edge-1` — внешний Nginx 80/443 с SSL и bot-detection
+
+### Креды (`/home/ubuntu/aptekaa/deploy/.env`)
+**Не вытаскивай в чат и не пиши в git.** Ключи: `MONGO_USER`, `MONGO_PASSWORD`,
+`MONGO_DB`, `ADMIN_TOKEN`, `EMERGENT_LLM_KEY`, `YANDEX_API_KEY`, `YANDEX_FOLDER_ID`,
+`CORS_ORIGINS`, `IMAP_*`, `SMTP_*`, `REACT_APP_BACKEND_URL`,
+`REACT_APP_YANDEX_MAPS_KEY`, `LETSENCRYPT_EMAIL`.
+
+Конкретные значения читай через:
 ```bash
-sudo docker compose logs backend --tail 50
-sudo docker compose logs imap_worker --tail 50
-sudo docker compose logs edge --tail 50
-sudo docker compose ps                  # статус всех контейнеров
+ssh -i ~/.ssh/aptekaa_key ubuntu@89.169.137.36 'cat /home/ubuntu/aptekaa/deploy/.env'
 ```
 
-### Перезапуск сервисов
-```bash
-sudo docker compose restart backend
-sudo docker compose restart edge
-sudo docker compose restart imap_worker
-```
+### Админ-панель
+- `https://aptekaa.ru/partner-admin?token=TCkwKsYaekNAJiBHoL8qjxNGsx4XX7PsiQye7WPy`
+- Через токен можно просматривать загруженные прайсы и менять статусы аптек.
 
-### Обновление кода после push в GitHub
-```bash
-cd ~/aptekaa
-git checkout -- backend/requirements.txt   # если были локальные правки
-git pull
-cd deploy
-sudo docker compose build && sudo docker compose up -d
-```
+### GitHub
+- Репо: `https://github.com/den3992/aptekaappoisksite`
+- Push настроен через PAT в `~/aptekaa/.git/config` (на сервере). **Работал на 13.02.2026.**
+- Если push выдаёт 403 — пользователь обновит PAT, не паникуй.
+- Все коммиты делаем как `aptekaa-agent <agent@aptekaa.ru>`.
 
-### Подключиться к Mongo
-```bash
-cd ~/aptekaa/deploy && sudo docker compose exec -T mongo mongosh \
-  --quiet --username aptekaa_admin \
-  --password "OkGaeGlcEqdsyGClit9BmphgiRTFeep50rwVgpcO" \
-  --authenticationDatabase admin aptekaa
-```
+---
 
-### Бэкапы
-- Автоматически: cron каждый день в 03:30 → `/var/backups/aptekaa/mongo-YYYYMMDD.archive.gz`, retention 14 дней
-- Вручную: `cd ~/aptekaa/deploy && bash backup.sh`
-- Восстановление:
+## 4. Как работает SSR + bot-detection (важно для SEO)
+
+Это уникальный архитектурный приём, не сломай его.
+
+1. Когда **обычный браузер** заходит на `https://aptekaa.ru/msk/preparaty/metformin-...`,
+   Nginx отдаёт `index.html` из React-билда. React клиентский роутер сам подтягивает данные.
+2. Когда заходит **YandexBot / Googlebot** (определяется по User-Agent в `nginx/active.conf`),
+   Nginx проксирует на `backend:8001/api/seo/render?path=...`. Backend выполняет реальный
+   запрос в MongoDB и отдаёт **полноценный статический HTML** с `<title>`, `<h1>`,
+   `<og:image>`, `Schema.org/Drug`, breadcrumbs, JSON-LD. Боты получают рендер сразу,
+   без выполнения JS.
+3. Это даёт нам **полноценную индексацию контента** при простом React SPA, без SSR-сервера
+   типа Next.js / SvelteKit. Дёшево, эффективно, главное — не сломать.
+
+**Файлы:**
+- `deploy/nginx/active.conf` — bot-detection regex + proxy_pass
+- `backend/server.py:320+` — диспетчер `/api/seo/render?path=...`
+- `backend/api/seo.py` — все рендереры:
+  - `render_home_for_bot` (главная)
+  - `render_med_for_bot` (карточка препарата)
+  - `render_pharmacy_for_bot` (карточка аптеки)
+  - `render_category_for_bot` (страница категории)
+  - `render_catalog_index_for_bot` (список А-Я по городу)
+  - `render_pharmacies_index_for_bot` (список аптек города)
+  - `render_categories_index_for_bot` (список категорий города)
+  - `render_contacts_for_bot`, `render_about_for_bot`, `render_for_pharmacies_for_bot`
+  - `_render_404` — для несуществующих URL
+
+**Правила работы с SSR:**
+- В рендерах нельзя использовать `_id` из MongoDB (BSON не сериализуется как JSON-LD).
+- Категории/города/аптеки фильтруем по `is_canonical: {$ne: false}` (см. п. 6.4).
+- Любые helper-функции, используемые в рендерах, должны быть **определены в `seo.py`**
+  (`_title_case`, `_normalize_country`, `cn_genitive` уже там). Если будешь импортировать
+  что-то новое из других модулей — проверь, что оно загружается в worker’е uvicorn.
+- **Самый частый класс ошибок:** `NameError` в SSR из-за неопределённой helper-функции.
+  При деплое backend перезапустится, и боты сразу получат 500. Проверяй через:
   ```bash
-  cd ~/aptekaa/deploy && sudo docker compose exec -T mongo mongorestore \
-    --username aptekaa_admin --password "OkGa..." --authenticationDatabase admin \
-    --gzip --archive < /var/backups/aptekaa/mongo-XXXX.archive.gz
+  curl -s -A YandexBot https://aptekaa.ru/msk/preparaty/<slug> -w '\nstatus:%{http_code}\n'
   ```
 
-### Запустить LLM-обогащение (требует прямого OpenAI-ключа на проде)
-```bash
-sudo docker compose exec backend python -m scripts.enrich_meds --limit 1000
+---
+
+## 5. Модель данных (MongoDB)
+
+**База:** `aptekaa`. Коллекции:
+
+### `medications` (≈23 303 документа, **источник истины: ЕСКЛП**)
+```javascript
+{
+  slug: "metformin-1000-mg-tabletki",
+  name: "Метформин",
+  mnn: "МЕТФОРМИН",
+  dosage: "1000 мг",
+  form: "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+  manufacturer: "ООО ОЗОН ФАРМ",     // строго как в ЕСКЛП, не править!
+  manufacturer_country: "РОССИЯ",
+  ru_number: "ЛП-002189",            // регистрационное удостоверение
+  category: "endokrinologiya",       // одна из 12 категорий
+  rx: false,                          // рецептурный?
+  variants: [                         // см. п. 6.5 — variants дублей сливаются в canonical
+    { pack_size: "60 шт", gtin: "04630015110065", primary_pack_desc: "...", ru_number: "..." }
+  ],
+  image_url: "/img/meds/ozon_metformin-1g-n60-tabl-ozon-farm.webp",  // см. п. 6.1
+  dedup_key: "a3f7e2d1b5c8...",      // md5(name+dosage+form+normalized_brand) — см. п. 6.4
+  is_canonical: true,                 // если false — не показывается в listings
+  canonical_slug: "metformin-1000-mg-tabletki"  // на какой slug ставить rel=canonical
+}
 ```
 
-### Сидинг партнёрских аптек (если добавляли новых вручную в код)
+**Критично:**
+- Текстовые поля БД (`manufacturer`, `manufacturer_country`, `mnn`) **в исходном
+  регистре ЕСКЛП** (часто КАПС). Title-case делается на лету в UI/SSR функциями
+  `_title_case` / `_normalize_country`. **Не мутируй БД для casing!**
+- БД сверена с реестром «2026_05_08_Общий_реестр_зарегистрированных_ЛП.xlsx» —
+  100% совпадение по GTIN. Не нужно «исправлять» странные манекенные текстовые
+  значения — они правильные, такие они в ЕСКЛП.
+- Текущая статистика:
+  - `is_canonical: true` → **22 348** документов (показываются в listings)
+  - `is_canonical: false` → **955** документов (скрыты, рендерятся только по прямому URL с canonical=other_slug)
+  - `image_url` не null → **~1851** документов (8.3% от каноничных)
+
+### `prices` (пуста; ждёт партнёров)
+Структура зарезервирована: `{ pharmacy_id, med_slug, gtin, price, qty, updated_at }`.
+Сейчас UI рендерит **МОК** на основе `pack_size`.
+
+### `pharmacies` (12 точек × 2 города, хардкод в `pharmacies_seed.py`)
+ID, имя, адрес, координаты, телефон, часы работы, город.
+
+### `imap_threads`, `partner_uploads` (служебные, для админки)
+
+---
+
+## 6. Что было сделано в этой сессии (13.02.2026)
+
+### 6.1 PNG → WebP (Q80, 800px) для всех 997 фото
+- Все фото препаратов конвертированы через `cwebp -q 80 -resize 800 0 src.png -o dst.webp`
+- Объём: **1.4 ГБ → 23 МБ** (60×)
+- Средний файл: 1.5 МБ → 20 КБ
+- MongoDB массово обновлён: `.png → .webp` (1218 docs)
+- WebP закоммичены в git, PNG удалены с диска
+- WebP поддерживают 96% браузеров, +Core Web Vitals → Яндекс ранжирование
+- **Все будущие фото скрейпим сразу как WebP**, не как PNG
+
+### 6.2 Критический SSR фикс
+В `backend/api/seo.py` использовались `_title_case` и `_normalize_country`, но они **не были
+определены** в файле. Каждая карточка препарата падала с `NameError` → HTTP 500 для всех
+ботов Яндекса. Добавлены оба хелпера. Коммит `92de124`.
+
+### 6.3 SSR для index-страниц (`/msk/preparaty`, `/msk/apteki`, `/msk/kategorii`)
+Эти URL были в `sitemap_static.xml`, но диспетчер не имел для них рендереров → soft-404.
+Добавлены `render_catalog_index_for_bot`, `render_pharmacies_index_for_bot`,
+`render_categories_index_for_bot`. Все 6 URL (по 3 секции × 2 города) теперь 200.
+Коммит `1e9e242`.
+
+### 6.4 Silent dedup дубликатов карточек
+**Проблема:** Один и тот же препарат в ЕСКЛП регистрируется под разными РУ (юрлица,
+ЕАЭС-регистрация, латинские буквы в названиях). Пользователь видел 3 карточки «Метформин
+1000 мг ООО ОЗОН» подряд в выдаче.
+
+**Решение:**
+- `scripts/dedup_migration.py` — считает `dedup_key = md5(name + dosage + form +
+  normalized_brand)`. Нормализация бренда снимает «ООО / OOO / ФАРМ / ПФК», приводит
+  латинские `oaec` → кириллические `оаес`.
+- На каждом документе теперь поля `dedup_key`, `is_canonical` (bool), `canonical_slug` (str).
+- В группе ≥2 документов один (с большим числом variants и более коротким slug) становится
+  `is_canonical=true`, остальные `false`.
+- Все listing-API (`/search`, `/suggest`, `/analogs`, sitemap_meds, category SSR, home SSR)
+  фильтруют `is_canonical: {$ne: false}`.
+- SSR-страница не-canonical документа возвращает 200 с `<link rel="canonical">` на
+  canonical slug → Яндекс склеит ранжирование.
+
+**Результат:** 22 348 canonical / 955 hidden. Коммит `4e2000a`.
+
+### 6.5 Merge variants of duplicates into canonical
+**Проблема:** После 6.4 пользователь видит одну карточку, но фасовки из остальных
+2 РУ были невидимы.
+
+**Решение:** `scripts/merge_variants.py` собирает `variants` из всех документов
+`dedup_key`-группы, дедупит по GTIN (фолбэк: `pack_size + label_name`), сортирует
+по числу, пишет на canonical. Также бэкфилл `image_url`, если у canonical нет, а у дубля есть.
+
+**Результат:** 855 групп слиты, **1523 уникальных GTIN** перенесены на canonical. Пример:
+«Метформин 1000 мг ООО ОЗОН ФАРМ» теперь имеет 6 GTINs (раньше было 3 — другие 3 жили
+на 2 дубликат-картах). Когда партнёры начнут заливать прайсы, все 6 артикулов склеятся
+под одной чипой «60 шт» в UI. Коммит `c44c6ec`.
+
+### 6.6 Фотографии производителей (главный фокус сессии)
+Pipeline единый для всех:
+1. Найти sitemap производителя → product URLs.
+2. С каждой страницы вытащить `<h1>` (trade name) + главное фото (`og:image`, `itemprop="image"`,
+   `IMG_PACK_FRONT/650_650_1`, или `/resize_cache/.../500_350_1/` — зависит от движка).
+3. Сразу конвертить через `cwebp -q 80 -resize 800 0` (без промежуточного PNG).
+4. Матчить с MongoDB через нормализованный trade-name + form-family (solid/liquid/
+   topical/supp/spray/inject). **Важно:** не делать cross-form match (Ибупрофен капсулы
+   → Ибупрофен гель — это разные препараты).
+
+**Покрытие после сессии:**
+
+| Производитель | Фото в БД | % канонических | Скрипт |
+|---|---:|---:|---|
+| **ООО ОЗОН + ОЗОН ФАРМ** | 998 / 1330 | 75% | scrape через GraphQL ozonpharm.ru |
+| **ЗАО КАНОНФАРМА** | 289 / 448 | 65% | canonpharma.ru/sitemap-iblock-7.xml |
+| **АО АКРИХИН** | 83 / 163 | 51% | akrikhin.ru/sitemap-iblock-1.xml |
+| **АО ПФК ОБНОВЛЕНИЕ (Renewal)** | 219 / 464 | 47% | renewal.ru |
+| **АО БИОКОМ** | 17 / 39 | 44% | binnopharmgroup.ru |
+| **АО ВЕРТЕКС** | 97 / 267 | 36% | vertex.spb.ru (og:image) |
+| **АО АЛИУМ (АКОС)** | 53 / 195 | 27% | binnopharmgroup.ru (бонус) |
+| **ОАО/ПАО СИНТЕЗ** | 94 / 366 | 26% | binnopharmgroup.ru (бонус) |
+| **ОБЩИЙ ИТОГ** | **1851 / 22 348** | **8.3%** | |
+
+**Биохимик отложен в конец списка.** У них:
+- `biohimik.net` — это вообще не Биохимик, какой-то админ-интерфейс
+- `biohimik.ru` → редиректит на `promomed.pro` (Биохимик принадлежит «Промомеду»)
+- Каталог Промомеда **не показывает фото товаров**, только заглушки и логотипы партнёров-аптек.
+
+### 6.7 Прочее
+- Phone numbers clickable (`<a href="tel:...">`), часы работы и телефон разделены `|`
+- Pack sizes отсортированы по числу по возрастанию (UI чипы)
+- ЕСКЛП-артефакты в pack sizes очищены (`см[3*];^мл` → `мл`)
+- Title Case для стран и МНН — **только в UI/SSR**, без мутации БД
+- GitHub PAT обновлён (push работает)
+
+---
+
+## 7. Где сейчас лежат скрипты (текущий поток работы)
+
+Все скрейпинг-скрипты живут в `/tmp/` на сервере (быстрые однократные миграции, не
+коммитим). Закоммичены только переиспользуемые: `scripts/dedup_migration.py`,
+`scripts/merge_variants.py`, `scripts/cp_match.py` (если коммитил).
+
+**На сервере существуют:**
+- `/tmp/canonpharma_scrape.py` + `/tmp/cp_match.py` — Канонфарма (готово)
+- `/tmp/binnopharm_scrape.py` + `/tmp/bnp_match.py` — Синтез/Алиум/Биоком (готово)
+- `/tmp/akrikhin_scrape.py` + `/tmp/ak_match.py` — Акрихин (готово)
+- `/tmp/vertex_scrape.py` + `/tmp/vx_match.py` — Вертекс (готово)
+- `/tmp/ozon_match.py` — Озон (применён, артефакты есть в `/tmp/`)
+
+**Шаблон для следующего производителя:**
+1. Найти sitemap или каталог → product URLs.
+2. Скопировать `vertex_scrape.py` (если og:image работает) или `akrikhin_scrape.py`
+   (если резайз-кеш Bitrix) как старт.
+3. Скопировать `vx_match.py` как основу матчера, заменить `DB_REGEX` на нужного
+   производителя. **Помни про cross-form match** — оставь `idx.setdefault((k,fam))` БЕЗ
+   `idx.setdefault((k,"any"))`, чтобы не было ложных совпадений.
+
+---
+
+## 8. Стандартный flow для скрейпинга нового производителя
+
 ```bash
-sudo docker compose exec backend python -m scripts.seed_pharmacy_tokens
+# 1. На локальной машине (поде агента) — пишем скрипт
+nano /tmp/<short>_scrape.py     # переиспользовать vx_/ak_/cp_scrape как шаблон
+nano /tmp/<short>_match.py
+
+# 2. Копируем на прод
+scp -i ~/.ssh/aptekaa_key /tmp/<short>_scrape.py ubuntu@89.169.137.36:/tmp/
+scp -i ~/.ssh/aptekaa_key /tmp/<short>_match.py  ubuntu@89.169.137.36:/tmp/
+
+# 3. Запускаем скрейп
+ssh -i ~/.ssh/aptekaa_key ubuntu@89.169.137.36 'rm -rf /tmp/<short>_img && nohup python3 /tmp/<short>_scrape.py > /tmp/<short>_scrape.log 2>&1 & echo started PID=$!'
+# Ждём (sleep 60-90 для ~300 продуктов на скорости 0.25 сек/запрос).
+# Проверяем счёт webp: ls /tmp/<short>_img/*.webp | wc -l
+
+# 4. Матчинг
+ssh -i ~/.ssh/aptekaa_key ubuntu@89.169.137.36 'python3 /tmp/<short>_match.py 2>&1'
+
+# 5. Применяем БД-апдейты
+ssh -i ~/.ssh/aptekaa_key ubuntu@89.169.137.36 "docker cp /tmp/<short>_updates.js deploy-mongo-1:/tmp/<short>_updates.js && docker exec deploy-mongo-1 mongosh -u aptekaa_admin -p \$(grep MONGO_PASSWORD /home/ubuntu/aptekaa/deploy/.env | cut -d= -f2) --authenticationDatabase admin aptekaa --quiet --file /tmp/<short>_updates.js"
+
+# 6. Копируем webp в host volume + в nginx container
+ssh -i ~/.ssh/aptekaa_key ubuntu@89.169.137.36 'cp /tmp/<short>_img/*.webp /home/ubuntu/aptekaa/frontend/public/img/meds/ && mkdir -p /tmp/<short>_batch && cp /tmp/<short>_img/*.webp /tmp/<short>_batch/ && docker cp /tmp/<short>_batch/. deploy-frontend-1:/usr/share/nginx/html/img/meds/ && rm -rf /tmp/<short>_batch'
+
+# 7. Проверка
+# 7a. curl на одну карточку из этого производителя:
+ssh -i ~/.ssh/aptekaa_key ubuntu@89.169.137.36 "curl -s 'https://aptekaa.ru/api/medications/<slug>' | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get(\"image_url\"))'"
+# 7b. Скриншот:
+# mcp_screenshot_tool со script, который грабит src='img[src*=<short>_]'
+
+# 8. Коммит и push
+ssh -i ~/.ssh/aptekaa_key ubuntu@89.169.137.36 "cd /home/ubuntu/aptekaa && git add frontend/public/img/meds/<short>_*.webp && git -c user.name='aptekaa-agent' -c user.email='agent@aptekaa.ru' commit -m 'feat(images): scrape <Производитель> catalog photos' && git push origin main"
+
+# 9. Обновить PRD.md и при необходимости HANDOFF.md
 ```
 
-### Перенос enrichment из Emergent preview → прод
-1. В Emergent: дампить `medications.find({enrichment: {$exists: true}})` в JSON (slug, name, mnn, enrichment)
-2. Положить в `deploy/data/enrichment-XXX.json`
-3. Push в GitHub
-4. На сервере: `git pull`
-5. Импорт через `update_many` (см. историю чата — короткая команда работает)
+---
+
+## 9. Полезные команды
+
+### Логи backend
+```bash
+ssh -i ~/.ssh/aptekaa_key ubuntu@89.169.137.36 'docker logs deploy-backend-1 --tail 50 2>&1'
+```
+
+### Перезапуск backend (после изменения файла напрямую в контейнере)
+```bash
+ssh -i ~/.ssh/aptekaa_key ubuntu@89.169.137.36 'docker cp /home/ubuntu/aptekaa/backend/api/seo.py deploy-backend-1:/app/api/seo.py && docker restart deploy-backend-1'
+sleep 7
+# Verify
+curl -s -A YandexBot https://aptekaa.ru/msk -w '\nstatus:%{http_code}\n' -o /dev/null
+```
+
+### MongoDB CLI
+```bash
+ssh -i ~/.ssh/aptekaa_key ubuntu@89.169.137.36 "docker exec deploy-mongo-1 mongosh -u aptekaa_admin -p \$(grep MONGO_PASSWORD /home/ubuntu/aptekaa/deploy/.env | cut -d= -f2) --authenticationDatabase admin aptekaa --quiet --eval 'db.medications.countDocuments({is_canonical: true})'"
+```
+
+### Тестирование SSR / каталога / API
+```bash
+# Карточка препарата
+curl -s -A YandexBot https://aptekaa.ru/msk/preparaty/<slug>
+
+# Index-страница
+curl -s -A YandexBot https://aptekaa.ru/msk/preparaty
+
+# API
+curl -s 'https://aptekaa.ru/api/search?q=метформин&page_size=10'
+curl -s 'https://aptekaa.ru/api/medications/<slug>'
+```
+
+### Образ препарата
+```bash
+curl -s -o /dev/null -w '%{http_code} %{content_type}\n' https://aptekaa.ru/img/meds/<filename>.webp
+```
 
 ---
 
-## 9. Известные подводные камни / Lessons Learned
+## 10. Backlog (приоритизирован)
 
-### Эти грабли мы уже наступили — будь осторожен
+### 🔴 P0 — блокеры
+Сейчас нет открытых P0. Все прошлые блокеры закрыты в этой сессии.
 
-1. **Emergent LLM Key 403 from outside Emergent IPs** — нельзя использовать с прода. Нужен прямой OpenAI-ключ для масштабирования enrichment.
+### 🟡 P1 — на очереди
+1. **Скрейпинг фото остальных топ-производителей** (выбор за пользователем):
+   - АО ФАРМАСИНТЕЗ — 324 шт без фото (pharmasyntez.com)
+   - ООО ВЕЛФАРМ — 295 (velfarm.ru)
+   - ОАО ФАРМСТАНДАРТ-ЛЕКСРЕДСТВА — 278 (pharmstd.ru)
+   - ООО ГРОТЕКС / Solopharm — 269 (solopharm.com)
+   - ООО ТУЛЬСКАЯ ФАРМФАБРИКА — 318 (tff.ru, но старый сайт, неточно с фото)
+   - АО КРКА (Словения) — 207 (krka.biz)
+   - АО АВВА РУС — 175 (avva-rus.ru)
+   - АО НПО МИКРОГЕН — 178 (microgen.ru, вакцины — обычно нет красивых фото)
+2. **DNS аптекаа.рф (xn--80aerl0afi.xn--p1ai)**: пользователь обратился в REG.RU,
+   домен **не зарегистрирован в реестре .рф** (WHOIS пусто). После регистрации:
+   ```bash
+   host xn--80aerl0afi.xn--p1ai   # должно резолвиться на 89.169.137.36
+   ssh ubuntu@89.169.137.36 'cd ~/aptekaa/deploy && ./deploy.sh'  # запустит certbot
+   ```
+3. **Подпись «Фото производителя»** под изображением в `MedDetail.jsx` и SSR (`seo.py`).
+   Пользователь явно сказал «отложим это на потом, запомни». Не делать без явного запроса.
 
-2. **Я.Cloud квота на статический IP = 0 для новых аккаунтов.** Робот поддержки автоматически отказывает при первом запросе. Нужно идти в человеческую поддержку с обоснованием.
-
-3. **Я.Cloud цены выросли с 1 мая 2026** — расчёты до этой даты были занижены (~750 ₽/мес ожидали, получили ~2800 ₽/мес).
-
-4. **Cloudflare НЕ работает в России** (Роскомнадзор режет TLS ECH с июня 2025). Используем встроенную защиту Я.Cloud + Let's Encrypt + nginx fail2ban. Не предлагай Cloudflare.
-
-5. **Mail.ru DKIM пользователь не довёл до конца** — переключились на Я.360. Не возвращаться к Mail.ru.
-
-6. **`frontend/yarn.lock` отсутствует в репо** (видимо, gitignore ловит) — пришлось убрать `--frozen-lockfile` из Dockerfile. Если делать pip install / yarn install заново, **могут поплыть версии зависимостей**. Желательно зафиксировать `yarn.lock` явно.
-
-7. **`requirements.txt` на момент хендовера НЕ синхронизирован между Emergent /app/backend и проектом на сервере.** Я ходил между ними, добавлял `slowapi`, `openpyxl`, `httpx`, `imap_tools`, `imapclient`. **На прод-сервере в `~/aptekaa/backend/requirements.txt` правильный набор есть.** На Emergent `/app/backend/requirements.txt` — тоже синхронизирован. Но если будешь обновлять — проверь оба места.
-
-8. **Юзер просил убрать ЖНВЛП и государственные предельные цены** — это из политических/юридических соображений, **никогда не возвращай**.
-
-9. **Голос «Алёна» зафиксирован** в Yandex SpeechKit — пользователь его утвердил. Не предлагай ElevenLabs или другие TTS.
-
-10. **`cd ~/aptekaa` под sudo** превращается в `/root/aptekaa` (не `/home/ubuntu/aptekaa`). Использовать абсолютные пути в sudo-командах.
-
-11. **Heredoc (`<< EOF`) в одной строке через ssh иногда не закрывается** — пользователь несколько раз вводил неполные команды и терминал зависал. Лучше многострочные скрипты класть в файл и потом запускать.
-
-12. **DNS пропагация .РФ-доменов медленная** — у `аптекаа.рф` после покупки до глобальной видимости прошло >12 часов.
-
-13. **Эмодзи в файлах — пользователь не возражал, но спросил один раз.** Используй умеренно.
-
----
-
-## 10. Файлы — куда смотреть в репо
-
-### Самые важные
-- `/app/memory/PRD.md` — продакт-роадмап и changelog
-- `/app/memory/test_credentials.md` — все креды и токены
-- `/app/deploy/README.md` — инструкция по деплою
-- `/app/deploy/DNS.md` — настройки REG.RU
-- `/app/deploy/deploy.sh` — главный скрипт деплоя
-- `/app/deploy/docker-compose.yml` — оркестрация контейнеров
-- `/app/deploy/nginx/edge-ssl.conf` — production nginx (после получения SSL)
-- `/app/deploy/nginx/edge-bootstrap.conf` — initial HTTP-only nginx (для ACME-challenge)
-
-### Тестовые отчёты (последние)
-- `/app/test_reports/iteration_5.json` — security audit, всё green
-
-### Логи последних сессий
-- `/app/test_result.md`
+### 🟢 P2 — потом
+4. **Лендинг `/dlya-aptek-lending`**: оформить для привлечения аптек-партнёров.
+5. **Расширить LLM-обогащение** на все препараты (нужен прямой OpenAI ключ, не Emergent).
+6. **Биохимик / Промомед**: если найдёте источник фото — добавить (пока заглушки).
+7. **Реальные цены** в SSR карточек (ждём заливки прайсов партнёрами).
 
 ---
 
-## 11. Контактные точки клиента / пользователя
+## 11. Стиль работы с пользователем
 
-- **Имя:** Денис (`den3992` на GitHub, `psyche_99` на Mac)
-- **Тон общения:** Русский, по-деловому, без излишних формальностей
-- **Принимает решения быстро,** но просит конкретные команды для терминала пошагово (не любит длинные простыни кода — присылать одну команду, ждать ответа, давать следующую)
-- **Не любит:** долгое ожидание, лишние вопросы при наличии разумного default'а
-- **Любит:** конкретику, цифры, оценку «нужно/не нужно сейчас», варианты с пометкой 🟢 рекомендую
-- **Бюджет:** ограниченный, но готов вкладываться в инфраструктуру (купил VPS за 2800₽/мес, второй домен)
-
----
-
-## 12. Что НЕ нужно делать (anti-patterns)
-
-❌ Не использовать Cloudflare — забанено в РФ
-❌ Не возвращать ЖНВЛП и предельные цены
-❌ Не предлагать ElevenLabs / VAPI вместо Yandex SpeechKit
-❌ Не запускать `enrich_meds.py` напрямую с прод-сервера через Emergent LLM Key — будет 403
-❌ Не нажимать Stop/Start ВМ в Я.Cloud, пока IP не статический
-❌ Не push'ить `.env` файлы в GitHub (уже в .gitignore, но проверь при больших изменениях)
-❌ Не предлагать «давай переделаем архитектуру» — MVP работает, задача — расширять, не переписывать
+- **Язык:** РУССКИЙ всегда. Не переходи на английский, даже в технических объяснениях.
+- **Тон:** деловой, но не сухой. Пользователь — собственник бизнеса, не разработчик,
+  но технически грамотный. Объясняет проблемы понятным языком, не сыпь термины.
+- **Подтверждай план перед выполнением.** Пользователь всегда говорит «давай»,
+  «делай», «погнали» — если ответ короткий, ты понял правильно.
+- **Не делай больше, чем спросили.** Например, если просят добавить фото производителя X,
+  не лезь чинить unrelated баги (только если они на пути).
+- **Финиш каждой задачи завершай:**
+  - markdown-таблицей с метриками
+  - коммитом в git
+  - предложением следующего шага (с лёгким а/б/в выбором)
+- **Эмодзи:** редко и осмысленно. ✅ для готового, ⚠️ для предупреждения, 🔴🟡🟢 для приоритетов.
+- **Не предлагай рефакторинг unsolicited.** Сейчас приоритеты — SEO, фото, лендинг.
 
 ---
 
-## 13. Финальный совет преемнику
+## 12. Чего НЕ делать (anti-patterns)
 
-Состояние проекта **стабильное и production-ready**. Главное теперь — это **рост** (SEO, привлечение аптек, расширение LLM-описаний по реальным запросам), а не разработка фич.
+1. ❌ **Не скрейпить агрегаторы цен** (apteka.ru, eapteka.ru, rigla.ru и т.п.) — пользователь
+   явно запретил из-за рисков. Только официальные сайты производителей.
+2. ❌ **Не мутировать БД для casing** (`manufacturer`, `mnn`, `country` остаются как в ЕСКЛП).
+   Title-case делается в UI/SSR функциями `_title_case` / `_normalize_country`.
+3. ❌ **Не добавлять водяные знаки** на скрейпленные фото — обсуждали, отказались
+   (копирайт остаётся за производителем, водяной знак не защищает, а навредит SEO).
+4. ❌ **Не предлагать medицинские рекомендации** в LLM-описаниях. Только справочная
+   информация и обязательный disclaimer (по ФЗ-38).
+5. ❌ **Не возвращать `_id` из MongoDB в JSON** — BSON ObjectId не сериализуется.
+   Всегда `projection: {_id: 0, ...}`.
+6. ❌ **Не запускать длинные процессы (>120 сек) в foreground.** Используй nohup + & + log file.
+7. ❌ **Не пересоздавать `requirements.txt` или `package.json`** — добавляй пакеты через
+   `pip install + pip freeze` / `yarn add`. Полное переписывание ломает локк-версии.
+8. ❌ **Не делать `.png` фото** — только `.webp` через cwebp -q 80 -resize 800 0.
 
-**Следующий шаг с большим импактом:**
-1. Подтвердить DKIM (5 мин)
-2. Зарегистрировать в Я.Вебмастере (15 мин) и Я.Бизнесе (30 мин)
-3. Получить статический IP (когда поддержка одобрит)
-4. Через неделю-две — расширить enrichment по данным Метрики
+---
 
-**Удачи!** 🍀
+## 13. Open questions для пользователя
+
+1. **Следующий производитель фото?** (см. P1, пункт 1)
+2. **Когда домен `аптекаа.рф` зарегистрируется в реестре .рф?** Ждём REG.RU.
+3. **Партнёры-аптеки**: есть ли первые контакты, кто загрузит первый реальный
+   прайс? Без этого Цены остаются MOCKED.
+
+---
+
+## 14. История коммитов сессии (последние 10)
+
+```
+f66cd9f feat(images): scrape Vertex catalog photos
+89d9442 feat(images): scrape Akrikhin catalog photos
+9d9566c feat(images): scrape Binnopharm Group catalog (Синтез + Алиум + Биоком)
+2c72703 feat(images): scrape Canonpharma Production catalog photos
+1e9e242 feat(seo): add SSR for /<city>/preparaty, /<city>/apteki, /<city>/kategorii indexes
+89fddaa perf(images): convert all medication photos PNG -> WebP 800px Q80
+c44c6ec feat(catalog): merge variants from duplicate registrations into canonical card
+4e2000a feat(catalog): silent dedup of duplicate registrations in listings
+92de124 fix(seo): define missing _title_case and _normalize_country helpers in SSR
+```
+
+Полная история: `git log --oneline` на сервере.
+
+---
+
+## 15. Контакты
+
+- Email пользователя: см. `partner@aptekaa.ru` / `support@aptekaa.ru`
+- Telegram, Discord: не использовались
+- GitHub: `den3992`
+- Хост-провайдер: Yandex Cloud (биллинг — на пользователе)
+- Регистратор домена: REG.RU
+
+---
+
+**Конец handoff. Удачи!**
+
+*Если что-то не нашёл — `git log --grep=<ключевое_слово>` или ищи в `memory/PRD.md`.*
