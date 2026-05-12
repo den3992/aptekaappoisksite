@@ -68,7 +68,9 @@ function simplifyPack(s) {
   if (m) {
     const u = m[3].toLowerCase();
     const unit = u.startsWith('доз') ? 'доз' : (u.startsWith('усл') ? 'усл.ед.' : 'шт');
-    return `${m[1]} × ${m[2].replace(',', '.')} ${unit}`;
+    const total = parseInt(m[1], 10) * parseFloat(m[2].replace(',', '.'));
+    const totalStr = Number.isInteger(total) ? String(total) : String(total);
+    return `${totalStr} ${unit}`;
   }
   // "по N <unit>" or contains "N <unit>"
   m = txt.match(/(?:по\s+)?(\d+(?:[\.,]\d+)?)\s*(шт|табл?\.?|капс?\.?|доз\S*|усл\.?\s*ед\.?|г|мг|мл|мкг|МЕ|ЕД|м³|%)/i);

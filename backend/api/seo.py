@@ -300,7 +300,9 @@ def _simplify_pack(s):
             unit = "усл.ед."
         else:
             unit = "шт"
-        return f"{m.group(1)} × {m.group(2).replace(',', '.')} {unit}"
+        total = int(m.group(1)) * float(m.group(2).replace(",", "."))
+        total_str = str(int(total)) if total.is_integer() else str(total)
+        return f"{total_str} {unit}"
     m = _re.search(r"(?:по\s+)?(\d+(?:[\.,]\d+)?)\s*(шт|табл?\.?|капс?\.?|доз\S*|усл\.?\s*ед\.?|г|мг|мл|мкг|МЕ|ЕД|м³|%)", txt, _re.I)
     if m:
         v = m.group(1).replace(",", ".")
