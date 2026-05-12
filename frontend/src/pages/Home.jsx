@@ -126,11 +126,11 @@ export default function Home() {
               </select>
             </div>
             <div className="flex-1 flex items-center gap-2 px-3 relative">
-              <Search className="w-4 h-4 text-slate-400" />
+              <Search className="w-4 h-4 text-rose-500" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Название препарата, вещества или симптома…"
+                placeholder="Введите название препарата"
                 className="w-full text-base py-3 bg-transparent outline-none"
               />
               {suggestions.length > 0 && (

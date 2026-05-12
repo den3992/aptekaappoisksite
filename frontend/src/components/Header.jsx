@@ -49,7 +49,7 @@ export default function Header() {
         </DropdownMenu>
 
         <form onSubmit={onSubmit} className="flex-1 max-w-2xl input-focus border border-slate-200 rounded-lg flex items-center bg-white transition">
-          <Search className="w-4 h-4 text-slate-400 ml-3" />
+          <Search className="w-4 h-4 text-rose-500 ml-3" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
