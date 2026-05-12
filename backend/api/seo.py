@@ -425,7 +425,7 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
     if dosage: body.append(f"<dt>Дозировка</dt><dd>{html.escape(dosage)}</dd>")
     if manufacturer: body.append(f"<dt>Производитель</dt><dd>{html.escape(manufacturer)}</dd>")
     if med.get("manufacturer_country"):
-        body.append(f"<dt>Страна производства</dt><dd>{html.escape(_title_case(med['manufacturer_country']))}</dd>")
+        body.append(f"<dt>Страна производства</dt><dd>{html.escape(_normalize_country(med['manufacturer_country']))}</dd>")
     if med.get("ru_number"): body.append(f"<dt>Номер регистрационного удостоверения</dt><dd>{html.escape(med['ru_number'])}</dd>")
     body.append("</dl>")
 

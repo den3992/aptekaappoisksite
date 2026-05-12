@@ -14,6 +14,25 @@ function titleCase(s) {
   return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
 }
 
+// Replace clunky/official country names with common usage.
+const COUNTRY_NORMALIZE = {
+  'соединенное королевство': 'Великобритания',
+  'соединенные штаты': 'США',
+  'чешская республика': 'Чехия',
+  'республика северная македония': 'Северная Македония',
+  'македония': 'Северная Македония',
+  'киргизская республика': 'Киргизия',
+  'южно-африканская республика': 'ЮАР',
+  'объединенные арабские эмираты': 'ОАЭ',
+  'сан марино': 'Сан-Марино',
+  'корея': 'Южная Корея'
+};
+function normalizeCountry(s) {
+  if (!s) return '';
+  const key = String(s).trim().toLowerCase();
+  return COUNTRY_NORMALIZE[key] || titleCase(s);
+}
+
 // Normalize pack_size text to a short user-facing label.
 // Examples:
 //   "3 × 10 шт"      -> "30 шт"
@@ -314,7 +333,7 @@ export default function MedDetail() {
 
           <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
             <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Производитель</div><div className="font-medium text-slate-800">{med.manufacturer || '—'}</div></div>
-            <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Страна</div><div className="font-medium text-slate-800">{titleCase(med.manufacturer_country) || '—'}</div></div>
+            <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Страна</div><div className="font-medium text-slate-800">{normalizeCountry(med.manufacturer_country) || '—'}</div></div>
             {med.mnn && <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">МНН</div><div className="font-medium text-slate-800">{titleCase(med.mnn)}</div></div>}
           </div>
 
