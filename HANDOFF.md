@@ -285,18 +285,43 @@ Pipeline единый для всех:
 |---|---:|---:|---|
 | **ООО ОЗОН + ОЗОН ФАРМ** | 998 / 1330 | 75% | scrape через GraphQL ozonpharm.ru |
 | **ЗАО КАНОНФАРМА** | 289 / 448 | 65% | canonpharma.ru/sitemap-iblock-7.xml |
+| **АО ФАРМАСИНТЕЗ группа** | 362 / 621 | 58% | pharmasyntez.com/products/ (single-page) |
 | **АО АКРИХИН** | 83 / 163 | 51% | akrikhin.ru/sitemap-iblock-1.xml |
 | **АО ПФК ОБНОВЛЕНИЕ (Renewal)** | 219 / 464 | 47% | renewal.ru |
 | **АО БИОКОМ** | 17 / 39 | 44% | binnopharmgroup.ru |
 | **АО ВЕРТЕКС** | 97 / 267 | 36% | vertex.spb.ru (og:image) |
 | **АО АЛИУМ (АКОС)** | 53 / 195 | 27% | binnopharmgroup.ru (бонус) |
 | **ОАО/ПАО СИНТЕЗ** | 94 / 366 | 26% | binnopharmgroup.ru (бонус) |
-| **ОБЩИЙ ИТОГ** | **1851 / 22 348** | **8.3%** | |
+| **ОБЩИЙ ИТОГ** | **2213 / 22 348** | **9.9%** | |
 
 **Биохимик отложен в конец списка.** У них:
 - `biohimik.net` — это вообще не Биохимик, какой-то админ-интерфейс
 - `biohimik.ru` → редиректит на `promomed.pro` (Биохимик принадлежит «Промомеду»)
 - Каталог Промомеда **не показывает фото товаров**, только заглушки и логотипы партнёров-аптек.
+
+### 6.6.x Лайфхак для Фармасинтеза (одно-страничный каталог)
+В отличие от Bitrix-каталогов остальных (где надо обходить sitemap и фетчить каждую
+страницу), у Фармасинтеза **весь каталог на одной странице** `/products/`:
+```html
+<div class="box-element ...">
+  <a href="/products/<category>/<slug>/">
+    <div class="square-picture" style="background-image: url('/upload/.../<img>.png');"></div>
+    <div class="name">Trade name</div>
+    <div class="mnn">МНН</div>
+    <div class="dose"><span>2,5 мг</span></div>
+    <div class="group">Категория</div>
+  </a>
+</div>
+```
+Один HTTP-запрос — 238 продуктов с изображениями, MNN и дозами сразу. Это в 30 раз
+быстрее обычного flow. Но: страница НЕ содержит lекарственной формы — для исключения
+cross-form match'a (Адеметионин таблетки vs лиофилизат) нужен **2-й проход**
+`ps_enrich_forms.py`: посетить каждую страницу продукта и определить форму
+по тексту тела (`таблетки` / `лиофилизат` / `раствор для инъекций` / ...).
+Дистрибуция вышла: 149 solid, 70 inject, 14 unknown, остальное единичные.
+
+Если попадётся ещё такой производитель — переиспользуй `pharmasyntez_scrape.py` +
+`ps_enrich_forms.py` как шаблон.
 
 ### 6.7 Прочее
 - Phone numbers clickable (`<a href="tel:...">`), часы работы и телефон разделены `|`
@@ -318,6 +343,7 @@ Pipeline единый для всех:
 - `/tmp/binnopharm_scrape.py` + `/tmp/bnp_match.py` — Синтез/Алиум/Биоком (готово)
 - `/tmp/akrikhin_scrape.py` + `/tmp/ak_match.py` — Акрихин (готово)
 - `/tmp/vertex_scrape.py` + `/tmp/vx_match.py` — Вертекс (готово)
+- `/tmp/pharmasyntez_scrape.py` + `/tmp/ps_enrich_forms.py` + `/tmp/ps_match.py` — Фармасинтез (готово, использует single-page parse + 2-й проход для form_family из тела страницы)
 - `/tmp/ozon_match.py` — Озон (применён, артефакты есть в `/tmp/`)
 
 **Шаблон для следующего производителя:**
@@ -416,7 +442,6 @@ curl -s -o /dev/null -w '%{http_code} %{content_type}\n' https://aptekaa.ru/img/
 
 ### 🟡 P1 — на очереди
 1. **Скрейпинг фото остальных топ-производителей** (выбор за пользователем):
-   - АО ФАРМАСИНТЕЗ — 324 шт без фото (pharmasyntez.com)
    - ООО ВЕЛФАРМ — 295 (velfarm.ru)
    - ОАО ФАРМСТАНДАРТ-ЛЕКСРЕДСТВА — 278 (pharmstd.ru)
    - ООО ГРОТЕКС / Solopharm — 269 (solopharm.com)
@@ -487,9 +512,11 @@ curl -s -o /dev/null -w '%{http_code} %{content_type}\n' https://aptekaa.ru/img/
 
 ---
 
-## 14. История коммитов сессии (последние 10)
+## 14. История коммитов сессии (последние 12)
 
 ```
+6e74c5d feat(images): scrape Pharmasyntez group catalog photos
+483e373 docs: full handoff for new AI agent migration
 f66cd9f feat(images): scrape Vertex catalog photos
 89d9442 feat(images): scrape Akrikhin catalog photos
 9d9566c feat(images): scrape Binnopharm Group catalog (Синтез + Алиум + Биоком)
