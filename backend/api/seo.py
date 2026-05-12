@@ -120,7 +120,8 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
         now = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         # Each sitemap chunk holds 25k slugs × 2 cities = 50k URLs (the per-sitemap limit)
         per_chunk_slugs = 25000
-        total = await db.medications.count_documents({})
+        # Sitemap only lists canonical pages (duplicates are hidden via rel=canonical)
+        total = await db.medications.count_documents({"is_canonical": {"$ne": False}})
         chunks = max(1, (total + per_chunk_slugs - 1) // per_chunk_slugs)
         items = [
             f"<sitemap><loc>{host}/sitemap_static.xml</loc><lastmod>{now}</lastmod></sitemap>",
@@ -175,7 +176,10 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
         # 25,000 slugs * 2 cities = 50,000 URLs (per-sitemap protocol limit)
         per = 25000
         skip = (idx - 1) * per
-        cursor = db.medications.find({}, {"_id": 0, "slug": 1}).sort("slug", 1).skip(skip).limit(per)
+        cursor = db.medications.find(
+            {"is_canonical": {"$ne": False}},
+            {"_id": 0, "slug": 1},
+        ).sort("slug", 1).skip(skip).limit(per)
         urls = []
         async for d in cursor:
             slug = d.get("slug")
@@ -425,7 +429,11 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
     if enrichment.get("summary"):
         desc = f"{enrichment['summary']} Сравните цены и наличие в аптеках {cn_genitive(cn)}."[:300]
 
-    canonical = f"{base_url(request)}/{city}/preparaty/{slug}"
+    # If this is a non-canonical duplicate, point canonical to the chosen representative.
+    # This tells Yandex/Google "the real page is /…/<canonical_slug>" and the duplicate
+    # won't compete in search results.
+    canonical_slug = med.get("canonical_slug") or slug
+    canonical = f"{base_url(request)}/{city}/preparaty/{canonical_slug}"
 
     body = []
     if rx:
@@ -468,9 +476,14 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
                 body.append(f"<li>{html.escape(str(label))}{' · GTIN ' + str(v.get('gtin')) if v.get('gtin') else ''}</li>")
         body.append("</ul>")
 
-    # Analogs
+    # Analogs — hide duplicate registrations (only canonical cards as analogs).
+    analog_flt = {"slug": {"$ne": slug}, "is_canonical": {"$ne": False}}
+    if mnn:
+        analog_flt["mnn"] = mnn
+    else:
+        analog_flt["category"] = med.get("category", "other")
     analogs_cursor = db.medications.find(
-        {"slug": {"$ne": slug}, "mnn": mnn} if mnn else {"slug": {"$ne": slug}, "category": med.get("category", "other")},
+        analog_flt,
         {"_id": 0, "slug": 1, "name": 1, "manufacturer": 1, "dosage": 1},
     ).limit(8)
     analogs = [a async for a in analogs_cursor]
@@ -577,7 +590,7 @@ async def render_home_for_bot(db: AsyncIOMotorDatabase, city: str, request: Requ
     )
     canonical = f"{base_url(request)}/{city}"
 
-    total = await db.medications.count_documents({})
+    total = await db.medications.count_documents({"is_canonical": {"$ne": False}})
     body = [
         f"<p>Сервис АптекаА помогает быстро найти нужное лекарство по выгодной цене в аптеках {cn_genitive(cn)} и Санкт-Петербурга. В каталоге <strong>{total:,}</strong> зарегистрированных лекарственных препаратов.</p>".replace(",", " "),
         "<h2>Категории препаратов</h2><ul>",
@@ -673,7 +686,10 @@ async def render_category_for_bot(db, city: str, cat_slug: str, request: Request
     desc = f"Каталог категории «{cat_title}» в аптеках {cn_genitive(cn)}. Сравните цены и наличие препаратов."
     canonical = f"{base_url(request)}/{city}/kategorii/{cat_slug}"
 
-    cursor = db.medications.find({"category": cat_slug}, {"_id": 0, "slug": 1, "name": 1, "dosage": 1, "manufacturer": 1, "rx": 1}).limit(60)
+    cursor = db.medications.find(
+        {"category": cat_slug, "is_canonical": {"$ne": False}},
+        {"_id": 0, "slug": 1, "name": 1, "dosage": 1, "manufacturer": 1, "rx": 1},
+    ).limit(60)
     body = ["<ul>"]
     async for m in cursor:
         u = f"{base_url(request)}/{city}/preparaty/{m['slug']}"

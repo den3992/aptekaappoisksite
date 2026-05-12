@@ -35,8 +35,9 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
 
     @router.get("/categories")
     async def list_categories():
-        # attach counts from medications collection
+        # attach counts from medications collection (canonical-only for accurate UX numbers)
         agg = db.medications.aggregate([
+            {"$match": {"is_canonical": {"$ne": False}}},
             {"$group": {"_id": "$category", "count": {"$sum": 1}}},
         ])
         counts = {row["_id"]: row["count"] async for row in agg}
@@ -91,7 +92,8 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         page: int = Query(1, ge=1),
         page_size: int = Query(24, ge=1, le=100),
     ):
-        flt = {}
+        # Hide non-canonical duplicates in listings. Direct URL access still works.
+        flt = {"is_canonical": {"$ne": False}}
         sort = None
         if q and q.strip():
             term = q.strip()
@@ -145,9 +147,12 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         # Prefix-style search: case‑insensitive on first chars
         pattern = re.escape(term)
         cursor = db.medications.find(
-            {"$or": [
-                {"name": {"$regex": f"^{pattern}", "$options": "i"}},
-                {"mnn": {"$regex": f"^{pattern.upper()}", "$options": "i"}},
+            {"$and": [
+                {"is_canonical": {"$ne": False}},
+                {"$or": [
+                    {"name": {"$regex": f"^{pattern}", "$options": "i"}},
+                    {"mnn": {"$regex": f"^{pattern.upper()}", "$options": "i"}},
+                ]},
             ]},
             {"_id": 0, "slug": 1, "name": 1, "mnn": 1, "dosage": 1, "form": 1},
         ).limit(limit)
@@ -194,7 +199,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         )
         if not med:
             raise HTTPException(404, "Medication not found")
-        flt = {"slug": {"$ne": slug}}
+        flt = {"slug": {"$ne": slug}, "is_canonical": {"$ne": False}}
         if med.get("mnn"):
             flt["mnn"] = med["mnn"]
         else:
