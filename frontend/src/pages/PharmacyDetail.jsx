@@ -39,7 +39,7 @@ export default function PharmacyDetail() {
       if (mapRef.current) { mapRef.current.destroy(); mapRef.current = null; }
       const m = new ymaps.Map(ref.current, { center: [ph.lat, ph.lng], zoom: 15, controls: ['zoomControl'] }, { suppressMapOpenBlock: true });
       const placemark = new ymaps.Placemark([ph.lat, ph.lng], {
-        balloonContent: `<strong>${ph.name}</strong><br/>${ph.address}`,
+        balloonContent: `<strong>${ph.name}</strong><br/>${ph.address}<br/><a href="tel:${(ph.phone || '').replace(/[^+\d]/g, '')}">${ph.phone || ''}</a>`,
       }, { preset: 'islands#greenIcon' });
       m.geoObjects.add(placemark);
       mapRef.current = m;
@@ -92,7 +92,7 @@ export default function PharmacyDetail() {
           </div>
           <div className="mt-5 grid sm:grid-cols-3 gap-3">
             <div className="bg-slate-50 rounded-lg p-3"><div className="flex items-center gap-1.5 text-[11px] text-slate-500 uppercase tracking-wide"><MapPin className="w-3 h-3" /> Адрес</div><div className="text-sm font-medium text-slate-800 mt-1">{ph.address}</div>{ph.metro && <div className="text-xs text-emerald-700 mt-0.5">м. {ph.metro}</div>}</div>
-            <div className="bg-slate-50 rounded-lg p-3"><div className="flex items-center gap-1.5 text-[11px] text-slate-500 uppercase tracking-wide"><Phone className="w-3 h-3" /> Телефон</div><div className="text-sm font-medium text-slate-800 mt-1">{ph.phone}</div></div>
+            <div className="bg-slate-50 rounded-lg p-3"><div className="flex items-center gap-1.5 text-[11px] text-slate-500 uppercase tracking-wide"><Phone className="w-3 h-3" /> Телефон</div><a href={`tel:${(ph.phone || "").replace(/[^+\d]/g, "")}`} data-testid="pharmacy-phone-link" className="block text-sm font-medium text-slate-800 mt-1 hover:text-emerald-700">{ph.phone}</a></div>
             <div className="bg-slate-50 rounded-lg p-3"><div className="flex items-center gap-1.5 text-[11px] text-slate-500 uppercase tracking-wide"><Clock className="w-3 h-3" /> Режим</div><div className="text-sm font-medium text-slate-800 mt-1">{ph.hours}</div></div>
           </div>
           <a

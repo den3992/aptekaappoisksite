@@ -178,7 +178,7 @@ function PriceMap({ med, prices, pharmacies, cityCenter, onSelect, selected }) {
         return new ymaps.Placemark([ph.lat, ph.lng], {
           price: pr.price,
           pid: ph.id,
-          balloonContent: `<strong>${ph.name}</strong><br/>${ph.address}<br/><b>${pr.price} ₽</b> · в наличии: ${pr.qty} шт.<br/>${ph.phone}`,
+          balloonContent: `<strong>${ph.name}</strong><br/>${ph.address}<br/><b>${pr.price} ₽</b> · в наличии: ${pr.qty} шт.<br/><a href="tel:${ph.phone.replace(/[^+\d]/g, '')}">${ph.phone}</a>`,
         }, {
           iconLayout: PriceLayout,
           iconShape: { type: 'Rectangle', coordinates: [[-50, -50], [50, 0]] },
@@ -478,7 +478,7 @@ export default function MedDetail() {
                     <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {ph.address}{ph.metro && <span className="text-emerald-600"> · м. {ph.metro}</span>}</div>
                   </div>
                   <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500"><Clock className="w-3.5 h-3.5" /> {ph.hours}</div>
-                  <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500"><Phone className="w-3.5 h-3.5" /> {ph.phone}</div>
+                  <a href={`tel:${(ph.phone || "").replace(/[^+\d]/g, "")}`} data-testid="med-pharmacy-phone" className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-slate-700 hover:text-emerald-700"><Phone className="w-4 h-4 text-emerald-600" /> {ph.phone}</a>
                   <div className="text-right">
                     <div className="text-lg font-bold text-emerald-700">{pr.price} ₽</div>
                     <div className="text-[11px] text-slate-500">в наличии: {pr.qty} шт</div>
