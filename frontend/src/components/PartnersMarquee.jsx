@@ -27,7 +27,7 @@ export default function PartnersMarquee() {
     <section className="relative bg-slate-50 border-y border-slate-100 py-10 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 mb-5 flex items-baseline justify-between">
         <div>
-          <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Аптеки-партнёры</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Наши партнёры</h2>
           <p className="text-slate-500 text-sm mt-1">Цены и наличие из аптечных сетей по всей России</p>
         </div>
         <div className="text-sm text-slate-500 hidden sm:block">{PARTNERS.length}+ сетей</div>
