@@ -328,6 +328,27 @@ def _simplify_pack(s):
 
 
 
+def _format_pack_list(items):
+    """Compact display of unique pack sizes."""
+    if not items: return ""
+    if len(items) <= 3:
+        return ", ".join(items)
+    import re as _re
+    parsed = []
+    for s in items:
+        m = _re.match(r"^(\d+(?:\.\d+)?)\s*(.+)$", str(s))
+        if m:
+            parsed.append((float(m.group(1)), m.group(2).strip(), s))
+    if len(parsed) == len(items) and len({p[1] for p in parsed}) == 1:
+        parsed.sort()
+        lo = parsed[0][0]
+        hi = parsed[-1][0]
+        unit = parsed[0][1]
+        def fmt(x): return str(int(x)) if x.is_integer() else str(x)
+        return f"{fmt(lo)}–{fmt(hi)} {unit} ({len(items)} шт)"
+    return f"{items[0]}, {items[1]}, … ({len(items)} шт)"
+
+
 async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, request: Request) -> HTMLResponse:
     med = await db.medications.find_one({"slug": slug}, {"_id": 0})
     if not med:

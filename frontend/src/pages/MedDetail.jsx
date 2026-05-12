@@ -91,6 +91,31 @@ function simplifyPack(s) {
   return txt.length > 24 ? txt.slice(0, 22) + '…' : txt;
 }
 
+// Format a list of pack sizes for compact display.
+//   ['10 мл']                    -> '10 мл'
+//   ['10 мл', '20 мл']           -> '10 мл, 20 мл'
+//   ['15 г', '25 г', '30 г']     -> '15 г, 25 г, 30 г'
+//   ['15 г', ..., '150 г'] (>=4) -> '15–150 г (8 шт)'
+function formatPackList(items) {
+  if (!items || items.length === 0) return '';
+  if (items.length <= 3) return items.join(', ');
+  // Try to extract numeric value + unit so we can show a range.
+  const parsed = items.map(s => {
+    const m = String(s).match(/^(\d+(?:\.\d+)?)\s*(.+)$/);
+    return m ? { v: parseFloat(m[1]), unit: m[2].trim(), raw: s } : null;
+  }).filter(Boolean);
+  // Range works only if all share the same unit.
+  if (parsed.length === items.length && new Set(parsed.map(p => p.unit)).size === 1) {
+    const sorted = [...parsed].sort((a, b) => a.v - b.v);
+    const lo = sorted[0].v;
+    const hi = sorted[sorted.length - 1].v;
+    const unit = parsed[0].unit;
+    return `${lo}–${hi} ${unit} (${items.length} шт)`;
+  }
+  // Heterogeneous units — show first two + count.
+  return `${items[0]}, ${items[1]}, … (${items.length} шт)`;
+}
+
 function PriceMap({ med, prices, pharmacies, cityCenter, onSelect, selected }) {
   const ref = useRef(null);
   const mapRef = useRef(null);
@@ -292,13 +317,11 @@ export default function MedDetail() {
               if (!med.variants || med.variants.length === 0) return null;
               const uniq = [...new Set(med.variants.map(v => simplifyPack(v.pack_size)).filter(Boolean))];
               if (uniq.length === 0) return null;
+              const display = formatPackList(uniq);
               return (
                 <div className="bg-slate-50 rounded-lg p-3" data-testid="med-variants-cell">
                   <div className="text-[11px] text-slate-500 uppercase tracking-wide">Фасовка</div>
-                  <div className="font-medium text-slate-800">
-                    {uniq[0]}
-                    {uniq.length > 1 && <span className="text-slate-500 font-normal"> +{uniq.length - 1}</span>}
-                  </div>
+                  <div className="font-medium text-slate-800">{display}</div>
                 </div>
               );
             })()}
