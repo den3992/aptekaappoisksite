@@ -48,6 +48,33 @@ def base_url(request: Request) -> str:
     return f"https://{CANONICAL_HOST}"
 
 
+
+def _title_case(s: Optional[str]) -> str:
+    if not s: return ""
+    t = str(s).strip()
+    if not t: return ""
+    return t[0].upper() + t[1:].lower()
+
+
+_COUNTRY_NORMALIZE = {
+    "соединенное королевство": "Великобритания",
+    "соединенные штаты": "США",
+    "чешская республика": "Чехия",
+    "республика северная македония": "Северная Македония",
+    "македония": "Северная Македония",
+    "киргизская республика": "Киргизия",
+    "южно-африканская республика": "ЮАР",
+    "объединенные арабские эмираты": "ОАЭ",
+    "сан марино": "Сан-Марино",
+    "корея": "Южная Корея",
+}
+
+
+def _normalize_country(s: Optional[str]) -> str:
+    if not s: return ""
+    key = str(s).strip().lower()
+    return _COUNTRY_NORMALIZE.get(key, _title_case(s))
+
 def city_name(slug: str) -> str:
     for c in CITIES:
         if c["slug"] == slug:
