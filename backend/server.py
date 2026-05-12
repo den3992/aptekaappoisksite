@@ -29,6 +29,7 @@ from api.seo import (
     render_contacts_for_bot,
     render_about_for_bot,
     render_for_pharmacies_for_bot,
+    _render_404,
 )
 from security import SecurityHeadersMiddleware
 
@@ -330,8 +331,20 @@ async def seo_render(path: str, request: Request):
     parts = [x for x in p.split("/") if x]
     if not parts:
         return await render_home_for_bot(db, "msk", request)
-    city = parts[0] if parts[0] in ("msk", "spb") else "msk"
-    rest = parts[1:] if parts[0] in ("msk", "spb") else parts
+
+    # Static pages allowed at top level (no city prefix): /kontakty, /o-servise, /dlya-aptek
+    STATIC_PAGES = {"kontakty", "o-servise", "dlya-aptek"}
+
+    if parts[0] in ("msk", "spb"):
+        city = parts[0]
+        rest = parts[1:]
+    elif parts[0] in STATIC_PAGES and len(parts) == 1:
+        city = "msk"
+        rest = parts  # let the section dispatcher handle it
+    else:
+        # Unknown top-level segment (not a city, not a known static page) → 404
+        return HTMLResponse(_render_404(request, "msk"), status_code=404)
+
     if not rest:
         return await render_home_for_bot(db, city, request)
     section = rest[0]
@@ -344,13 +357,15 @@ async def seo_render(path: str, request: Request):
     # Static pages: /kontakty, /o-servise, /dlya-aptek (with or without city prefix).
     # These have their own SSR templates so search bots see unique title/h1/content
     # — critical for Yandex.Webmaster regionality verification (contacts page).
-    if section == "kontakty":
+    if section == "kontakty" and len(rest) == 1:
         return await render_contacts_for_bot(db, city, request)
-    if section == "o-servise":
+    if section == "o-servise" and len(rest) == 1:
         return await render_about_for_bot(db, city, request)
-    if section == "dlya-aptek":
+    if section == "dlya-aptek" and len(rest) == 1:
         return await render_for_pharmacies_for_bot(db, city, request)
-    return await render_home_for_bot(db, city, request)
+
+    # Unknown route → proper 404 with status_code=404 (no soft-404 cloaking)
+    return HTMLResponse(_render_404(request, city), status_code=404)
 
 
 app.add_middleware(
