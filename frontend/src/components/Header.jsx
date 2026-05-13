@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, MapPin, ChevronDown, Menu, X, Pill } from 'lucide-react';
 import { useCity } from '../context/CityContext';
-import { suggestMeds } from '../api/client';
+import { suggestMeds } from "../api/client";
+import { dedupeMeds } from "../utils/text";
 import { formatName, formatManufacturer } from '../utils/text';
 import PillIcon from './PillIcon';
 import {
@@ -103,7 +104,7 @@ export default function Header() {
               className="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-100 rounded-xl shadow-card max-h-[60vh] overflow-y-auto no-scrollbar z-50 text-left"
               data-testid="header-search-suggestions"
             >
-              {suggestions.map((s) => (
+              {dedupeMeds(suggestions).map((s) => (
                 <Link
                   key={s.slug}
                   to={`/${city.id}/preparaty/${s.slug}`}

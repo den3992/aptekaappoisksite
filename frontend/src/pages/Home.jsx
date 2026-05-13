@@ -8,7 +8,7 @@ import PartnersMarquee from '../components/PartnersMarquee';
 import SEOHead from '../components/SEOHead';
 import { homeSEO } from '../seo';
 import { suggestMeds, fetchCategories } from '../api/client';
-import { formatName, formatManufacturer } from "../utils/text";
+import { formatName, formatManufacturer, dedupeMeds } from "../utils/text";
 import { getCategoryStyle } from '../lib/categoryStyles';
 
 const POPULAR_QUERIES = ['Парацетамол', 'Нурофен', 'Витамин D3', 'Омепразол', 'Кагоцел', 'Смекта'];
@@ -133,7 +133,7 @@ export default function Home() {
               />
               {suggestions.length > 0 && (
                 <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-100 rounded-xl shadow-card max-h-[60vh] overflow-y-auto no-scrollbar z-50 text-left" data-testid="search-suggestions">
-                  {suggestions.map(s => (
+                  {dedupeMeds(suggestions).map(s => (
                     <Link key={s.slug} to={`/${city.id}/preparaty/${s.slug}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-emerald-50 transition" onClick={() => setQ('')}>
                       <Pill className="w-4 h-4 text-emerald-600 shrink-0" />
                       <div className="flex-1 min-w-0">

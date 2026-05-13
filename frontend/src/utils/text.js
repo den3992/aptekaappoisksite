@@ -76,3 +76,51 @@ export function formatManufacturer(s) {
   if (!isAllCaps(s)) return v;
   return v.split(/(\s+|[-/])/).map(titleWord).join('');
 }
+
+// Canonical "group root" for a manufacturer. Used to merge duplicate
+// medication records that belong to the same pharma group but were registered
+// by different legal entities (e.g. "Велфарм" + "Велфарм-М" → Велфарм).
+//
+// Returns a lowercase token suitable as a map/group key.
+export function canonicalManufacturer(s) {
+  const stripped = formatManufacturer(s);
+  if (!stripped) return '';
+  // Take the first dash-delimited token (drops "-М", "-Лексредства", "-Уфавита", "-Тюмень")
+  // and the first whitespace-delimited token (drops trailing " Фарм", " М").
+  let root = stripped.split(/[-/]/)[0].trim();
+  root = root.split(/\s+/)[0];
+  return root.toLocaleLowerCase('ru-RU');
+}
+
+// Group key for medication records that should appear as ONE search result.
+// We dedupe by (name + form + dosage + canonical manufacturer group).
+export function medGroupKey(m) {
+  return [
+    (m.name || '').toLocaleLowerCase('ru-RU').trim(),
+    (m.form || '').toLocaleLowerCase('ru-RU').trim(),
+    (m.dosage || '').toLocaleLowerCase('ru-RU').trim(),
+    canonicalManufacturer(m.manufacturer),
+  ].join('|');
+}
+
+// Deduplicate a list of meds: items sharing the same (name/form/dosage/group)
+// are merged. The first item wins as the representative; other manufacturers
+// from the same group are collected into `also_manufacturers` for display.
+export function dedupeMeds(items) {
+  if (!Array.isArray(items)) return items;
+  const seen = new Map();
+  for (const it of items) {
+    const k = medGroupKey(it);
+    if (!seen.has(k)) {
+      seen.set(k, { ...it, also_manufacturers: [] });
+    } else {
+      const head = seen.get(k);
+      const mfr = it.manufacturer;
+      if (mfr && mfr !== head.manufacturer && !head.also_manufacturers.includes(mfr)) {
+        head.also_manufacturers.push(mfr);
+      }
+    }
+  }
+  return Array.from(seen.values());
+}
+
