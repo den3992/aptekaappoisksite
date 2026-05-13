@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ChevronRight, MapPin, Phone, Clock, Pill, ShieldAlert, Tag, Navigation } from 'lucide-react';
 import { useCity } from '../context/CityContext';
-import { fetchMed, fetchAnalogs, fetchPharmacies } from '../api/client';
+import { fetchMed, fetchAnalogs, fetchPharmacies, fetchCategories } from '../api/client';
 import SEOHead from '../components/SEOHead';
 import { medSEO } from '../seo';
 import { loadYmaps } from '../lib/ymaps';
@@ -220,6 +220,8 @@ export default function MedDetail() {
   const [loading, setLoading] = useState(true);
   const [selectedPack, setSelectedPack] = useState(null);
   const [notFound, setNotFound] = useState(false);
+  const [categories, setCategories] = useState([]);
+  useEffect(() => { fetchCategories().then(setCategories).catch(() => {}); }, []);
 
   // Sync URL city → context
   useEffect(() => {
@@ -362,7 +364,7 @@ export default function MedDetail() {
         {med.category && med.category !== 'other' && (
           <>
             <ChevronRight className="w-3 h-3" />
-            <Link to={`/${city.id}/kategorii/${med.category}`} className="hover:text-emerald-700 capitalize">{med.category.replace(/-/g, ' ')}</Link>
+            <Link to={`/${city.id}/kategorii/${med.category}`} className="hover:text-emerald-700">{(categories.find(c => c.slug === med.category) || {}).title || med.category.replace(/-/g, ' ')}</Link>
           </>
         )}
         <ChevronRight className="w-3 h-3" /><span className="text-slate-700">{formatName(med.name)}</span>
