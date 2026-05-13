@@ -268,6 +268,11 @@ def render_seo_html(
 <title>{html.escape(title)}</title>
 <meta name="description" content="{html.escape(description)}">
 <link rel="canonical" href="{html.escape(canonical_url)}">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="120x120" href="/favicon-120.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="shortcut icon" href="/favicon.ico">
 <meta property="og:title" content="{html.escape(title)}">
 <meta property="og:description" content="{html.escape(description)}">
 <meta property="og:type" content="website">
@@ -768,7 +773,7 @@ async def render_pharmacies_index_for_bot(db, city: str, request: Request) -> HT
     pharms = [p for p in PHARMACIES if p.get("city") == city]
     title = f"Аптеки {cn_genitive(cn)} — адреса, телефоны, наличие лекарств | АптекаА"
     desc = (
-        f"Аптеки-партнёры в {cn}: {len(pharms)} точек. Адреса, телефоны, "
+        f"Аптеки-партнёры в {cn_prepositional(cn)}: {len(pharms)} точек. Адреса, телефоны, "
         f"график работы, актуальное наличие препаратов."
     )
     canonical = f"{base_url(request)}/{city}/apteki"

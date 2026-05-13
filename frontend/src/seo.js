@@ -6,7 +6,6 @@ const CANONICAL_HOST = 'https://aptekaa.ru';
 
 const cnGenitive = (city) => (city === 'msk' ? 'Москвы' : 'Санкт-Петербурга');
 const cnPrepositional = (city) => (city === 'msk' ? 'Москве' : 'Санкт-Петербурге');
-const cnNomin = (city) => (city === 'msk' ? 'Москва' : 'Санкт-Петербург');
 
 export function homeSEO(city = 'msk') {
   const title = `Аптечная справочная ${cnGenitive(city)}: поиск лекарств, цены и наличие в аптеках | АптекаА`;
@@ -55,10 +54,9 @@ export function medSEO(city, med) {
 }
 
 export function pharmacySEO(city, ph) {
-  const cn = cnNomin(city);
   const title = `${ph.name} — адрес, телефон, режим работы | АптекаА`;
   const description = (
-    `${ph.name} в ${cn}: ${ph.address}. Телефон ${ph.phone || ''}. ` +
+    `${ph.name} в ${cnPrepositional(city)}: ${ph.address}. Телефон ${ph.phone || ''}. ` +
     `Режим работы: ${ph.hours || ''}. Сравните наличие и цены лекарств.`
   ).slice(0, 300);
   return {
