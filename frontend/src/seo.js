@@ -9,8 +9,8 @@ const cnPrepositional = (city) => (city === 'msk' ? 'Москве' : 'Санкт
 const cnNomin = (city) => (city === 'msk' ? 'Москва' : 'Санкт-Петербург');
 
 export function homeSEO(city = 'msk') {
-  const title = `АптекаА — поиск лекарств и сравнение цен в аптеках ${cnGenitive(city)}`;
-  const description = `Бесплатный агрегатор цен и наличия лекарств в аптеках ${cnGenitive(city)}. Сравнивайте цены, ищите аналоги, находите ближайшие аптеки.`;
+  const title = `Аптечная справочная ${cnGenitive(city)}: поиск лекарств, цены и наличие в аптеках | АптекаА`;
+  const description = `Бесплатная аптечная справочная ${cnGenitive(city)}: цены и наличие лекарств в аптеках, аналоги препаратов, адреса и режим работы. Без регистрации.`;
   return {
     title,
     description,

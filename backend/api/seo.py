@@ -583,16 +583,16 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
 
 async def render_home_for_bot(db: AsyncIOMotorDatabase, city: str, request: Request) -> HTMLResponse:
     cn = city_name(city)
-    title = f"АптекаА — поиск лекарств и сравнение цен в аптеках {cn_genitive(cn)}"
+    title = f"Аптечная справочная {cn_genitive(cn)}: поиск лекарств, цены и наличие в аптеках | АптекаА"
     desc = (
-        f"Бесплатный агрегатор цен и наличия лекарств в аптеках {cn_genitive(cn)}. "
-        f"Сравнивайте цены, ищите аналоги, находите ближайшие аптеки. Без регистрации."
+        f"Бесплатная аптечная справочная {cn_genitive(cn)}: цены и наличие лекарств в аптеках, "
+        f"аналоги препаратов, адреса и режим работы. Без регистрации."
     )
     canonical = f"{base_url(request)}/{city}"
 
     total = await db.medications.count_documents({"is_canonical": {"$ne": False}})
     body = [
-        f"<p>Сервис АптекаА помогает быстро найти нужное лекарство по выгодной цене в аптеках {cn_genitive(cn)} и Санкт-Петербурга. В каталоге <strong>{total:,}</strong> зарегистрированных лекарственных препаратов.</p>".replace(",", " "),
+        f"<p>АптекаА — бесплатная аптечная справочная по {cn_genitive(cn)} и Санкт-Петербургу. Найдите нужное лекарство, узнайте цены и наличие в ближайших аптеках, посмотрите аналоги препаратов. В каталоге <strong>{total:,}</strong> зарегистрированных лекарственных препаратов.</p>".replace(",", " "),
         "<h2>Категории препаратов</h2><ul>",
     ]
     for cat in CATEGORIES:

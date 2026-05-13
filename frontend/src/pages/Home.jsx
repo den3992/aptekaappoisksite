@@ -112,7 +112,7 @@ export default function Home() {
             Ищите лекарства <span className="text-emerald-600">быстро</span><br />и по <span className="text-emerald-600">лучшей цене</span>
           </h1>
           <p className="mt-6 text-lg text-slate-600 max-w-2xl mx-auto">
-            Сравнивайте наличие и цены на лекарства, БАДы и аптечные товары в аптеках вашего города. Бесплатно и без регистрации.
+            Бесплатная аптечная справочная по Москве и СПб. Сравнивайте наличие и цены на лекарства, БАДы и аптечные товары. Без регистрации.
           </p>
 
           <form onSubmit={submit} className="mt-10 mx-auto max-w-3xl bg-white shadow-card border border-slate-100 rounded-2xl p-2 flex flex-col sm:flex-row gap-2 input-focus text-left">
