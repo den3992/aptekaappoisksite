@@ -131,7 +131,7 @@ export default function Home() {
                 className="w-full text-base py-3 bg-transparent outline-none"
               />
               {suggestions.length > 0 && (
-                <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-100 rounded-xl shadow-card max-h-[60vh] overflow-y-auto no-scrollbar z-10 text-left" data-testid="search-suggestions">
+                <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-100 rounded-xl shadow-card max-h-[60vh] overflow-y-auto no-scrollbar z-50 text-left" data-testid="search-suggestions">
                   {suggestions.map(s => (
                     <Link key={s.slug} to={`/${city.id}/preparaty/${s.slug}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-emerald-50 transition" onClick={() => setQ('')}>
                       <Pill className="w-4 h-4 text-emerald-600 shrink-0" />
