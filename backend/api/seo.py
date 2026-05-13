@@ -532,13 +532,53 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
             f'<div class="pack-sizes"><strong>Фасовка:</strong> {chips_html}</div>'
         )
 
-    # Schema.org Drug
+    # Schema.org @graph: Drug (medical metadata) + Product (offers for rich snippets)
     import json as _json
-    drug_schema = {
-        "@context": "https://schema.org",
+
+    # ---- Compute price aggregation (mirror what users see in UI) ----
+    # Prefer real pharmacy uploads; fall back to deterministic mock matching
+    # `/api/medications/{slug}` so schema = visible prices on the page.
+    real_prices_city: list = []
+    async for p in db.prices.find({"slug": slug}, {"_id": 0, "pharmacy_id": 1, "price": 1}):
+        ph = find_pharmacy_by_id(p["pharmacy_id"])
+        if ph and ph.get("city") == city and isinstance(p.get("price"), (int, float)):
+            real_prices_city.append(float(p["price"]))
+    if real_prices_city:
+        price_values = real_prices_city
+        prices_source = "real"
+    else:
+        # Mirror _mock_prices() from api/__init__.py (deterministic per slug)
+        msk_ids = [p["id"] for p in PHARMACIES if p["city"] == city]
+        h = sum(ord(c) for c in slug) or 1
+        base = 60 + (h % 280)
+        price_values = []
+        for i, _pid in enumerate(msk_ids):
+            seed = (h * 1664525 + i * 1013904223) % (2 ** 31)
+            pr = round((base * (0.85 + (seed % 1000) / 1000 * 0.4)) / 5) * 5
+            price_values.append(float(pr))
+        prices_source = "demo"
+
+    low_price = min(price_values) if price_values else None
+    high_price = max(price_values) if price_values else None
+    offer_count = len(price_values)
+
+    # ---- Active ingredient + strength split ----
+    active_ingredient = _title_case(mnn) if mnn else None
+    strength_value, strength_unit = None, None
+    if dosage:
+        import re as _re2
+        sm = _re2.match(r"^\s*([\d.,]+)\s*(.+)$", dosage.strip())
+        if sm:
+            strength_value = sm.group(1).replace(",", ".")
+            strength_unit = sm.group(2).strip()
+
+    drug_node = {
         "@type": "Drug",
+        "@id": f"{canonical}#drug",
         "name": name,
-        "nonProprietaryName": mnn or None,
+        "alternateName": _title_case(mnn) if mnn else None,
+        "nonProprietaryName": _title_case(mnn) if mnn else None,
+        "activeIngredient": active_ingredient,
         "manufacturer": {"@type": "Organization", "name": manufacturer} if manufacturer else None,
         "dosageForm": form or None,
         "description": desc,
@@ -546,8 +586,20 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
         "image": image_abs,
         "url": canonical,
     }
+    if strength_value and strength_unit:
+        drug_node["availableStrength"] = {
+            "@type": "DrugStrength",
+            "strengthValue": strength_value,
+            "strengthUnit": strength_unit,
+        }
+    if med.get("narcotic"):
+        # Narcotic/psychotropic — schema.org doesn't have a Russian schedule;
+        # use legalStatus as a freeform note. Yandex parses this for medical pages.
+        drug_node["legalStatus"] = "Наркотическое/психотропное средство"
+    if vital:
+        drug_node["isProprietary"] = False  # ЖНВЛП = state-regulated, non-proprietary pricing
     if _uniq_packs:
-        drug_schema["isVariantOf"] = {
+        drug_node["isVariantOf"] = {
             "@type": "ProductGroup",
             "name": name,
             "hasVariant": [
@@ -555,8 +607,79 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
                 for p in _uniq_packs
             ],
         }
-    drug_schema = {k: v for k, v in drug_schema.items() if v}
-    schema_jsonld = _json.dumps(drug_schema, ensure_ascii=False)
+    drug_node = {k: v for k, v in drug_node.items() if v}
+
+    # Product with AggregateOffer — gives Yandex/Google a rich snippet
+    # (price range + offer count) even though we aggregate, not sell.
+    product_node = {
+        "@type": "Product",
+        "@id": f"{canonical}#product",
+        "name": " ".join(filter(None, [name, dosage, pack_short])).strip() or name,
+        "brand": {"@type": "Brand", "name": manufacturer} if manufacturer else None,
+        "manufacturer": {"@type": "Organization", "name": manufacturer} if manufacturer else None,
+        "description": desc,
+        "image": image_abs,
+        "url": canonical,
+        "category": "Лекарственные препараты",
+        "isRelatedTo": {"@id": f"{canonical}#drug"},
+    }
+    if med.get("ru_number"):
+        product_node["productID"] = med["ru_number"]
+    if low_price is not None and high_price is not None and offer_count:
+        product_node["offers"] = {
+            "@type": "AggregateOffer",
+            "priceCurrency": "RUB",
+            "lowPrice": low_price,
+            "highPrice": high_price,
+            "offerCount": offer_count,
+            "availability": "https://schema.org/InStock",
+            "url": canonical,
+            "areaServed": {"@type": "City", "name": cn},
+        }
+    if limit_price:
+        # ЖНВЛП state-regulated price ceiling — informative.
+        product_node["additionalProperty"] = {
+            "@type": "PropertyValue",
+            "name": "Предельная цена ЖНВЛП",
+            "value": limit_price,
+            "unitCode": "RUB",
+        }
+    product_node = {k: v for k, v in product_node.items() if v}
+
+    graph_nodes = [drug_node, product_node]
+
+    # FAQPage from LLM enrichment (rich snippet on Yandex/Google SERPs)
+    faq_pairs = []
+    if enrichment.get("indications"):
+        faq_pairs.append((
+            f"Для чего применяется {name}?",
+            "Применяется: " + "; ".join(str(x) for x in enrichment["indications"][:5]) + ".",
+        ))
+    if enrichment.get("contraindications"):
+        faq_pairs.append((
+            f"Какие противопоказания у {name}?",
+            "Противопоказания: " + "; ".join(str(x) for x in enrichment["contraindications"][:5]) + ".",
+        ))
+    if enrichment.get("how_to_take"):
+        faq_pairs.append((f"Как принимать {name}?", enrichment["how_to_take"]))
+    if faq_pairs:
+        graph_nodes.append({
+            "@type": "FAQPage",
+            "@id": f"{canonical}#faq",
+            "mainEntity": [
+                {
+                    "@type": "Question",
+                    "name": q,
+                    "acceptedAnswer": {"@type": "Answer", "text": a},
+                }
+                for q, a in faq_pairs
+            ],
+        })
+
+    schema_jsonld = _json.dumps(
+        {"@context": "https://schema.org", "@graph": graph_nodes},
+        ensure_ascii=False,
+    )
 
     crumbs = [
         ("Главная", f"{base_url(request)}/{city}"),
