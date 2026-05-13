@@ -1,3 +1,4 @@
+import { formatName } from "../utils/text";
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
@@ -96,9 +97,9 @@ export default function Catalog() {
                     Отпускается по рецепту
                   </span>
                 )}
-                <div className="text-sm font-semibold text-slate-900 leading-tight">{m.name}</div>
+                <div className="text-sm font-semibold text-slate-900 leading-tight">{formatName(m.name)}</div>
                 <div className="text-xs text-slate-500 mt-0.5 line-clamp-2">{[m.form?.toLowerCase(), m.dosage].filter(Boolean).join(', ')}</div>
-                <div className="text-xs text-slate-400 mt-1.5 truncate">{m.manufacturer}</div>
+                <div className="text-xs text-slate-400 mt-1.5 truncate">{formatName(m.manufacturer)}</div>
               </Link>
             ))}
           </div>

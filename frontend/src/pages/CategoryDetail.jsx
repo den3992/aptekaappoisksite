@@ -1,3 +1,4 @@
+import { formatName } from "../utils/text";
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -80,11 +81,11 @@ export default function CategoryDetail() {
                     Отпускается по рецепту
                   </span>
                 )}
-                <h3 className="font-semibold text-slate-900 text-base leading-tight">{m.name}</h3>
+                <h3 className="font-semibold text-slate-900 text-base leading-tight">{formatName(m.name)}</h3>
                 <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">
                   {[m.form?.toLowerCase(), m.dosage].filter(Boolean).join(', ')}
                 </p>
-                <p className="text-xs text-slate-400 mt-2">{m.manufacturer}</p>
+                <p className="text-xs text-slate-400 mt-2">{formatName(m.manufacturer)}</p>
               </Link>
             ))}
           </div>

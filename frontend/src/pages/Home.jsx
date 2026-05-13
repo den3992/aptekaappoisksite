@@ -136,8 +136,8 @@ export default function Home() {
                     <Link key={s.slug} to={`/${city.id}/preparaty/${s.slug}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-emerald-50 transition" onClick={() => setQ('')}>
                       <Pill className="w-4 h-4 text-emerald-600 shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-slate-900 truncate">{s.name}</div>
-                        <div className="text-xs text-slate-500 truncate">{[s.form, s.dosage, s.manufacturer].filter(Boolean).join(' · ')}</div>
+                        <div className="text-sm font-medium text-slate-900 truncate">{formatName(s.name)}</div>
+                        <div className="text-xs text-slate-500 truncate">{[formatName(s.form), s.dosage, formatName(s.manufacturer)].filter(Boolean).join(' · ')}</div>
                       </div>
                     </Link>
                   ))}
@@ -170,7 +170,7 @@ export default function Home() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5" data-testid="popular-meds">
           {popularMeds.map(m => (
             <Link key={m.slug} to={`/${city.id}/preparaty/${m.slug}`} className="group flex flex-col justify-between bg-white border border-slate-200 hover:border-emerald-400 hover:shadow-sm transition rounded-xl px-4 py-3.5 min-h-[72px]">
-              <span className="font-semibold text-slate-900 text-sm leading-tight line-clamp-2">{m.name}</span>
+              <span className="font-semibold text-slate-900 text-sm leading-tight line-clamp-2">{formatName(m.name)}</span>
               <span className="text-xs text-slate-500 mt-1 truncate">{[m.form?.toLowerCase(), m.dosage].filter(Boolean).join(', ')}</span>
             </Link>
           ))}

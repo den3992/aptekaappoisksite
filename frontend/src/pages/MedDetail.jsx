@@ -1,3 +1,4 @@
+import { formatName } from "../utils/text";
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ChevronRight, MapPin, Phone, Clock, Pill, ShieldAlert, Tag, Navigation } from 'lucide-react';
@@ -364,7 +365,7 @@ export default function MedDetail() {
             <Link to={`/${city.id}/kategorii/${med.category}`} className="hover:text-emerald-700 capitalize">{med.category.replace(/-/g, ' ')}</Link>
           </>
         )}
-        <ChevronRight className="w-3 h-3" /><span className="text-slate-700">{med.name}</span>
+        <ChevronRight className="w-3 h-3" /><span className="text-slate-700">{formatName(med.name)}</span>
       </nav>
 
       <div className="grid lg:grid-cols-[380px_1fr] gap-8 mb-10">
@@ -373,7 +374,7 @@ export default function MedDetail() {
             {med.image_url ? (
               <img
                 src={med.image_url}
-                alt={[med.name, med.dosage, med.form].filter(Boolean).join(", ")}
+                alt={[formatName(med.name), med.dosage, formatName(med.form)].filter(Boolean).join(", ")}
                 className="max-w-full max-h-full object-contain p-4"
                 loading="eager"
                 data-testid="med-image"
@@ -392,7 +393,7 @@ export default function MedDetail() {
             )}
           </div>
           <h1 className="text-3xl md:text-4xl font-bold text-slate-900" data-testid="med-h1">
-            {med.name}
+            {formatName(med.name)}
             {med.dosage && <span className="text-slate-700"> {med.dosage}</span>}
             {(() => {
               if (!med.variants || med.variants.length === 0) return null;
@@ -461,7 +462,7 @@ export default function MedDetail() {
         <section className="mb-10">
           <div className="flex items-end justify-between mb-3">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">{med.name} на карте — {city.name}</h2>
+              <h2 className="text-2xl font-bold text-slate-900">{formatName(med.name)} на карте — {city.name}</h2>
               <p className="text-sm text-slate-500 mt-1">Нажмите на облачко с ценой, чтобы увидеть адрес и наличие</p>
             </div>
           </div>
@@ -582,9 +583,9 @@ export default function MedDetail() {
                     Отпускается по рецепту
                   </span>
                 )}
-                <h3 className="font-semibold text-slate-900 text-sm leading-tight line-clamp-2">{a.name}</h3>
+                <h3 className="font-semibold text-slate-900 text-sm leading-tight line-clamp-2">{formatName(a.name)}</h3>
                 <p className="text-[11px] text-slate-500 mt-1 line-clamp-1">{[a.form?.toLowerCase(), a.dosage].filter(Boolean).join(', ')}</p>
-                <p className="text-[11px] text-slate-400 mt-1">{a.manufacturer}</p>
+                <p className="text-[11px] text-slate-400 mt-1">{formatName(a.manufacturer)}</p>
               </Link>
             ))}
           </div>
