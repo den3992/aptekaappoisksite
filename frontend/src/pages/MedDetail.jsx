@@ -404,7 +404,7 @@ export default function MedDetail() {
           <p className="text-slate-600 mt-1.5">{formLower}</p>
 
           <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-            <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Производитель</div><div className="font-medium text-slate-800">{med.manufacturer || '—'}</div></div>
+            <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Производитель</div><div className="font-medium text-slate-800">{formatName(med.manufacturer) || "—"}</div></div>
             <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Страна</div><div className="font-medium text-slate-800">{normalizeCountry(med.manufacturer_country) || '—'}</div></div>
             {med.mnn && <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">МНН</div><div className="font-medium text-slate-800">{titleCase(med.mnn)}</div></div>}
           </div>
