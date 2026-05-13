@@ -103,7 +103,7 @@ export default function Home() {
         </div>
 
         {/* Hero */}
-        <section className="relative max-w-4xl mx-auto px-4 pt-10 pb-16 md:pt-14 md:pb-24 text-center">
+        <section className="relative z-20 max-w-4xl mx-auto px-4 pt-10 pb-16 md:pt-14 md:pb-24 text-center">
           <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur border border-emerald-100 rounded-full px-3.5 py-1.5 mb-6 text-xs font-medium text-emerald-800 shadow-sm">
             <ShieldCheck className="w-3.5 h-3.5" />
             Более 2000 аптек-партнёров в Москве и СПб
