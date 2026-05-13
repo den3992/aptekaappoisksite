@@ -1,4 +1,4 @@
-import { formatName } from "../utils/text";
+import { formatName, formatManufacturer } from "../utils/text";
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -85,7 +85,7 @@ export default function CategoryDetail() {
                 <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">
                   {[m.form?.toLowerCase(), m.dosage].filter(Boolean).join(', ')}
                 </p>
-                <p className="text-xs text-slate-400 mt-2">{formatName(m.manufacturer)}</p>
+                <p className="text-xs text-slate-400 mt-2">{formatManufacturer(m.manufacturer)}</p>
               </Link>
             ))}
           </div>

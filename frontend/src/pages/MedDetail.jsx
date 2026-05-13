@@ -1,4 +1,4 @@
-import { formatName } from "../utils/text";
+import { formatName, formatManufacturer } from "../utils/text";
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ChevronRight, MapPin, Phone, Clock, Pill, ShieldAlert, Tag, Navigation } from 'lucide-react';
@@ -404,7 +404,7 @@ export default function MedDetail() {
           <p className="text-slate-600 mt-1.5">{formLower}</p>
 
           <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-            <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Производитель</div><div className="font-medium text-slate-800">{formatName(med.manufacturer) || "—"}</div></div>
+            <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Производитель</div><div className="font-medium text-slate-800">{formatManufacturer(med.manufacturer) || "—"}</div></div>
             <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Страна</div><div className="font-medium text-slate-800">{normalizeCountry(med.manufacturer_country) || '—'}</div></div>
             {med.mnn && <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">МНН</div><div className="font-medium text-slate-800">{titleCase(med.mnn)}</div></div>}
           </div>
@@ -585,7 +585,7 @@ export default function MedDetail() {
                 )}
                 <h3 className="font-semibold text-slate-900 text-sm leading-tight line-clamp-2">{formatName(a.name)}</h3>
                 <p className="text-[11px] text-slate-500 mt-1 line-clamp-1">{[a.form?.toLowerCase(), a.dosage].filter(Boolean).join(', ')}</p>
-                <p className="text-[11px] text-slate-400 mt-1">{formatName(a.manufacturer)}</p>
+                <p className="text-[11px] text-slate-400 mt-1">{formatManufacturer(a.manufacturer)}</p>
               </Link>
             ))}
           </div>

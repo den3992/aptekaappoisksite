@@ -8,7 +8,7 @@ import PartnersMarquee from '../components/PartnersMarquee';
 import SEOHead from '../components/SEOHead';
 import { homeSEO } from '../seo';
 import { suggestMeds, fetchCategories } from '../api/client';
-import { formatName } from "../utils/text";
+import { formatName, formatManufacturer } from "../utils/text";
 import { getCategoryStyle } from '../lib/categoryStyles';
 
 const POPULAR_QUERIES = ['Парацетамол', 'Нурофен', 'Витамин D3', 'Омепразол', 'Кагоцел', 'Смекта'];
@@ -138,7 +138,7 @@ export default function Home() {
                       <Pill className="w-4 h-4 text-emerald-600 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-slate-900 truncate">{formatName(s.name)}</div>
-                        <div className="text-xs text-slate-500 truncate">{[formatName(s.form), s.dosage, formatName(s.manufacturer)].filter(Boolean).join(' · ')}</div>
+                        <div className="text-xs text-slate-500 truncate">{[formatName(s.form), s.dosage, formatManufacturer(s.manufacturer)].filter(Boolean).join(' · ')}</div>
                       </div>
                     </Link>
                   ))}

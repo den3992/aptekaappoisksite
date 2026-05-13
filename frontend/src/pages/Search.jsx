@@ -1,4 +1,4 @@
-import { formatName } from "../utils/text";
+import { formatName, formatManufacturer } from "../utils/text";
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useParams, Link } from 'react-router-dom';
 import { Search as SearchIcon, SlidersHorizontal, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -176,7 +176,7 @@ function MedListCard({ med, cityId }) {
       <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">
         {[formLower, med.dosage].filter(Boolean).join(', ')}
       </p>
-      <p className="text-xs text-slate-400 mt-2">{formatName(med.manufacturer)}</p>
+      <p className="text-xs text-slate-400 mt-2">{formatManufacturer(med.manufacturer)}</p>
       {med.mnn && (
         <p className="text-[11px] text-slate-400 mt-1">МНН: {med.mnn.toLowerCase()}</p>
       )}
