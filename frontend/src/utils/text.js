@@ -25,11 +25,20 @@ export function formatName(s) {
 // Legal-form prefixes (RU) that should be stripped from manufacturer names.
 // Match at start of string OR at end (sometimes RU form goes after name).
 const LEGAL_FORMS = [
-  'ОАО', 'ООО', 'ЗАО', 'ПАО', 'АО', 'ОДО', 'ИП',
-  'ФГУП', 'ФГБУ', 'ГБУ', 'ГУП', 'ГП',
-  'ПФК', 'НПО', 'НПП', 'НПК', 'ПКФ', 'ХФК',
-  'OOO', // Latin-look-alike (typo in DB)
+  'ОАО', 'ООО', 'ЗАО', 'ПАО', 'НАО', 'АО', 'ОДО', 'ИП',
+  'ФГУП', 'ФГБУ', 'ГБУ', 'ГУП', 'ГП', 'ФКП',
+  'ПФК', 'НПО', 'НПП', 'НПК', 'ПКФ', 'ХФК', 'ФП',
+  'OOO', 'AO', 'OAO', 'PAO', // Latin look-alikes used by some scrapers
 ];
+
+// "Weak" canonical roots — too generic to use as a group key alone.
+// When formatManufacturer returns one of these as the first word, we extend
+// the canonical key with the next word to avoid merging unrelated companies.
+const WEAK_ROOTS = new Set([
+  'фирма', 'завод', 'фабрика', 'комбинат', 'институт', 'центр',
+  'предприятие', 'объединение', 'компания', 'корпорация',
+  'фармацевтический', 'фармацевтическая',
+]);
 
 // Short ALL-CAPS tokens that are likely real abbreviations — keep as-is.
 const KEEP_ABBR = new Set([
@@ -87,9 +96,15 @@ export function canonicalManufacturer(s) {
   if (!stripped) return '';
   // Take the first dash-delimited token (drops "-М", "-Лексредства", "-Уфавита", "-Тюмень")
   // and the first whitespace-delimited token (drops trailing " Фарм", " М").
-  let root = stripped.split(/[-/]/)[0].trim();
-  root = root.split(/\s+/)[0];
-  return root.toLocaleLowerCase('ru-RU');
+  const tokens = stripped.split(/[-/]/)[0].trim().split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return '';
+  let root = tokens[0].toLocaleLowerCase('ru-RU');
+  // If first word is too generic (e.g. "ФИРМА"), include the next word
+  // so "Фирма Здоровье" and "Фирма Фермент" don't collapse together.
+  if (WEAK_ROOTS.has(root) && tokens.length > 1) {
+    root = root + ' ' + tokens[1].toLocaleLowerCase('ru-RU');
+  }
+  return root;
 }
 
 // Group key for medication records that should appear as ONE search result.
