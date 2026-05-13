@@ -8,6 +8,7 @@ import PartnersMarquee from '../components/PartnersMarquee';
 import SEOHead from '../components/SEOHead';
 import { homeSEO } from '../seo';
 import { suggestMeds, fetchCategories } from '../api/client';
+import { formatName } from "../utils/text";
 import { getCategoryStyle } from '../lib/categoryStyles';
 
 const POPULAR_QUERIES = ['Парацетамол', 'Нурофен', 'Витамин D3', 'Омепразол', 'Кагоцел', 'Смекта'];
