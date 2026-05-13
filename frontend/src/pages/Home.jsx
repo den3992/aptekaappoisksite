@@ -84,7 +84,7 @@ export default function Home() {
     <div>
       <SEOHead seo={{ ...seo, jsonLd: websiteJsonLd }} />
       {/* Hero block (brand + hero combined with single smooth gradient) */}
-      <div className="relative bg-gradient-to-b from-emerald-50/70 via-emerald-50/40 to-white overflow-x-hidden border-b border-slate-100">
+      <div className="relative bg-gradient-to-b from-emerald-50/70 via-emerald-50/40 to-white border-b border-slate-100">
         {/* decorative shapes */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0">
           <div className="absolute top-20 -left-16 w-96 h-96 rounded-full bg-emerald-200/25 blur-3xl" />
