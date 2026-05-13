@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, MapPin, ChevronDown, Menu, X } from 'lucide-react';
+import { Search, MapPin, ChevronDown, Menu, X, Pill } from 'lucide-react';
 import { useCity } from '../context/CityContext';
+import { suggestMeds } from '../api/client';
+import { formatName, formatManufacturer } from '../utils/text';
 import PillIcon from './PillIcon';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -10,14 +12,46 @@ import {
 export default function Header() {
   const { city, setCity, cities } = useCity();
   const [q, setQ] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [open, setOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
+  const wrapRef = useRef(null);
+
+  // Debounced suggestions
+  useEffect(() => {
+    if (!q.trim() || q.trim().length < 2) { setSuggestions([]); return; }
+    let cancelled = false;
+    const t = setTimeout(() => {
+      suggestMeds(q.trim())
+        .then((d) => { if (!cancelled) { setSuggestions(d || []); setOpen(true); } })
+        .catch(() => {});
+    }, 150);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [q]);
+
+  // Close on outside click / Escape
+  useEffect(() => {
+    const onClick = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    };
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, []);
 
   const onSubmit = (e) => {
     e.preventDefault();
     if (!q.trim()) return;
-    navigate(`/poisk?q=${encodeURIComponent(q.trim())}`);
+    setOpen(false);
+    navigate(`/${city.id}/poisk?q=${encodeURIComponent(q.trim())}`);
   };
+
+  const pickSuggestion = () => { setQ(''); setOpen(false); };
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-slate-100">
@@ -48,18 +82,46 @@ export default function Header() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <form onSubmit={onSubmit} className="flex-1 max-w-2xl input-focus border border-slate-200 rounded-lg flex items-center bg-white transition">
-          <Search className="w-4 h-4 text-rose-500 ml-3" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Найдите препарат в аптеках вашего города"
-            className="flex-1 px-3 py-2.5 text-sm bg-transparent outline-none"
-          />
-          <button type="submit" className="hidden sm:inline-flex items-center gap-1 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 m-1 rounded-md transition">
-            Найти
-          </button>
-        </form>
+        <div ref={wrapRef} className="flex-1 max-w-2xl relative">
+          <form onSubmit={onSubmit} className="input-focus border border-slate-200 rounded-lg flex items-center bg-white transition">
+            <Search className="w-4 h-4 text-rose-500 ml-3" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onFocus={() => suggestions.length > 0 && setOpen(true)}
+              placeholder="Найдите препарат в аптеках вашего города"
+              className="flex-1 px-3 py-2.5 text-sm bg-transparent outline-none"
+              data-testid="header-search-input"
+            />
+            <button type="submit" className="hidden sm:inline-flex items-center gap-1 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 m-1 rounded-md transition">
+              Найти
+            </button>
+          </form>
+
+          {open && suggestions.length > 0 && (
+            <div
+              className="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-100 rounded-xl shadow-card max-h-[60vh] overflow-y-auto no-scrollbar z-50 text-left"
+              data-testid="header-search-suggestions"
+            >
+              {suggestions.map((s) => (
+                <Link
+                  key={s.slug}
+                  to={`/${city.id}/preparaty/${s.slug}`}
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-emerald-50 transition"
+                  onClick={pickSuggestion}
+                >
+                  <Pill className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-slate-900 truncate">{formatName(s.name)}</div>
+                    <div className="text-xs text-slate-500 truncate">
+                      {[formatName(s.form), s.dosage, formatManufacturer(s.manufacturer)].filter(Boolean).join(' · ')}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
 
         <button className="md:hidden p-2" onClick={() => setMobileOpen(v => !v)} aria-label="Меню">
           {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
