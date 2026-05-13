@@ -591,8 +591,9 @@ async def render_home_for_bot(db: AsyncIOMotorDatabase, city: str, request: Requ
     canonical = f"{base_url(request)}/{city}"
 
     total = await db.medications.count_documents({"is_canonical": {"$ne": False}})
+    total_str = f"{total:,}".replace(",", " ")
     body = [
-        f"<p>АптекаА — бесплатная аптечная справочная по {cn_genitive(cn)} и Санкт-Петербургу. Найдите нужное лекарство, узнайте цены и наличие в ближайших аптеках, посмотрите аналоги препаратов. В каталоге <strong>{total:,}</strong> зарегистрированных лекарственных препаратов.</p>".replace(",", " "),
+        f"<p>АптекаА — бесплатная аптечная справочная по Москве и Санкт-Петербургу. Найдите нужное лекарство, узнайте цены и наличие в ближайших аптеках, посмотрите аналоги препаратов. В каталоге <strong>{total_str}</strong> зарегистрированных лекарственных препаратов.</p>",
         "<h2>Категории препаратов</h2><ul>",
     ]
     for cat in CATEGORIES:
