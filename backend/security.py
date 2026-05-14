@@ -6,8 +6,11 @@ from __future__ import annotations
 import os
 import secrets
 import logging
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
+import bcrypt
+import jwt
 from fastapi import HTTPException, Request, Header
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
@@ -15,25 +18,93 @@ from starlette.responses import Response
 
 logger = logging.getLogger("security")
 
+JWT_ALGORITHM = "HS256"
+JWT_TTL_HOURS = 8
+
 
 # ---------------------------------------------------------------------------
-# Admin token — constant-time comparison + read from header OR query string
-# (URL path is no longer the primary place; backward-compat preserved for
-# existing admin endpoints during transition).
+# Admin auth.
+#
+# Two compatible mechanisms:
+#   1. Bearer JWT in Authorization header — issued by /api/admin/login.
+#      Preferred. Carries username + expiry.
+#   2. X-Admin-Token header / `token_query` — legacy shared-secret used by
+#      partner-upload IMAP integrations. Kept active during migration.
 # ---------------------------------------------------------------------------
 def _expected_admin_token() -> str:
     return os.environ.get("ADMIN_TOKEN", "")
 
 
-def verify_admin(x_admin_token: Optional[str] = Header(default=None),
-                 token_query: Optional[str] = None) -> None:
-    """Dependency: 403 if neither header nor query token matches."""
+def _jwt_secret() -> str:
+    s = os.environ.get("JWT_SECRET", "")
+    if not s:
+        raise HTTPException(500, "JWT secret not configured on the server")
+    return s
+
+
+def _admin_username() -> str:
+    return os.environ.get("ADMIN_USERNAME", "")
+
+
+def _admin_password_hash() -> str:
+    return os.environ.get("ADMIN_PASSWORD_HASH", "")
+
+
+def verify_password(plain: str, hashed: str) -> bool:
+    if not plain or not hashed:
+        return False
+    try:
+        return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
+    except Exception:
+        return False
+
+
+def issue_admin_jwt(username: str) -> tuple[str, datetime]:
+    """Create signed JWT for an admin session. Returns (token, expires_at)."""
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=JWT_TTL_HOURS)
+    payload = {
+        "sub": username,
+        "role": "admin",
+        "exp": expires_at,
+        "iat": datetime.now(timezone.utc),
+    }
+    token = jwt.encode(payload, _jwt_secret(), algorithm=JWT_ALGORITHM)
+    return token, expires_at
+
+
+def _verify_admin_jwt(token: str) -> bool:
+    try:
+        payload = jwt.decode(token, _jwt_secret(), algorithms=[JWT_ALGORITHM])
+    except jwt.ExpiredSignatureError:
+        return False
+    except jwt.InvalidTokenError:
+        return False
+    expected_user = _admin_username()
+    if payload.get("role") != "admin":
+        return False
+    if expected_user and payload.get("sub") != expected_user:
+        return False
+    return True
+
+
+def verify_admin(
+    authorization: Optional[str] = Header(default=None),
+    x_admin_token: Optional[str] = Header(default=None),
+    token_query: Optional[str] = None,
+) -> None:
+    """Dependency: 403 unless Bearer JWT or legacy shared-secret matches."""
+    # 1. Bearer JWT
+    if authorization and authorization.lower().startswith("bearer "):
+        token = authorization[7:].strip()
+        if token and _verify_admin_jwt(token):
+            return
+    # 2. Legacy shared-secret header / query
     expected = _expected_admin_token()
-    if not expected:
-        raise HTTPException(500, "Admin token not configured on the server")
-    candidate = x_admin_token or token_query or ""
-    if not candidate or not secrets.compare_digest(candidate, expected):
-        raise HTTPException(403, "Bad admin token")
+    if expected:
+        candidate = x_admin_token or token_query or ""
+        if candidate and secrets.compare_digest(candidate, expected):
+            return
+    raise HTTPException(403, "Bad admin credentials")
 
 
 def verify_admin_path(path_token: str) -> None:

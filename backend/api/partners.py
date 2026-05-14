@@ -11,11 +11,12 @@ import secrets
 from datetime import datetime, timezone
 from typing import Optional, List
 
-from fastapi import APIRouter, HTTPException, Header, Query, Path, Request, Depends
+from fastapi import APIRouter, HTTPException, Header, Query, Path, Request, Depends, Body
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from security import verify_admin
+from security import verify_admin, verify_password, issue_admin_jwt
+import os
 
 import time
 from collections import defaultdict
@@ -57,8 +58,31 @@ class PartnerRequestOut(BaseModel):
     created_at: str
 
 
+class AdminLoginIn(BaseModel):
+    username: str = Field(..., min_length=1, max_length=80)
+    password: str = Field(..., min_length=1, max_length=200)
+
+
 def make_partner_router(db: AsyncIOMotorDatabase) -> APIRouter:
     router = APIRouter()
+
+    # ---- Admin login (username + password → JWT) ----------------------------
+    @router.post("/admin/login")
+    async def admin_login(payload: AdminLoginIn = Body(...), request: Request = None):
+        # Rate limit: 10 attempts / 5 min per IP — nginx already enforces a
+        # zone-level limit, this is a defense in depth.
+        _rate_limit_or_429(request, "admin_login", limit=10, per_seconds=300)
+        expected_user = os.environ.get("ADMIN_USERNAME", "")
+        expected_hash = os.environ.get("ADMIN_PASSWORD_HASH", "")
+        if not expected_user or not expected_hash:
+            raise HTTPException(500, "Admin credentials not configured")
+        # Constant-time compare for username, bcrypt verify for password
+        u_ok = secrets.compare_digest(payload.username, expected_user)
+        p_ok = verify_password(payload.password, expected_hash)
+        if not (u_ok and p_ok):
+            raise HTTPException(401, "Неверный логин или пароль")
+        token, exp = issue_admin_jwt(expected_user)
+        return {"token": token, "expires_at": exp.isoformat(), "username": expected_user}
 
     @router.post("/partner-requests", response_model=PartnerRequestOut)
     async def submit_request(request: Request, payload: PartnerRequestIn):

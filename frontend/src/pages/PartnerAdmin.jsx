@@ -5,24 +5,23 @@ import { CheckCircle2, XCircle, Copy, Loader2, Inbox, ShieldAlert, LogOut } from
 import SEOHead from '../components/SEOHead';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
-const TOKEN_KEY = 'aptekaa_admin_token';
+const TOKEN_KEY = 'aptekaa_admin_jwt';
 
 /**
  * Hidden admin page to review/approve partner requests.
  *
  * Auth flow:
- *  1. First load with ?token=... in URL → save to sessionStorage, redirect to
- *     /partner-admin (clean URL, no query).  Token leaves browser history.
- *  2. Subsequent loads read token from sessionStorage.
- *  3. If neither URL nor storage — show a login form.
- *  4. Backend receives token via X-Admin-Token header only.  Never goes into
- *     nginx access logs or HTTP Referer.
+ *  1. Login form (username + password) — POST /api/admin/login → JWT.
+ *  2. JWT stored in sessionStorage; sent as Authorization: Bearer header.
+ *  3. Expires in 8h (server-side); on 401/403 we clear storage + show form.
+ *  4. Legacy ?token=<jwt> still accepted for direct deep-links (e.g. e-mail).
  */
 export default function PartnerAdmin() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const [token, setToken] = useState('');
-  const [tokenInput, setTokenInput] = useState('');
+  const [loginInput, setLoginInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
   const [items, setItems] = useState([]);
   const [filter, setFilter] = useState('new');
   const [loading, setLoading] = useState(false);
@@ -30,13 +29,11 @@ export default function PartnerAdmin() {
   const [busyId, setBusyId] = useState(null);
   const [issued, setIssued] = useState({});
 
-  // Bootstrap auth: URL query → storage → form
   useEffect(() => {
     const urlTok = params.get('token');
     if (urlTok) {
       sessionStorage.setItem(TOKEN_KEY, urlTok);
       setToken(urlTok);
-      // Strip token from URL so it doesn't sit in history.
       navigate('/partner-admin', { replace: true });
       return;
     }
@@ -45,17 +42,20 @@ export default function PartnerAdmin() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const authHeaders = () => ({ Authorization: `Bearer ${token}` });
+
   const refresh = async () => {
     setLoading(true); setError('');
     try {
       const { data } = await axios.get(`${API}/admin/partner-requests`, {
-        headers: { 'X-Admin-Token': token },
+        headers: authHeaders(),
         params: filter !== 'all' ? { status: filter } : {},
       });
       setItems(data);
     } catch (e) {
-      if (e?.response?.status === 403) {
-        setError('Неверный токен администратора');
+      const s = e?.response?.status;
+      if (s === 401 || s === 403) {
+        setError('Сессия истекла. Войдите снова.');
         sessionStorage.removeItem(TOKEN_KEY);
         setToken('');
       } else {
@@ -73,7 +73,7 @@ export default function PartnerAdmin() {
     setBusyId(rid);
     try {
       const { data } = await axios.post(`${API}/admin/partner-requests/${rid}/approve`, null, {
-        headers: { 'X-Admin-Token': token },
+        headers: authHeaders(),
       });
       setIssued(prev => ({ ...prev, [rid]: { token: data.token, pharmacy_id: data.pharmacy_id } }));
       await refresh();
@@ -89,7 +89,7 @@ export default function PartnerAdmin() {
     setBusyId(rid);
     try {
       await axios.post(`${API}/admin/partner-requests/${rid}/reject`, null, {
-        headers: { 'X-Admin-Token': token },
+        headers: authHeaders(),
       });
       await refresh();
     } catch (e) {
@@ -106,13 +106,25 @@ export default function PartnerAdmin() {
     setError('');
   };
 
-  const onLogin = (e) => {
+  const onLogin = async (e) => {
     e.preventDefault();
-    const t = tokenInput.trim();
-    if (!t) return;
-    sessionStorage.setItem(TOKEN_KEY, t);
-    setToken(t);
-    setTokenInput('');
+    setError('');
+    if (!loginInput.trim() || !passwordInput) return;
+    try {
+      const { data } = await axios.post(`${API}/admin/login`, {
+        username: loginInput.trim(),
+        password: passwordInput,
+      });
+      sessionStorage.setItem(TOKEN_KEY, data.token);
+      setToken(data.token);
+      setLoginInput('');
+      setPasswordInput('');
+    } catch (e) {
+      const s = e?.response?.status;
+      if (s === 401) setError('Неверный логин или пароль');
+      else if (s === 429) setError('Слишком много попыток. Подождите несколько минут.');
+      else setError('Ошибка входа');
+    }
   };
 
   const copy = (text) => navigator.clipboard.writeText(text);
@@ -125,16 +137,26 @@ export default function PartnerAdmin() {
         <div className="text-center mb-6">
           <ShieldAlert className="w-10 h-10 text-emerald-600 mx-auto mb-3" />
           <h1 className="text-xl font-bold text-slate-900 mb-1">Кабинет администратора</h1>
-          <p className="text-slate-500 text-sm">Введите токен для входа.</p>
+          <p className="text-slate-500 text-sm">Войдите в систему.</p>
         </div>
         <form onSubmit={onLogin} className="space-y-3">
           <input
-            type="password"
-            value={tokenInput}
-            onChange={(e) => setTokenInput(e.target.value)}
-            placeholder="Токен"
+            type="text"
+            value={loginInput}
+            onChange={(e) => setLoginInput(e.target.value)}
+            placeholder="Логин"
+            autoComplete="username"
             autoFocus
-            data-testid="admin-token-input"
+            data-testid="admin-login-input"
+            className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-emerald-400"
+          />
+          <input
+            type="password"
+            value={passwordInput}
+            onChange={(e) => setPasswordInput(e.target.value)}
+            placeholder="Пароль"
+            autoComplete="current-password"
+            data-testid="admin-password-input"
             className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-emerald-400"
           />
           <button
