@@ -79,7 +79,22 @@ def make_partner_router(db: AsyncIOMotorDatabase) -> APIRouter:
         # Constant-time compare for username, bcrypt verify for password
         u_ok = secrets.compare_digest(payload.username, expected_user)
         p_ok = verify_password(payload.password, expected_hash)
-        if not (u_ok and p_ok):
+        success = u_ok and p_ok
+        # Audit log: record every login attempt (success and failure) so we
+        # can detect brute-force or credential leaks post-mortem.
+        try:
+            ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or request.client.host if request else ""
+            await db.admin_audit_log.insert_one({
+                "event": "login",
+                "username": payload.username[:80],
+                "success": success,
+                "ip": ip,
+                "ua": (request.headers.get("user-agent", "")[:240]) if request else "",
+                "at": datetime.now(timezone.utc).isoformat(),
+            })
+        except Exception:
+            pass  # never let logging break auth
+        if not success:
             raise HTTPException(401, "Неверный логин или пароль")
         token, exp = issue_admin_jwt(expected_user)
         return {"token": token, "expires_at": exp.isoformat(), "username": expected_user}
@@ -160,5 +175,12 @@ def make_partner_router(db: AsyncIOMotorDatabase) -> APIRouter:
         if res.matched_count == 0:
             raise HTTPException(404, "Request not found")
         return {"ok": True, "status": "rejected"}
+
+    @router.get("/admin/audit-log")
+    async def get_audit_log(limit: int = 50, _: None = Depends(verify_admin)):
+        """Recent admin login attempts (latest first), for security audit."""
+        limit = max(1, min(limit, 500))
+        cursor = db.admin_audit_log.find({}, {"_id": 0}).sort([("at", -1)]).limit(limit)
+        return [doc async for doc in cursor]
 
     return router
