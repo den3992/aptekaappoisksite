@@ -93,7 +93,7 @@ export default function Search() {
             </label>
             <div className="mt-4">
               <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-medium">Категория</div>
-              <div className="space-y-1 max-h-[400px] overflow-y-auto no-scrollbar">
+              <div className="space-y-1 lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto no-scrollbar">
                 <button
                   onClick={() => { const np = new URLSearchParams(params); np.delete('kategoriya'); np.delete('page'); setParams(np); }}
                   className={`block w-full text-left px-2 py-1.5 rounded ${!cat ? 'bg-emerald-50 text-emerald-800 font-medium' : 'hover:bg-slate-50'}`}
