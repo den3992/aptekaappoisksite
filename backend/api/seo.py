@@ -25,6 +25,7 @@ from fastapi.responses import PlainTextResponse, HTMLResponse
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from .pharmacies_seed import CITIES, CATEGORIES, PHARMACIES, find_pharmacy_by_id
+from .text_format import format_manufacturer
 
 CANONICAL_HOST = os.environ.get("CANONICAL_HOST", "aptekaa.ru")
 DEFAULT_CITY = "msk"
@@ -398,6 +399,7 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
     form = med.get("form", "").lower()
     dosage = med.get("dosage") or ""
     manufacturer = med.get("manufacturer") or ""
+    manufacturer_brand = format_manufacturer(manufacturer) if manufacturer else ""
     rx = med.get("rx", False)
     vital = med.get("vital", False)
     limit_price = med.get("limit_price")
@@ -467,7 +469,7 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
     if mnn: body.append(f"<dt>Международное непатентованное наименование (МНН)</dt><dd>{html.escape(_title_case(mnn))}</dd>")
     if form: body.append(f"<dt>Лекарственная форма</dt><dd>{html.escape(form)}</dd>")
     if dosage: body.append(f"<dt>Дозировка</dt><dd>{html.escape(dosage)}</dd>")
-    if manufacturer: body.append(f"<dt>Производитель</dt><dd>{html.escape(manufacturer)}</dd>")
+    if manufacturer: body.append(f"<dt>Производитель</dt><dd>{html.escape(manufacturer_brand)}</dd>")
     if med.get("manufacturer_country"):
         body.append(f"<dt>Страна производства</dt><dd>{html.escape(_normalize_country(med['manufacturer_country']))}</dd>")
     if med.get("ru_number"): body.append(f"<dt>Номер регистрационного удостоверения</dt><dd>{html.escape(med['ru_number'])}</dd>")
@@ -496,7 +498,7 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
         body.append(f"<h2>Аналоги {name}</h2><ul>")
         for a in analogs:
             au = f"{base_url(request)}/{city}/preparaty/{a['slug']}"
-            label = " · ".join(filter(None, [a.get("name"), a.get("dosage"), a.get("manufacturer")]))
+            label = " · ".join(filter(None, [a.get("name"), a.get("dosage"), format_manufacturer(a.get("manufacturer"))]))
             body.append(f'<li><a href="{au}">{html.escape(label)}</a></li>')
         body.append("</ul>")
 
@@ -579,7 +581,10 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
         "alternateName": _title_case(mnn) if mnn else None,
         "nonProprietaryName": _title_case(mnn) if mnn else None,
         "activeIngredient": active_ingredient,
-        "manufacturer": {"@type": "Organization", "name": manufacturer} if manufacturer else None,
+        "manufacturer": (
+            {"@type": "Organization", "name": manufacturer_brand, "legalName": manufacturer}
+            if manufacturer else None
+        ),
         "dosageForm": form or None,
         "description": desc,
         "prescriptionStatus": "PrescriptionOnly" if rx else "OTC",
@@ -615,8 +620,11 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
         "@type": "Product",
         "@id": f"{canonical}#product",
         "name": " ".join(filter(None, [name, dosage, pack_short])).strip() or name,
-        "brand": {"@type": "Brand", "name": manufacturer} if manufacturer else None,
-        "manufacturer": {"@type": "Organization", "name": manufacturer} if manufacturer else None,
+        "brand": {"@type": "Brand", "name": manufacturer_brand} if manufacturer else None,
+        "manufacturer": (
+            {"@type": "Organization", "name": manufacturer_brand, "legalName": manufacturer}
+            if manufacturer else None
+        ),
         "description": desc,
         "image": image_abs,
         "url": canonical,
@@ -822,7 +830,7 @@ async def render_category_for_bot(db, city: str, cat_slug: str, request: Request
     body = ["<ul>"]
     async for m in cursor:
         u = f"{base_url(request)}/{city}/preparaty/{m['slug']}"
-        label = " · ".join(filter(None, [m.get("name"), m.get("dosage"), m.get("manufacturer")]))
+        label = " · ".join(filter(None, [m.get("name"), m.get("dosage"), format_manufacturer(m.get("manufacturer"))]))
         body.append(f'<li><a href="{u}">{html.escape(label)}</a>{" — Отпускается по рецепту" if m.get("rx") else ""}</li>')
     body.append("</ul>")
 
@@ -875,7 +883,7 @@ async def render_catalog_index_for_bot(db, city: str, request: Request) -> HTMLR
     body.append("<h2>Препараты А–Я</h2><ul>")
     async for m in cursor:
         u = f"{base_url(request)}/{city}/preparaty/{m['slug']}"
-        label = " · ".join(filter(None, [m.get("name"), m.get("dosage"), m.get("manufacturer")]))
+        label = " · ".join(filter(None, [m.get("name"), m.get("dosage"), format_manufacturer(m.get("manufacturer"))]))
         body.append(f'<li><a href="{u}">{html.escape(label)}</a></li>')
     body.append("</ul>")
     return HTMLResponse(render_seo_html(
