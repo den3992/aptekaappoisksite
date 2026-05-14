@@ -15,7 +15,7 @@ from fastapi import APIRouter, HTTPException, Header, Query, Path, Request, Depe
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from security import verify_admin, verify_admin_path
+from security import verify_admin
 
 import time
 from collections import defaultdict
@@ -75,20 +75,12 @@ def make_partner_router(db: AsyncIOMotorDatabase) -> APIRouter:
         return PartnerRequestOut(id=rid, status="new", created_at=doc["created_at"])
 
     # ---- Admin endpoints -----------------------------------------------------
-    # Two ways to authenticate (both backwards-compatible):
-    #   • X-Admin-Token header  (preferred — no log/referrer leak)
-    #   • path token            (legacy, kept for the existing admin UI)
-
-    @router.get("/admin/partner-requests/{admin_token}")
-    async def list_requests_legacy(admin_token: str, status: Optional[str] = Query(None)):
-        verify_admin_path(admin_token)
-        return await _list_requests(status)
+    # Authentication: X-Admin-Token header (verify_admin dep).
+    # Legacy path-based token endpoints were removed for security — tokens in
+    # URLs leak via nginx access logs, browser history and Referer headers.
 
     @router.get("/admin/partner-requests")
     async def list_requests(_: None = Depends(verify_admin), status: Optional[str] = Query(None)):
-        return await _list_requests(status)
-
-    async def _list_requests(status: Optional[str]):
         flt = {}
         if status:
             flt["status"] = status
@@ -99,16 +91,8 @@ def make_partner_router(db: AsyncIOMotorDatabase) -> APIRouter:
             out.append(d)
         return out
 
-    @router.post("/admin/partner-requests/{admin_token}/{rid}/approve")
-    async def approve_request(admin_token: str, rid: str):
-        verify_admin_path(admin_token)
-        return await _approve(rid)
-
     @router.post("/admin/partner-requests/{rid}/approve")
-    async def approve_request_v2(rid: str, _: None = Depends(verify_admin)):
-        return await _approve(rid)
-
-    async def _approve(rid: str):
+    async def approve_request(rid: str, _: None = Depends(verify_admin)):
         req = await db.partner_requests.find_one({"_id": rid})
         if not req:
             raise HTTPException(404, "Request not found")
@@ -142,16 +126,8 @@ def make_partner_router(db: AsyncIOMotorDatabase) -> APIRouter:
         return {"ok": True, "status": "approved",
                 "token": upload_token, "pharmacy_id": pharmacy_id}
 
-    @router.post("/admin/partner-requests/{admin_token}/{rid}/reject")
-    async def reject_request(admin_token: str, rid: str, reason: Optional[str] = ""):
-        verify_admin_path(admin_token)
-        return await _reject(rid, reason)
-
     @router.post("/admin/partner-requests/{rid}/reject")
-    async def reject_request_v2(rid: str, reason: Optional[str] = "", _: None = Depends(verify_admin)):
-        return await _reject(rid, reason)
-
-    async def _reject(rid: str, reason: str):
+    async def reject_request(rid: str, reason: Optional[str] = "", _: None = Depends(verify_admin)):
         res = await db.partner_requests.update_one(
             {"_id": rid},
             {"$set": {"status": "rejected", "reject_reason": reason or "",

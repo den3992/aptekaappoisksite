@@ -1,24 +1,49 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import { CheckCircle2, XCircle, Copy, Loader2, Inbox, ShieldAlert } from 'lucide-react';
+import { CheckCircle2, XCircle, Copy, Loader2, Inbox, ShieldAlert, LogOut } from 'lucide-react';
 import SEOHead from '../components/SEOHead';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const TOKEN_KEY = 'aptekaa_admin_token';
 
 /**
  * Hidden admin page to review/approve partner requests.
- * Usage: /partner-admin?token=<ADMIN_TOKEN>
+ *
+ * Auth flow:
+ *  1. First load with ?token=... in URL → save to sessionStorage, redirect to
+ *     /partner-admin (clean URL, no query).  Token leaves browser history.
+ *  2. Subsequent loads read token from sessionStorage.
+ *  3. If neither URL nor storage — show a login form.
+ *  4. Backend receives token via X-Admin-Token header only.  Never goes into
+ *     nginx access logs or HTTP Referer.
  */
 export default function PartnerAdmin() {
   const [params] = useSearchParams();
-  const token = params.get('token') || '';
+  const navigate = useNavigate();
+  const [token, setToken] = useState('');
+  const [tokenInput, setTokenInput] = useState('');
   const [items, setItems] = useState([]);
   const [filter, setFilter] = useState('new');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState(null);
-  const [issued, setIssued] = useState({}); // {requestId: {token, pharmacy_id}}
+  const [issued, setIssued] = useState({});
+
+  // Bootstrap auth: URL query → storage → form
+  useEffect(() => {
+    const urlTok = params.get('token');
+    if (urlTok) {
+      sessionStorage.setItem(TOKEN_KEY, urlTok);
+      setToken(urlTok);
+      // Strip token from URL so it doesn't sit in history.
+      navigate('/partner-admin', { replace: true });
+      return;
+    }
+    const stored = sessionStorage.getItem(TOKEN_KEY);
+    if (stored) setToken(stored);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const refresh = async () => {
     setLoading(true); setError('');
@@ -29,7 +54,13 @@ export default function PartnerAdmin() {
       });
       setItems(data);
     } catch (e) {
-      setError(e?.response?.status === 403 ? 'Неверный токен администратора' : 'Ошибка загрузки');
+      if (e?.response?.status === 403) {
+        setError('Неверный токен администратора');
+        sessionStorage.removeItem(TOKEN_KEY);
+        setToken('');
+      } else {
+        setError('Ошибка загрузки');
+      }
       setItems([]);
     } finally {
       setLoading(false);
@@ -68,35 +99,76 @@ export default function PartnerAdmin() {
     }
   };
 
-  const copy = (text) => {
-    navigator.clipboard.writeText(text);
+  const logout = () => {
+    sessionStorage.removeItem(TOKEN_KEY);
+    setToken('');
+    setItems([]);
+    setError('');
   };
 
+  const onLogin = (e) => {
+    e.preventDefault();
+    const t = tokenInput.trim();
+    if (!t) return;
+    sessionStorage.setItem(TOKEN_KEY, t);
+    setToken(t);
+    setTokenInput('');
+  };
+
+  const copy = (text) => navigator.clipboard.writeText(text);
+
+  // ----- Login screen -----
   if (!token) {
     return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center">
+      <div className="max-w-md mx-auto px-4 py-20">
         <SEOHead seo={{ title: 'Кабинет администратора | АптекаА' }} />
-        <ShieldAlert className="w-10 h-10 text-rose-500 mx-auto mb-3" />
-        <h1 className="text-xl font-bold text-slate-900 mb-2">Требуется токен</h1>
-        <p className="text-slate-600 text-sm">Откройте страницу с админ-токеном в URL.</p>
+        <div className="text-center mb-6">
+          <ShieldAlert className="w-10 h-10 text-emerald-600 mx-auto mb-3" />
+          <h1 className="text-xl font-bold text-slate-900 mb-1">Кабинет администратора</h1>
+          <p className="text-slate-500 text-sm">Введите токен для входа.</p>
+        </div>
+        <form onSubmit={onLogin} className="space-y-3">
+          <input
+            type="password"
+            value={tokenInput}
+            onChange={(e) => setTokenInput(e.target.value)}
+            placeholder="Токен"
+            autoFocus
+            data-testid="admin-token-input"
+            className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-emerald-400"
+          />
+          <button
+            type="submit"
+            data-testid="admin-login-btn"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-lg"
+          >
+            Войти
+          </button>
+          {error && (
+            <div className="text-sm text-rose-600 text-center">{error}</div>
+          )}
+        </form>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center">
-        <ShieldAlert className="w-10 h-10 text-rose-500 mx-auto mb-3" />
-        <h1 className="text-xl font-bold text-slate-900 mb-2">{error}</h1>
-      </div>
-    );
-  }
-
+  // ----- Authenticated view -----
   return (
     <div className="max-w-6xl mx-auto px-4 py-8" data-testid="partner-admin-page">
       <SEOHead seo={{ title: 'Заявки партнёров | АптекаА' }} />
-      <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">Заявки партнёров</h1>
-      <p className="text-slate-500 text-sm mb-6">Скрытая страница администратора. Не индексируется.</p>
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">Заявки партнёров</h1>
+          <p className="text-slate-500 text-sm">Скрытая страница администратора. Не индексируется.</p>
+        </div>
+        <button
+          onClick={logout}
+          data-testid="admin-logout-btn"
+          className="inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-rose-600 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-rose-300"
+        >
+          <LogOut className="w-3.5 h-3.5" /> Выйти
+        </button>
+      </div>
 
       <div className="flex gap-2 mb-6">
         {[
@@ -112,6 +184,12 @@ export default function PartnerAdmin() {
           </button>
         ))}
       </div>
+
+      {error && (
+        <div className="mb-4 p-3 bg-rose-50 border border-rose-100 rounded-lg text-sm text-rose-700">
+          {error}
+        </div>
+      )}
 
       {loading ? (
         <div className="text-center py-16 text-slate-500"><Loader2 className="w-6 h-6 mx-auto animate-spin" /></div>
