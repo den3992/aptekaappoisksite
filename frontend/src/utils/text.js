@@ -31,6 +31,65 @@ const LEGAL_FORMS = [
   'OOO', 'AO', 'OAO', 'PAO', // Latin look-alikes used by some scrapers
 ];
 
+// Foreign legal-form suffixes (anywhere in the string) — used to detect
+// "tail" after a comma that should be stripped (e.g. "КРКА, Д.Д., НОВО МЕСТО").
+// Each entry is matched as a whole token (Cyrillic-aware).
+const FOREIGN_LEGAL_TOKENS = [
+  'Д.Д.', 'Д.О.О.', 'СП. З.О.О.', 'З.О.О.', 'Н.В.', 'С.А.', 'С.А.У.',
+  'С.П.А.', 'С.Р.Л.', 'К.С.', 'К.Г.', 'К.Г.А.А.', 'М.Б.Х.',
+  'ГМБХ', 'ЛТД.', 'ЛТД', 'СПА', 'АГ', 'СА', 'СЕ',
+  'GMBH', 'LTD.', 'LTD', 'LLC', 'INC.', 'INC', 'PLC',
+  'BV', 'B.V.', 'AG', 'A.G.', 'SA', 'S.A.', 'SAU', 'S.A.U.',
+  'SARL', 'S.A.R.L.', 'SRL', 'S.R.L.', 'SPA', 'S.P.A.',
+  'KG', 'KGAA', 'CO.', 'CO', 'AB', 'OY', 'KK', 'KFT',
+  'COMPANY', 'COMPAGNIE', 'CORP', 'CORPORATION',
+  'ARZNEIMITTEL', 'PHARMA', 'PHARMACEUTICALS', 'HEALTHCARE',
+];
+
+// Brand-override patterns: when manufacturer matches one of these regexes,
+// return the canonical brand name directly (skipping the generic stripper).
+// Patterns are tested case-insensitively against the FULL trimmed string.
+// Order matters: more specific patterns should go first.
+const BRAND_OVERRIDES = [
+  // Russian-language uppercase variants from ЕСКЛП registry
+  [/(^|[\s,])КРКА($|[\s,])/i, 'KRKA'],
+  [/РЕКИТТ\s+БЕНКИЗЕР/i, 'Reckitt Benckiser'],
+  [/ГЕДЕОН\s+РИХТЕР/i, 'Gedeon Richter'],
+  [/САНОФИ(-АВЕНТИС)?(?![А-Я])/i, 'Sanofi'],
+  [/НОВАРТИС/i, 'Novartis'],
+  [/(ТАКЕДА|НИКОМЕД)/i, 'Takeda'],
+  [/ПФАЙЗЕР/i, 'Pfizer'],
+  [/ГЛАКСОСМИТКЛЯЙН/i, 'GSK'],
+  [/ХЕЙЛКАЙР|ХЭЛЕОН|HALEON/i, 'Haleon'],
+  [/(ЯНССЕН|КЕНВЬЮ|KENVUE)/i, 'Kenvue'],
+  [/БЕРИНГЕР\s+ИНГЕЛЬХАЙМ/i, 'Boehringer Ingelheim'],
+  [/ШТАДА|STADA|НИЖФАРМ/i, 'Stada'],
+  [/(ЮНИК\s+ФАРМАСЬЮТИКАЛ|ЦИПЛА|CIPLA)/i, 'Cipla'],
+  [/ТЕВА(?![А-Я])/i, 'Teva'],
+  [/АСТРАЗЕНЕКА|ASTRAZENECA/i, 'AstraZeneca'],
+  [/БАЙЕР|BAYER/i, 'Bayer'],
+  [/ЭББОТТ|ABBOTT/i, 'Abbott'],
+  [/БИОНОРИКА|BIONORICA/i, 'Bionorica'],
+  [/КРЕВЕЛЬ\s+МОЙЗЕЛЬБАХ|KREWEL/i, 'Krewel Meuselbach'],
+  [/УРСАФАРМ|URSAPHARM/i, 'Ursapharm'],
+  [/МАТЕРИА\s+МЕДИКА/i, 'Materia Medica'],
+  [/ФИРН\s+М/i, 'Фирн-М'],
+  [/ЦИТОМЕД/i, 'Цитомед'],
+  [/СОФАРИМЕКС/i, 'Sofarimex'],
+  [/МЕРК(?:\s+КГАА)?/i, 'Merck'],
+  [/ФАРМСТАНДАРТ/i, 'Фармстандарт'],
+  [/(^|\s)ОЗОН(\s+ФАРМ)?($|\s|,)/i, 'Озон'],
+  [/КАНОНФАРМА/i, 'Канонфарма'],
+  [/ВЕРТЕКС/i, 'Вертекс'],
+  [/АКРИХИН/i, 'Акрихин'],
+  [/БИОХИМИК/i, 'Биохимик'],
+  [/ВЕЛФАРМ/i, 'Велфарм'],
+  [/АВВА\s+РУС/i, 'АВВА РУС'],
+  [/НПО\s+МИКРОГЕН|МИКРОГЕН/i, 'Микроген'],
+  [/ОТИСИФАРМ|ОТЦИФАРМ/i, 'Otcpharm'],
+  [/ОТЦФАРМ/i, 'Otcpharm'],
+];
+
 // "Weak" canonical roots — too generic to use as a group key alone.
 // When formatManufacturer returns one of these as the first word, we extend
 // the canonical key with the next word to avoid merging unrelated companies.
@@ -60,7 +119,15 @@ function titleWord(w) {
 
 export function formatManufacturer(s) {
   if (!s || typeof s !== 'string') return s;
-  let v = s.trim().replace(/[«»"]/g, '');
+  const trimmed = s.trim().replace(/[«»"]/g, '');
+
+  // 1. Brand-override fast-path: known multi-word brand names like
+  //    "АО КРКА, Д.Д., НОВО МЕСТО" → "KRKA".
+  for (const [re, brand] of BRAND_OVERRIDES) {
+    if (re.test(trimmed)) return brand;
+  }
+
+  let v = trimmed;
   // Strip leading legal form(s), possibly several (e.g. "АО НПО МИКРОГЕН")
   // \b doesn't work with cyrillic in JS regex, so we use lookahead for separator.
   let changed = true;
@@ -79,6 +146,26 @@ export function formatManufacturer(s) {
     const re = new RegExp(`[\\s,]+${lf}\\s*$`, 'i');
     v = v.replace(re, '');
   }
+
+  // 2. If a comma is followed by a foreign legal token anywhere downstream,
+  //    cut at the first comma (drops "Д.Д., НОВО МЕСТО" etc.).
+  const commaIdx = v.indexOf(',');
+  if (commaIdx > 0) {
+    const tail = v.slice(commaIdx + 1).toUpperCase();
+    const tailHasLegal = FOREIGN_LEGAL_TOKENS.some((tok) => {
+      // exact token match in tail (delimited by space/comma/dot)
+      const re = new RegExp(`(^|[\\s,.])${tok.replace(/\./g, '\\.')}(?=$|[\\s,.])`);
+      return re.test(tail);
+    });
+    if (tailHasLegal) v = v.slice(0, commaIdx);
+  }
+
+  // 3. Trailing foreign legal tokens (e.g. "САНОФИ-АВЕНТИС СП. З.О.О.").
+  for (const tok of FOREIGN_LEGAL_TOKENS) {
+    const re = new RegExp(`[\\s,]+${tok.replace(/\./g, '\\.')}\\s*$`, 'i');
+    v = v.replace(re, '');
+  }
+
   v = v.trim().replace(/^[,\s]+/, '').replace(/[,\s]+$/, '');
   if (!v) return s; // fallback if we stripped everything
   // Title-case only if input was mostly upper
