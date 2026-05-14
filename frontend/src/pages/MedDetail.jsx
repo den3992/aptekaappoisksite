@@ -1,7 +1,7 @@
 import { formatName, formatManufacturer } from "../utils/text";
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ChevronRight, MapPin, Phone, Clock, Pill, ShieldAlert, Tag, Navigation } from 'lucide-react';
+import { ChevronRight, MapPin, Phone, Clock, Pill, ShieldAlert, Tag, Navigation, PackageX } from 'lucide-react';
 import { useCity } from '../context/CityContext';
 import { fetchMed, fetchAnalogs, fetchPharmacies, fetchCategories } from '../api/client';
 import SEOHead from '../components/SEOHead';
@@ -458,6 +458,38 @@ export default function MedDetail() {
           )}
         </div>
       </div>
+
+      {/* Empty state: no pharmacies in network carry this SKU */}
+      {prices.length === 0 && (
+        <section className="mb-10" data-testid="out-of-stock-section">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 md:p-10 text-center max-w-3xl mx-auto">
+            <div className="mx-auto w-14 h-14 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center mb-4">
+              <PackageX className="w-7 h-7 text-amber-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">
+              Препарата сейчас нет в наших аптеках-партнёрах
+            </h2>
+            <p className="text-slate-600 max-w-xl mx-auto leading-relaxed">
+              «{formatName(med.name)}{med.dosage ? ` ${med.dosage}` : ''}» временно отсутствует
+              у всех 12 партнёрских аптек Москвы и Санкт-Петербурга. Попробуйте
+              {med.mnn ? <> найти аналог с тем же действующим веществом — <b>{titleCase(med.mnn)}</b>.</> : <> поискать аналог в той же категории.</>}
+            </p>
+            {analogs.length > 0 && (
+              <button
+                data-testid="show-analogs-btn"
+                onClick={() => {
+                  const el = document.querySelector('[data-testid="analogs-section"]');
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition"
+              >
+                Показать аналоги
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Map */}
       {prices.length > 0 && (

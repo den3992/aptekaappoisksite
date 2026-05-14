@@ -166,6 +166,14 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         if not med:
             raise HTTPException(404, "Medication not found")
 
+        # Manual "out of stock everywhere" override (debug / testing).
+        # Set medications.force_empty_stock=true on a SKU to make it look
+        # as if no pharmacy in our network currently carries it.
+        if med.get("force_empty_stock"):
+            med["prices_by_city"] = {"msk": [], "spb": []}
+            med["prices_source"] = "real"
+            return med
+
         # Try real pharmacy prices first (uploaded via /api/upload/prices).
         # Fallback to deterministic mock when no pharmacy has uploaded yet.
         real_prices = {"msk": [], "spb": []}
@@ -199,17 +207,27 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         )
         if not med:
             raise HTTPException(404, "Medication not found")
-        flt = {"slug": {"$ne": slug}, "is_canonical": {"$ne": False}}
+
+        base_flt = {"slug": {"$ne": slug}, "is_canonical": {"$ne": False}}
+        proj = {"_id": 0, "slug": 1, "name": 1, "manufacturer": 1, "dosage": 1,
+                "form": 1, "rx": 1, "category": 1, "mnn": 1}
+
+        # Primary: same MNN
+        results = []
         if med.get("mnn"):
-            flt["mnn"] = med["mnn"]
-        else:
-            flt["category"] = med.get("category", "other")
-        cursor = db.medications.find(
-            flt,
-            {"_id": 0, "slug": 1, "name": 1, "manufacturer": 1, "dosage": 1,
-             "form": 1, "rx": 1, "category": 1, "mnn": 1},
-        ).sort([("name", 1), ("slug", 1)]).limit(limit)
-        return [d async for d in cursor]
+            cursor = db.medications.find(
+                {**base_flt, "mnn": med["mnn"]}, proj
+            ).sort([("name", 1), ("slug", 1)]).limit(limit)
+            results = [d async for d in cursor]
+
+        # Fallback: same category (when MNN gives no analogs or no MNN at all)
+        if not results and med.get("category"):
+            cursor = db.medications.find(
+                {**base_flt, "category": med["category"]}, proj
+            ).sort([("name", 1), ("slug", 1)]).limit(limit)
+            results = [d async for d in cursor]
+
+        return results
 
     return router
 
