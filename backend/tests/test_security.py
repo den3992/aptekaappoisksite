@@ -163,7 +163,7 @@ class TestRegressionSmoke:
         assert r.status_code == 200
 
     def test_upload_me_with_known_token(self):
-        token = "pHAmm6vzzz2HBHdiZmbkTdMbY8GAFR-3"
+        token = os.environ.get("TEST_TOKEN_P1", "FAKE_TOKEN_P1_SET_VIA_ENV")
         r = requests.get(f"{BASE_URL}/api/upload/me/{token}")
         assert r.status_code == 200
         assert "pharmacy_id" in r.json()

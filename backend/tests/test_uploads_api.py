@@ -17,10 +17,11 @@ BASE_URL = os.environ.get(
 ).rstrip("/")
 API = f"{BASE_URL}/api"
 
-# Seeded tokens
-TOKEN_P1 = "pHAmm6vzzz2HBHdiZmbkTdMbY8GAFR-3"   # Аптека «Здоровье», msk
-TOKEN_P2 = "-bwJQeGqV19YILpoWeFzAJyilQjNoDLF"   # Аптека «36,6», msk
-TOKEN_P13 = "rfbhqHut0y3iaIsnCyGMiBL-6PwsPahU"  # Аптека «Первая помощь», spb
+# Seeded tokens - read from env so secrets stay out of git.
+# Real values live in pharmacy_tokens collection and in the partner integration vault.
+TOKEN_P1 = os.environ.get("TEST_TOKEN_P1", "FAKE_TOKEN_P1_SET_VIA_ENV")  # Аптека «Здоровье», msk
+TOKEN_P2 = os.environ.get("TEST_TOKEN_P2", "FAKE_TOKEN_P2_SET_VIA_ENV")  # Аптека «36,6», msk
+TOKEN_P13 = os.environ.get("TEST_TOKEN_P13", "FAKE_TOKEN_P13_SET_VIA_ENV")  # Аптека «Первая помощь», spb
 BAD_TOKEN = "INVALID_TOKEN_XXXX"
 
 # Two GTINs known to exist in db.medications variants (per review_request)

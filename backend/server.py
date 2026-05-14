@@ -34,7 +34,6 @@ from api.seo import (
     render_for_pharmacies_for_bot,
     _render_404,
 )
-from security import SecurityHeadersMiddleware
 
 import time as _time
 from collections import defaultdict as _defaultdict
@@ -65,8 +64,7 @@ db = client[os.environ['DB_NAME']]
 # Create the main app without a prefix
 app = FastAPI()
 
-# Security headers on every response
-app.add_middleware(SecurityHeadersMiddleware)
+# Security headers are set at the nginx edge (deploy/nginx/edge-ssl.conf).
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")

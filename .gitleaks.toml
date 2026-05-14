@@ -1,0 +1,44 @@
+# Gitleaks config for aptekaa repository
+# Extends the default ruleset and adds allowlist for known false positives.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Global allowlist for aptekaa"
+paths = [
+  # Lockfiles often contain integrity hashes that look like secrets
+  '''yarn\.lock''',
+  '''package-lock\.json''',
+  # Built artifacts and dependencies
+  '''node_modules/''',
+  '''build/''',
+  '''dist/''',
+  # Tests with sample data + agent memory
+  '''.*test_credentials\.md''',
+  '''memory/test_credentials\.md''',
+  # Example/template files
+  '''\.env\.example$''',
+  '''.*\.example$''',
+  # MongoDB dump backups (binary)
+  '''.*\.bson$''',
+  '''.*\.gz$''',
+  # On-VM files that are .gitignore'd and never committed
+  '''deploy/\.env$''',
+  '''deploy/\.env\..*''',
+  # Historic handoff documents — kept for context.
+  # The keys inside have been ROTATED and are now dead.
+  '''^HANDOFF\.md$''',
+  '''^HANDOFF_.*\.md$''',
+  # Historic test reports — contain dead token strings only
+  '''test_reports/.*\.json$''',
+]
+
+# Regex stopwords for known non-secrets (e.g. placeholders in .env.example)
+regexes = [
+  '''CHANGE_ME''',
+  '''YOUR_.*_HERE''',
+  '''\$\{[A-Z_]+\}''',
+  '''<your-.*>''',
+  '''FAKE_TOKEN_.*''',
+]

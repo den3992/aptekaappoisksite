@@ -1,0 +1,9 @@
+# Fingerprints of historic, ROTATED partner-upload tokens that
+# remain visible in git history. The tokens themselves have been
+# rotated in MongoDB (pharmacy_tokens collection) and are dead.
+# Generated: 2026-05-14
+
+73295e8a889b716c51e7d1d3bad3b0dbbd732522:backend/tests/test_security.py:generic-api-key:166
+45e98abcdd8820acb537a366224e00ee164cf052:backend/tests/test_uploads_api.py:generic-api-key:21
+45e98abcdd8820acb537a366224e00ee164cf052:backend/tests/test_uploads_api.py:generic-api-key:22
+45e98abcdd8820acb537a366224e00ee164cf052:backend/tests/test_uploads_api.py:generic-api-key:23
