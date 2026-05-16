@@ -452,14 +452,14 @@ export default function MedDetail() {
           </div>
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 leading-tight" data-testid="med-h1">
             {formatName(med.name)}
-            {med.dosage && <span className="text-slate-700"> {med.dosage}</span>}
             {(() => {
               if (!med.variants || med.variants.length === 0) return null;
               const uniq = sortPacks([...new Set(med.variants.map(v => simplifyPack(v.pack_size)).filter(Boolean))]);
               return uniq.length === 1 ? <span className="text-slate-700">, {uniq[0]}</span> : null;
             })()}
           </h1>
-          <p className="text-slate-600 mt-1.5">{formLower}</p>
+          {med.dosage && <p className="text-slate-700 font-medium mt-1">{med.dosage}</p>}
+          <p className="text-slate-600 mt-0.5">{formLower}</p>
 
           <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
             <div className="bg-slate-50 rounded-lg p-3 min-w-0"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Производитель</div><div className="font-medium text-slate-800 break-words">{formatManufacturer(med.manufacturer) || "—"}</div></div>

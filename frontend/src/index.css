@@ -125,20 +125,36 @@ code {
 .input-focus:focus-within { box-shadow: 0 0 0 4px rgba(14,159,110,.15); border-color: #0E9F6E; }
 
 /* Partners marquee */
-.marquee-container { width: 100%; overflow: hidden; }
+.marquee-container { width: 100%; }
 .marquee-track {
   display: flex;
+  align-items: center;
   width: max-content;
-  animation: marquee 80s linear infinite;
-  will-change: transform;
+  -webkit-animation: marquee 36s linear infinite;
+  animation: marquee 36s linear infinite;
 }
-.marquee-container:hover .marquee-track { animation-play-state: paused; }
+.marquee-track > * {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.marquee-container:hover .marquee-track {
+  -webkit-animation-play-state: paused;
+  animation-play-state: paused;
+}
+@-webkit-keyframes marquee {
+  from { -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); }
+  to   { -webkit-transform: translate3d(-50%, 0, 0); transform: translate3d(-50%, 0, 0); }
+}
 @keyframes marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  from { -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); }
+  to   { -webkit-transform: translate3d(-50%, 0, 0); transform: translate3d(-50%, 0, 0); }
 }
 @media (max-width: 640px) {
-  .marquee-track { animation-duration: 56s; }
+  .marquee-track { -webkit-animation-duration: 26s; animation-duration: 26s; }
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* First-visit hint: a single radiating ring around the Search tab to draw

@@ -69,6 +69,20 @@ def _parse_dose_first(dosage):
         return float(m.group(1).replace(',', '.'))
     except ValueError:
         return None
+_SEARCH_FORM_PRIORITY = [
+    (0, re.compile(r'ТАБЛЕТК', re.I)),
+    (1, re.compile(r'КАПСУЛ', re.I)),
+    (2, re.compile(r'РАСТВОР', re.I)),
+]
+
+def _search_form_priority(form: str) -> int:
+    if not form:
+        return 99
+    for priority, rx in _SEARCH_FORM_PRIORITY:
+        if rx.search(form):
+            return priority
+    return 2
+
 # ------------------------------------------------------
 
 
@@ -182,6 +196,10 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
             doc.pop("score", None)
             doc["variants_count"] = len(doc.pop("variants", []) or [])
             items.append(doc)
+        items.sort(key=lambda d: (
+            _search_form_priority(d.get("form", "")),
+            _parse_dose_first(d.get("dosage")) or float("inf"),
+        ))
         return SearchResponse(
             query=q, total=total, page=page, page_size=page_size, items=items
         )
@@ -203,8 +221,13 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
                 ]},
             ]},
             {"_id": 0, "slug": 1, "name": 1, "mnn": 1, "dosage": 1, "form": 1},
-        ).limit(limit)
-        return [doc async for doc in cursor]
+        ).limit(min(limit * 5, 300))
+        docs = [doc async for doc in cursor]
+        docs.sort(key=lambda d: (
+            _search_form_priority(d.get("form", "")),
+            _parse_dose_first(d.get("dosage")) or float("inf"),
+        ))
+        return docs[:limit]
 
     # ----- Medication detail -----
 

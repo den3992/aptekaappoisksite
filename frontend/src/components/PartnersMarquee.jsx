@@ -1,7 +1,5 @@
 import React from 'react';
-import { Building2 } from 'lucide-react';
 
-// 18 pharmacy chains as marquee partners
 const PARTNERS = [
   'Ригла', '36,6', 'Здоровье', 'Горздрав', 'Столички', 'Будь Здоров',
   'Самсон-Фарма', 'Аптеки А5', 'Ноль Боли', 'Доктор Столетов',
@@ -9,36 +7,47 @@ const PARTNERS = [
   'Радуга', 'Невис', 'ГосАптека', 'Лекарь',
 ];
 
+function initials(name) {
+  return name.replace(/[^а-яёa-z0-9]/gi, '').slice(0, 2).toUpperCase();
+}
+
 function Item({ name }) {
   return (
-    <div className="shrink-0 mx-3 flex items-center gap-2 px-5 py-3 bg-white border border-slate-100 rounded-xl shadow-sm">
-      <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
-        <Building2 className="w-4 h-4" />
+    <div className="group shrink-0 flex items-center gap-2.5 whitespace-nowrap cursor-default px-4">
+      <div className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-400 shrink-0 group-hover:bg-emerald-50 group-hover:border-emerald-200 group-hover:text-emerald-600 transition-colors">
+        {initials(name)}
       </div>
-      <span className="text-sm font-semibold text-slate-700 whitespace-nowrap">{name}</span>
+      <span className="text-[13px] font-semibold text-slate-600 group-hover:text-emerald-600 transition-colors">
+        {name}
+      </span>
+      <span className="text-slate-200 text-base select-none ml-2">·</span>
     </div>
   );
 }
 
 export default function PartnersMarquee() {
-  // Duplicate the array for seamless loop
   const list = [...PARTNERS, ...PARTNERS];
   return (
-    <section className="relative bg-slate-50 border-y border-slate-100 py-6 md:py-10 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 mb-5 flex items-baseline justify-between">
-        <div>
-          <h2 className="text-xl md:text-3xl font-bold text-slate-900">Наши партнёры</h2>
-        </div>
-        <div className="text-sm text-slate-500 hidden sm:block">{PARTNERS.length}+ сетей</div>
+    <section className="relative py-8 md:py-10">
+
+      <div className="max-w-7xl mx-auto px-4 mb-5 flex items-center justify-between">
+        <h2 className="font-extrabold text-slate-900 text-xl md:text-2xl tracking-tight" style={{ fontFamily: "'Manrope', sans-serif" }}>
+          Наши партнёры
+        </h2>
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-xs font-semibold text-emerald-700">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+          {PARTNERS.length}+ аптечных сетей
+        </span>
       </div>
 
-      <div className="marquee-container relative">
-        <div className="marquee-track">
-          {list.map((p, i) => <Item key={i} name={p} />)}
+      <div className="overflow-hidden">
+        <div className="marquee-container relative">
+          <div className="marquee-track">
+            {list.map((p, i) => <Item key={i} name={p} />)}
+          </div>
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-20 z-10" style={{background:'linear-gradient(to right, rgba(240,253,244,0.7), transparent)'}} />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-20 z-10" style={{background:'linear-gradient(to left, rgba(240,253,244,0.7), transparent)'}} />
         </div>
-        {/* edge fades */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-slate-50 to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-slate-50 to-transparent" />
       </div>
     </section>
   );

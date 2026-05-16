@@ -207,10 +207,9 @@ export default function Home() {
             ))}
           </div>
         </section>
-      </div>
-
-      {/* Partners marquee */}
+      {/* Partners marquee — inside gradient so background flows through */}
       <PartnersMarquee />
+      </div>
 
       {/* Popular meds — uniform grid */}
       <section className="max-w-7xl mx-auto px-4 pt-8 md:pt-12 pb-2">

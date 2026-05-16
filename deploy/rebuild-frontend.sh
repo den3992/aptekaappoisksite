@@ -13,7 +13,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 set -a; source ./.env; set +a
-sudo -E docker compose -f docker-compose.yml build --no-cache \
+sudo -E docker compose -f docker-compose.yml build \
   --build-arg "REACT_APP_YANDEX_MAPS_KEY=${REACT_APP_YANDEX_MAPS_KEY:?missing}" \
   --build-arg "REACT_APP_BACKEND_URL=${REACT_APP_BACKEND_URL:?missing}" \
   frontend
