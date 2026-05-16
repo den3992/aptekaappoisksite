@@ -303,5 +303,31 @@ curl -s -A 'Googlebot' https://aptekaa.ru/msk | grep -oE '<title>[^<]+'
 
 ---
 
-_Last updated: 2026-05-15. When you make significant changes, append a
+_Last updated: 2026-05-16. When you make significant changes, append a
 2-line note here so future Claude sessions know what shifted._
+
+---
+
+## 11. Changes — 2026-05-16
+
+### SSH доступ
+- SSH ключ: `~/.ssh/id_ed25519` (уже авторизован на сервере, `aptekaa_key` не нужен)
+
+### Исправления UI
+- **SearchOverlay.jsx**: `type="search"` → `type="text"` + `min-w-0` на обёртке инпута — убран нативный крестик браузера, кнопка "Найти" больше не уходит за экран при вводе
+- **Header.jsx**: аналогично `type="text"` + `min-w-0` на инпуте + `shrink-0` на кнопке "Найти"
+
+### Дисклеймеры (двухуровневая схема, 38-ФЗ ст. 24)
+- **Footer.jsx**: расширен до полного текста — "Имеются противопоказания. Перед применением проконсультируйтесь со специалистом и ознакомьтесь с инструкцией по применению. Сведения о ценах и наличии носят справочный характер и не являются публичной офертой."
+- **MedDetail.jsx**: amber-плашка сокращена до короткого маркера — "Имеются противопоказания. Перед применением — инструкция и консультация со специалистом."
+- **MedDetail.jsx**: удалён inline italic дисклеймер из блока enrichment
+- **backend/api/seo.py**: SSR-дисклеймер для ботов синхронизирован с новым текстом. **Важно**: backend надо пересобирать через `docker compose build --no-cache backend && docker compose up -d --force-recreate backend` (не просто restart — файлы запечены в образ). Или `docker cp file deploy-backend-1:/app/...` + `docker restart`.
+
+### Ускорение сборки фронтенда
+- **.dockerignore** добавлен в корень репо — исключает `.git` (184MB), `frontend/public/img/meds` (59MB), тесты, доки
+- **docker-compose.yml**: `frontend` сервис получил volume mount `../frontend/public/img/meds:/usr/share/nginx/html/img/meds:ro` — новые фото добавляются без пересборки, просто кладёшь в `~/aptekaa/frontend/public/img/meds/`
+- Сборка теперь ~2-3 мин вместо 10+
+
+### Незавершённая задача (следующая сессия)
+- **MedDetail.jsx**: дозировка отображается под названием препарата вместо справа от него. Нужно переверстать блок h1 (строки ~453-461) — разделить название и дозировку в flex-row, чтобы дозировка всегда была справа/на той же строке.
+
