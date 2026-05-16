@@ -5,10 +5,13 @@ import PillIcon from './PillIcon';
 
 export default function Footer() {
   return (
-    <footer className="bg-slate-50 border-t border-slate-100 mt-12">
-      <div className="max-w-7xl mx-auto px-4 py-10">
+    <footer
+      className="bg-slate-50 border-t border-slate-100 mt-0 md:mt-12"
+      style={{ paddingBottom: 'var(--tabbar-offset, 0px)' }}
+    >
+      <div className="max-w-7xl mx-auto px-4 pt-4 pb-6 md:py-10">
         {/* warning band */}
-        <div className="flex items-start gap-3 p-4 mb-8 bg-amber-50 border border-amber-200 rounded-lg">
+        <div className="flex items-start gap-3 p-4 mb-6 md:mb-8 bg-amber-50 border border-amber-200 rounded-lg">
           <ShieldCheck className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <p className="text-sm text-amber-900 leading-relaxed">
             <strong>Имеются противопоказания. Необходима консультация со специалистом.</strong>{' '}

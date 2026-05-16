@@ -34,7 +34,7 @@ export default function ForPharmacies() {
   return (
     <div>
       <section className="bg-gradient-to-b from-emerald-50/60 to-white border-b border-slate-100">
-        <div className="max-w-5xl mx-auto px-4 pt-12 pb-12">
+        <div className="max-w-5xl mx-auto px-4 pt-5 pb-8 md:pt-12 md:pb-12">
           <nav className="text-xs text-slate-500 mb-4">
             <Link to="/" className="hover:text-emerald-700">Главная</Link>
             <span className="mx-1.5">/</span><span>Для аптек</span>
@@ -49,7 +49,7 @@ export default function ForPharmacies() {
         </div>
       </section>
 
-      <section className="max-w-5xl mx-auto px-4 py-12">
+      <section className="max-w-5xl mx-auto px-4 py-8 md:py-12">
         <h2 className="text-2xl font-bold text-slate-900 mb-6">Как это работает</h2>
         <div className="grid md:grid-cols-3 gap-4">
           {[
@@ -69,7 +69,7 @@ export default function ForPharmacies() {
         </div>
       </section>
 
-      <section className="max-w-5xl mx-auto px-4 pb-12">
+      <section className="max-w-5xl mx-auto px-4 pb-8 md:pb-12">
         <div className="bg-slate-50 border border-slate-100 rounded-2xl p-8">
           <h2 className="text-2xl font-bold text-slate-900 mb-3">Что мы предоставляем</h2>
           <ul className="space-y-3 text-slate-700">
@@ -87,7 +87,7 @@ export default function ForPharmacies() {
         </div>
       </section>
 
-      <section className="max-w-5xl mx-auto px-4 pb-16">
+      <section className="max-w-5xl mx-auto px-4 pb-10 md:pb-16">
         <div className="bg-white border border-slate-100 rounded-2xl p-6 md:p-8">
           <div className="grid md:grid-cols-[1fr_auto] gap-6 items-start mb-6">
             <div>
@@ -138,7 +138,7 @@ function Field({ label, value, onChange, placeholder, type = 'text', testId, nam
         onChange={onChange}
         placeholder={placeholder}
         data-testid={testId}
-        className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+        className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-base md:text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
       />
     </label>
   );

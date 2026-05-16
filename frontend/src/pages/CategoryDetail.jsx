@@ -50,7 +50,7 @@ export default function CategoryDetail() {
   const seo = categorySEO(city.id, cat);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-5 md:py-8">
       <SEOHead seo={seo} />
       <nav className="text-xs text-slate-500 mb-4">
         <Link to={`/${city.id}`} className="hover:text-emerald-700">Главная</Link>
@@ -59,13 +59,13 @@ export default function CategoryDetail() {
         <span className="mx-1.5">/</span><span>{cat.title}</span>
       </nav>
 
-      <div className="flex items-center gap-4 mb-8">
-        <div className="w-14 h-14 rounded-xl flex items-center justify-center" style={{ background: icon.color, color: icon.accent }}>
-          <CategoryIcon name={icon.icon} className="w-7 h-7" />
+      <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
+        <div className="w-11 h-11 md:w-14 md:h-14 rounded-xl flex items-center justify-center shrink-0" style={{ background: icon.color, color: icon.accent }}>
+          <CategoryIcon name={icon.icon} className="w-5 h-5 md:w-7 md:h-7" />
         </div>
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900">{cat.title}</h1>
-          <p className="text-slate-500 text-sm mt-1">{data.total.toLocaleString('ru')} препаратов в категории</p>
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 leading-tight">{cat.title}</h1>
+          <p className="text-slate-500 text-xs md:text-sm mt-0.5 md:mt-1">{data.total.toLocaleString('ru')} препаратов в категории</p>
         </div>
       </div>
 
@@ -73,9 +73,9 @@ export default function CategoryDetail() {
         <div className="bg-white border border-slate-100 rounded-xl p-12 text-center text-slate-500">В этой категории пока нет препаратов</div>
       ) : (
         <>
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3">
             {data.items.map(m => (
-              <Link key={m.slug} to={`/${city.id}/preparaty/${m.slug}`} className="med-card block bg-white border border-slate-100 rounded-xl p-4 hover:border-emerald-300">
+              <Link key={m.slug} to={`/${city.id}/preparaty/${m.slug}`} className="med-card block bg-white border border-slate-100 rounded-xl p-4 hover:border-emerald-300 active:bg-slate-50 transition">
                 {m.rx && (
                   <span className="inline-block text-[10px] font-semibold uppercase tracking-wide bg-rose-50 text-rose-700 px-2 py-0.5 rounded mb-1.5">
                     Отпускается по рецепту
@@ -93,12 +93,12 @@ export default function CategoryDetail() {
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 mt-8">
               <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
-                className="px-3 py-2 rounded-lg border border-slate-200 disabled:opacity-40 hover:border-emerald-400 flex items-center gap-1 text-sm">
+                className="px-3 h-11 rounded-lg border border-slate-200 disabled:opacity-40 hover:border-emerald-400 flex items-center gap-1 text-sm">
                 <ChevronLeft className="w-4 h-4" /> Назад
               </button>
               <span className="text-sm text-slate-600">Страница <strong>{page}</strong> из <strong>{totalPages}</strong></span>
               <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
-                className="px-3 py-2 rounded-lg border border-slate-200 disabled:opacity-40 hover:border-emerald-400 flex items-center gap-1 text-sm">
+                className="px-3 h-11 rounded-lg border border-slate-200 disabled:opacity-40 hover:border-emerald-400 flex items-center gap-1 text-sm">
                 Вперёд <ChevronRight className="w-4 h-4" />
               </button>
             </div>

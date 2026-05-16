@@ -129,7 +129,7 @@ code {
 .marquee-track {
   display: flex;
   width: max-content;
-  animation: marquee 40s linear infinite;
+  animation: marquee 80s linear infinite;
   will-change: transform;
 }
 .marquee-container:hover .marquee-track { animation-play-state: paused; }
@@ -138,5 +138,30 @@ code {
   to { transform: translateX(-50%); }
 }
 @media (max-width: 640px) {
-  .marquee-track { animation-duration: 28s; }
+  .marquee-track { animation-duration: 56s; }
 }
+
+/* First-visit hint: a single radiating ring around the Search tab to draw
+   attention to the primary action. Shown for ~3.6s (3 pulses), then removed. */
+.tabbar-pulse {
+  position: relative;
+}
+.tabbar-pulse::before {
+  content: '';
+  position: absolute;
+  inset: 6px 14px;
+  border-radius: 14px;
+  border: 2px solid rgba(244, 63, 94, 0.55);
+  pointer-events: none;
+  animation: tabbar-ping 1.2s cubic-bezier(0, 0, 0.2, 1) 3;
+  z-index: 0;
+}
+@keyframes tabbar-ping {
+  0%   { transform: scale(1);     opacity: 0.85; }
+  80%  { transform: scale(1.55);  opacity: 0;    }
+  100% { transform: scale(1.55);  opacity: 0;    }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tabbar-pulse::before { animation: none; }
+}
+

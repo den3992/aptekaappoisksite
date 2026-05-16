@@ -48,9 +48,9 @@ export async function searchMeds({ q, category, rx, prefix, page = 1, pageSize =
   return data;
 }
 
-export async function suggestMeds(q) {
+export async function suggestMeds(q, limit = 8) {
   if (!q || q.trim().length < 2) return [];
-  const { data } = await http.get('/search/suggest', { params: { q, limit: 8 } });
+  const { data } = await http.get('/search/suggest', { params: { q, limit } });
   return data;
 }
 

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 export default function Privacy() {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10 prose prose-slate">
+    <div className="max-w-3xl mx-auto px-4 py-5 md:py-10 prose prose-slate">
       <nav className="text-xs text-slate-500 mb-4">
         <Link to="/" className="hover:text-emerald-700 no-underline">Главная</Link>
         <span className="mx-1.5">/</span><span>Политика конфиденциальности</span>

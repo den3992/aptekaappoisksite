@@ -26,7 +26,7 @@ export default function PharmaciesList() {
   const filtered = useMemo(() => list.filter(p => q ? `${p.name} ${p.address} ${p.chain}`.toLowerCase().includes(q.toLowerCase()) : true), [list, q]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-5 md:py-8">
       <SEOHead seo={{
         title: `Аптеки в ${city.inLoc} — адреса, телефоны, режим работы | АптекаА`,
         description: `Список аптек-партнёров в ${city.inLoc} с адресами, телефонами и режимом работы.`,
@@ -35,12 +35,12 @@ export default function PharmaciesList() {
         <Link to={`/${city.id}`} className="hover:text-emerald-700">Главная</Link>
         <span className="mx-1.5">/</span><span>Аптеки</span>
       </nav>
-      <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Аптеки в {city.inLoc}</h1>
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-2 leading-tight">Аптеки в {city.inLoc}</h1>
       <p className="text-slate-500 mb-6">{filtered.length} аптек-партнёров</p>
 
       <div className="input-focus border border-slate-200 rounded-lg flex items-center bg-white max-w-md mb-6 transition">
         <Search className="w-4 h-4 text-slate-400 ml-3" />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Поиск по названию или адресу…" className="flex-1 px-3 py-2.5 text-sm bg-transparent outline-none" />
+        <input type="search" inputMode="search" autoComplete="off" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Поиск по названию или адресу…" aria-label="Поиск аптек" className="flex-1 px-3 py-3 md:py-2.5 text-base md:text-sm bg-transparent outline-none" />
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3" data-testid="pharmacies-list">

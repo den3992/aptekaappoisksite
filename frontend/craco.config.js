@@ -1,6 +1,7 @@
 // craco.config.js
 const path = require("path");
 require("dotenv").config();
+const { GenerateSW } = require("workbox-webpack-plugin");
 
 // Check if we're in development/preview mode (not production build)
 // Craco sets NODE_ENV=development for start, NODE_ENV=production for build
@@ -55,6 +56,54 @@ let webpackConfig = {
       if (config.enableHealthCheck && healthPluginInstance) {
         webpackConfig.plugins.push(healthPluginInstance);
       }
+
+      // PWA Service Worker (production builds only)
+      if (process.env.NODE_ENV === "production") {
+        webpackConfig.plugins.push(
+          new GenerateSW({
+            swDest: "service-worker.js",
+            clientsClaim: true,
+            skipWaiting: false,
+            cleanupOutdatedCaches: true,
+            exclude: [/\.map$/, /asset-manifest\.json$/, /LICENSE/, /enrichment-dump\.json$/],
+            maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+            navigateFallback: "/index.html",
+            navigateFallbackDenylist: [/^\/api\//, /^\/admin/, /\/[^/]+\.[^/]+$/],
+            runtimeCaching: [
+              {
+                // JSON API — fresh data preferred, falling back to cache (≤ 10 min).
+                urlPattern: ({ url }) => url.origin === self.location.origin && url.pathname.startsWith("/api/"),
+                handler: "NetworkFirst",
+                options: {
+                  cacheName: "api-cache",
+                  networkTimeoutSeconds: 5,
+                  expiration: { maxEntries: 200, maxAgeSeconds: 600 },
+                  cacheableResponse: { statuses: [0, 200] },
+                },
+              },
+              {
+                // Same-origin images: long cache
+                urlPattern: ({ url, request }) => url.origin === self.location.origin && request.destination === "image",
+                handler: "CacheFirst",
+                options: {
+                  cacheName: "image-cache",
+                  expiration: { maxEntries: 400, maxAgeSeconds: 30 * 24 * 60 * 60, purgeOnQuotaError: true },
+                  cacheableResponse: { statuses: [0, 200] },
+                },
+              },
+              {
+                // Same-origin fonts/css/js (rare since precached): SWR
+                urlPattern: ({ url, request }) =>
+                  url.origin === self.location.origin &&
+                  (request.destination === "style" || request.destination === "script" || request.destination === "font"),
+                handler: "StaleWhileRevalidate",
+                options: { cacheName: "static-assets-cache" },
+              },
+            ],
+          })
+        );
+      }
+
       return webpackConfig;
     },
   },

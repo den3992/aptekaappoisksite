@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Search, MapPin, ShieldCheck, ArrowRight, Pill } from 'lucide-react';
+import NotFound from './NotFound';
+import { Search, MapPin, ShieldCheck, ArrowRight, Pill, Building2, Sparkles, Map } from 'lucide-react';
 import { useCity } from '../context/CityContext';
 import CategoryIcon from '../components/CategoryIcon';
 import PillIcon from '../components/PillIcon';
@@ -13,6 +14,14 @@ import { getCategoryStyle } from '../lib/categoryStyles';
 
 const POPULAR_QUERIES = ['Парацетамол', 'Нурофен', 'Витамин D3', 'Омепразол', 'Кагоцел', 'Смекта'];
 
+const TRUST_SIGNALS = [
+  { icon: ShieldCheck, text: 'Более 2000 аптек-партнёров в Москве и СПб' },
+  { icon: Pill, text: 'Более 23 000 препаратов в каталоге' },
+  { icon: Building2, text: '18+ аптечных сетей по всей России' },
+  { icon: Map, text: 'Цены и наличие на интерактивной карте' },
+  { icon: Sparkles, text: 'Бесплатно и без регистрации' },
+];
+
 export default function Home() {
   const { city, cities, setCity } = useCity();
   const { city: cityParam } = useParams();
@@ -22,14 +31,38 @@ export default function Home() {
   const [categories, setCategories] = useState([]);
   const navigate = useNavigate();
 
+  // Rotating trust signals (mobile-friendly hero badge)
+  const [trustIdx, setTrustIdx] = useState(0);
+  const [trustVisible, setTrustVisible] = useState(true);
+  useEffect(() => {
+    const t = setInterval(() => {
+      setTrustVisible(false);
+      setTimeout(() => {
+        setTrustIdx(i => (i + 1) % TRUST_SIGNALS.length);
+        setTrustVisible(true);
+      }, 250);
+    }, 3000);
+    return () => clearInterval(t);
+  }, []);
+
   // Sync URL city → context
   useEffect(() => {
-    if (cityParam && cities) {
-      const found = cities.find(c => c.id === cityParam);
-      if (found && found.id !== city.id) setCity(found);
+    // Accept either the URL slug ('moskva', 'sankt-peterburg') or the
+    // internal city.id ('msk', 'spb'). Both forms exist in the wild:
+    //   - sitemap.xml + Yandex/Google indexes /msk/... (legacy canonical);
+    //   - human-facing TabBar / nav generates /msk/... too;
+    //   - some old links use /moskva/... so we keep that as a safe alias.
+    if (cityParam && cities && cities.length > 0) {
+      const slugToId = { moskva: 'msk', 'sankt-peterburg': 'spb', msk: 'msk', spb: 'spb' };
+      const targetId = slugToId[cityParam];
+      if (targetId) {
+        const found = cities.find(c => c.id === targetId);
+        if (found && found.id !== city.id) setCity(found);
+      }
+      // Unknown slug → render NotFound below.
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cityParam]);
+  }, [cityParam, cities]);
 
   // API-backed suggestions (typeahead in search box)
   useEffect(() => {
@@ -81,6 +114,10 @@ export default function Home() {
     },
   };
 
+  if (cityParam && !['moskva', 'spb', 'msk', 'sankt-peterburg'].includes(cityParam)) {
+    return <NotFound />;
+  }
+
   return (
     <div>
       <SEOHead seo={{ ...seo, jsonLd: websiteJsonLd }} />
@@ -93,7 +130,7 @@ export default function Home() {
         </div>
 
         {/* Brand */}
-        <div className="relative max-w-7xl mx-auto px-4 pt-7 pb-2 flex justify-center">
+        <div className="relative max-w-7xl mx-auto px-4 pt-7 pb-2 hidden md:flex justify-center">
           <Link to="/" className="inline-flex flex-col items-center leading-none">
             <div className="flex items-center gap-2.5 md:gap-3">
               <PillIcon className="w-6 h-6 md:w-10 md:h-10" />
@@ -104,19 +141,28 @@ export default function Home() {
         </div>
 
         {/* Hero */}
-        <section className="relative z-20 max-w-4xl mx-auto px-4 pt-10 pb-16 md:pt-14 md:pb-24 text-center">
-          <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur border border-emerald-100 rounded-full px-3.5 py-1.5 mb-6 text-xs font-medium text-emerald-800 shadow-sm">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            Более 2000 аптек-партнёров в Москве и СПб
-          </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.05]">
+        <section className="relative z-20 max-w-4xl mx-auto px-4 pt-6 pb-10 md:pt-14 md:pb-24 text-center">
+          {(() => {
+            const TrustIcon = TRUST_SIGNALS[trustIdx].icon;
+            return (
+              <div
+                aria-live="polite"
+                data-testid="hero-trust-badge"
+                className={`inline-flex items-center gap-2 bg-white/80 backdrop-blur border border-emerald-100 rounded-full px-3 py-1 mb-4 md:mb-6 text-[11px] md:text-xs font-medium text-emerald-800 shadow-sm transition-opacity duration-300 ${trustVisible ? 'opacity-100' : 'opacity-0'}`}
+              >
+                <TrustIcon className="w-3.5 h-3.5 shrink-0" />
+                <span className="whitespace-nowrap">{TRUST_SIGNALS[trustIdx].text}</span>
+              </div>
+            );
+          })()}
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.1] md:leading-[1.05]">
             Ищите лекарства <span className="text-emerald-600">быстро</span><br />и по <span className="text-emerald-600">лучшей цене</span>
           </h1>
-          <p className="mt-6 text-lg text-slate-600 max-w-2xl mx-auto">
+          <p className="mt-4 md:mt-6 text-base md:text-lg text-slate-600 max-w-2xl mx-auto">
             Бесплатная аптечная справочная по Москве и СПб. Сравнивайте наличие и цены на лекарства, БАДы и аптечные товары. Без регистрации.
           </p>
 
-          <form onSubmit={submit} className="mt-10 mx-auto max-w-3xl bg-white shadow-card border border-slate-100 rounded-2xl p-2 flex flex-col sm:flex-row gap-2 input-focus text-left">
+          <form onSubmit={submit} className="hidden md:flex mt-10 mx-auto max-w-3xl bg-white shadow-card border border-slate-100 rounded-2xl p-2 flex-col sm:flex-row gap-2 input-focus text-left">
             <div className="flex items-center gap-2 sm:border-r sm:border-slate-100 px-3 py-2 sm:py-0">
               <MapPin className="w-4 h-4 text-emerald-600" />
               <select value={city.id} onChange={(e) => setCity(cities.find(c => c.id === e.target.value))} className="text-sm font-medium text-slate-800 bg-transparent outline-none cursor-pointer">
@@ -126,9 +172,13 @@ export default function Home() {
             <div className="flex-1 flex items-center gap-2 px-3 relative">
               <Search className="w-4 h-4 text-rose-500" />
               <input
+                type="search"
+                inputMode="search"
+                autoComplete="off"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Введите название препарата"
+                aria-label="Поиск препарата"
                 className="w-full text-base py-3 bg-transparent outline-none"
               />
               {suggestions.length > 0 && (
@@ -150,7 +200,7 @@ export default function Home() {
             </button>
           </form>
 
-          <div className="mt-5 flex items-center gap-2 flex-wrap justify-center text-xs text-slate-500">
+          <div className="hidden md:flex mt-5 items-center gap-2 flex-wrap justify-center text-xs text-slate-500">
             <span>Часто ищут:</span>
             {['Парацетамол','Нурофен','Арбидол','Витамин D3','Смекта','Зодак'].map(t => (
               <button key={t} type="button" onClick={() => navigate(`/${city.id}/poisk?q=${encodeURIComponent(t)}`)} className="px-2.5 py-1 rounded-full bg-white/70 backdrop-blur border border-slate-200 hover:border-emerald-300 hover:text-emerald-700 transition">{t}</button>
@@ -163,7 +213,7 @@ export default function Home() {
       <PartnersMarquee />
 
       {/* Popular meds — uniform grid */}
-      <section className="max-w-7xl mx-auto px-4 pt-12 pb-2">
+      <section className="max-w-7xl mx-auto px-4 pt-8 md:pt-12 pb-2">
         <div className="flex items-center justify-between gap-3 mb-5">
           <h2 className="text-xl md:text-2xl font-bold text-slate-900">Популярные препараты</h2>
           <Link to={`/${city.id}/preparaty`} className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1 whitespace-nowrap shrink-0">Каталог А–Я <ArrowRight className="w-4 h-4" /></Link>
@@ -178,8 +228,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Categories — uniform grid */}
-      <section className="max-w-7xl mx-auto px-4 pt-10 pb-12">
+      {/* Categories — uniform grid (desktop only — mobile uses TabBar → Catalog) */}
+      <section className="hidden md:block max-w-7xl mx-auto px-4 pt-8 md:pt-10 pb-10 md:pb-12">
         <div className="flex items-center justify-between gap-3 mb-5">
           <div className="min-w-0">
             <h2 className="text-xl md:text-2xl font-bold text-slate-900">Категории препаратов</h2>
@@ -203,11 +253,11 @@ export default function Home() {
       </section>
 
       {/* CTA for pharmacies */}
-      <section className="max-w-7xl mx-auto px-4 py-14">
-        <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl p-8 md:p-12 text-white relative overflow-hidden">
+      <section className="max-w-7xl mx-auto px-4 py-10 md:py-14">
+        <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl p-6 md:p-12 text-white relative overflow-hidden">
           <div className="max-w-2xl relative z-10">
             <div className="inline-block px-3 py-1 bg-white/15 rounded-full text-xs font-medium mb-4">Для аптек</div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-3">Привлекайте новых клиентов в вашу аптеку</h2>
+            <h2 className="text-2xl md:text-4xl font-bold mb-3">Привлекайте новых клиентов в вашу аптеку</h2>
             <p className="text-emerald-50 leading-relaxed mb-6">
               Простая выгрузка ассортимента. Поможем с настройкой.
             </p>

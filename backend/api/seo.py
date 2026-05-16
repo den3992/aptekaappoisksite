@@ -26,6 +26,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from .pharmacies_seed import CITIES, CATEGORIES, PHARMACIES, find_pharmacy_by_id
 from .text_format import format_manufacturer
+from .__init__ import form_group, _parse_dose_first
 
 CANONICAL_HOST = os.environ.get("CANONICAL_HOST", "aptekaa.ru")
 DEFAULT_CITY = "msk"
@@ -483,19 +484,25 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
                 body.append(f"<li>{html.escape(str(label))}{' · GTIN ' + str(v.get('gtin')) if v.get('gtin') else ''}</li>")
         body.append("</ul>")
 
-    # Analogs — hide duplicate registrations (only canonical cards as analogs).
-    analog_flt = {"slug": {"$ne": slug}, "is_canonical": {"$ne": False}}
+    # Analogs — strict: same MNN + same form-group, sorted by dosage closeness.
+    analogs = []
     if mnn:
-        analog_flt["mnn"] = mnn
-    else:
-        analog_flt["category"] = med.get("category", "other")
-    analogs_cursor = db.medications.find(
-        analog_flt,
-        {"_id": 0, "slug": 1, "name": 1, "manufacturer": 1, "dosage": 1},
-    ).limit(8)
-    analogs = [a async for a in analogs_cursor]
+        target_grp = form_group(med.get("form"))
+        target_dose = _parse_dose_first(med.get("dosage"))
+        cur = db.medications.find(
+            {"slug": {"$ne": slug}, "is_canonical": {"$ne": False}, "mnn": mnn},
+            {"_id": 0, "slug": 1, "name": 1, "manufacturer": 1, "dosage": 1, "form": 1},
+        )
+        items = [a async for a in cur if form_group(a.get("form")) == target_grp]
+
+        def _akey(d):
+            dose = _parse_dose_first(d.get("dosage"))
+            diff = abs(dose - target_dose) if (dose is not None and target_dose is not None) else 1e9
+            return (diff, d.get("name") or "", d.get("slug") or "")
+        items.sort(key=_akey)
+        analogs = items[:8]
     if analogs:
-        body.append(f"<h2>Аналоги {name}</h2><ul>")
+        body.append(f"<h2>Аналоги {name} по МНН</h2><ul>")
         for a in analogs:
             au = f"{base_url(request)}/{city}/preparaty/{a['slug']}"
             label = " · ".join(filter(None, [a.get("name"), a.get("dosage"), format_manufacturer(a.get("manufacturer"))]))
@@ -612,6 +619,15 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
                 for p in _uniq_packs
             ],
         }
+    if analogs:
+        drug_node["relatedDrug"] = [
+            {
+                "@type": "Drug",
+                "name": a.get("name"),
+                "url": f"{base_url(request)}/{city}/preparaty/{a['slug']}",
+            }
+            for a in analogs
+        ]
     drug_node = {k: v for k, v in drug_node.items() if v}
 
     # Product with AggregateOffer — gives Yandex/Google a rich snippet

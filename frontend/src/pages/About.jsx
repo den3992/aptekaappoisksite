@@ -4,17 +4,17 @@ import { ShieldCheck, Heart, Search, Clock, Building2 } from 'lucide-react';
 
 export default function About() {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10">
+    <div className="max-w-4xl mx-auto px-4 py-5 md:py-10">
       <nav className="text-xs text-slate-500 mb-4">
         <Link to="/" className="hover:text-emerald-700">Главная</Link>
         <span className="mx-1.5">/</span><span>О сервисе</span>
       </nav>
-      <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">О сервисе АптекаА</h1>
-      <p className="text-slate-600 leading-relaxed mb-8">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-3 leading-tight">О сервисе АптекаА</h1>
+      <p className="text-slate-600 leading-relaxed mb-6 md:mb-8 text-sm md:text-base">
         АптекаА — информационный сервис по поиску лекарственных препаратов, биологически активных добавок и медицинских изделий в аптеках России. Мы помогаем людям быстро находить нужные препараты по лучшей цене и в ближайших аптеках.
       </p>
 
-      <div className="grid sm:grid-cols-2 gap-3 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8 md:mb-10">
         {[
           { i: Search, t: 'Быстрый поиск', d: 'Находите препарат в десятках аптек за секунды' },
           { i: Heart, t: 'Забота о здоровье', d: 'Все данные проверяются и обновляются' },

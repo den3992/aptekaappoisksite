@@ -38,6 +38,13 @@ export default function VoiceAssistant() {
   const messagesEndRef = useRef(null);
   const sessionIdRef = useRef(getOrCreateSessionId());
   const audioRef = useRef(null);
+
+  // Global trigger: any component (e.g., header mic icon) can dispatch this.
+  useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener('voice-assistant:open', onOpen);
+    return () => window.removeEventListener('voice-assistant:open', onOpen);
+  }, []);
   const audioUrlRef = useRef(null);
 
   useEffect(() => {
@@ -175,12 +182,13 @@ export default function VoiceAssistant() {
 
   return (
     <>
-      {/* Floating launcher */}
+      {/* Floating launcher (desktop only — mobile uses header mic button). */}
       {!open && (
         <button
           data-testid="voice-assistant-launcher"
           onClick={toggleOpen}
-          className="fixed bottom-20 right-5 z-50 flex items-center gap-2 rounded-full bg-brand-green text-white px-5 py-3 shadow-card-hover hover:bg-brand-green-dark transition-all"
+          className="hidden md:flex fixed right-5 z-50 items-center gap-2 rounded-full bg-brand-green text-white px-5 py-3 shadow-card-hover hover:bg-brand-green-dark transition-all"
+          style={{ bottom: 'calc(var(--tabbar-offset, 0px) + 80px)' }}
           aria-label="Открыть голосового помощника"
         >
           <MessageCircle className="w-5 h-5" />
@@ -192,7 +200,8 @@ export default function VoiceAssistant() {
       {open && (
         <div
           data-testid="voice-assistant-dialog"
-          className="fixed bottom-20 right-5 z-50 w-[calc(100vw-2.5rem)] sm:w-[380px] max-h-[80vh] bg-white rounded-2xl shadow-card-hover border border-slate-200 flex flex-col overflow-hidden"
+          className="fixed right-5 z-50 w-[calc(100vw-2.5rem)] sm:w-[380px] max-h-[80vh] bg-white rounded-2xl shadow-card-hover border border-slate-200 flex flex-col overflow-hidden"
+          style={{ bottom: 'calc(var(--tabbar-offset, 0px) + 16px)' }}
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-brand-green text-white">

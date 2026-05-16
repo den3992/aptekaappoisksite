@@ -1,8 +1,9 @@
 import { formatName, formatManufacturer } from "../utils/text";
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ChevronRight, MapPin, Phone, Clock, Pill, ShieldAlert, Tag, Navigation, PackageX } from 'lucide-react';
+import { ChevronRight, ChevronLeft, MapPin, Phone, Clock, Pill, ShieldAlert, Tag, Navigation, PackageX, Maximize2, Minimize2 } from 'lucide-react';
 import { useCity } from '../context/CityContext';
+import { Drawer as VaulDrawer } from 'vaul';
 import { fetchMed, fetchAnalogs, fetchPharmacies, fetchCategories } from '../api/client';
 import SEOHead from '../components/SEOHead';
 import { medSEO } from '../seo';
@@ -147,9 +148,19 @@ function sortPacks(items) {
   });
 }
 
-function PriceMap({ med, prices, pharmacies, cityCenter, onSelect, selected }) {
+const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, cityCenter, onSelect, selected, fullscreen = false, onInteract }, externalRef) {
   const ref = useRef(null);
   const mapRef = useRef(null);
+  const onInteractRef = useRef(onInteract);
+  useEffect(() => { onInteractRef.current = onInteract; }, [onInteract]);
+
+  React.useImperativeHandle(externalRef, () => ({
+    centerOn: (lat, lng, zoom = 14) => {
+      if (mapRef.current) {
+        try { mapRef.current.setCenter([lat, lng], zoom, { duration: 400 }); } catch (e) {}
+      }
+    },
+  }));
 
   useEffect(() => {
     let cancelled = false;
@@ -159,12 +170,31 @@ function PriceMap({ med, prices, pharmacies, cityCenter, onSelect, selected }) {
         mapRef.current.destroy();
         mapRef.current = null;
       }
+      // Yandex fullscreen control: keep on desktop (user has no other
+      // way to enlarge the map there), drop on mobile (duplicated by
+      // our own button + sheet UI for the fullscreen mode).
+      const isDesktop = typeof window !== 'undefined' && window.matchMedia
+        ? window.matchMedia('(min-width: 768px)').matches
+        : true;
+      const controls = isDesktop
+        ? ['zoomControl', 'fullscreenControl', 'geolocationControl']
+        : ['zoomControl', 'geolocationControl'];
+
       const map = new ymaps.Map(ref.current, {
         center: cityCenter,
         zoom: 11,
-        controls: ['zoomControl', 'fullscreenControl', 'geolocationControl'],
+        controls,
       }, { suppressMapOpenBlock: true });
       mapRef.current = map;
+
+      // Notify parent on user interaction (pan/zoom) so the bottom sheet
+      // can auto-shrink and stop covering the map. We use DOM events on the
+      // map container (rather than Yandex map.events) to avoid triggering on
+      // programmatic setBounds/setCenter calls. Read the latest onInteract
+      // via a ref to avoid stale closures.
+      const fireInteract = () => { if (onInteractRef.current) onInteractRef.current(); };
+      ref.current.addEventListener('pointerdown', fireInteract, { passive: true });
+      ref.current.addEventListener('wheel', fireInteract, { passive: true });
 
       const PriceLayout = ymaps.templateLayoutFactory.createClass(
         '<div class="ymap-price-pill">{{ properties.price }} ₽</div>',
@@ -207,13 +237,39 @@ function PriceMap({ med, prices, pharmacies, cityCenter, onSelect, selected }) {
     // eslint-disable-next-line
   }, [med?.slug, cityCenter[0], cityCenter[1], prices.length]);
 
-  return <div ref={ref} className="w-full h-[460px] rounded-xl overflow-hidden border border-slate-100" />;
-}
+  // Re-fit map viewport when fullscreen mode toggles (Yandex Maps caches its size at init).
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const id = setTimeout(() => {
+      try { mapRef.current.container.fitToViewport(); } catch (e) {}
+    }, 60);
+    return () => clearTimeout(id);
+  }, [fullscreen]);
+
+  return <div ref={ref} className={fullscreen ? "w-full h-full" : "w-full h-[360px] md:h-[460px] rounded-xl overflow-hidden border border-slate-100"} />;
+});
 
 export default function MedDetail() {
   const { slug, city: cityParam } = useParams();
   const { city, cities, setCity } = useCity();
   const [selectedId, setSelectedId] = useState(null);
+  const [mapFullscreen, setMapFullscreen] = useState(false);
+  const priceMapRef = useRef(null);
+  const SNAP_POINTS = [0.25, 0.55, 0.9];
+  const [snapPoint, setSnapPoint] = useState(0.55);
+
+  // Lock body scroll + ESC to close when map is fullscreen.
+  useEffect(() => {
+    if (!mapFullscreen) {
+      setSnapPoint(0.55); // reset for next open
+      return;
+    }
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => { if (e.key === 'Escape') setMapFullscreen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onKey); };
+  }, [mapFullscreen]);
   const [med, setMed] = useState(null);
   const [analogs, setAnalogs] = useState([]);
   const [pharmacies, setPharmacies] = useState([]);
@@ -354,7 +410,7 @@ export default function MedDetail() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8" data-testid="med-detail-page">
+    <div className="max-w-7xl mx-auto px-4 py-5 md:py-8" data-testid="med-detail-page">
       <SEOHead seo={{ ...seo, jsonLd: drugJsonLd }} />
 
       <nav className="text-xs text-slate-500 mb-4 flex items-center flex-wrap gap-x-1.5">
@@ -370,9 +426,9 @@ export default function MedDetail() {
         <ChevronRight className="w-3 h-3" /><span className="text-slate-700">{formatName(med.name)}</span>
       </nav>
 
-      <div className="grid lg:grid-cols-[380px_1fr] gap-8 mb-10">
-        <div className="bg-white border border-slate-100 rounded-2xl p-6">
-          <div className="aspect-square rounded-xl bg-slate-50 overflow-hidden flex items-center justify-center">
+      <div className="grid lg:grid-cols-[380px_1fr] gap-6 md:gap-8 mb-8 md:mb-10">
+        <div className="bg-white border border-slate-100 rounded-2xl p-3 md:p-6">
+          <div className="aspect-square mx-auto md:mx-0 max-w-[240px] md:max-w-none rounded-xl bg-slate-50 overflow-hidden flex items-center justify-center">
             {med.image_url ? (
               <img
                 src={med.image_url}
@@ -394,7 +450,7 @@ export default function MedDetail() {
               </div>
             )}
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900" data-testid="med-h1">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 leading-tight" data-testid="med-h1">
             {formatName(med.name)}
             {med.dosage && <span className="text-slate-700"> {med.dosage}</span>}
             {(() => {
@@ -406,9 +462,9 @@ export default function MedDetail() {
           <p className="text-slate-600 mt-1.5">{formLower}</p>
 
           <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-            <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Производитель</div><div className="font-medium text-slate-800">{formatManufacturer(med.manufacturer) || "—"}</div></div>
-            <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Страна</div><div className="font-medium text-slate-800">{normalizeCountry(med.manufacturer_country) || '—'}</div></div>
-            {med.mnn && <div className="bg-slate-50 rounded-lg p-3"><div className="text-[11px] text-slate-500 uppercase tracking-wide">МНН</div><div className="font-medium text-slate-800">{titleCase(med.mnn)}</div></div>}
+            <div className="bg-slate-50 rounded-lg p-3 min-w-0"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Производитель</div><div className="font-medium text-slate-800 break-words">{formatManufacturer(med.manufacturer) || "—"}</div></div>
+            <div className="bg-slate-50 rounded-lg p-3 min-w-0"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Страна</div><div className="font-medium text-slate-800 break-words">{normalizeCountry(med.manufacturer_country) || '—'}</div></div>
+            {med.mnn && <div className="bg-slate-50 rounded-lg p-3 min-w-0 col-span-2 sm:col-span-1"><div className="text-[11px] text-slate-500 uppercase tracking-wide">МНН</div><div className="font-medium text-slate-800 break-words">{titleCase(med.mnn)}</div></div>}
           </div>
 
           {(() => {
@@ -456,87 +512,244 @@ export default function MedDetail() {
               <p className="legal-band mt-3">Сведения о ценах и остатках носят справочный характер. Не является публичной офертой.</p>
             </div>
           )}
+
+          {prices.length === 0 && (
+            <div className="mt-5 bg-amber-50/50 border border-amber-200 rounded-xl p-4" data-testid="out-of-stock-section">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
+                  <PackageX className="w-5 h-5 text-amber-600" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-base font-semibold text-slate-900 leading-snug">
+                    Препарата сейчас нет в наших аптеках-партнёрах
+                  </h2>
+                  <p className="text-sm text-slate-600 leading-snug mt-1">
+                    Временно отсутствует во всех 12 аптеках-партнёрах Москвы и Санкт-Петербурга.
+                    {med.mnn ? <> Попробуйте аналог с тем же действующим веществом — <b>{titleCase(med.mnn)}</b>.</> : <> Попробуйте поискать аналог в той же категории.</>}
+                  </p>
+                  {analogs.length > 0 && (
+                    <button
+                      data-testid="show-analogs-btn"
+                      onClick={() => {
+                        const el = document.querySelector('[data-testid="analogs-section"]');
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }}
+                      className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-emerald-700 hover:text-emerald-800"
+                    >
+                      Показать аналоги <ChevronRight className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Empty state: no pharmacies in network carry this SKU */}
-      {prices.length === 0 && (
-        <section className="mb-10" data-testid="out-of-stock-section">
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 md:p-10 text-center max-w-3xl mx-auto">
-            <div className="mx-auto w-14 h-14 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center mb-4">
-              <PackageX className="w-7 h-7 text-amber-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">
-              Препарата сейчас нет в наших аптеках-партнёрах
-            </h2>
-            <p className="text-slate-600 max-w-xl mx-auto leading-relaxed">
-              «{formatName(med.name)}{med.dosage ? ` ${med.dosage}` : ''}» временно отсутствует
-              у всех 12 партнёрских аптек Москвы и Санкт-Петербурга. Попробуйте
-              {med.mnn ? <> найти аналог с тем же действующим веществом — <b>{titleCase(med.mnn)}</b>.</> : <> поискать аналог в той же категории.</>}
-            </p>
-            {analogs.length > 0 && (
-              <button
-                data-testid="show-analogs-btn"
-                onClick={() => {
-                  const el = document.querySelector('[data-testid="analogs-section"]');
-                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition"
-              >
-                Показать аналоги
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        </section>
-      )}
-
       {/* Map */}
       {prices.length > 0 && (
-        <section className="mb-10">
-          <div className="flex items-end justify-between mb-3">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900">{formatName(med.name)} на карте — {city.name}</h2>
-              <p className="text-sm text-slate-500 mt-1">Нажмите на облачко с ценой, чтобы увидеть адрес и наличие</p>
+        <section
+          className={mapFullscreen ? "fixed inset-0 z-[70] bg-white flex flex-col" : "mb-8 md:mb-10"}
+          data-testid="med-map-section"
+        >
+          {!mapFullscreen && (
+            <div className="flex items-end justify-between mb-3 gap-3">
+              <div className="min-w-0">
+                <h2 className="text-xl md:text-2xl font-bold text-slate-900 leading-tight">{formatName(med.name)} на карте — {city.name}</h2>
+                <p className="text-xs md:text-sm text-slate-500 mt-1">Нажмите на облачко с ценой, чтобы увидеть адрес и наличие</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMapFullscreen(true)}
+                data-testid="map-fullscreen-open"
+                className="md:hidden shrink-0 inline-flex items-center justify-center w-11 h-11 rounded-xl border border-slate-200 bg-white text-slate-700 active:bg-slate-50 transition"
+                aria-label="Развернуть карту"
+              >
+                <Maximize2 className="w-5 h-5" />
+              </button>
             </div>
+          )}
+
+          {/* Fullscreen top bar (mobile) — overlay on top of map */}
+          {mapFullscreen && (
+            <div
+              className="absolute top-0 inset-x-0 z-[5] flex items-center gap-2 px-3 py-2.5 border-b border-slate-100 bg-white/95 backdrop-blur"
+              style={{ paddingTop: 'calc(env(safe-area-inset-top) + 10px)' }}
+            >
+              <button
+                type="button"
+                onClick={() => setMapFullscreen(false)}
+                data-testid="map-fullscreen-close"
+                className="inline-flex items-center justify-center w-10 h-10 rounded-xl text-slate-700 active:bg-slate-100"
+                aria-label="Свернуть карту"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold text-slate-900 truncate">{formatName(med.name)}</div>
+                <div className="text-[11px] text-slate-500">от {Math.min(...prices.map(p => p.price))} ₽ · {prices.length} {prices.length === 1 ? 'аптека' : (prices.length < 5 ? 'аптеки' : 'аптек')}</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMapFullscreen(false)}
+                data-testid="map-fullscreen-minimize"
+                className="inline-flex items-center justify-center w-10 h-10 rounded-xl text-slate-500 active:bg-slate-100"
+                aria-label="Закрыть"
+              >
+                <Minimize2 className="w-5 h-5" />
+              </button>
+            </div>
+          )}
+
+          {/* Map: fills the entire fullscreen section (sheet overlays on top) */}
+          <div className={mapFullscreen ? "absolute inset-0" : ""}>
+            <PriceMap
+              ref={priceMapRef}
+              med={med}
+              prices={prices}
+              pharmacies={pharmacies}
+              cityCenter={city.center}
+              onSelect={(pid) => {
+                setSelectedId(pid);
+                if (mapFullscreen) {
+                  setSnapPoint(0.25);
+                  const sp = pharmacies.find(p => p.id === pid);
+                  if (sp) setTimeout(() => priceMapRef.current?.centerOn(sp.lat, sp.lng, 15), 300);
+                }
+              }}
+              selected={selectedId}
+              fullscreen={mapFullscreen}
+              onInteract={() => setSnapPoint(0.25)}
+            />
           </div>
-          <PriceMap med={med} prices={prices} pharmacies={pharmacies} cityCenter={city.center} onSelect={setSelectedId} selected={selectedId} />
+
+          {/* Bottom sheet with drag-handle and snap-points (vaul) */}
+          {mapFullscreen && (
+            <VaulDrawer.Root
+              open
+              modal={false}
+              dismissible={false}
+              snapPoints={SNAP_POINTS}
+              activeSnapPoint={snapPoint}
+              setActiveSnapPoint={setSnapPoint}
+            >
+              <VaulDrawer.Portal>
+                <VaulDrawer.Content
+                  data-testid="map-pharmacy-sheet"
+                  className="fixed inset-x-0 bottom-0 z-[80] flex flex-col rounded-t-2xl border-t border-slate-200 bg-white shadow-2xl outline-none h-full max-h-[97dvh]"
+                  aria-describedby={undefined}
+                >
+                  <VaulDrawer.Title className="sr-only">Аптеки рядом</VaulDrawer.Title>
+                  {/* Drag handle (visual + tap-zone) */}
+                  <div className="shrink-0 pt-2.5 pb-2 flex justify-center cursor-grab active:cursor-grabbing touch-none" data-testid="map-sheet-drag-handle">
+                    <div className="w-12 h-1.5 rounded-full bg-slate-400" style={{ minHeight: '6px' }} />
+                  </div>
+                  <div className="shrink-0 border-b border-slate-100 px-4 py-2 flex items-center justify-between">
+                    <div className="text-sm font-semibold text-slate-900">Аптеки рядом ({prices.length})</div>
+                    <div className="text-xs text-slate-500">Сначала дешевле</div>
+                  </div>
+                  <div
+                    data-vaul-no-drag
+                    className="flex-1 overflow-y-auto divide-y divide-slate-100 overscroll-contain"
+                    style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 80px)', WebkitOverflowScrolling: 'touch' }}
+                  >
+                    {prices.map(pr => {
+                      const ph = pharmacies.find(p => p.id === pr.pharmacy_id);
+                      if (!ph) return null;
+                      const isSel = selectedId === ph.id;
+                      return (
+                        <button
+                          key={pr.pharmacy_id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedId(ph.id);
+                            setSnapPoint(0.25);
+                            setTimeout(() => priceMapRef.current?.centerOn(ph.lat, ph.lng, 15), 300);
+                          }}
+                          className={`w-full text-left px-4 py-3 flex items-center gap-3 active:bg-slate-50 transition ${isSel ? 'bg-emerald-50/60' : ''}`}
+                          data-testid="map-sheet-pharmacy-item"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="font-semibold text-slate-900 text-sm leading-tight truncate">{ph.name}</div>
+                            <div className="text-[11px] text-slate-500 mt-0.5 line-clamp-1 flex items-center gap-1">
+                              <MapPin className="w-3 h-3 shrink-0" /> {ph.address}{ph.metro && <span className="text-emerald-600"> · м. {ph.metro}</span>}
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <div className="text-base font-bold text-emerald-700 leading-tight">{pr.price} ₽</div>
+                            <a
+                              href={`https://yandex.ru/maps/?rtext=~${ph.lat}%2C${ph.lng}&rtt=auto&z=15`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-[11px] text-emerald-700 font-medium inline-flex items-center gap-0.5"
+                            >
+                              <Navigation className="w-3 h-3" /> Маршрут
+                            </a>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </VaulDrawer.Content>
+              </VaulDrawer.Portal>
+            </VaulDrawer.Root>
+          )}
         </section>
       )}
 
       {/* Prices list */}
       {prices.length > 0 && (
-        <section className="mb-12">
-          <div className="flex items-end justify-between mb-4">
-            <h2 className="text-2xl font-bold text-slate-900">Цены в аптеках</h2>
-            <div className="text-sm text-slate-500">Сортировка: сначала дешевле</div>
+        <section className="mb-8 md:mb-12">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1 mb-3 md:mb-4">
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900">Цены в аптеках</h2>
+            <div className="text-xs md:text-sm text-slate-500">Сортировка: сначала дешевле</div>
           </div>
           <div className="bg-white border border-slate-100 rounded-xl divide-y divide-slate-100 overflow-hidden">
             {prices.map(pr => {
               const ph = pharmacies.find(p => p.id === pr.pharmacy_id);
               if (!ph) return null;
+              const telHref = `tel:${(ph.phone || "").replace(/[^+\d]/g, "")}`;
+              const routeHref = `https://yandex.ru/maps/?rtext=~${ph.lat}%2C${ph.lng}&rtt=auto&z=15`;
               return (
-                <div key={pr.pharmacy_id} className={`grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_130px_170px_110px_130px] items-center gap-3 px-4 py-3 hover:bg-emerald-50/30 transition ${selectedId === ph.id ? 'bg-emerald-50/50' : ''}`}>
-                  <div>
-                    <Link to={`/${city.id}/apteki/${ph.id}`} className="font-semibold text-slate-900 hover:text-emerald-700">{ph.name}</Link>
-                    <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {ph.address}{ph.metro && <span className="text-emerald-600"> · м. {ph.metro}</span>}</div>
+                <div key={pr.pharmacy_id} className={`px-4 py-3 hover:bg-emerald-50/30 transition ${selectedId === ph.id ? 'bg-emerald-50/50' : ''}`}>
+                  {/* Mobile layout: 2 rows */}
+                  <div className="sm:hidden">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <Link to={`/${city.id}/apteki/${ph.id}`} className="font-semibold text-slate-900 active:text-emerald-700 leading-tight block">{ph.name}</Link>
+                        <div className="text-[11px] text-slate-500 mt-0.5 flex items-start gap-1"><MapPin className="w-3 h-3 mt-0.5 shrink-0" /><span className="line-clamp-2">{ph.address}{ph.metro && <span className="text-emerald-600"> · м. {ph.metro}</span>}</span></div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-lg font-bold text-emerald-700 leading-tight">{pr.price} ₽</div>
+                        <div className="text-[10px] text-slate-500">в наличии</div>
+                      </div>
+                    </div>
+                    <div className="mt-2.5 flex items-center gap-2">
+                      <a href={telHref} data-testid="med-pharmacy-phone" className="inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 h-9 rounded-lg border border-slate-200 text-slate-700 active:bg-slate-50 flex-1">
+                        <Phone className="w-3.5 h-3.5 text-emerald-600" /> Позвонить
+                      </a>
+                      <a data-testid="route-btn" href={routeHref} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 h-9 rounded-lg border border-emerald-200 bg-emerald-50/50 text-emerald-700 active:bg-emerald-100 flex-1" title="Открыть маршрут в Яндекс.Картах">
+                        <Navigation className="w-3.5 h-3.5" /> Маршрут
+                      </a>
+                    </div>
                   </div>
-                  <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 whitespace-nowrap"><Clock className="w-3.5 h-3.5 shrink-0" /> {ph.hours}</div>
-                  <a href={`tel:${(ph.phone || "").replace(/[^+\d]/g, "")}`} data-testid="med-pharmacy-phone" className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-slate-700 hover:text-emerald-700 whitespace-nowrap border-l border-slate-200 pl-3"><Phone className="w-4 h-4 text-emerald-600 shrink-0" /> {ph.phone}</a>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-emerald-700">{pr.price} ₽</div>
-                    <div className="text-[11px] text-slate-500">в наличии: {pr.qty} шт</div>
+                  {/* Desktop layout: keep existing grid */}
+                  <div className="hidden sm:grid grid-cols-[1fr_130px_170px_110px_130px] items-center gap-3">
+                    <div>
+                      <Link to={`/${city.id}/apteki/${ph.id}`} className="font-semibold text-slate-900 hover:text-emerald-700">{ph.name}</Link>
+                      <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {ph.address}{ph.metro && <span className="text-emerald-600"> · м. {ph.metro}</span>}</div>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500 whitespace-nowrap"><Clock className="w-3.5 h-3.5 shrink-0" /> {ph.hours}</div>
+                    <a href={telHref} data-testid="med-pharmacy-phone-d" className="flex items-center gap-1.5 text-sm font-medium text-slate-700 hover:text-emerald-700 whitespace-nowrap border-l border-slate-200 pl-3"><Phone className="w-4 h-4 text-emerald-600 shrink-0" /> {ph.phone}</a>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-emerald-700">{pr.price} ₽</div>
+                      <div className="text-[11px] text-slate-500">в наличии: {pr.qty} шт</div>
+                    </div>
+                    <a data-testid="route-btn-d" href={routeHref} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border border-emerald-200 bg-emerald-50/50 text-emerald-700 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition whitespace-nowrap" title="Открыть маршрут в Яндекс.Картах">
+                      <Navigation className="w-3.5 h-3.5" /> Маршрут
+                    </a>
                   </div>
-                  <a
-                    data-testid="route-btn"
-                    href={`https://yandex.ru/maps/?rtext=~${ph.lat}%2C${ph.lng}&rtt=auto&z=15`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hidden sm:inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border border-emerald-200 bg-emerald-50/50 text-emerald-700 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition whitespace-nowrap"
-                    title="Открыть маршрут в Яндекс.Картах"
-                  >
-                    <Navigation className="w-3.5 h-3.5" /> Маршрут
-                  </a>
                 </div>
               );
             })}
@@ -546,9 +759,9 @@ export default function MedDetail() {
 
       {/* LLM-enriched description (top-200 popular meds) */}
       {med.enrichment && (
-        <section className="mb-12" data-testid="enrichment-section">
-          <div className="bg-white border border-slate-100 rounded-2xl p-6 md:p-8">
-            <h2 className="text-2xl font-bold text-slate-900 mb-3">О препарате</h2>
+        <section className="mb-8 md:mb-12" data-testid="enrichment-section">
+          <div className="bg-white border border-slate-100 rounded-2xl p-5 md:p-8">
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-3">О препарате</h2>
             {med.enrichment.summary && (
               <p className="text-slate-700 leading-relaxed mb-6">{med.enrichment.summary}</p>
             )}
@@ -580,49 +793,63 @@ export default function MedDetail() {
                 <p className="text-sm text-slate-700 leading-relaxed">{med.enrichment.how_to_take}</p>
               </div>
             )}
-            <p className="mt-5 text-xs text-slate-500 italic">
+            <p className="hidden md:block mt-5 text-xs text-slate-500 italic">
               Справочная информация. {med.enrichment.disclaimer || 'Имеются противопоказания. Перед применением проконсультируйтесь с врачом.'}
             </p>
           </div>
         </section>
       )}
 
-      {/* Disclaimer */}
-      <section className="mb-12">
+      {/* Disclaimer — wording per Federal Law 38-FZ Art. 24 para 7:
+          must mention BOTH the medication's instruction AND consulting a
+          specialist. Also clearly states the page is informational, not an
+          advertisement and not a medical recommendation. */}
+      <section className="mb-8 md:mb-12">
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 flex items-start gap-3">
           <ShieldAlert className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
-          <div className="text-sm text-amber-900">
-            <strong>Имеются противопоказания.</strong> Информация на странице носит справочный характер и не является
-            рекомендацией к применению. Перед приёмом препарата обязательно проконсультируйтесь с врачом или фармацевтом.
+          <div className="text-sm text-amber-900 leading-relaxed">
+            <strong>Имеются противопоказания.</strong> Информация на странице носит
+            справочный характер и не является рекламой лекарственного препарата или
+            рекомендацией к применению. Перед применением необходимо ознакомиться с
+            инструкцией по применению и проконсультироваться со специалистом.
           </div>
         </div>
       </section>
 
-      {/* Analogs */}
-      {analogs.length > 0 && (
-        <section className="mb-12" data-testid="analogs-section">
+      {/* Analogs (strict: same MNN + same form group) */}
+      {med.mnn && (
+        <section className="mb-8 md:mb-12" data-testid="analogs-section">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center"><Tag className="w-5 h-5" /></div>
-            <h2 className="text-2xl font-bold text-slate-900">Аналоги по МНН: {med.mnn ? titleCase(med.mnn) : '—'}</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900 leading-tight">Аналоги по МНН: {titleCase(med.mnn)}</h2>
           </div>
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {analogs.map(a => (
-              <Link
-                key={a.slug}
-                to={`/${city.id}/preparaty/${a.slug}`}
-                className="bg-white border border-slate-100 rounded-xl p-3 hover:border-emerald-300 transition"
-              >
-                {a.rx && (
-                  <span className="inline-block text-[10px] font-semibold uppercase tracking-wide bg-rose-50 text-rose-700 px-2 py-0.5 rounded mb-1.5">
-                    Отпускается по рецепту
-                  </span>
-                )}
-                <h3 className="font-semibold text-slate-900 text-sm leading-tight line-clamp-2">{formatName(a.name)}</h3>
-                <p className="text-[11px] text-slate-500 mt-1 line-clamp-1">{[a.form?.toLowerCase(), a.dosage].filter(Boolean).join(', ')}</p>
-                <p className="text-[11px] text-slate-400 mt-1">{formatManufacturer(a.manufacturer)}</p>
-              </Link>
-            ))}
-          </div>
+          {analogs.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3">
+              {analogs.map(a => (
+                <Link
+                  key={a.slug}
+                  to={`/${city.id}/preparaty/${a.slug}`}
+                  className="bg-white border border-slate-100 rounded-xl p-3 hover:border-emerald-300 transition"
+                >
+                  {a.rx && (
+                    <span className="inline-block text-[10px] font-semibold uppercase tracking-wide bg-rose-50 text-rose-700 px-2 py-0.5 rounded mb-1.5">
+                      Отпускается по рецепту
+                    </span>
+                  )}
+                  <h3 className="font-semibold text-slate-900 text-sm leading-tight line-clamp-2">{formatName(a.name)}</h3>
+                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-1">{[a.form?.toLowerCase(), a.dosage].filter(Boolean).join(', ')}</p>
+                  <p className="text-[11px] text-slate-400 mt-1">{formatManufacturer(a.manufacturer)}</p>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 text-sm text-slate-600">
+              Других препаратов с действующим веществом{' '}
+              <b>{titleCase(med.mnn)}</b>
+              {med.form ? <> в форме {med.form.toLowerCase()}</> : null}
+              {' '}в нашем каталоге пока не найдено.
+            </div>
+          )}
         </section>
       )}
     </div>

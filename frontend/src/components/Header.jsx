@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, MapPin, ChevronDown, Menu, X, Pill } from 'lucide-react';
+import { Search, MapPin, ChevronDown, Pill, Mic } from 'lucide-react';
 import { useCity } from '../context/CityContext';
 import { suggestMeds } from "../api/client";
 import { dedupeMeds } from "../utils/text";
@@ -10,12 +10,17 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 
-export default function Header() {
+export default function Header({ hideOnDesktop = false } = {}) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 4);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
   const { city, setCity, cities } = useCity();
   const [q, setQ] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [open, setOpen] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const wrapRef = useRef(null);
 
@@ -48,16 +53,36 @@ export default function Header() {
   const onSubmit = (e) => {
     e.preventDefault();
     if (!q.trim()) return;
+    // Close mobile keyboard before navigation so the destination page
+    // doesn't open with viewport pushed up by the on-screen keyboard.
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+      document.activeElement.blur();
+    }
     setOpen(false);
     navigate(`/${city.id}/poisk?q=${encodeURIComponent(q.trim())}`);
+  };
+
+  // On mobile, focusing/clicking the sticky header search should open the
+  // dedicated SearchOverlay (proper modal UX, body scroll lock, more results,
+  // keyboard-aware). The desktop Header keeps its inline dropdown.
+  const onInputFocus = (e) => {
+    const isMobile = typeof window !== 'undefined' && window.matchMedia
+      ? window.matchMedia('(max-width: 767px)').matches
+      : false;
+    if (isMobile) {
+      e.target.blur();
+      window.dispatchEvent(new CustomEvent('search-overlay:open'));
+      return;
+    }
+    if (suggestions.length > 0) setOpen(true);
   };
 
   const pickSuggestion = () => { setQ(''); setOpen(false); };
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-slate-100">
+    <header className={`sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 transition-shadow ${scrolled ? "shadow-sm" : ""} ${hideOnDesktop ? "md:hidden" : ""}`}>
       {/* main bar */}
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center gap-3 md:gap-6">
+      <div className="max-w-7xl mx-auto px-4 py-2 md:h-16 md:py-0 flex flex-wrap md:flex-nowrap items-center gap-y-2 gap-x-3 md:gap-6">
         <Link to="/" className="flex flex-col items-start leading-none shrink-0">
           <div className="flex items-center gap-2 md:gap-2.5">
             <PillIcon className="w-4 h-4 md:w-5 md:h-5" />
@@ -68,7 +93,7 @@ export default function Header() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="hidden md:flex items-center gap-1 text-sm text-slate-700 hover:text-emerald-700 px-2 py-1 rounded-md">
+            <button className="flex items-center gap-1 text-sm text-slate-700 hover:text-emerald-700 px-1.5 md:px-2 py-1 rounded-md shrink-0">
               <MapPin className="w-4 h-4" />
               <span className="font-medium">{city.name}</span>
               <ChevronDown className="w-4 h-4" />
@@ -83,17 +108,31 @@ export default function Header() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <div ref={wrapRef} className="flex-1 max-w-2xl relative">
+        <div ref={wrapRef} className="order-3 md:order-none w-full md:flex-1 md:max-w-2xl relative">
           <form onSubmit={onSubmit} className="input-focus border border-slate-200 rounded-lg flex items-center bg-white transition">
             <Search className="w-4 h-4 text-rose-500 ml-3" />
             <input
+              type="search"
+              inputMode="search"
+              autoComplete="off"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              onFocus={() => suggestions.length > 0 && setOpen(true)}
+              onFocus={onInputFocus}
+              onClick={onInputFocus}
               placeholder="Найдите препарат в аптеках вашего города"
-              className="flex-1 px-3 py-2.5 text-sm bg-transparent outline-none"
+              aria-label="Поиск препарата"
+              className="flex-1 px-3 py-3 md:py-2.5 text-base md:text-sm bg-transparent outline-none [&::-webkit-search-cancel-button]:appearance-none"
               data-testid="header-search-input"
             />
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('voice-assistant:open'))}
+              data-testid="header-voice-mic"
+              aria-label="Голосовой помощник"
+              className="md:hidden inline-flex items-center justify-center w-11 h-11 mr-1 text-slate-500 hover:text-emerald-600 active:text-emerald-700 transition"
+            >
+              <Mic className="w-5 h-5" />
+            </button>
             <button type="submit" className="hidden sm:inline-flex items-center gap-1 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 m-1 rounded-md transition">
               Найти
             </button>
@@ -124,9 +163,7 @@ export default function Header() {
           )}
         </div>
 
-        <button className="md:hidden p-2" onClick={() => setMobileOpen(v => !v)} aria-label="Меню">
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        {/* mobile hamburger removed — handled by MobileTabBar "Ещё" tab */}
       </div>
 
       {/* sub nav */}
@@ -144,26 +181,6 @@ export default function Header() {
         </div>
       </nav>
 
-      {/* mobile menu */}
-      {mobileOpen && (
-        <div className="md:hidden border-t border-slate-100 bg-white">
-          <div className="px-4 py-3 flex flex-col gap-2 text-sm">
-            <div className="flex items-center gap-2 py-2">
-              <MapPin className="w-4 h-4 text-emerald-600" />
-              <span className="text-slate-500">Город:</span>
-              <select value={city.id} onChange={(e) => setCity(cities.find(c => c.id === e.target.value))} className="border border-slate-200 rounded px-2 py-1">
-                {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </div>
-            <Link onClick={() => setMobileOpen(false)} to="/kategorii" className="py-2 border-t border-slate-100">Категории</Link>
-            <Link onClick={() => setMobileOpen(false)} to="/preparaty" className="py-2 border-t border-slate-100">Все препараты А–Я</Link>
-            <Link onClick={() => setMobileOpen(false)} to="/apteki" className="py-2 border-t border-slate-100">Аптеки</Link>
-            <Link onClick={() => setMobileOpen(false)} to="/dlya-aptek" className="py-2 border-t border-slate-100">Для аптек</Link>
-            <Link onClick={() => setMobileOpen(false)} to="/o-servise" className="py-2 border-t border-slate-100">О сервисе</Link>
-            <Link onClick={() => setMobileOpen(false)} to="/kontakty" className="py-2 border-t border-slate-100">Контакты</Link>
-          </div>
-        </div>
-      )}
     </header>
   );
 }

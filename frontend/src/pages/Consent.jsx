@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 export default function Consent() {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10">
+    <div className="max-w-3xl mx-auto px-4 py-5 md:py-10">
       <nav className="text-xs text-slate-500 mb-4">
         <Link to="/" className="hover:text-emerald-700">Главная</Link>
         <span className="mx-1.5">/</span><span>Согласие на обработку ПД</span>

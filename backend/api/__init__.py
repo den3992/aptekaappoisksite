@@ -24,6 +24,54 @@ from .pharmacies_seed import (
 )
 
 
+# ---------- Helpers for analogs filtering ----------
+# Map raw `form` strings from ЕСКЛП to a small set of comparable groups,
+# so that on a "tablets" SKU we only show analogs that are also tablets.
+_FORM_GROUP_PATTERNS = [
+    ('ophthalmic',  re.compile(r'(КАПЛИ|МАЗЬ|ГЕЛЬ|РАСТВОР).*ГЛАЗ', re.I)),
+    ('nasal',       re.compile(r'(КАПЛИ|СПРЕЙ|МАЗЬ|АЭРОЗОЛЬ|РАСТВОР).*НАЗАЛ', re.I)),
+    ('otic',        re.compile(r'(КАПЛИ|МАЗЬ).*УШ', re.I)),
+    ('inhalation',  re.compile(r'ИНГАЛЯЦ|АЭРОЗОЛЬ.*ИНГ', re.I)),
+    ('suppository', re.compile(r'СУППОЗИТОР|СВЕЧИ', re.I)),
+    ('injection',   re.compile(r'ИНЪЕКЦ|ИНФУЗ|ЛИОФИЛИЗАТ', re.I)),
+    ('oral_liquid', re.compile(r'СИРОП|СУСПЕНЗИ.*ВНУТР|РАСТВОР.*ВНУТР|РАСТВОР.*ПРИЕМА|РАСТВОР.*ПРИЁМА|КАПЛИ.*ВНУТР|КАПЛИ.*ПРИЕМА|КАПЛИ.*ПРИЁМА|НАСТОЙК|ЭКСТРАКТ.*ВНУТР|ЭЛИКСИР', re.I)),
+    ('topical',     re.compile(r'МАЗЬ|ГЕЛЬ|КРЕМ|ЛИНИМЕНТ|ЛОСЬОН|ШАМПУН|АЭРОЗОЛЬ|СПРЕЙ|ПАСТА|ПЛАСТЫР|ЭМУЛЬС', re.I)),
+    ('oral_solid',  re.compile(r'ТАБЛЕТК|КАПСУЛ|ДРАЖЕ|ПАСТИЛК|ГРАНУЛ|ПОРОШОК.*ВНУТР|ПОРОШОК.*ПРИЕМА|ПОРОШОК.*ПРИЁМА|ЛЕПЕШК|САШЕ|КАРАМЕЛЬ', re.I)),
+]
+
+
+def form_group(form_value):
+    """Return a canonical form group for an ЕСКЛП `form` string.
+
+    Order of patterns matters — site-specific routes (eye/nose/ear/inhaler)
+    are matched first, so e.g. "КАПЛИ ГЛАЗНЫЕ" is ophthalmic, not oral_liquid.
+    """
+    if not form_value:
+        return 'other'
+    s = form_value.strip()
+    for grp, rx in _FORM_GROUP_PATTERNS:
+        if rx.search(s):
+            return grp
+    return 'other'
+
+
+def _parse_dose_first(dosage):
+    """Pick the first numeric token from a dosage string (e.g. "500 мг + 30 мг" → 500.0).
+
+    Returns float or None.
+    """
+    if not dosage:
+        return None
+    m = re.search(r'(\d+(?:[.,]\d+)?)', str(dosage))
+    if not m:
+        return None
+    try:
+        return float(m.group(1).replace(',', '.'))
+    except ValueError:
+        return None
+# ------------------------------------------------------
+
+
 def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
     router = APIRouter()
 
@@ -140,7 +188,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
 
     # Lightweight typeahead for search box / chatbot
     @router.get("/search/suggest")
-    async def search_suggest(q: str = Query(...), limit: int = Query(8, ge=1, le=20)):
+    async def search_suggest(q: str = Query(...), limit: int = Query(8, ge=1, le=100)):
         term = q.strip()
         if len(term) < 2:
             return []
@@ -203,31 +251,36 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
     @router.get("/medications/{slug}/analogs")
     async def medication_analogs(slug: str, limit: int = 8):
         med = await db.medications.find_one(
-            {"slug": slug}, {"_id": 0, "mnn": 1, "category": 1}
+            {"slug": slug},
+            {"_id": 0, "mnn": 1, "form": 1, "dosage": 1, "category": 1},
         )
         if not med:
             raise HTTPException(404, "Medication not found")
+        # Strict analogs: same MNN + same form group. No category fallback.
+        if not med.get("mnn"):
+            return []
+        target_grp = form_group(med.get("form"))
+        target_dose = _parse_dose_first(med.get("dosage"))
 
-        base_flt = {"slug": {"$ne": slug}, "is_canonical": {"$ne": False}}
-        proj = {"_id": 0, "slug": 1, "name": 1, "manufacturer": 1, "dosage": 1,
-                "form": 1, "rx": 1, "category": 1, "mnn": 1}
-
-        # Primary: same MNN
-        results = []
-        if med.get("mnn"):
-            cursor = db.medications.find(
-                {**base_flt, "mnn": med["mnn"]}, proj
-            ).sort([("name", 1), ("slug", 1)]).limit(limit)
-            results = [d async for d in cursor]
-
-        # Fallback: same category (when MNN gives no analogs or no MNN at all)
-        if not results and med.get("category"):
-            cursor = db.medications.find(
-                {**base_flt, "category": med["category"]}, proj
-            ).sort([("name", 1), ("slug", 1)]).limit(limit)
-            results = [d async for d in cursor]
-
-        return results
+        proj = {"_id": 0, "slug": 1, "name": 1, "manufacturer": 1,
+                "dosage": 1, "form": 1, "rx": 1, "category": 1, "mnn": 1}
+        # Wider DB query (by mnn only); filter form_group in Python (varied raw strings).
+        cursor = db.medications.find(
+            {"slug": {"$ne": slug}, "is_canonical": {"$ne": False},
+             "mnn": med["mnn"]},
+            proj,
+        )
+        items = [
+            d async for d in cursor
+            if form_group(d.get("form")) == target_grp
+        ]
+        # Sort by closeness of dosage (ascending |Δ|), then by name.
+        def _key(d):
+            dose = _parse_dose_first(d.get("dosage"))
+            diff = abs(dose - target_dose) if (dose is not None and target_dose is not None) else 1e9
+            return (diff, d.get("name") or "", d.get("slug") or "")
+        items.sort(key=_key)
+        return items[:limit]
 
     return router
 

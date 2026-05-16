@@ -4,12 +4,12 @@ import { Mail, Phone, MapPin, Clock, Briefcase, LifeBuoy } from 'lucide-react';
 
 export default function Contacts() {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10">
+    <div className="max-w-4xl mx-auto px-4 py-5 md:py-10">
       <nav className="text-xs text-slate-500 mb-4">
         <Link to="/" className="hover:text-emerald-700">Главная</Link>
         <span className="mx-1.5">/</span><span>Контакты</span>
       </nav>
-      <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">Контакты</h1>
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-3">Контакты</h1>
       <p className="text-slate-600 mb-8">Отвечаем в рабочие дни с 9:00 до 18:00 МСК</p>
 
       <div className="grid sm:grid-cols-2 gap-3 mb-8">
