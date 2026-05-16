@@ -1,0 +1,31 @@
+# Git history — not needed in any build
+.git
+.gitignore
+.github
+.gitleaks.toml
+.gitleaksignore
+.gitconfig
+
+# Docs and memory
+docs/
+memory/
+*.md
+
+# Scripts (ETL, not needed for builds)
+scripts/
+
+# Tests
+tests/
+test_reports/
+backend/tests/
+
+# Node modules (safety net — shouldn't be on server)
+node_modules/
+frontend/node_modules/
+
+# Large media folder — served via docker-compose volume mount instead
+frontend/public/img/meds/
+
+# Misc
+deploy/data/
+.emergent/

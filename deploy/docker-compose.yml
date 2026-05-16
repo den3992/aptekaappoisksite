@@ -85,6 +85,8 @@ services:
         REACT_APP_BACKEND_URL: ${REACT_APP_BACKEND_URL}
         REACT_APP_YANDEX_MAPS_KEY: ${REACT_APP_YANDEX_MAPS_KEY}
     restart: unless-stopped
+    volumes:
+      - ../frontend/public/img/meds:/usr/share/nginx/html/img/meds:ro
     networks: [internal]
     logging:
       driver: json-file
