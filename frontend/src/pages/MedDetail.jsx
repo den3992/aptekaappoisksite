@@ -793,9 +793,6 @@ export default function MedDetail() {
                 <p className="text-sm text-slate-700 leading-relaxed">{med.enrichment.how_to_take}</p>
               </div>
             )}
-            <p className="hidden md:block mt-5 text-xs text-slate-500 italic">
-              Справочная информация. {med.enrichment.disclaimer || 'Имеются противопоказания. Перед применением проконсультируйтесь с врачом.'}
-            </p>
           </div>
         </section>
       )}
@@ -805,14 +802,11 @@ export default function MedDetail() {
           specialist. Also clearly states the page is informational, not an
           advertisement and not a medical recommendation. */}
       <section className="mb-8 md:mb-12">
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 flex items-start gap-3">
-          <ShieldAlert className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
-          <div className="text-sm text-amber-900 leading-relaxed">
-            <strong>Имеются противопоказания.</strong> Информация на странице носит
-            справочный характер и не является рекламой лекарственного препарата или
-            рекомендацией к применению. Перед применением необходимо ознакомиться с
-            инструкцией по применению и проконсультироваться со специалистом.
-          </div>
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+          <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+          <p className="text-sm text-amber-900 leading-relaxed">
+            <strong>Имеются противопоказания.</strong> Перед применением — инструкция и консультация со специалистом.
+          </p>
         </div>
       </section>
 
