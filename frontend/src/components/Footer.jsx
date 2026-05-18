@@ -9,7 +9,7 @@ export default function Footer() {
       className="bg-slate-50 border-t border-slate-100 mt-0 md:mt-12"
       style={{ paddingBottom: 'var(--tabbar-offset, 0px)' }}
     >
-      <div className="max-w-7xl mx-auto px-4 pt-4 pb-6 md:py-10">
+      <div className="max-w-7xl mx-auto px-4 pt-2 pb-6 md:py-10">
         {/* warning band */}
         <div className="flex items-start gap-1.5 md:gap-3 p-2 md:p-4 mb-2 md:mb-8 bg-amber-50 border border-amber-200 rounded-lg">
           <ShieldCheck className="w-3 h-3 md:w-5 md:h-5 text-amber-600 shrink-0 mt-0.5" />
