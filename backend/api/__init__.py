@@ -121,6 +121,16 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
             raise HTTPException(404, "Pharmacy not found")
         return ph
 
+    @router.get("/gorzdrav/stores")
+    async def gorzdrav_stores(city: str = Query("msk")):
+        """Список всех аптек Горздрав с координатами для отображения на карте."""
+        cursor = db.gorzdrav_stores.find(
+            {"city": city, "lat": {"$ne": None}, "lng": {"$ne": None}},
+            {"_id": 0, "store_id": 1, "full_name": 1, "lat": 1, "lng": 1,
+             "address": 1, "phone": 1, "hours": 1, "is_24h": 1},
+        )
+        return [doc async for doc in cursor]
+
     # ----- Search -----
 
     class MedListItem(BaseModel):
@@ -245,8 +255,6 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
             med["prices_source"] = "real"
             return med
 
-        # Try real pharmacy prices first (uploaded via /api/upload/prices).
-        # Fallback to deterministic mock when no pharmacy has uploaded yet.
         real_prices = {"msk": [], "spb": []}
         cursor = db.prices.find(
             {"slug": slug},
@@ -263,12 +271,29 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
                 "expiry_date": p.get("expiry_date"),
             })
 
-        if real_prices["msk"] or real_prices["spb"]:
-            med["prices_by_city"] = real_prices
-            med["prices_source"] = "real"
-        else:
-            med["prices_by_city"] = _mock_prices(slug)
-            med["prices_source"] = "demo"
+        # Добавляем цены Горздрав по ВСЕМ упаковкам (если матч есть).
+        # Раньше was find_one — теперь find, чтобы при переключении упаковки
+        # на фронте можно было показать данные именно для активной фасовки.
+        gz_cursor = db.prices_real.find(
+            {
+                "slug": slug,
+                "source": "gorzdrav",
+                "match_status": {"$in": ["matched", "mnn_match", "needs_review"]},
+                "price": {"$ne": None},
+            },
+            {"_id": 0, "price": 1, "stores_count": 1, "gz_name": 1, "gz_pack": 1},
+        )
+        async for gz_entry in gz_cursor:
+            real_prices["msk"].append({
+                "pharmacy_id": "gorzdrav",
+                "price": gz_entry["price"],
+                "qty": gz_entry.get("stores_count", 0),
+                "gz_name": gz_entry.get("gz_name"),
+                "gz_pack": gz_entry.get("gz_pack"),
+            })
+
+        med["prices_by_city"] = real_prices
+        med["prices_source"] = "real"
         return med
 
     @router.get("/medications/{slug}/analogs")
@@ -307,29 +332,3 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
 
     return router
 
-
-# ===========================
-# Mock prices (deterministic)
-# ===========================
-
-def _mock_prices(slug: str) -> dict:
-    """Return prices_by_city = {msk: [...], spb: [...]}.
-
-    The price is deterministic per slug so reloading does not jiggle the UI.
-    Real prices will come from FTP price-list ingestion later.
-    """
-    msk_ids = [p["id"] for p in PHARMACIES if p["city"] == "msk"]
-    spb_ids = [p["id"] for p in PHARMACIES if p["city"] == "spb"]
-    # Deterministic seed from slug
-    h = sum(ord(c) for c in slug) or 1
-    base = 60 + (h % 280)  # 60..340 ₽
-    out = {}
-    for city, ids in (("msk", msk_ids), ("spb", spb_ids)):
-        rows = []
-        for i, pid in enumerate(ids):
-            seed = (h * 1664525 + i * 1013904223) % (2**31)
-            price = round((base * (0.85 + (seed % 1000) / 1000 * 0.4)) / 5) * 5
-            qty = (seed // 1000) % 30 + 1
-            rows.append({"pharmacy_id": pid, "price": price, "qty": qty})
-        out[city] = rows
-    return out

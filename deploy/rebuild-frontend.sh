@@ -16,6 +16,7 @@ set -a; source ./.env; set +a
 sudo -E docker compose -f docker-compose.yml build \
   --build-arg "REACT_APP_YANDEX_MAPS_KEY=${REACT_APP_YANDEX_MAPS_KEY:?missing}" \
   --build-arg "REACT_APP_BACKEND_URL=${REACT_APP_BACKEND_URL:?missing}" \
+  --build-arg "REACT_APP_YANDEX_TILES_KEY=${REACT_APP_YANDEX_TILES_KEY:-}" \
   frontend
 sudo docker compose -f docker-compose.yml up -d --force-recreate frontend
 

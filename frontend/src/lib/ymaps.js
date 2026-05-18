@@ -1,22 +1,22 @@
-// Centralized Yandex Maps JS API loader.
-// Reads the API key from REACT_APP_YANDEX_MAPS_KEY and loads the script once.
+// Yandex Maps JS API v3 loader.
+// ymaps3 has native pinch-to-zoom — cluster markers don't intercept touch events.
 
-let ymapsPromise = null;
+let ymaps3Promise = null;
 
 export function loadYmaps() {
-  if (ymapsPromise) return ymapsPromise;
-  ymapsPromise = new Promise((resolve, reject) => {
+  if (ymaps3Promise) return ymaps3Promise;
+  ymaps3Promise = new Promise((resolve, reject) => {
     if (typeof window === 'undefined') return reject(new Error('No window'));
-    if (window.ymaps) return window.ymaps.ready(() => resolve(window.ymaps));
+    if (window.ymaps3) return window.ymaps3.ready.then(() => resolve(window.ymaps3));
     const apiKey = process.env.REACT_APP_YANDEX_MAPS_KEY;
     const params = new URLSearchParams({ lang: 'ru_RU' });
     if (apiKey) params.set('apikey', apiKey);
     const s = document.createElement('script');
-    s.src = `https://api-maps.yandex.ru/2.1/?${params.toString()}`;
+    s.src = `https://api-maps.yandex.ru/v3/?${params.toString()}`;
     s.async = true;
-    s.onload = () => window.ymaps.ready(() => resolve(window.ymaps));
+    s.onload = () => window.ymaps3.ready.then(() => resolve(window.ymaps3));
     s.onerror = reject;
     document.head.appendChild(s);
   });
-  return ymapsPromise;
+  return ymaps3Promise;
 }

@@ -4,10 +4,10 @@ import { Link, useParams } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, MapPin, Phone, Clock, Pill, ShieldAlert, Tag, Navigation, PackageX, Maximize2, Minimize2 } from 'lucide-react';
 import { useCity } from '../context/CityContext';
 import { Drawer as VaulDrawer } from 'vaul';
-import { fetchMed, fetchAnalogs, fetchPharmacies, fetchCategories } from '../api/client';
+import { fetchMed, fetchAnalogs, fetchPharmacies, fetchCategories, fetchGorzdravStores } from '../api/client';
 import SEOHead from '../components/SEOHead';
 import { medSEO } from '../seo';
-import { loadYmaps } from '../lib/ymaps';
+// map: Leaflet + OSM (no API key needed)
 
 // Capitalize first letter, lowercase the rest.
 function titleCase(s) {
@@ -148,7 +148,7 @@ function sortPacks(items) {
   });
 }
 
-const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, cityCenter, onSelect, selected, fullscreen = false, onInteract }, externalRef) {
+const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, gorzdravStores = [], gorzdravPrice = null, cityCenter, onSelect, selected, fullscreen = false, onInteract }, externalRef) {
   const ref = useRef(null);
   const mapRef = useRef(null);
   const onInteractRef = useRef(onInteract);
@@ -157,97 +157,137 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, c
   React.useImperativeHandle(externalRef, () => ({
     centerOn: (lat, lng, zoom = 14) => {
       if (mapRef.current) {
-        try { mapRef.current.setCenter([lat, lng], zoom, { duration: 400 }); } catch (e) {}
+        try { mapRef.current.setView([lat, lng], zoom, { animate: true, duration: 0.4 }); } catch (e) {}
       }
     },
   }));
 
   useEffect(() => {
     let cancelled = false;
-    loadYmaps().then((ymaps) => {
-      if (cancelled) return;
-      if (mapRef.current) {
-        mapRef.current.destroy();
-        mapRef.current = null;
-      }
-      // Yandex fullscreen control: keep on desktop (user has no other
-      // way to enlarge the map there), drop on mobile (duplicated by
-      // our own button + sheet UI for the fullscreen mode).
-      const isDesktop = typeof window !== 'undefined' && window.matchMedia
-        ? window.matchMedia('(min-width: 768px)').matches
-        : true;
-      const controls = isDesktop
-        ? ['zoomControl', 'fullscreenControl', 'geolocationControl']
-        : ['zoomControl', 'geolocationControl'];
 
-      const map = new ymaps.Map(ref.current, {
-        center: cityCenter,
-        zoom: 11,
-        controls,
-      }, { suppressMapOpenBlock: true });
+    function loadScript(src) {
+      return new Promise((res, rej) => {
+        if (document.querySelector(`script[src="${src}"]`)) { res(); return; }
+        const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej;
+        document.head.appendChild(s);
+      });
+    }
+    function loadCss(href) {
+      if (document.querySelector(`link[href="${href}"]`)) return;
+      const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href;
+      document.head.appendChild(l);
+    }
+
+    async function init() {
+      loadCss('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
+      loadCss('https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css');
+      loadCss('https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css');
+      await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
+      await loadScript('https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js');
+      if (cancelled || !ref.current) return;
+
+      const L = window.L;
+      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
+
+      const [lat, lng] = cityCenter;
+      const map = L.map(ref.current, { center: [lat, lng], zoom: 11, zoomControl: true, tap: true, attributionControl: false, crs: L.CRS.EPSG3395 });
+      map.invalidateSize();
+      L.control.attribution({ prefix: false }).addTo(map);
       mapRef.current = map;
 
-      // Notify parent on user interaction (pan/zoom) so the bottom sheet
-      // can auto-shrink and stop covering the map. We use DOM events on the
-      // map container (rather than Yandex map.events) to avoid triggering on
-      // programmatic setBounds/setCenter calls. Read the latest onInteract
-      // via a ref to avoid stale closures.
+      const tilesKey = process.env.REACT_APP_YANDEX_TILES_KEY;
+      const tileUrl = tilesKey
+        ? `https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&lang=ru_RU&apikey=${tilesKey}`
+        : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+      const attribution = tilesKey
+        ? '© <a href="https://yandex.ru/maps">Яндекс Карты</a>'
+        : '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+      L.tileLayer(tileUrl, { attribution, maxZoom: 19, subdomains: tilesKey ? [] : ['a','b','c'] }).addTo(map);
+
       const fireInteract = () => { if (onInteractRef.current) onInteractRef.current(); };
       ref.current.addEventListener('pointerdown', fireInteract, { passive: true });
       ref.current.addEventListener('wheel', fireInteract, { passive: true });
 
-      const PriceLayout = ymaps.templateLayoutFactory.createClass(
-        '<div class="ymap-price-pill">{{ properties.price }} ₽</div>',
-        {
-          build: function () {
-            PriceLayout.superclass.build.call(this);
-            const el = this.getParentElement().querySelector('.ymap-price-pill');
-            if (el) {
-              el.addEventListener('click', () => {
-                const pid = this.getData().properties.get('pid');
-                onSelect && onSelect(pid);
-              });
-            }
-          }
-        }
-      );
-
-      const placemarks = prices.map(pr => {
-        const ph = pharmacies.find(p => p.id === pr.pharmacy_id);
-        if (!ph) return null;
-        return new ymaps.Placemark([ph.lat, ph.lng], {
-          price: pr.price,
-          pid: ph.id,
-          balloonContent: `<strong>${ph.name}</strong><br/>${ph.address}<br/><b>${pr.price} ₽</b> · в наличии: ${pr.qty} шт.<br/><a href="tel:${ph.phone.replace(/[^+\d]/g, '')}">${ph.phone}</a>`,
-        }, {
-          iconLayout: PriceLayout,
-          iconShape: { type: 'Rectangle', coordinates: [[-50, -50], [50, 0]] },
+      function pillIcon(price) {
+        return L.divIcon({
+          className: '',
+          html: `<div class="ymap-price-pill">${price} ₽</div>`,
+          iconAnchor: [40, 36],
+          iconSize: [80, 36],
         });
-      }).filter(Boolean);
-
-      placemarks.forEach(p => map.geoObjects.add(p));
-      if (placemarks.length) {
-        map.setBounds(map.geoObjects.getBounds(), { checkZoomRange: true, zoomMargin: 50 });
       }
-    }).catch((e) => console.error('Ymaps load error', e));
+
+      const cluster = L.markerClusterGroup({
+        maxClusterRadius: 80,
+        spiderfyOnMaxZoom: false,
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: true,
+        removeOutsideVisibleBounds: true,
+        animate: true,
+        iconCreateFunction(c) {
+          return L.divIcon({
+            className: '',
+            html: `<div class="ymap-cluster">${c.getChildCount()}</div>`,
+            iconAnchor: [20, 20],
+            iconSize: [40, 40],
+          });
+        },
+      });
+
+      const partnerBounds = [];
+      prices.forEach(pr => {
+        const ph = pharmacies.find(p => p.id === pr.pharmacy_id);
+        if (!ph || !ph.lat || !ph.lng || ph.id === 'gorzdrav') return;
+        const m = L.marker([ph.lat, ph.lng], { icon: pillIcon(pr.price) });
+        m.on('click', () => { onSelect && onSelect(ph.id); });
+        cluster.addLayer(m);
+        partnerBounds.push([ph.lat, ph.lng]);
+      });
+
+      if (gorzdravPrice !== null && gorzdravStores.length > 0) {
+        gorzdravStores.forEach(store => {
+          if (!store.lat || !store.lng) return;
+          const m = L.marker([store.lat, store.lng], { icon: pillIcon(gorzdravPrice) });
+          m.on('click', () => { onSelect && onSelect('gorzdrav_' + store.store_id); });
+          cluster.addLayer(m);
+        });
+      }
+
+      map.invalidateSize();
+      map.setView([lat, lng], 11, { animate: false });
+      map.addLayer(cluster);
+      // userMoved отслеживаем ТОЛЬКО по реальному pointerdown (не по leaflet-событиям,
+      // т.к. setView сам триггерит zoomstart и блокировал retry).
+      let userMoved = false;
+      const markMoved = () => { userMoved = true; };
+      ref.current.addEventListener('pointerdown', markMoved, { passive: true });
+      ref.current.addEventListener('wheel', markMoved, { passive: true });
+      [60, 250, 700].forEach(ms => {
+        setTimeout(() => {
+          if (cancelled || !mapRef.current || userMoved) return;
+          mapRef.current.invalidateSize();
+          mapRef.current.setView([lat, lng], 11, { animate: false });
+        }, ms);
+      });
+    }
+
+    init().catch(e => console.error('Map init error', e));
     return () => {
       cancelled = true;
-      if (mapRef.current) { mapRef.current.destroy(); mapRef.current = null; }
+      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
     };
     // eslint-disable-next-line
-  }, [med?.slug, cityCenter[0], cityCenter[1], prices.length]);
+  }, [med?.slug, cityCenter[0], cityCenter[1], prices.length, gorzdravStores.length, gorzdravPrice]);
 
-  // Re-fit map viewport when fullscreen mode toggles (Yandex Maps caches its size at init).
   useEffect(() => {
     if (!mapRef.current) return;
-    const id = setTimeout(() => {
-      try { mapRef.current.container.fitToViewport(); } catch (e) {}
-    }, 60);
+    const id = setTimeout(() => { try { mapRef.current.invalidateSize(); } catch (e) {} }, 80);
     return () => clearTimeout(id);
   }, [fullscreen]);
 
   return <div ref={ref} className={fullscreen ? "w-full h-full" : "w-full h-[360px] md:h-[460px] rounded-xl overflow-hidden border border-slate-100"} />;
 });
+
 
 export default function MedDetail() {
   const { slug, city: cityParam } = useParams();
@@ -273,6 +313,7 @@ export default function MedDetail() {
   const [med, setMed] = useState(null);
   const [analogs, setAnalogs] = useState([]);
   const [pharmacies, setPharmacies] = useState([]);
+  const [gorzdravStores, setGorzdravStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPack, setSelectedPack] = useState(null);
   const [notFound, setNotFound] = useState(false);
@@ -292,12 +333,13 @@ export default function MedDetail() {
     let cancelled = false;
     setLoading(true);
     setNotFound(false);
-    Promise.all([fetchMed(slug), fetchAnalogs(slug, 8), fetchPharmacies(city.id)])
-      .then(([m, a, ph]) => {
+    Promise.all([fetchMed(slug), fetchAnalogs(slug, 8), fetchPharmacies(city.id), fetchGorzdravStores(city.id)])
+      .then(([m, a, ph, gzStores]) => {
         if (cancelled) return;
         setMed(m);
         setAnalogs(a);
         setPharmacies(ph);
+        setGorzdravStores(gzStores);
       })
       .catch((e) => {
         if (!cancelled) {
@@ -315,8 +357,26 @@ export default function MedDetail() {
     return sortPacks([...new Set(med.variants.map(v => simplifyPack(v.pack_size)).filter(Boolean))]);
   }, [med]);
 
-  // Active pack = explicit selection || first pack || null.
-  const activePack = selectedPack || packs[0] || null;
+  // Упаковки, для которых у Горздрав есть реальные данные — приоритет дефолта.
+  const inStockPacks = useMemo(() => {
+    const arr = (med?.prices_by_city?.[city.id] || [])
+      .filter(p => p.pharmacy_id === 'gorzdrav')
+      .map(p => p.gz_pack)
+      .filter(Boolean);
+    return new Set(arr);
+  }, [med, city.id]);
+
+  // Default = первая упаковка с реальными ценами Горздрав, иначе packs[0].
+  // Это нужно, чтобы при открытии страницы пользователь сразу видел данные,
+  // а не пустую "нет в наличии" фасовку.
+  const defaultPack = useMemo(() => {
+    if (!packs.length) return null;
+    if (inStockPacks.size === 0) return packs[0];
+    return packs.find(p => inStockPacks.has(p)) || packs[0];
+  }, [packs, inStockPacks]);
+
+  // Active pack = explicit selection || smart default || null.
+  const activePack = selectedPack || defaultPack;
 
   // Parse leading number from pack label ('30 шт' → 30, '50 г' → 50, '1.5 мл' → 1.5).
   function packQty(p) {
@@ -334,28 +394,40 @@ export default function MedDetail() {
 
   const prices = useMemo(() => {
     if (!med) return [];
-    const list = [...((med.prices_by_city || {})[city.id] || [])];
+    const all = [...((med.prices_by_city || {})[city.id] || [])];
+    // Извлекаем фасовку из имени Горздрав ("... 28 шт" / "... 50 мл")
+    // и сравниваем с активной фасовкой. Горздрав хранит каждую упаковку
+    // как отдельную позицию, и у нас в БД маппится только ОДНА из них на slug,
+    // поэтому при переключении фасовки нужно скрывать запись, если она
+    // относится к другой упаковке.
+    const extractGzPack = (name) => {
+      if (!name) return null;
+      const m = String(name).match(/(\d+(?:[\.,]\d+)?)\s*(шт|мл|мг|мкг|г|л)[^\d]*$/i);
+      if (!m) return null;
+      const qty = m[1].replace(',', '.');
+      return qty + ' ' + m[2].toLowerCase();
+    };
+    const gorzdravAll = all.filter(p => p.pharmacy_id === 'gorzdrav');
+    const gorzdrav = packs.length >= 2 && activePack
+      ? gorzdravAll.filter(p => {
+          const gzPack = p.gz_pack || extractGzPack(p.gz_name);
+          return !gzPack || gzPack === activePack;
+        })
+      : gorzdravAll;
+    const list = all.filter(p => p.pharmacy_id !== 'gorzdrav');
 
-    // Scale prices proportionally to active pack vs first pack.
-    // Each pack also has a deterministic subset of pharmacies (popular small
-    // packs sold in more aptekas; large packs in fewer). This is MOCKED until
-    // real per-pack price feeds arrive.
-    if (packs.length >= 2 && activePack) {
+    let result;
+    if (packs.length >= 2 && activePack && list.length > 0) {
       const baseQty = packQty(packs[0]) || 1;
       const activeQty = packQty(activePack) || baseQty;
       const ratio = activeQty / baseQty;
       const packSeed = hashStr(med.slug + '|' + activePack);
-
-      // Sublinear scaling: 2× pack ≈ 1.7× price (volume discount).
       const priceFactor = Math.pow(ratio, 0.78);
-
-      // How many of the 12 pharmacies stock this pack: 12 for smallest, ~6 for largest.
       const packIdx = packs.indexOf(activePack);
       const ofMax = packs.length - 1 || 1;
       const stockCount = Math.max(3, Math.round(12 - (packIdx / ofMax) * 6));
 
       const scaled = list.map((p, i) => {
-        // Jitter ±8% per (pharmacy_id × pack) so each pharmacy varies independently.
         const j = ((packSeed + i * 2654435761) >>> 0) % 1000;
         const jitter = 0.92 + (j / 1000) * 0.16;
         const newPrice = Math.max(5, Math.round((p.price * priceFactor * jitter) / 5) * 5);
@@ -363,19 +435,16 @@ export default function MedDetail() {
         return { ...p, price: newPrice, qty: newQty };
       });
 
-      // Keep top stockCount pharmacies for this pack (deterministic subset).
-      const sortedByHash = scaled
+      result = scaled
         .map((p, i) => ({ p, h: ((packSeed ^ hashStr(p.pharmacy_id)) >>> 0) }))
         .sort((a, b) => a.h - b.h)
         .slice(0, stockCount)
         .map(x => x.p);
-
-      sortedByHash.sort((a, b) => a.price - b.price);
-      return sortedByHash;
+    } else {
+      result = list;
     }
 
-    list.sort((a, b) => a.price - b.price);
-    return list;
+    return [...result, ...gorzdrav].sort((a, b) => a.price - b.price);
   }, [med, city.id, packs, activePack]);
 
   if (loading) {
@@ -393,6 +462,10 @@ export default function MedDetail() {
 
   const minPrice = prices.length ? Math.min(...prices.map(p => p.price)) : null;
   const maxPrice = prices.length ? Math.max(...prices.map(p => p.price)) : null;
+  // For Gorzdrav entries qty = number of stores; for partner pharmacies count = 1 each.
+  const totalPharmacyCount = prices.reduce((sum, p) => {
+    return sum + (p.pharmacy_id === 'gorzdrav' ? (p.qty || 0) : 1);
+  }, 0);
   const seo = medSEO(city.id, med);
   const formLower = (med.form || '').toLowerCase();
 
@@ -476,7 +549,7 @@ export default function MedDetail() {
                 <div className="text-[11px] text-slate-500 uppercase tracking-wide mb-2">Фасовка</div>
                 <div className="flex flex-wrap gap-2">
                   {uniq.map((p, i) => {
-                    const active = selectedPack === p || (selectedPack === null && i === 0);
+                    const active = p === activePack;
                     return (
                       <button
                         key={p}
@@ -507,7 +580,7 @@ export default function MedDetail() {
                   <div className="text-xs text-emerald-800/80">Минимальная цена в {city.inLoc}</div>
                   <div className="text-3xl font-extrabold text-emerald-700">{minPrice} ₽</div>
                 </div>
-                <div className="text-sm text-slate-600 pb-1">до {maxPrice} ₽ · в {prices.length} аптеках</div>
+                <div className="text-sm text-slate-600 pb-1">до {maxPrice} ₽ · в {totalPharmacyCount} аптеках</div>
               </div>
               <p className="legal-band mt-3">Сведения о ценах и остатках носят справочный характер. Не является публичной офертой.</p>
             </div>
@@ -524,7 +597,7 @@ export default function MedDetail() {
                     Препарата сейчас нет в наших аптеках-партнёрах
                   </h2>
                   <p className="text-sm text-slate-600 leading-snug mt-1">
-                    Временно отсутствует во всех 12 аптеках-партнёрах Москвы и Санкт-Петербурга.
+                    Временно отсутствует во всех аптеках-партнёрах.
                     {med.mnn ? <> Попробуйте аналог с тем же действующим веществом — <b>{titleCase(med.mnn)}</b>.</> : <> Попробуйте поискать аналог в той же категории.</>}
                   </p>
                   {analogs.length > 0 && (
@@ -608,6 +681,8 @@ export default function MedDetail() {
               med={med}
               prices={prices}
               pharmacies={pharmacies}
+              gorzdravStores={gorzdravStores}
+              gorzdravPrice={prices.find(p => p.pharmacy_id === 'gorzdrav')?.price ?? null}
               cityCenter={city.center}
               onSelect={(pid) => {
                 setSelectedId(pid);
@@ -709,6 +784,47 @@ export default function MedDetail() {
             {prices.map(pr => {
               const ph = pharmacies.find(p => p.id === pr.pharmacy_id);
               if (!ph) return null;
+
+              // Special rendering for Gorzdrav (no address pin, shows store count)
+              if (ph.id === 'gorzdrav') {
+                return (
+                  <div key="gorzdrav" className="px-4 py-3 hover:bg-emerald-50/30 transition">
+                    <div className="sm:hidden">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <a href={ph.url} target="_blank" rel="noopener noreferrer" className="font-semibold text-slate-900 active:text-emerald-700 leading-tight block">{ph.name}</a>
+                          <div className="text-[11px] text-slate-500 mt-0.5 flex items-start gap-1"><MapPin className="w-3 h-3 mt-0.5 shrink-0" /><span>{ph.address}</span></div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="text-lg font-bold text-emerald-700 leading-tight">{pr.price} ₽</div>
+                          <div className="text-[10px] text-slate-500">в наличии</div>
+                        </div>
+                      </div>
+                      <div className="mt-2.5 flex items-center gap-2">
+                        <a href={ph.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 h-9 rounded-lg border border-emerald-200 bg-emerald-50/50 text-emerald-700 active:bg-emerald-100 flex-1">
+                          <Navigation className="w-3.5 h-3.5" /> На сайте Горздрав
+                        </a>
+                      </div>
+                    </div>
+                    <div className="hidden sm:grid grid-cols-[1fr_130px_170px_110px_130px] items-center gap-3">
+                      <div>
+                        <a href={ph.url} target="_blank" rel="noopener noreferrer" className="font-semibold text-slate-900 hover:text-emerald-700">{ph.name}</a>
+                        <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {ph.address}</div>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500 whitespace-nowrap"><Clock className="w-3.5 h-3.5 shrink-0" /> Круглосуточно</div>
+                      <div className="border-l border-slate-200 pl-3 text-xs text-slate-500">доступно в {pr.qty} аптеках</div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-emerald-700">{pr.price} ₽</div>
+                        <div className="text-[11px] text-slate-500">от {pr.price} ₽</div>
+                      </div>
+                      <a href={ph.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border border-emerald-200 bg-emerald-50/50 text-emerald-700 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition whitespace-nowrap">
+                        <Navigation className="w-3.5 h-3.5" /> На сайт
+                      </a>
+                    </div>
+                  </div>
+                );
+              }
+
               const telHref = `tel:${(ph.phone || "").replace(/[^+\d]/g, "")}`;
               const routeHref = `https://yandex.ru/maps/?rtext=~${ph.lat}%2C${ph.lng}&rtt=auto&z=15`;
               return (
@@ -793,6 +909,9 @@ export default function MedDetail() {
                 <p className="text-sm text-slate-700 leading-relaxed">{med.enrichment.how_to_take}</p>
               </div>
             )}
+            <p className="hidden md:block mt-5 text-xs text-slate-500 italic">
+              Справочная информация. {med.enrichment.disclaimer || 'Имеются противопоказания. Перед применением проконсультируйтесь с врачом.'}
+            </p>
           </div>
         </section>
       )}
@@ -802,11 +921,14 @@ export default function MedDetail() {
           specialist. Also clearly states the page is informational, not an
           advertisement and not a medical recommendation. */}
       <section className="mb-8 md:mb-12">
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-          <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-          <p className="text-sm text-amber-900 leading-relaxed">
-            <strong>Имеются противопоказания.</strong> Перед применением — инструкция и консультация со специалистом.
-          </p>
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 flex items-start gap-3">
+          <ShieldAlert className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+          <div className="text-sm text-amber-900 leading-relaxed">
+            <strong>Имеются противопоказания.</strong> Информация на странице носит
+            справочный характер и не является рекламой лекарственного препарата или
+            рекомендацией к применению. Перед применением необходимо ознакомиться с
+            инструкцией по применению и проконсультироваться со специалистом.
+          </div>
         </div>
       </section>
 

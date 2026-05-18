@@ -64,6 +64,14 @@ export async function fetchAnalogs(slug, limit = 8) {
   return data;
 }
 
+let _gorzdravStoresCache = {};
+export async function fetchGorzdravStores(city = 'msk') {
+  if (_gorzdravStoresCache[city]) return _gorzdravStoresCache[city];
+  const { data } = await http.get('/gorzdrav/stores', { params: { city } });
+  _gorzdravStoresCache[city] = data;
+  return data;
+}
+
 // Static helpers to keep current presentational components working
 // without major refactors.
 export function findPharmacyById(pharmacies, id) {
