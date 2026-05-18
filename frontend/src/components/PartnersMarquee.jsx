@@ -1,22 +1,54 @@
 import React, { useEffect, useRef } from 'react';
 
 const PARTNERS = [
-  'Ригла', '36,6', 'Здоровье', 'Горздрав', 'Столички', 'Будь Здоров',
-  'Самсон-Фарма', 'Аптеки А5', 'Ноль Боли', 'Доктор Столетов',
-  'Wer.ru', 'Планета Здоровья', 'Первая помощь', 'Озерки',
-  'Радуга', 'Невис', 'ГосАптека', 'Лекарь',
+  { name: 'Ригла',            logo: 'rigla' },
+  { name: '36,6',             logo: '366' },
+  { name: 'Здоровье',         logo: null },
+  { name: 'Горздрав',         logo: 'gorzdrav' },
+  { name: 'Столички',         logo: 'stolichki' },
+  { name: 'Будь Здоров',      logo: 'budzdorov' },
+  { name: 'Самсон-Фарма',     logo: 'samson-pharma' },
+  { name: 'Аптеки А5',        logo: null },
+  { name: 'Ноль Боли',        logo: null },
+  { name: 'Доктор Столетов',  logo: 'drstoletov' },
+  { name: 'Wer.ru',           logo: null },
+  { name: 'Планета Здоровья', logo: 'planetazdorovo' },
+  { name: 'Первая помощь',    logo: 'pervaya-pomosh' },
+  { name: 'Озерки',           logo: null },
+  { name: 'Радуга',           logo: 'raduga' },
+  { name: 'Невис',            logo: null },
+  { name: 'ГосАптека',        logo: null },
+  { name: 'Лекарь',           logo: null },
 ];
 
 function initials(name) {
   return name.replace(/[^а-яёa-z0-9]/gi, '').slice(0, 2).toUpperCase();
 }
 
-function Item({ name }) {
+function Item({ name, logo }) {
   return (
     <div className="group shrink-0 flex items-center gap-4 md:gap-2.5 whitespace-nowrap cursor-default px-6 md:px-4">
-      <div className="w-10 h-10 md:w-7 md:h-7 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-[15px] md:text-[10px] font-bold text-slate-400 shrink-0 group-hover:bg-emerald-50 group-hover:border-emerald-200 group-hover:text-emerald-600 transition-colors">
-        {initials(name)}
-      </div>
+      {logo ? (
+        <img
+          src={"/img/partners/" + logo + ".png"}
+          alt={name}
+          loading="lazy"
+          className="w-10 h-10 md:w-7 md:h-7 rounded-lg object-contain bg-white border border-slate-200 shrink-0 p-0.5"
+          onError={(e) => {
+            // Если файл по какой-то причине не загрузился — заменяем
+            // изображение на текстовый квадратик с инициалами.
+            const el = e.currentTarget;
+            const fallback = document.createElement('div');
+            fallback.className = 'w-10 h-10 md:w-7 md:h-7 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-[15px] md:text-[10px] font-bold text-slate-400 shrink-0';
+            fallback.textContent = initials(name);
+            el.replaceWith(fallback);
+          }}
+        />
+      ) : (
+        <div className="w-10 h-10 md:w-7 md:h-7 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-[15px] md:text-[10px] font-bold text-slate-400 shrink-0 group-hover:bg-emerald-50 group-hover:border-emerald-200 group-hover:text-emerald-600 transition-colors">
+          {initials(name)}
+        </div>
+      )}
       <span className="text-[19px] md:text-[13px] font-semibold text-slate-600 group-hover:text-emerald-600 transition-colors">
         {name}
       </span>
@@ -60,7 +92,7 @@ export default function PartnersMarquee() {
 
       <div className="overflow-hidden marquee-host">
         <div ref={trackRef} className="marquee-track-v2 flex items-center">
-          {list.map((p, i) => <Item key={i} name={p} />)}
+          {list.map((p, i) => <Item key={i} name={p.name} logo={p.logo} />)}
         </div>
       </div>
     </section>
