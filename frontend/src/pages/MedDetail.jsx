@@ -151,6 +151,7 @@ function sortPacks(items) {
 const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, gorzdravStores = [], gorzdravPrice = null, cityCenter, onSelect, selected, fullscreen = false, onInteract }, externalRef) {
   const ref = useRef(null);
   const mapRef = useRef(null);
+  const tileLayerRef = useRef(null);
   const onInteractRef = useRef(onInteract);
   useEffect(() => { onInteractRef.current = onInteract; }, [onInteract]);
 
@@ -202,7 +203,8 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
       const attribution = tilesKey
         ? '© <a href="https://yandex.ru/maps">Яндекс Карты</a>'
         : '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
-      L.tileLayer(tileUrl, { attribution, maxZoom: 19, subdomains: tilesKey ? [] : ['a','b','c'] }).addTo(map);
+      const tileLayer = L.tileLayer(tileUrl, { attribution, maxZoom: 19, subdomains: tilesKey ? [] : ['a','b','c'] }).addTo(map);
+      tileLayerRef.current = tileLayer;
 
       const fireInteract = () => { if (onInteractRef.current) onInteractRef.current(); };
       ref.current.addEventListener('pointerdown', fireInteract, { passive: true });
@@ -365,12 +367,24 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
     };
     // eslint-disable-next-line
-  }, [med?.slug, cityCenter[0], cityCenter[1], prices.length, gorzdravStores.length, gorzdravPrice]);
+  }, [med?.slug, cityCenter[0], cityCenter[1], prices.length, gorzdravStores.length, gorzdravPrice, fullscreen]);
 
   useEffect(() => {
     if (!mapRef.current) return;
-    const id = setTimeout(() => { try { mapRef.current.invalidateSize(); } catch (e) {} }, 80);
-    return () => clearTimeout(id);
+    // При смене fullscreen контейнер ресайзится. Leaflet нужно явно сказать:
+    //   1) invalidateSize — пересчитать пиксельный размер карты
+    //   2) tileLayer.redraw — принудительно перезапросить тайлы под новый
+    //      viewport (без этого пустые тайлы остаются белыми)
+    const map = mapRef.current;
+    const refresh = () => {
+      try {
+        map.invalidateSize({ animate: false });
+        if (tileLayerRef.current) tileLayerRef.current.redraw();
+      } catch (e) {}
+    };
+    refresh();
+    const ids = [50, 200, 500].map(ms => setTimeout(refresh, ms));
+    return () => ids.forEach(clearTimeout);
   }, [fullscreen]);
 
   return <div ref={ref} className={fullscreen ? "w-full h-full relative isolate" : "w-full h-[360px] md:h-[460px] rounded-xl overflow-hidden border border-slate-100 relative isolate"} />;
