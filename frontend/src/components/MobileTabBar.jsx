@@ -20,7 +20,38 @@ function isActive(pathname, target) {
 }
 
 function openSearchOverlay() {
+  // iOS-хак: чтобы клавиатура реально открылась, focus() должен быть вызван
+  // СИНХРОННО внутри пользовательского жеста. SearchOverlay монтируется
+  // асинхронно (через CustomEvent + React render), поэтому к моменту, когда
+  // его input появится в DOM, user-gesture уже истечёт и iOS заблокирует
+  // клавиатуру. Решение: фокусируем временный невидимый input ПРЯМО СЕЙЧАС,
+  // что «разблокирует» клавиатуру, а затем перекидываем фокус на реальный
+  // input — iOS воспринимает это как смену фокуса при уже открытой
+  // клавиатуре и оставляет её видимой.
+  const tmp = document.createElement('input');
+  tmp.setAttribute('type', 'text');
+  tmp.setAttribute('inputmode', 'search');
+  tmp.setAttribute('lang', 'ru');
+  // font-size: 16px чтобы Safari не зумил viewport.
+  tmp.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;font-size:16px;border:0;padding:0;z-index:-1;';
+  document.body.appendChild(tmp);
+  tmp.focus();
+
   window.dispatchEvent(new CustomEvent('search-overlay:open'));
+
+  // Когда реальный input смонтируется — перебрасываем фокус и убираем заглушку.
+  const transfer = (attempt = 0) => {
+    const real = document.querySelector('[data-testid="search-overlay-input"]');
+    if (real) {
+      real.focus();
+      tmp.remove();
+    } else if (attempt < 20) {
+      requestAnimationFrame(() => transfer(attempt + 1));
+    } else {
+      tmp.remove();
+    }
+  };
+  requestAnimationFrame(() => transfer(0));
 }
 
 /**

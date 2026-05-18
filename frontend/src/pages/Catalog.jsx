@@ -70,7 +70,7 @@ export default function Catalog() {
 
       <div className="input-focus border border-slate-200 rounded-lg flex items-center bg-white max-w-md mb-6 transition">
         <Search className="w-4 h-4 text-slate-400 ml-3" />
-        <input type="search" inputMode="search" autoComplete="off" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Найти в каталоге…" aria-label="Поиск в каталоге" className="flex-1 px-3 py-3 md:py-2.5 text-[15px] md:text-sm bg-transparent outline-none" data-testid="catalog-search-input" />
+        <input type="search" inputMode="search" lang="ru" autoComplete="off" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Найти в каталоге…" aria-label="Поиск в каталоге" className="flex-1 px-3 py-3 md:py-2.5 text-[15px] md:text-sm bg-transparent outline-none" data-testid="catalog-search-input" />
       </div>
 
       <div className="flex flex-wrap gap-1 md:gap-1.5 mb-6 md:mb-8 bg-white border border-slate-100 rounded-xl p-2 md:p-3" data-testid="letter-filter">

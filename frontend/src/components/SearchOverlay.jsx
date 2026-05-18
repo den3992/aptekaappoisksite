@@ -117,18 +117,18 @@ export default function SearchOverlay() {
           >
             <X className="w-5 h-5" />
           </button>
-          <div className="flex-1 flex items-center border border-emerald-400 rounded-lg bg-white shadow-sm">
+          <div className="flex-1 min-w-0 flex items-center border border-emerald-400 rounded-lg bg-white shadow-sm">
             <Search className="w-4 h-4 text-rose-500 ml-3" />
             <input
               ref={inputRef}
-              type="search"
-              inputMode="search"
+              type="text"
+              inputMode="search" lang="ru"
               autoComplete="off"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Найдите препарат в аптеках"
               aria-label="Поиск препарата"
-              className="flex-1 px-3 py-3 text-base bg-transparent outline-none [&::-webkit-search-cancel-button]:appearance-none"
+              className="flex-1 min-w-0 px-3 py-3 text-base bg-transparent outline-none"
               data-testid="search-overlay-input"
             />
             {q && (

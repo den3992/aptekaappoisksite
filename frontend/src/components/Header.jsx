@@ -112,8 +112,8 @@ export default function Header({ hideOnDesktop = false } = {}) {
           <form onSubmit={onSubmit} className="input-focus border border-slate-200 rounded-lg flex items-center bg-white transition">
             <Search className="w-4 h-4 text-rose-500 ml-3" />
             <input
-              type="search"
-              inputMode="search"
+              type="text"
+              inputMode="search" lang="ru"
               autoComplete="off"
               value={q}
               onChange={(e) => setQ(e.target.value)}
@@ -121,7 +121,7 @@ export default function Header({ hideOnDesktop = false } = {}) {
               onClick={onInputFocus}
               placeholder="Найдите препарат в аптеках вашего города"
               aria-label="Поиск препарата"
-              className="flex-1 px-3 py-3 md:py-2.5 text-base md:text-sm bg-transparent outline-none [&::-webkit-search-cancel-button]:appearance-none"
+              className="flex-1 min-w-0 px-3 py-3 md:py-2.5 text-base md:text-sm bg-transparent outline-none"
               data-testid="header-search-input"
             />
             <button
@@ -133,7 +133,7 @@ export default function Header({ hideOnDesktop = false } = {}) {
             >
               <Mic className="w-5 h-5" />
             </button>
-            <button type="submit" className="hidden sm:inline-flex items-center gap-1 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 m-1 rounded-md transition">
+            <button type="submit" className="hidden sm:inline-flex shrink-0 items-center gap-1 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 m-1 rounded-md transition">
               Найти
             </button>
           </form>

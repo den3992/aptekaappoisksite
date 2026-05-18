@@ -124,34 +124,31 @@ code {
 /* nice focus ring */
 .input-focus:focus-within { box-shadow: 0 0 0 4px rgba(14,159,110,.15); border-color: #0E9F6E; }
 
-/* Partners marquee */
-.marquee-container { width: 100%; }
-.marquee-track {
-  display: flex;
-  align-items: center;
+/* Partners marquee v2 — CSS animation на тройном списке. Анимируем от
+   -cycle до -2*cycle: видимая область всегда показывает среднюю копию,
+   которая физически не пересекает границу overflow:hidden — это
+   обходит iOS Safari баг с tile-rendering на краях клиппинга. */
+.marquee-track-v2 {
   width: max-content;
-  -webkit-animation: marquee 36s linear infinite;
-  animation: marquee 36s linear infinite;
+  will-change: transform;
+  -webkit-animation: marquee-v2 30s linear infinite;
+          animation: marquee-v2 30s linear infinite;
+  -webkit-transform: translate3d(calc(-1 * var(--marquee-cycle, 0px)), 0, 0);
+          transform: translate3d(calc(-1 * var(--marquee-cycle, 0px)), 0, 0);
 }
-.marquee-track > * {
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
-.marquee-container:hover .marquee-track {
+.marquee-host:hover .marquee-track-v2 {
   -webkit-animation-play-state: paused;
-  animation-play-state: paused;
+          animation-play-state: paused;
 }
-@-webkit-keyframes marquee {
-  from { -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); }
-  to   { -webkit-transform: translate3d(-50%, 0, 0); transform: translate3d(-50%, 0, 0); }
+@-webkit-keyframes marquee-v2 {
+  from { -webkit-transform: translate3d(calc(-1 * var(--marquee-cycle, 0px)), 0, 0); }
+  to   { -webkit-transform: translate3d(calc(-2 * var(--marquee-cycle, 0px)), 0, 0); }
 }
-@keyframes marquee {
-  from { -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); }
-  to   { -webkit-transform: translate3d(-50%, 0, 0); transform: translate3d(-50%, 0, 0); }
+@keyframes marquee-v2 {
+  from { transform: translate3d(calc(-1 * var(--marquee-cycle, 0px)), 0, 0); }
+  to   { transform: translate3d(calc(-2 * var(--marquee-cycle, 0px)), 0, 0); }
 }
-@media (max-width: 640px) {
-  .marquee-track { -webkit-animation-duration: 26s; animation-duration: 26s; }
-}
+
 @keyframes shimmer {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }

@@ -40,7 +40,7 @@ export default function PharmaciesList() {
 
       <div className="input-focus border border-slate-200 rounded-lg flex items-center bg-white max-w-md mb-6 transition">
         <Search className="w-4 h-4 text-slate-400 ml-3" />
-        <input type="search" inputMode="search" autoComplete="off" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Поиск по названию или адресу…" aria-label="Поиск аптек" className="flex-1 px-3 py-3 md:py-2.5 text-base md:text-sm bg-transparent outline-none" />
+        <input type="search" inputMode="search" lang="ru" autoComplete="off" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Поиск по названию или адресу…" aria-label="Поиск аптек" className="flex-1 px-3 py-3 md:py-2.5 text-base md:text-sm bg-transparent outline-none" />
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3" data-testid="pharmacies-list">

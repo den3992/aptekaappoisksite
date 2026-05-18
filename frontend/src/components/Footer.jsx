@@ -19,7 +19,7 @@ export default function Footer() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="hidden md:grid grid-cols-2 md:grid-cols-4 gap-8">
           <div className="col-span-2">
             <Link to="/" className="flex flex-col items-start mb-3 leading-none">
               <div className="flex items-center gap-2 md:gap-2.5">

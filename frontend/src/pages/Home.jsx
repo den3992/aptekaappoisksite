@@ -173,7 +173,7 @@ export default function Home() {
               <Search className="w-4 h-4 text-rose-500" />
               <input
                 type="search"
-                inputMode="search"
+                inputMode="search" lang="ru"
                 autoComplete="off"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}

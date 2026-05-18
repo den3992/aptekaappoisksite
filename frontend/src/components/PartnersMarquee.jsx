@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 const PARTNERS = [
   'Ригла', '36,6', 'Здоровье', 'Горздрав', 'Столички', 'Будь Здоров',
@@ -26,10 +26,28 @@ function Item({ name }) {
 }
 
 export default function PartnersMarquee() {
-  const list = [...PARTNERS, ...PARTNERS];
+  // Тройной список: средняя копия всегда внутри viewport, не пересекает
+  // границы overflow:hidden — устраняет iOS Safari баг с tile-rendering
+  // на краях клиппинг-региона.
+  const list = [...PARTNERS, ...PARTNERS, ...PARTNERS];
+  const trackRef = useRef(null);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const apply = () => {
+      const cycle = track.scrollWidth / 3;
+      const speed = window.innerWidth < 640 ? 50 : 40; // px/s
+      track.style.setProperty('--marquee-cycle', cycle + 'px');
+      track.style.animationDuration = (cycle / speed) + 's';
+    };
+    apply();
+    window.addEventListener('resize', apply);
+    return () => window.removeEventListener('resize', apply);
+  }, []);
+
   return (
     <section className="relative py-8 md:py-10">
-
       <div className="max-w-7xl mx-auto px-4 mb-5 flex items-center justify-between">
         <h2 className="font-extrabold text-slate-900 text-xl md:text-2xl tracking-tight" style={{ fontFamily: "'Manrope', sans-serif" }}>
           Наши партнёры
@@ -40,13 +58,9 @@ export default function PartnersMarquee() {
         </span>
       </div>
 
-      <div className="overflow-hidden">
-        <div className="marquee-container relative">
-          <div className="marquee-track">
-            {list.map((p, i) => <Item key={i} name={p} />)}
-          </div>
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-20 z-10" style={{background:'linear-gradient(to right, rgba(240,253,244,0.7), transparent)'}} />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-20 z-10" style={{background:'linear-gradient(to left, rgba(240,253,244,0.7), transparent)'}} />
+      <div className="overflow-hidden marquee-host">
+        <div ref={trackRef} className="marquee-track-v2 flex items-center">
+          {list.map((p, i) => <Item key={i} name={p} />)}
         </div>
       </div>
     </section>
