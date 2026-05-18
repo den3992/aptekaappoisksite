@@ -249,11 +249,9 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
         const hoursLines = splitHours(hours);
         // Координаты для deep-link'ов.
         // Я.Карты: rtext=~LAT,LNG;  2GIS: routeSearch/.../to/LNG,LAT (порядок обратный).
-        // Universal links: iOS/Android сами откроют приложение, если оно
-        // установлено; иначе — браузер. Никакого диалога подтверждения и
-        // никаких таймеров-фолбэков, которые могли открывать одновременно
-        // и web, и приложение.
+        const yandexApp = `yandexmaps://build_route_on_map?lat_to=${lat}&lon_to=${lng}`;
         const yandexWeb = `https://yandex.ru/maps/?rtext=~${lat}%2C${lng}&rtt=auto&z=15`;
+        const dgisApp   = `dgis://2gis.ru/routeSearch/rsType/car/to/${lng},${lat}`;
         const dgisWeb   = `https://2gis.ru/routeSearch/rsType/car/to/${lng},${lat}/go`;
         return [
           '<div class="ymap-popup">',
@@ -263,8 +261,8 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
           phone   ? `<div class="ymap-popup__row">📞 <a href="tel:${esc(phoneClean)}">${esc(phone)}</a></div>` : '',
           price != null ? `<div class="ymap-popup__price">${esc(price)} ₽</div>` : '',
           '<div class="ymap-popup__routes">',
-            `<a class="ymap-popup__route ymap-popup__route--ya" href="${esc(yandexWeb)}" target="_blank" rel="noopener noreferrer">Я.Карты</a>`,
-            `<a class="ymap-popup__route ymap-popup__route--dgis" href="${esc(dgisWeb)}" target="_blank" rel="noopener noreferrer">2GIS</a>`,
+            `<button type="button" class="ymap-popup__route ymap-popup__route--ya" data-app="${esc(yandexApp)}" data-web="${esc(yandexWeb)}">Я.Карты</button>`,
+            `<button type="button" class="ymap-popup__route ymap-popup__route--dgis" data-app="${esc(dgisApp)}" data-web="${esc(dgisWeb)}">2GIS</button>`,
           '</div>',
           '</div>',
         ].join('');
@@ -310,6 +308,35 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
       map.invalidateSize();
       map.setView([lat, lng], 11, { animate: false });
       map.addLayer(cluster);
+
+      // Делегированный клик на кнопки маршрута. Стратегия:
+      //   1. window.location.href = app-scheme — iOS покажет диалог
+      //      "Открыть в Яндекс.Карты?". Если юзер согласится — приложение
+      //      откроется и страница уйдёт в background (visibilitychange).
+      //   2. Слушаем visibilitychange. Если за 2.5с страница ушла в bg —
+      //      приложение открылось, ничего не делаем.
+      //   3. Если visibility НЕ сменился — приложение не установлено,
+      //      открываем веб как fallback.
+      const onPopupClick = (e) => {
+        const btn = e.target.closest && e.target.closest('.ymap-popup__route');
+        if (!btn) return;
+        e.preventDefault();
+        const app = btn.getAttribute('data-app');
+        const web = btn.getAttribute('data-web');
+        if (!app || !web) return;
+        let appOpened = false;
+        const onVis = () => { if (document.hidden) appOpened = true; };
+        document.addEventListener('visibilitychange', onVis);
+        window.location.href = app;
+        setTimeout(() => {
+          document.removeEventListener('visibilitychange', onVis);
+          if (!appOpened) {
+            // Приложение не открылось — fallback на веб.
+            window.open(web, '_blank', 'noopener,noreferrer');
+          }
+        }, 2500);
+      };
+      ref.current.addEventListener('click', onPopupClick);
 
       // userMoved отслеживаем ТОЛЬКО по реальному pointerdown (не по leaflet-событиям,
       // т.к. setView сам триггерит zoomstart и блокировал retry).
