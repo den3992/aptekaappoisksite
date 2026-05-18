@@ -3,12 +3,10 @@ import React, { useEffect, useRef } from 'react';
 const PARTNERS = [
   { name: 'Ригла',            logo: 'rigla.png' },
   { name: '36,6',             logo: '366.png' },
-  { name: 'Здоровье',         logo: null },
   { name: 'Горздрав',         logo: 'gorzdrav.png' },
   { name: 'Столички',         logo: 'stolichki.png' },
   { name: 'Будь Здоров',      logo: 'budzdorov.png' },
   { name: 'Самсон-Фарма',     logo: 'samson-pharma.png' },
-  { name: 'Аптеки А5',        logo: null },
   { name: 'Ноль Боли',        logo: '0boli.png' },
   { name: 'Доктор Столетов',  logo: 'drstoletov.png' },
   { name: 'Wer.ru',           logo: 'wer.svg' },
@@ -17,8 +15,6 @@ const PARTNERS = [
   { name: 'Озерки',           logo: 'ozerki.png' },
   { name: 'Радуга',           logo: 'raduga.png' },
   { name: 'Невис',            logo: 'nevis.png' },
-  { name: 'ГосАптека',        logo: null },
-  { name: 'Лекарь',           logo: null },
 ];
 
 function initials(name) {
