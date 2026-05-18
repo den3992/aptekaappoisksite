@@ -1,22 +1,22 @@
 import React, { useEffect, useRef } from 'react';
 
 const PARTNERS = [
-  { name: 'Ригла',            logo: 'rigla' },
-  { name: '36,6',             logo: '366' },
+  { name: 'Ригла',            logo: 'rigla.png' },
+  { name: '36,6',             logo: '366.png' },
   { name: 'Здоровье',         logo: null },
-  { name: 'Горздрав',         logo: 'gorzdrav' },
-  { name: 'Столички',         logo: 'stolichki' },
-  { name: 'Будь Здоров',      logo: 'budzdorov' },
-  { name: 'Самсон-Фарма',     logo: 'samson-pharma' },
+  { name: 'Горздрав',         logo: 'gorzdrav.png' },
+  { name: 'Столички',         logo: 'stolichki.png' },
+  { name: 'Будь Здоров',      logo: 'budzdorov.png' },
+  { name: 'Самсон-Фарма',     logo: 'samson-pharma.png' },
   { name: 'Аптеки А5',        logo: null },
-  { name: 'Ноль Боли',        logo: null },
-  { name: 'Доктор Столетов',  logo: 'drstoletov' },
-  { name: 'Wer.ru',           logo: null },
-  { name: 'Планета Здоровья', logo: 'planetazdorovo' },
-  { name: 'Первая помощь',    logo: 'pervaya-pomosh' },
-  { name: 'Озерки',           logo: null },
-  { name: 'Радуга',           logo: 'raduga' },
-  { name: 'Невис',            logo: null },
+  { name: 'Ноль Боли',        logo: '0boli.png' },
+  { name: 'Доктор Столетов',  logo: 'drstoletov.png' },
+  { name: 'Wer.ru',           logo: 'wer.svg' },
+  { name: 'Планета Здоровья', logo: 'planetazdorovo.png' },
+  { name: 'Первая помощь',    logo: 'pervaya-pomosh.png' },
+  { name: 'Озерки',           logo: 'ozerki.png' },
+  { name: 'Радуга',           logo: 'raduga.png' },
+  { name: 'Невис',            logo: 'nevis.png' },
   { name: 'ГосАптека',        logo: null },
   { name: 'Лекарь',           logo: null },
 ];
@@ -30,7 +30,7 @@ function Item({ name, logo }) {
     <div className="group shrink-0 flex items-center gap-4 md:gap-2.5 whitespace-nowrap cursor-default px-6 md:px-4">
       {logo ? (
         <img
-          src={"/img/partners/" + logo + ".png"}
+          src={"/img/partners/" + logo}
           alt={name}
           loading="lazy"
           className="w-10 h-10 md:w-7 md:h-7 rounded-lg object-contain bg-white border border-slate-200 shrink-0 p-0.5"
