@@ -1004,22 +1004,6 @@ export default function MedDetail() {
         </section>
       )}
 
-      {/* Disclaimer — wording per Federal Law 38-FZ Art. 24 para 7:
-          must mention BOTH the medication's instruction AND consulting a
-          specialist. Also clearly states the page is informational, not an
-          advertisement and not a medical recommendation. */}
-      <section className="mb-8 md:mb-12">
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 flex items-start gap-3">
-          <ShieldAlert className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
-          <div className="text-sm text-amber-900 leading-relaxed">
-            <strong>Имеются противопоказания.</strong> Перед применением проконсультируйтесь
-            со специалистом и ознакомьтесь с инструкцией по применению. Цены и наличие
-            в аптеках — справочная информация, не публичная оферта и не реклама
-            лекарственного препарата.
-          </div>
-        </div>
-      </section>
-
       {/* Analogs (strict: same MNN + same form group) */}
       {med.mnn && (
         <section className="mb-8 md:mb-12" data-testid="analogs-section">
