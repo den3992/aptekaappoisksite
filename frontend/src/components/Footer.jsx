@@ -11,9 +11,9 @@ export default function Footer() {
     >
       <div className="max-w-7xl mx-auto px-4 pt-4 pb-6 md:py-10">
         {/* warning band */}
-        <div className="flex items-start gap-3 p-4 mb-6 md:mb-8 bg-amber-50 border border-amber-200 rounded-lg">
-          <ShieldCheck className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-          <p className="text-sm text-amber-900 leading-relaxed">
+        <div className="flex items-start gap-1.5 md:gap-3 p-2 md:p-4 mb-2 md:mb-8 bg-amber-50 border border-amber-200 rounded-lg">
+          <ShieldCheck className="w-3 h-3 md:w-5 md:h-5 text-amber-600 shrink-0 mt-0.5" />
+          <p className="text-[9.5px] md:text-sm text-amber-900 leading-[1.3] md:leading-relaxed">
             <strong>Имеются противопоказания.</strong>{' '}
             Перед применением проконсультируйтесь со специалистом и ознакомьтесь с инструкцией по применению. Сведения о ценах и наличии носят справочный характер и не являются публичной офертой.
           </p>

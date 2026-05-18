@@ -212,7 +212,7 @@ export default function Home() {
       </div>
 
       {/* Popular meds — uniform grid */}
-      <section className="max-w-7xl mx-auto px-4 pt-8 md:pt-12 pb-2">
+      <section className="hidden md:block max-w-7xl mx-auto px-4 pt-8 md:pt-12 pb-2">
         <div className="flex items-center justify-between gap-3 mb-5">
           <h2 className="text-xl md:text-2xl font-bold text-slate-900">Популярные препараты</h2>
           <Link to={`/${city.id}/preparaty`} className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1 whitespace-nowrap shrink-0">Каталог А–Я <ArrowRight className="w-4 h-4" /></Link>
