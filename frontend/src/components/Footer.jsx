@@ -58,7 +58,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-xs text-slate-500">
+        <div className="mt-2 md:mt-10 pt-6 border-t border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-xs text-slate-500">
           <div>© {new Date().getFullYear()} АптекаА · ООО «Идеал-Фарм» · ИНН 5050110424. Все права защищены.</div>
           <div>Сервис соответствует требованиям ФЗ №152 «О персональных данных». 18+</div>
         </div>
