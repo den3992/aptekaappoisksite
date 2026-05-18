@@ -548,6 +548,10 @@ export default function MedDetail() {
     </div>
   );
 
+  // noAvailability: считаем по СЫРЫМ данным prices_by_city (по всем упаковкам),
+  // не по фильтрованному prices. Используется, чтобы решить, показывать ли блок
+  // аналогов на мобильной версии (показываем только если препарата вообще нет).
+  const noAvailability = !((med?.prices_by_city?.[city.id] || []).length);
   const minPrice = prices.length ? Math.min(...prices.map(p => p.price)) : null;
   const maxPrice = prices.length ? Math.max(...prices.map(p => p.price)) : null;
   // For Gorzdrav entries qty = number of stores; for partner pharmacies count = 1 each.
@@ -1006,7 +1010,7 @@ export default function MedDetail() {
 
       {/* Analogs (strict: same MNN + same form group) */}
       {med.mnn && (
-        <section className="mb-8 md:mb-12" data-testid="analogs-section">
+        <section className={"mb-8 md:mb-12 " + (noAvailability ? "" : "hidden md:block")} data-testid="analogs-section">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center"><Tag className="w-5 h-5" /></div>
             <h2 className="text-xl md:text-2xl font-bold text-slate-900 leading-tight">Аналоги по МНН: {titleCase(med.mnn)}</h2>
