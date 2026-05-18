@@ -234,11 +234,37 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
         },
       });
 
+      // HTML-экранирование (popupContent рендерится как HTML).
+      const esc = (str) => String(str ?? '').replace(/[&<>"']/g, ch => (
+        { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch]
+      ));
+      const popupContent = ({ title, address, hours, phone, price, route }) => {
+        const phoneClean = (phone || '').replace(/[^+\d]/g, '');
+        return [
+          '<div class="ymap-popup">',
+          `<div class="ymap-popup__title">${esc(title)}</div>`,
+          address ? `<div class="ymap-popup__row">📍 ${esc(address)}</div>` : '',
+          hours   ? `<div class="ymap-popup__row">🕒 ${esc(hours)}</div>`   : '',
+          phone   ? `<div class="ymap-popup__row">📞 <a href="tel:${esc(phoneClean)}">${esc(phone)}</a></div>` : '',
+          price != null ? `<div class="ymap-popup__price">${esc(price)} ₽</div>` : '',
+          route ? `<a class="ymap-popup__route" href="${esc(route)}" target="_blank" rel="noopener noreferrer">Маршрут →</a>` : '',
+          '</div>',
+        ].join('');
+      };
+
       const partnerBounds = [];
       prices.forEach(pr => {
         const ph = pharmacies.find(p => p.id === pr.pharmacy_id);
         if (!ph || !ph.lat || !ph.lng || ph.id === 'gorzdrav') return;
         const m = L.marker([ph.lat, ph.lng], { icon: pillIcon(pr.price) });
+        m.bindPopup(popupContent({
+          title: ph.name,
+          address: ph.address,
+          hours: ph.hours,
+          phone: ph.phone,
+          price: pr.price,
+          route: `https://yandex.ru/maps/?rtext=~${ph.lat}%2C${ph.lng}&rtt=auto&z=15`,
+        }), { maxWidth: 280, autoPan: true });
         m.on('click', () => { onSelect && onSelect(ph.id); });
         cluster.addLayer(m);
         partnerBounds.push([ph.lat, ph.lng]);
@@ -248,6 +274,14 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
         gorzdravStores.forEach(store => {
           if (!store.lat || !store.lng) return;
           const m = L.marker([store.lat, store.lng], { icon: pillIcon(gorzdravPrice) });
+          m.bindPopup(popupContent({
+            title: store.full_name || ('Горздрав ' + (store.name || '')),
+            address: store.address,
+            hours: store.is_24h ? 'Круглосуточно' : store.hours,
+            phone: store.phone,
+            price: gorzdravPrice,
+            route: `https://yandex.ru/maps/?rtext=~${store.lat}%2C${store.lng}&rtt=auto&z=15`,
+          }), { maxWidth: 280, autoPan: true });
           m.on('click', () => { onSelect && onSelect('gorzdrav_' + store.store_id); });
           cluster.addLayer(m);
         });
