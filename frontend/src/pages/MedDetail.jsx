@@ -317,6 +317,7 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
       //      приложение открылось, ничего не делаем.
       //   3. Если visibility НЕ сменился — приложение не установлено,
       //      открываем веб как fallback.
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       const onPopupClick = (e) => {
         const btn = e.target.closest && e.target.closest('.ymap-popup__route');
         if (!btn) return;
@@ -324,6 +325,12 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
         const app = btn.getAttribute('data-app');
         const web = btn.getAttribute('data-web');
         if (!app || !web) return;
+        // На десктопе приложение никогда не установлено — сразу веб, без ожидания.
+        if (!isMobile) {
+          window.open(web, '_blank', 'noopener,noreferrer');
+          return;
+        }
+        // Мобильная схема: app-scheme → fallback на веб, если visibility не сменился.
         let appOpened = false;
         const onVis = () => { if (document.hidden) appOpened = true; };
         document.addEventListener('visibilitychange', onVis);
@@ -331,7 +338,6 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
         setTimeout(() => {
           document.removeEventListener('visibilitychange', onVis);
           if (!appOpened) {
-            // Приложение не открылось — fallback на веб.
             window.open(web, '_blank', 'noopener,noreferrer');
           }
         }, 2500);
@@ -367,7 +373,7 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
     return () => clearTimeout(id);
   }, [fullscreen]);
 
-  return <div ref={ref} className={fullscreen ? "w-full h-full" : "w-full h-[360px] md:h-[460px] rounded-xl overflow-hidden border border-slate-100"} />;
+  return <div ref={ref} className={fullscreen ? "w-full h-full relative isolate" : "w-full h-[360px] md:h-[460px] rounded-xl overflow-hidden border border-slate-100 relative isolate"} />;
 });
 
 
