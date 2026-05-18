@@ -17,7 +17,7 @@ const POPULAR_QUERIES = ['Парацетамол', 'Нурофен', 'Витам
 const TRUST_SIGNALS = [
   { icon: ShieldCheck, text: 'Более 2000 аптек-партнёров в Москве и СПб' },
   { icon: Pill, text: 'Более 23 000 препаратов в каталоге' },
-  { icon: Building2, text: '18+ аптечных сетей по всей России' },
+  { icon: Building2, text: '14+ аптечных сетей по всей России' },
   { icon: Map, text: 'Цены и наличие на интерактивной карте' },
   { icon: Sparkles, text: 'Бесплатно и без регистрации' },
 ];
