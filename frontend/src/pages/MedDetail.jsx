@@ -657,12 +657,16 @@ export default function MedDetail() {
 
           {minPrice !== null && (
             <div className="mt-6 bg-emerald-50/60 border border-emerald-100 rounded-xl p-5">
-              <div className="flex items-end gap-4">
-                <div>
-                  <div className="text-xs text-emerald-800/80">Минимальная цена в {city.inLoc}</div>
-                  <div className="text-3xl font-extrabold text-emerald-700">{minPrice} ₽</div>
-                </div>
-                <div className="text-sm text-slate-600 pb-1">до {maxPrice} ₽ · в {totalPharmacyCount} аптеках</div>
+              <div className="text-xs text-emerald-800/80">Минимальная цена в {city.inLoc}</div>
+              <div className="text-3xl font-extrabold text-emerald-700 whitespace-nowrap">
+                {minPrice}&nbsp;₽
+              </div>
+              <div className="text-sm text-slate-600 mt-1">
+                {minPrice !== maxPrice ? (
+                  <>от&nbsp;{minPrice}&nbsp;₽ до&nbsp;{maxPrice}&nbsp;₽ · в&nbsp;{totalPharmacyCount}&nbsp;аптеках</>
+                ) : (
+                  <>в&nbsp;{totalPharmacyCount}&nbsp;аптеках</>
+                )}
               </div>
               <p className="legal-band mt-3">Сведения о ценах и остатках носят справочный характер. Не является публичной офертой.</p>
             </div>
