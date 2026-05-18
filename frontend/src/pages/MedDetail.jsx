@@ -674,7 +674,6 @@ export default function MedDetail() {
                   <>в&nbsp;{totalPharmacyCount}&nbsp;аптеках</>
                 )}
               </div>
-              <p className="legal-band mt-3">Сведения о ценах и остатках носят справочный характер. Не является публичной офертой.</p>
             </div>
           )}
 
@@ -1001,9 +1000,6 @@ export default function MedDetail() {
                 <p className="text-sm text-slate-700 leading-relaxed">{med.enrichment.how_to_take}</p>
               </div>
             )}
-            <p className="hidden md:block mt-5 text-xs text-slate-500 italic">
-              Справочная информация. {med.enrichment.disclaimer || 'Имеются противопоказания. Перед применением проконсультируйтесь с врачом.'}
-            </p>
           </div>
         </section>
       )}
@@ -1016,10 +1012,10 @@ export default function MedDetail() {
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 flex items-start gap-3">
           <ShieldAlert className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
           <div className="text-sm text-amber-900 leading-relaxed">
-            <strong>Имеются противопоказания.</strong> Информация на странице носит
-            справочный характер и не является рекламой лекарственного препарата или
-            рекомендацией к применению. Перед применением необходимо ознакомиться с
-            инструкцией по применению и проконсультироваться со специалистом.
+            <strong>Имеются противопоказания.</strong> Перед применением проконсультируйтесь
+            со специалистом и ознакомьтесь с инструкцией по применению. Цены и наличие
+            в аптеках — справочная информация, не публичная оферта и не реклама
+            лекарственного препарата.
           </div>
         </div>
       </section>
