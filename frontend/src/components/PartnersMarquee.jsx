@@ -13,14 +13,14 @@ function initials(name) {
 
 function Item({ name }) {
   return (
-    <div className="group shrink-0 flex items-center gap-2.5 whitespace-nowrap cursor-default px-4">
-      <div className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-400 shrink-0 group-hover:bg-emerald-50 group-hover:border-emerald-200 group-hover:text-emerald-600 transition-colors">
+    <div className="group shrink-0 flex items-center gap-4 md:gap-2.5 whitespace-nowrap cursor-default px-6 md:px-4">
+      <div className="w-10 h-10 md:w-7 md:h-7 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-[15px] md:text-[10px] font-bold text-slate-400 shrink-0 group-hover:bg-emerald-50 group-hover:border-emerald-200 group-hover:text-emerald-600 transition-colors">
         {initials(name)}
       </div>
-      <span className="text-[13px] font-semibold text-slate-600 group-hover:text-emerald-600 transition-colors">
+      <span className="text-[19px] md:text-[13px] font-semibold text-slate-600 group-hover:text-emerald-600 transition-colors">
         {name}
       </span>
-      <span className="text-slate-200 text-base select-none ml-2">·</span>
+      <span className="text-slate-200 text-2xl md:text-base select-none ml-3 md:ml-2">·</span>
     </div>
   );
 }
@@ -47,8 +47,8 @@ export default function PartnersMarquee() {
   }, []);
 
   return (
-    <section className="relative py-8 md:py-10">
-      <div className="max-w-7xl mx-auto px-4 mb-5 flex items-center justify-between">
+    <section className="relative py-12 md:py-10">
+      <div className="max-w-7xl mx-auto px-4 mb-7 md:mb-5 flex items-center justify-between">
         <h2 className="font-extrabold text-slate-900 text-xl md:text-2xl tracking-tight" style={{ fontFamily: "'Manrope', sans-serif" }}>
           Наши партнёры
         </h2>
