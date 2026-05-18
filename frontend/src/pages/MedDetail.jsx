@@ -238,16 +238,32 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
       const esc = (str) => String(str ?? '').replace(/[&<>"']/g, ch => (
         { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch]
       ));
-      const popupContent = ({ title, address, hours, phone, price, route }) => {
+      // Парсим hours по запятой/точке-с-запятой — каждый кусок на свою строку.
+      // 'ПН-ПТ с 08:00 до 22:00, СБ-ВС с 09:00 до 22:00' -> 2 строки.
+      const splitHours = (h) => {
+        if (!h) return [];
+        return String(h).split(/[,;·]\s*/).map(s => s.trim()).filter(Boolean);
+      };
+      const popupContent = ({ title, address, hours, phone, price, lat, lng }) => {
         const phoneClean = (phone || '').replace(/[^+\d]/g, '');
+        const hoursLines = splitHours(hours);
+        // Координаты для deep-link'ов.
+        // Я.Карты: rtext=~LAT,LNG;  2GIS: routeSearch/.../to/LNG,LAT (порядок обратный).
+        const yandexApp = `yandexmaps://build_route_on_map?lat_to=${lat}&lon_to=${lng}`;
+        const yandexWeb = `https://yandex.ru/maps/?rtext=~${lat}%2C${lng}&rtt=auto&z=15`;
+        const dgisApp   = `dgis://2gis.ru/routeSearch/rsType/car/to/${lng},${lat}`;
+        const dgisWeb   = `https://2gis.ru/routeSearch/rsType/car/to/${lng},${lat}/go`;
         return [
           '<div class="ymap-popup">',
           `<div class="ymap-popup__title">${esc(title)}</div>`,
-          address ? `<div class="ymap-popup__row">📍 ${esc(address)}</div>` : '',
-          hours   ? `<div class="ymap-popup__row">🕒 ${esc(hours)}</div>`   : '',
+          address ? `<div class="ymap-popup__row">📍 <span>${esc(address)}</span></div>` : '',
+          hoursLines.length ? `<div class="ymap-popup__row">🕒 <span>${hoursLines.map(esc).join('<br>')}</span></div>` : '',
           phone   ? `<div class="ymap-popup__row">📞 <a href="tel:${esc(phoneClean)}">${esc(phone)}</a></div>` : '',
           price != null ? `<div class="ymap-popup__price">${esc(price)} ₽</div>` : '',
-          route ? `<a class="ymap-popup__route" href="${esc(route)}" target="_blank" rel="noopener noreferrer">Маршрут →</a>` : '',
+          '<div class="ymap-popup__routes">',
+            `<button type="button" class="ymap-popup__route ymap-popup__route--ya" data-app="${esc(yandexApp)}" data-web="${esc(yandexWeb)}">Я.Карты</button>`,
+            `<button type="button" class="ymap-popup__route ymap-popup__route--dgis" data-app="${esc(dgisApp)}" data-web="${esc(dgisWeb)}">2GIS</button>`,
+          '</div>',
           '</div>',
         ].join('');
       };
@@ -263,7 +279,8 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
           hours: ph.hours,
           phone: ph.phone,
           price: pr.price,
-          route: `https://yandex.ru/maps/?rtext=~${ph.lat}%2C${ph.lng}&rtt=auto&z=15`,
+          lat: ph.lat,
+          lng: ph.lng,
         }), { maxWidth: 280, autoPan: true });
         m.on('click', () => { onSelect && onSelect(ph.id); });
         cluster.addLayer(m);
@@ -280,7 +297,8 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
             hours: store.is_24h ? 'Круглосуточно' : store.hours,
             phone: store.phone,
             price: gorzdravPrice,
-            route: `https://yandex.ru/maps/?rtext=~${store.lat}%2C${store.lng}&rtt=auto&z=15`,
+            lat: store.lat,
+            lng: store.lng,
           }), { maxWidth: 280, autoPan: true });
           m.on('click', () => { onSelect && onSelect('gorzdrav_' + store.store_id); });
           cluster.addLayer(m);
@@ -290,6 +308,29 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
       map.invalidateSize();
       map.setView([lat, lng], 11, { animate: false });
       map.addLayer(cluster);
+
+      // Делегированный клик на кнопки маршрута внутри popup'ов:
+      // пробуем открыть приложение через app-scheme, через 800мс
+      // (если страница ещё в foreground) — fallback на веб.
+      const onPopupClick = (e) => {
+        const btn = e.target.closest && e.target.closest('.ymap-popup__route');
+        if (!btn) return;
+        e.preventDefault();
+        const app = btn.getAttribute('data-app');
+        const web = btn.getAttribute('data-web');
+        if (!app || !web) return;
+        const t0 = Date.now();
+        // Пробуем app-scheme через невидимый iframe (не вызывает alert,
+        // если scheme не поддерживается на iOS/Android Chrome).
+        window.location.href = app;
+        setTimeout(() => {
+          // Если за 800мс страница не ушла в background — приложение не открылось.
+          if (Date.now() - t0 < 1500 && !document.hidden) {
+            window.open(web, '_blank', 'noopener,noreferrer');
+          }
+        }, 800);
+      };
+      ref.current.addEventListener('click', onPopupClick);
       // userMoved отслеживаем ТОЛЬКО по реальному pointerdown (не по leaflet-событиям,
       // т.к. setView сам триггерит zoomstart и блокировал retry).
       let userMoved = false;

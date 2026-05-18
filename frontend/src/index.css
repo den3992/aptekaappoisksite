@@ -218,12 +218,51 @@ code {
   font-weight: 800;
   color: #047857;
 }
+
+
+
+/* Cluster bubbles на карте препаратов. Раньше стиль был только на проде
+   (вне git), после ребилда контейнера слетел. Возвращаем явно. */
+.ymap-cluster {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #10b981;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Две кнопки маршрута (Я.Карты + 2GIS) в одну строку. */
+.ymap-popup__routes {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
 .ymap-popup__route {
-  display: inline-block;
-  margin-top: 8px;
+  flex: 1;
+  text-align: center;
+  padding: 7px 10px;
+  border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
-  color: #047857;
-  text-decoration: none;
+  border: 1px solid;
+  background: #fff;
+  cursor: pointer;
 }
-.ymap-popup__route:active { color: #065f46; }
+.ymap-popup__route--ya {
+  border-color: #fde047;
+  color: #a16207;
+}
+.ymap-popup__route--ya:active { background: #fef9c3; }
+.ymap-popup__route--dgis {
+  border-color: #86efac;
+  color: #047857;
+}
+.ymap-popup__route--dgis:active { background: #dcfce7; }
