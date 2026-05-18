@@ -247,6 +247,7 @@ code {
 }
 .ymap-popup__route {
   flex: 1;
+  text-decoration: none;
   text-align: center;
   padding: 7px 10px;
   border-radius: 8px;
