@@ -15,6 +15,24 @@ export function register(config) {
   const publicUrl = new URL(process.env.PUBLIC_URL || '', window.location.href);
   if (publicUrl.origin !== window.location.origin) return;
 
+  // Авто-перезагрузка, когда новый SW взял управление страницей.
+  // Без этого юзер видит старый bundle до второй ручной перезагрузки.
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    // Защита от reload-loop: если уже перезагружались за последние 10с — пропускаем.
+    try {
+      const last = parseInt(sessionStorage.getItem('sw_reload_ts') || '0', 10);
+      if (Date.now() - last < 10000) return;
+      sessionStorage.setItem('sw_reload_ts', String(Date.now()));
+    } catch (e) {}
+    // Защита от потери данных: не перезагружаем, если юзер активно вводит в форме.
+    const ae = document.activeElement;
+    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA') && ae.value) return;
+    refreshing = true;
+    window.location.reload();
+  });
+
   window.addEventListener('load', () => {
     const swUrl = `${process.env.PUBLIC_URL || ''}/service-worker.js`;
 
