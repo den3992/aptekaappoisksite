@@ -80,13 +80,17 @@ export default function PartnersMarquee() {
         started = true;
       }
       if (started && cw > 0) {
-        if (!pausedRef.current) {
+        if (pausedRef.current) {
+          // Пока юзер свайпает — НЕ перезаписываем scrollLeft, он его двигает сам
+          // Просто синхронизируем нашу позицию с его, чтобы при resume двигалось дальше
+          pos = host.scrollLeft;
+        } else {
           pos += SPEED * dt;
           if (pos >= cw * 2) pos -= cw;
+          else if (pos < cw * 0.5) pos += cw;
+          const target = Math.round(pos);
+          if (host.scrollLeft !== target) host.scrollLeft = target;
         }
-        // Округляем именно в момент применения — точность копится в pos
-        const target = Math.round(pos);
-        if (host.scrollLeft !== target) host.scrollLeft = target;
       }
       raf = requestAnimationFrame(tick);
     };
