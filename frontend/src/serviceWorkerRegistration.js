@@ -16,17 +16,19 @@ export function register(config) {
   if (publicUrl.origin !== window.location.origin) return;
 
   // Авто-перезагрузка, когда новый SW взял управление страницей.
-  // Без этого юзер видит старый bundle до второй ручной перезагрузки.
+  // ВАЖНО: срабатывает ТОЛЬКО при обновлении SW (когда контроллер уже был),
+  // НЕ при первой установке — иначе на первом заходе на сайт страница
+  // перезагружается 2-3 раза подряд и юзер видит "зависание".
+  const hadController = !!navigator.serviceWorker.controller;
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController) return; // первая установка — не перезагружаемся
     if (refreshing) return;
-    // Защита от reload-loop: если уже перезагружались за последние 10с — пропускаем.
     try {
       const last = parseInt(sessionStorage.getItem('sw_reload_ts') || '0', 10);
       if (Date.now() - last < 10000) return;
       sessionStorage.setItem('sw_reload_ts', String(Date.now()));
     } catch (e) {}
-    // Защита от потери данных: не перезагружаем, если юзер активно вводит в форме.
     const ae = document.activeElement;
     if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA') && ae.value) return;
     refreshing = true;
