@@ -72,6 +72,15 @@ export async function fetchGorzdravStores(city = 'msk') {
   return data;
 }
 
+// Per-store full info — lazy-loaded on marker click; cached forever in-memory.
+let _gorzdravStoreDetailCache = {};
+export async function fetchGorzdravStoreDetail(storeId) {
+  if (_gorzdravStoreDetailCache[storeId]) return _gorzdravStoreDetailCache[storeId];
+  const { data } = await http.get('/gorzdrav/stores/' + storeId);
+  _gorzdravStoreDetailCache[storeId] = data;
+  return data;
+}
+
 // Static helpers to keep current presentational components working
 // without major refactors.
 export function findPharmacyById(pharmacies, id) {

@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, MapPin, Phone, Clock, Pill, ShieldAlert, Tag, Navigation, PackageX, Maximize2, Minimize2 } from 'lucide-react';
 import { useCity } from '../context/CityContext';
 import { Drawer as VaulDrawer } from 'vaul';
-import { fetchMed, fetchAnalogs, fetchPharmacies, fetchCategories, fetchGorzdravStores } from '../api/client';
+import { fetchMed, fetchAnalogs, fetchPharmacies, fetchCategories, fetchGorzdravStores, fetchGorzdravStoreDetail } from '../api/client';
 import SEOHead from '../components/SEOHead';
 import { medSEO } from '../seo';
 // map: Leaflet + OSM (no API key needed)
@@ -293,16 +293,34 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
         gorzdravStores.forEach(store => {
           if (!store.lat || !store.lng) return;
           const m = L.marker([store.lat, store.lng], { icon: pillIcon(gorzdravPrice) });
+          // Лёгкий placeholder-popup (название + цена + кнопки маршрута).
+          // Адрес, часы, телефон — догружаются по клику и подменяют popup.
           m.bindPopup(popupContent({
-            title: store.full_name || ('Горздрав ' + (store.name || '')),
-            address: store.address,
-            hours: store.is_24h ? 'Круглосуточно' : store.hours,
-            phone: store.phone,
+            title: 'Горздрав',
+            address: null,
+            hours: null,
+            phone: null,
             price: gorzdravPrice,
             lat: store.lat,
             lng: store.lng,
           }), { maxWidth: 280, autoPan: true });
-          m.on('click', () => { onSelect && onSelect('gorzdrav_' + store.store_id); });
+          m.on('click', () => {
+            onSelect && onSelect('gorzdrav_' + store.store_id);
+            // Lazy-load полной инфы про эту аптеку и подменяем содержимое popup'а.
+            fetchGorzdravStoreDetail(store.store_id).then(full => {
+              const popup = m.getPopup();
+              if (!popup) return;
+              popup.setContent(popupContent({
+                title: full.full_name || 'Горздрав',
+                address: full.address,
+                hours: full.is_24h ? 'Круглосуточно' : full.hours,
+                phone: full.phone,
+                price: gorzdravPrice,
+                lat: full.lat || store.lat,
+                lng: full.lng || store.lng,
+              }));
+            }).catch(() => {});
+          });
           cluster.addLayer(m);
         });
       }
@@ -435,13 +453,18 @@ export default function MedDetail() {
     let cancelled = false;
     setLoading(true);
     setNotFound(false);
-    Promise.all([fetchMed(slug), fetchAnalogs(slug, 8), fetchPharmacies(city.id), fetchGorzdravStores(city.id)])
-      .then(([m, a, ph, gzStores]) => {
+    // Горздрав-аптек 1937 штук — грузим параллельно, но НЕ блокируем рендер.
+    // Карта появится сразу же с партнёрскими маркерами, кружки Горздрав
+    // дорисуются как только данные приедут (~100-300мс).
+    fetchGorzdravStores(city.id)
+      .then(gz => { if (!cancelled) setGorzdravStores(gz); })
+      .catch(() => {});
+    Promise.all([fetchMed(slug), fetchAnalogs(slug, 8), fetchPharmacies(city.id)])
+      .then(([m, a, ph]) => {
         if (cancelled) return;
         setMed(m);
         setAnalogs(a);
         setPharmacies(ph);
-        setGorzdravStores(gzStores);
       })
       .catch((e) => {
         if (!cancelled) {

@@ -11,7 +11,7 @@ import math
 from typing import Optional, List
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import Response, APIRouter, Query, HTTPException
 from pydantic import BaseModel, Field
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
@@ -122,14 +122,34 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         return ph
 
     @router.get("/gorzdrav/stores")
-    async def gorzdrav_stores(city: str = Query("msk")):
-        """Список всех аптек Горздрав с координатами для отображения на карте."""
+    async def gorzdrav_stores(city: str = Query("msk"), response: Response = None):
+        """Лёгкий список Горздрав-аптек для отображения маркеров на карте.
+        Возвращает только координаты + минимум данных для маркера.
+        Полная инфо (адрес, телефон, часы) — через /gorzdrav/stores/{store_id}."""
         cursor = db.gorzdrav_stores.find(
             {"city": city, "lat": {"$ne": None}, "lng": {"$ne": None}},
-            {"_id": 0, "store_id": 1, "full_name": 1, "lat": 1, "lng": 1,
-             "address": 1, "phone": 1, "hours": 1, "is_24h": 1},
+            {"_id": 0, "store_id": 1, "lat": 1, "lng": 1},
         )
-        return [doc async for doc in cursor]
+        items = [doc async for doc in cursor]
+        if response is not None:
+            # Список меняется редко (раз в сутки при cron-парсинге),
+            # поэтому кэшируем у клиента и на CDN на 10 минут.
+            response.headers["Cache-Control"] = "public, max-age=600, s-maxage=600"
+        return items
+
+    @router.get("/gorzdrav/stores/{store_id}")
+    async def gorzdrav_store_detail(store_id: str, response: Response = None):
+        """Полная инфо по одной Горздрав-аптеке. Запрашивается по клику на маркер."""
+        doc = await db.gorzdrav_stores.find_one(
+            {"store_id": store_id},
+            {"_id": 0, "store_id": 1, "full_name": 1, "address": 1,
+             "phone": 1, "hours": 1, "is_24h": 1, "lat": 1, "lng": 1},
+        )
+        if not doc:
+            raise HTTPException(404, "Store not found")
+        if response is not None:
+            response.headers["Cache-Control"] = "public, max-age=600"
+        return doc
 
     # ----- Search -----
 
