@@ -65,8 +65,10 @@ export default function PartnersMarquee() {
     const SPEED = 50;
     let last = performance.now();
     let raf = 0;
-    let pos = 0;            // наш точный sub-pixel аккумулятор
+    let pos = 0;
     let started = false;
+    let prevCw = 0;
+    let stableTicks = 0;
 
     const cycle = () => host.scrollWidth / 3;
 
@@ -74,15 +76,25 @@ export default function PartnersMarquee() {
       const dt = Math.min(50, now - last) / 1000;
       last = now;
       const cw = cycle();
-      if (!started && cw > 0) {
-        pos = cw;
-        host.scrollLeft = Math.round(pos);
-        started = true;
+
+      // Ждём пока scrollWidth перестанет меняться (картинки догрузились).
+      // Только после этого стартуем — иначе будут "скачки" из-за safety-checks
+      // при росте cw в первые секунды после загрузки.
+      if (!started) {
+        if (cw > 0 && Math.abs(cw - prevCw) < 1) stableTicks++;
+        else stableTicks = 0;
+        prevCw = cw;
+        if (stableTicks >= 5 && cw > 0) {
+          pos = cw;
+          host.scrollLeft = Math.round(pos);
+          started = true;
+        }
+        raf = requestAnimationFrame(tick);
+        return;
       }
-      if (started && cw > 0) {
+
+      if (cw > 0) {
         if (pausedRef.current) {
-          // Пока юзер свайпает — НЕ перезаписываем scrollLeft, он его двигает сам
-          // Просто синхронизируем нашу позицию с его, чтобы при resume двигалось дальше
           pos = host.scrollLeft;
         } else {
           pos += SPEED * dt;
