@@ -31,13 +31,11 @@ function Item({ name, logo }) {
           loading="lazy"
           className="w-10 h-10 md:w-7 md:h-7 rounded-lg object-contain bg-white border border-slate-200 shrink-0 p-0.5"
           onError={(e) => {
-            // Если файл по какой-то причине не загрузился — заменяем
-            // изображение на текстовый квадратик с инициалами.
             const el = e.currentTarget;
-            const fallback = document.createElement('div');
-            fallback.className = 'w-10 h-10 md:w-7 md:h-7 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-[15px] md:text-[10px] font-bold text-slate-400 shrink-0';
-            fallback.textContent = initials(name);
-            el.replaceWith(fallback);
+            const fb = document.createElement('div');
+            fb.className = 'w-10 h-10 md:w-7 md:h-7 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-[15px] md:text-[10px] font-bold text-slate-400 shrink-0';
+            fb.textContent = initials(name);
+            el.replaceWith(fb);
           }}
         />
       ) : (
@@ -54,24 +52,66 @@ function Item({ name, logo }) {
 }
 
 export default function PartnersMarquee() {
-  // Тройной список: средняя копия всегда внутри viewport, не пересекает
-  // границы overflow:hidden — устраняет iOS Safari баг с tile-rendering
-  // на краях клиппинг-региона.
+  // Тройной список — обеспечивает бесшовный loop при телепорте scrollLeft
   const list = [...PARTNERS, ...PARTNERS, ...PARTNERS];
-  const trackRef = useRef(null);
+  const hostRef = useRef(null);
+  const pausedRef = useRef(false);
 
   useEffect(() => {
-    const track = trackRef.current;
-    if (!track) return;
-    const apply = () => {
-      const cycle = track.scrollWidth / 3;
-      const speed = window.innerWidth < 640 ? 50 : 40; // px/s
-      track.style.setProperty('--marquee-cycle', cycle + 'px');
-      track.style.animationDuration = (cycle / speed) + 's';
+    const host = hostRef.current;
+    if (!host) return;
+
+    // Скорость в пикселях за секунду
+    const SPEED = 50;
+    let last = performance.now();
+    let raf = 0;
+    let pos = 0;            // наш точный sub-pixel аккумулятор
+    let started = false;
+
+    const cycle = () => host.scrollWidth / 3;
+
+    const tick = (now) => {
+      const dt = Math.min(50, now - last) / 1000;
+      last = now;
+      const cw = cycle();
+      if (!started && cw > 0) {
+        pos = cw;
+        host.scrollLeft = Math.round(pos);
+        started = true;
+      }
+      if (started && cw > 0) {
+        if (!pausedRef.current) {
+          pos += SPEED * dt;
+          if (pos >= cw * 2) pos -= cw;
+        }
+        // Округляем именно в момент применения — точность копится в pos
+        const target = Math.round(pos);
+        if (host.scrollLeft !== target) host.scrollLeft = target;
+      }
+      raf = requestAnimationFrame(tick);
     };
-    apply();
-    window.addEventListener('resize', apply);
-    return () => window.removeEventListener('resize', apply);
+    raf = requestAnimationFrame(tick);
+
+    // Pause при touch/mouseenter; resume при отпускании/уходе
+    const onPauseStart = () => { pausedRef.current = true; };
+    const onPauseEnd = () => { pausedRef.current = false; };
+    host.addEventListener('touchstart', onPauseStart, { passive: true });
+    host.addEventListener('touchend',   onPauseEnd,   { passive: true });
+    host.addEventListener('touchcancel',onPauseEnd,   { passive: true });
+    host.addEventListener('mouseenter', onPauseStart);
+    host.addEventListener('mouseleave', onPauseEnd);
+    const onResize = () => { /* cycle() пересчитается на следующем tick */ };
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      host.removeEventListener('touchstart', onPauseStart);
+      host.removeEventListener('touchend',   onPauseEnd);
+      host.removeEventListener('touchcancel',onPauseEnd);
+      host.removeEventListener('mouseenter', onPauseStart);
+      host.removeEventListener('mouseleave', onPauseEnd);
+      window.removeEventListener('resize', onResize);
+    };
   }, []);
 
   return (
@@ -86,8 +126,11 @@ export default function PartnersMarquee() {
         </span>
       </div>
 
-      <div className="overflow-hidden marquee-host">
-        <div ref={trackRef} className="marquee-track-v2 flex items-center">
+      <div
+        ref={hostRef}
+        className="marquee-native overflow-x-auto no-scrollbar"
+      >
+        <div className="flex items-center w-max">
           {list.map((p, i) => <Item key={i} name={p.name} logo={p.logo} />)}
         </div>
       </div>

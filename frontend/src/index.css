@@ -124,38 +124,17 @@ code {
 /* nice focus ring */
 .input-focus:focus-within { box-shadow: 0 0 0 4px rgba(14,159,110,.15); border-color: #0E9F6E; }
 
-/* Partners marquee v2 — CSS animation на тройном списке. Анимируем от
-   -cycle до -2*cycle: видимая область всегда показывает среднюю копию,
-   которая физически не пересекает границу overflow:hidden — это
-   обходит iOS Safari баг с tile-rendering на краях клиппинга. */
-.marquee-host {
-  /* Плавный fade по краям через mask-image. С тройным списком партнёров
-     видимая часть никогда не пересекает границу overflow:hidden — это
-     избегает старого iOS Safari бага, когда mask-image + animated transform
-     рандомно скрывал отдельные элементы. */
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 48px, #000 calc(100% - 48px), transparent 100%);
-          mask-image: linear-gradient(to right, transparent 0, #000 48px, #000 calc(100% - 48px), transparent 100%);
-}
-
-.marquee-track-v2 {
-  width: max-content;
-  will-change: transform;
-  -webkit-animation: marquee-v2 30s linear infinite;
-          animation: marquee-v2 30s linear infinite;
-  -webkit-transform: translate3d(calc(-1 * var(--marquee-cycle, 0px)), 0, 0);
-          transform: translate3d(calc(-1 * var(--marquee-cycle, 0px)), 0, 0);
-}
-.marquee-host:hover .marquee-track-v2 {
-  -webkit-animation-play-state: paused;
-          animation-play-state: paused;
-}
-@-webkit-keyframes marquee-v2 {
-  from { -webkit-transform: translate3d(calc(-1 * var(--marquee-cycle, 0px)), 0, 0); }
-  to   { -webkit-transform: translate3d(calc(-2 * var(--marquee-cycle, 0px)), 0, 0); }
-}
-@keyframes marquee-v2 {
-  from { transform: translate3d(calc(-1 * var(--marquee-cycle, 0px)), 0, 0); }
-  to   { transform: translate3d(calc(-2 * var(--marquee-cycle, 0px)), 0, 0); }
+/* Partners marquee — native horizontal scroll with rAF auto-advance.
+   Avoids CSS transform compositing entirely; browser handles partial
+   tile rendering at edges correctly on all mobile browsers. */
+.marquee-native {
+  scroll-behavior: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Плавное затухание на краях через mask-image. Применяется к контейнеру,
+     внутри которого scrollLeft — не пересекает границу transform-композитинга,
+     поэтому iOS Safari рендерит корректно. */
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%);
+          mask-image: linear-gradient(to right, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%);
 }
 
 @keyframes shimmer {
