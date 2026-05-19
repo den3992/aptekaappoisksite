@@ -81,6 +81,18 @@ export async function fetchGorzdravStoreDetail(storeId) {
   return data;
 }
 
+// Bulk fetch — для динамического списка "видно на карте".
+// Возвращает только тех, кого ещё нет в кеше; уже закэшированных не запрашивает.
+export async function fetchGorzdravStoresBulk(ids) {
+  if (!ids || ids.length === 0) return [];
+  const missing = ids.filter(id => !_gorzdravStoreDetailCache[id]);
+  if (missing.length > 0) {
+    const { data } = await http.get('/gorzdrav/stores/bulk', { params: { ids: missing.join(',') } });
+    data.forEach(d => { _gorzdravStoreDetailCache[d.store_id] = d; });
+  }
+  return ids.map(id => _gorzdravStoreDetailCache[id]).filter(Boolean);
+}
+
 // Static helpers to keep current presentational components working
 // without major refactors.
 export function findPharmacyById(pharmacies, id) {

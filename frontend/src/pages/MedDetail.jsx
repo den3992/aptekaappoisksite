@@ -1,10 +1,10 @@
 import { formatName, formatManufacturer } from "../utils/text";
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, MapPin, Phone, Clock, Pill, ShieldAlert, Tag, Navigation, PackageX, Maximize2, Minimize2 } from 'lucide-react';
 import { useCity } from '../context/CityContext';
 import { Drawer as VaulDrawer } from 'vaul';
-import { fetchMed, fetchAnalogs, fetchPharmacies, fetchCategories, fetchGorzdravStores, fetchGorzdravStoreDetail } from '../api/client';
+import { fetchMed, fetchAnalogs, fetchPharmacies, fetchCategories, fetchGorzdravStores, fetchGorzdravStoreDetail, fetchGorzdravStoresBulk } from '../api/client';
 import SEOHead from '../components/SEOHead';
 import { medSEO } from '../seo';
 // map: Leaflet + OSM (no API key needed)
@@ -148,12 +148,14 @@ function sortPacks(items) {
   });
 }
 
-const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, gorzdravStores = [], gorzdravPrice = null, cityCenter, onSelect, selected, fullscreen = false, onInteract }, externalRef) {
+const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, gorzdravStores = [], gorzdravPrice = null, cityCenter, onSelect, selected, fullscreen = false, onInteract, onViewportChange }, externalRef) {
   const ref = useRef(null);
   const mapRef = useRef(null);
   const tileLayerRef = useRef(null);
   const onInteractRef = useRef(onInteract);
   useEffect(() => { onInteractRef.current = onInteract; }, [onInteract]);
+  const onViewportChangeRef = useRef(onViewportChange);
+  useEffect(() => { onViewportChangeRef.current = onViewportChange; }, [onViewportChange]);
 
   React.useImperativeHandle(externalRef, () => ({
     centerOn: (lat, lng, zoom = 14) => {
@@ -329,6 +331,27 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
       map.setView([lat, lng], 11, { animate: false });
       map.addLayer(cluster);
 
+      // Динамический список "видно на карте": при каждом moveend (debounce 300мс)
+      // даём родителю текущий центр и bounds. Родитель сам пересчитывает,
+      // какие 15 аптек попадают в viewport и сортирует.
+      let viewportTimer = null;
+      const fireViewport = () => {
+        if (!onViewportChangeRef.current) return;
+        const c = map.getCenter();
+        const b = map.getBounds();
+        onViewportChangeRef.current({
+          center: { lat: c.lat, lng: c.lng },
+          bounds: { south: b.getSouth(), north: b.getNorth(), west: b.getWest(), east: b.getEast() },
+        });
+      };
+      const onMoveEnd = () => {
+        clearTimeout(viewportTimer);
+        viewportTimer = setTimeout(fireViewport, 300);
+      };
+      map.on('moveend zoomend', onMoveEnd);
+      // Первый раз — сразу
+      fireViewport();
+
       // Делегированный клик на кнопки маршрута. Стратегия:
       //   1. window.location.href = app-scheme — iOS покажет диалог
       //      "Открыть в Яндекс.Карты?". Если юзер согласится — приложение
@@ -409,6 +432,59 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
 });
 
 
+// Карточка в списке "Видно на карте" — общая для bottom-sheet и блока под картой.
+function ViewportListItem({ item, onClick, selected = false }) {
+  const ya = `https://yandex.ru/maps/?rtext=~${item.lat}%2C${item.lng}&rtt=auto&z=15`;
+  const dgis = `https://2gis.ru/routeSearch/rsType/car/to/${item.lng},${item.lat}/go`;
+  const hoursLines = item.hours ? String(item.hours).split(/[,;·]\s*/).map(s => s.trim()).filter(Boolean) : [];
+  const phoneClean = (item.phone || '').replace(/[^+\d]/g, '');
+  return (
+    <div
+      className={`px-4 py-3 active:bg-slate-50 transition ${selected ? 'bg-emerald-50/60' : ''}`}
+      data-testid="viewport-list-item"
+    >
+      <button type="button" onClick={onClick} className="w-full text-left flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="font-semibold text-slate-900 text-sm leading-tight">{item.name || (item.source === 'gorzdrav' ? 'Горздрав' : 'Аптека')}</div>
+          {item.address && (
+            <div className="text-[11px] text-slate-500 mt-0.5 flex items-start gap-1">
+              <MapPin className="w-3 h-3 shrink-0 mt-0.5" />
+              <span>{item.address}</span>
+            </div>
+          )}
+          {hoursLines.length > 0 && (
+            <div className="text-[11px] text-slate-500 mt-0.5 flex items-start gap-1">
+              <Clock className="w-3 h-3 shrink-0 mt-0.5" />
+              <span>{hoursLines.map((h,i) => <React.Fragment key={i}>{i>0 && <br/>}{h}</React.Fragment>)}</span>
+            </div>
+          )}
+          {item.phone && (
+            <div className="text-[11px] mt-0.5 flex items-center gap-1">
+              <Phone className="w-3 h-3 shrink-0 text-emerald-700" />
+              <a href={`tel:${phoneClean}`} onClick={(e) => e.stopPropagation()} className="text-emerald-700 font-medium">{item.phone}</a>
+            </div>
+          )}
+        </div>
+        <div className="text-right shrink-0">
+          <div className="text-base font-bold text-emerald-700 leading-tight">{item.price} ₽</div>
+        </div>
+      </button>
+      <div className="mt-2 flex items-center gap-2">
+        <a
+          href={ya}
+          target="_blank" rel="noopener noreferrer"
+          className="inline-flex items-center justify-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded-md border border-yellow-300 text-yellow-800 active:bg-yellow-50"
+        >Я.Карты</a>
+        <a
+          href={dgis}
+          target="_blank" rel="noopener noreferrer"
+          className="inline-flex items-center justify-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded-md border border-emerald-300 text-emerald-800 active:bg-emerald-50"
+        >2GIS</a>
+      </div>
+    </div>
+  );
+}
+
 export default function MedDetail() {
   const { slug, city: cityParam } = useParams();
   const { city, cities, setCity } = useCity();
@@ -434,6 +510,10 @@ export default function MedDetail() {
   const [analogs, setAnalogs] = useState([]);
   const [pharmacies, setPharmacies] = useState([]);
   const [gorzdravStores, setGorzdravStores] = useState([]);
+  // Динамический список аптек, видимых на карте + 15 ближайших к центру.
+  // Обновляется при каждом moveend/zoomend (debounce внутри PriceMap).
+  const [viewportList, setViewportList] = useState([]);
+  const lastViewportRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [selectedPack, setSelectedPack] = useState(null);
   const [notFound, setNotFound] = useState(false);
@@ -572,6 +652,102 @@ export default function MedDetail() {
     return [...result, ...gorzdrav].sort((a, b) => a.price - b.price);
   }, [med, city.id, packs, activePack]);
 
+  // Гаверсин-расстояние в км между двумя точками.
+  const haversine = (lat1, lng1, lat2, lng2) => {
+    const R = 6371;
+    const toRad = (d) => (d * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
+    return 2 * R * Math.asin(Math.sqrt(a));
+  };
+
+  // Обработчик изменения viewport — вычисляет 15 ближайших аптек в bbox,
+  // сортирует по цене (asc), при равной цене — по расстоянию (asc).
+  // Рефы на актуальные данные — чтобы коллбэк не пересоздавался и не рвал
+  // подписку у PriceMap, но всегда читал свежие prices/pharmacies/stores.
+  const dataRef = useRef({ prices, pharmacies, gorzdravStores });
+  useEffect(() => { dataRef.current = { prices, pharmacies, gorzdravStores }; }, [prices, pharmacies, gorzdravStores]);
+
+  const onMapViewportChange = useCallback(async ({ center, bounds }) => {
+    lastViewportRef.current = { center, bounds };
+    const { prices, pharmacies, gorzdravStores } = dataRef.current;
+    const gzPrice = prices.find(p => p.pharmacy_id === 'gorzdrav')?.price ?? null;
+
+    // 1. Партнёрские аптеки в bbox + у них есть цена для активной упаковки.
+    const partnerEntries = prices
+      .map(pr => {
+        if (pr.pharmacy_id === 'gorzdrav') return null;
+        const ph = pharmacies.find(p => p.id === pr.pharmacy_id);
+        if (!ph || !ph.lat || !ph.lng) return null;
+        if (ph.lat < bounds.south || ph.lat > bounds.north) return null;
+        if (ph.lng < bounds.west  || ph.lng > bounds.east)  return null;
+        return {
+          key: 'partner_' + ph.id,
+          source: 'partner',
+          ph_id: ph.id,
+          name: ph.name,
+          address: ph.address,
+          hours: ph.hours,
+          phone: ph.phone,
+          lat: ph.lat,
+          lng: ph.lng,
+          price: pr.price,
+          distance: haversine(center.lat, center.lng, ph.lat, ph.lng),
+        };
+      })
+      .filter(Boolean);
+
+    // 2. Горздрав-аптеки в bbox (если цена есть).
+    const gzCandidates = gzPrice !== null
+      ? gorzdravStores
+          .filter(s => s.lat >= bounds.south && s.lat <= bounds.north && s.lng >= bounds.west && s.lng <= bounds.east)
+          .map(s => ({
+            key: 'gorzdrav_' + s.store_id,
+            source: 'gorzdrav',
+            store_id: s.store_id,
+            lat: s.lat,
+            lng: s.lng,
+            price: gzPrice,
+            distance: haversine(center.lat, center.lng, s.lat, s.lng),
+          }))
+      : [];
+
+    // 3. Объединяем, сортируем (price asc, distance asc), берём топ-15.
+    const combined = [...partnerEntries, ...gzCandidates]
+      .sort((a, b) => a.price - b.price || a.distance - b.distance)
+      .slice(0, 15);
+
+    // 4. Догружаем полные данные для тех Горздрав, которых ещё нет в детальной выдаче.
+    const gzIds = combined.filter(x => x.source === 'gorzdrav').map(x => x.store_id);
+    if (gzIds.length > 0) {
+      try {
+        const details = await fetchGorzdravStoresBulk(gzIds);
+        const byId = Object.fromEntries(details.map(d => [d.store_id, d]));
+        combined.forEach(item => {
+          if (item.source === 'gorzdrav') {
+            const d = byId[item.store_id];
+            if (d) {
+              item.name = d.full_name || 'Горздрав';
+              item.address = d.address;
+              item.hours = d.is_24h ? 'Круглосуточно' : d.hours;
+              item.phone = d.phone;
+            }
+          }
+        });
+      } catch (e) {}
+    }
+
+    setViewportList(combined);
+  }, []);
+
+  // Когда данные обновляются (gorzdravStores догрузились / поменялся pack / город) —
+  // пересчитываем список под текущий viewport.
+  useEffect(() => {
+    if (lastViewportRef.current) onMapViewportChange(lastViewportRef.current);
+  }, [prices, pharmacies, gorzdravStores, onMapViewportChange]);
+
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-16 text-center text-slate-500">Загрузка препарата…</div>
@@ -589,6 +765,7 @@ export default function MedDetail() {
   // не по фильтрованному prices. Используется, чтобы решить, показывать ли блок
   // аналогов на мобильной версии (показываем только если препарата вообще нет).
   const noAvailability = !((med?.prices_by_city?.[city.id] || []).length);
+
   const minPrice = prices.length ? Math.min(...prices.map(p => p.price)) : null;
   const maxPrice = prices.length ? Math.max(...prices.map(p => p.price)) : null;
   // For Gorzdrav entries qty = number of stores; for partner pharmacies count = 1 each.
@@ -827,6 +1004,7 @@ export default function MedDetail() {
               selected={selectedId}
               fullscreen={mapFullscreen}
               onInteract={() => setSnapPoint(0.25)}
+              onViewportChange={onMapViewportChange}
             />
           </div>
 
@@ -852,7 +1030,7 @@ export default function MedDetail() {
                     <div className="w-12 h-1.5 rounded-full bg-slate-400" style={{ minHeight: '6px' }} />
                   </div>
                   <div className="shrink-0 border-b border-slate-100 px-4 py-2 flex items-center justify-between">
-                    <div className="text-sm font-semibold text-slate-900">Аптеки рядом ({prices.length})</div>
+                    <div className="text-sm font-semibold text-slate-900">Видно на карте ({viewportList.length})</div>
                     <div className="text-xs text-slate-500">Сначала дешевле</div>
                   </div>
                   <div
@@ -860,43 +1038,18 @@ export default function MedDetail() {
                     className="flex-1 overflow-y-auto divide-y divide-slate-100 overscroll-contain"
                     style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 80px)', WebkitOverflowScrolling: 'touch' }}
                   >
-                    {prices.map(pr => {
-                      const ph = pharmacies.find(p => p.id === pr.pharmacy_id);
-                      if (!ph) return null;
-                      const isSel = selectedId === ph.id;
-                      return (
-                        <button
-                          key={pr.pharmacy_id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedId(ph.id);
-                            setSnapPoint(0.25);
-                            setTimeout(() => priceMapRef.current?.centerOn(ph.lat, ph.lng, 15), 300);
-                          }}
-                          className={`w-full text-left px-4 py-3 flex items-center gap-3 active:bg-slate-50 transition ${isSel ? 'bg-emerald-50/60' : ''}`}
-                          data-testid="map-sheet-pharmacy-item"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <div className="font-semibold text-slate-900 text-sm leading-tight truncate">{ph.name}</div>
-                            <div className="text-[11px] text-slate-500 mt-0.5 line-clamp-1 flex items-center gap-1">
-                              <MapPin className="w-3 h-3 shrink-0" /> {ph.address}{ph.metro && <span className="text-emerald-600"> · м. {ph.metro}</span>}
-                            </div>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <div className="text-base font-bold text-emerald-700 leading-tight">{pr.price} ₽</div>
-                            <a
-                              href={`https://yandex.ru/maps/?rtext=~${ph.lat}%2C${ph.lng}&rtt=auto&z=15`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-[11px] text-emerald-700 font-medium inline-flex items-center gap-0.5"
-                            >
-                              <Navigation className="w-3 h-3" /> Маршрут
-                            </a>
-                          </div>
-                        </button>
-                      );
-                    })}
+                    {viewportList.map(item => (
+                      <ViewportListItem
+                        key={item.key}
+                        item={item}
+                        onClick={() => {
+                          setSelectedId(item.key);
+                          setSnapPoint(0.25);
+                          setTimeout(() => priceMapRef.current?.centerOn(item.lat, item.lng, 15), 300);
+                        }}
+                        selected={selectedId === item.key}
+                      />
+                    ))}
                   </div>
                 </VaulDrawer.Content>
               </VaulDrawer.Portal>
@@ -905,102 +1058,34 @@ export default function MedDetail() {
         </section>
       )}
 
-      {/* Prices list */}
+      {/* Аптеки, видимые на карте — динамически обновляется при движении карты */}
       {prices.length > 0 && (
         <section className="mb-8 md:mb-12">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1 mb-3 md:mb-4">
             <h2 className="text-xl md:text-2xl font-bold text-slate-900">Цены в аптеках</h2>
-            <div className="text-xs md:text-sm text-slate-500">Сортировка: сначала дешевле</div>
+            <div className="text-xs md:text-sm text-slate-500">
+              {viewportList.length > 0
+                ? `15 ближайших к центру карты · сначала дешевле`
+                : 'Загрузка списка аптек…'}
+            </div>
           </div>
           <div className="bg-white border border-slate-100 rounded-xl divide-y divide-slate-100 overflow-hidden">
-            {prices.map(pr => {
-              const ph = pharmacies.find(p => p.id === pr.pharmacy_id);
-              if (!ph) return null;
-
-              // Special rendering for Gorzdrav (no address pin, shows store count)
-              if (ph.id === 'gorzdrav') {
-                return (
-                  <div key="gorzdrav" className="px-4 py-3 hover:bg-emerald-50/30 transition">
-                    <div className="sm:hidden">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <a href={ph.url} target="_blank" rel="noopener noreferrer" className="font-semibold text-slate-900 active:text-emerald-700 leading-tight block">{ph.name}</a>
-                          <div className="text-[11px] text-slate-500 mt-0.5 flex items-start gap-1"><MapPin className="w-3 h-3 mt-0.5 shrink-0" /><span>{ph.address}</span></div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <div className="text-lg font-bold text-emerald-700 leading-tight">{pr.price} ₽</div>
-                          <div className="text-[10px] text-slate-500">в наличии</div>
-                        </div>
-                      </div>
-                      <div className="mt-2.5 flex items-center gap-2">
-                        <a href={ph.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 h-9 rounded-lg border border-emerald-200 bg-emerald-50/50 text-emerald-700 active:bg-emerald-100 flex-1">
-                          <Navigation className="w-3.5 h-3.5" /> На сайте Горздрав
-                        </a>
-                      </div>
-                    </div>
-                    <div className="hidden sm:grid grid-cols-[1fr_130px_170px_110px_130px] items-center gap-3">
-                      <div>
-                        <a href={ph.url} target="_blank" rel="noopener noreferrer" className="font-semibold text-slate-900 hover:text-emerald-700">{ph.name}</a>
-                        <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {ph.address}</div>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-xs text-slate-500 whitespace-nowrap"><Clock className="w-3.5 h-3.5 shrink-0" /> Круглосуточно</div>
-                      <div className="border-l border-slate-200 pl-3 text-xs text-slate-500">доступно в {pr.qty} аптеках</div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-emerald-700">{pr.price} ₽</div>
-                        <div className="text-[11px] text-slate-500">от {pr.price} ₽</div>
-                      </div>
-                      <a href={ph.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border border-emerald-200 bg-emerald-50/50 text-emerald-700 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition whitespace-nowrap">
-                        <Navigation className="w-3.5 h-3.5" /> На сайт
-                      </a>
-                    </div>
-                  </div>
-                );
-              }
-
-              const telHref = `tel:${(ph.phone || "").replace(/[^+\d]/g, "")}`;
-              const routeHref = `https://yandex.ru/maps/?rtext=~${ph.lat}%2C${ph.lng}&rtt=auto&z=15`;
-              return (
-                <div key={pr.pharmacy_id} className={`px-4 py-3 hover:bg-emerald-50/30 transition ${selectedId === ph.id ? 'bg-emerald-50/50' : ''}`}>
-                  {/* Mobile layout: 2 rows */}
-                  <div className="sm:hidden">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <Link to={`/${city.id}/apteki/${ph.id}`} className="font-semibold text-slate-900 active:text-emerald-700 leading-tight block">{ph.name}</Link>
-                        <div className="text-[11px] text-slate-500 mt-0.5 flex items-start gap-1"><MapPin className="w-3 h-3 mt-0.5 shrink-0" /><span className="line-clamp-2">{ph.address}{ph.metro && <span className="text-emerald-600"> · м. {ph.metro}</span>}</span></div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="text-lg font-bold text-emerald-700 leading-tight">{pr.price} ₽</div>
-                        <div className="text-[10px] text-slate-500">в наличии</div>
-                      </div>
-                    </div>
-                    <div className="mt-2.5 flex items-center gap-2">
-                      <a href={telHref} data-testid="med-pharmacy-phone" className="inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 h-9 rounded-lg border border-slate-200 text-slate-700 active:bg-slate-50 flex-1">
-                        <Phone className="w-3.5 h-3.5 text-emerald-600" /> Позвонить
-                      </a>
-                      <a data-testid="route-btn" href={routeHref} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 h-9 rounded-lg border border-emerald-200 bg-emerald-50/50 text-emerald-700 active:bg-emerald-100 flex-1" title="Открыть маршрут в Яндекс.Картах">
-                        <Navigation className="w-3.5 h-3.5" /> Маршрут
-                      </a>
-                    </div>
-                  </div>
-                  {/* Desktop layout: keep existing grid */}
-                  <div className="hidden sm:grid grid-cols-[1fr_130px_170px_110px_130px] items-center gap-3">
-                    <div>
-                      <Link to={`/${city.id}/apteki/${ph.id}`} className="font-semibold text-slate-900 hover:text-emerald-700">{ph.name}</Link>
-                      <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {ph.address}{ph.metro && <span className="text-emerald-600"> · м. {ph.metro}</span>}</div>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs text-slate-500 whitespace-nowrap"><Clock className="w-3.5 h-3.5 shrink-0" /> {ph.hours}</div>
-                    <a href={telHref} data-testid="med-pharmacy-phone-d" className="flex items-center gap-1.5 text-sm font-medium text-slate-700 hover:text-emerald-700 whitespace-nowrap border-l border-slate-200 pl-3"><Phone className="w-4 h-4 text-emerald-600 shrink-0" /> {ph.phone}</a>
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-emerald-700">{pr.price} ₽</div>
-                      <div className="text-[11px] text-slate-500">в наличии: {pr.qty} шт</div>
-                    </div>
-                    <a data-testid="route-btn-d" href={routeHref} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border border-emerald-200 bg-emerald-50/50 text-emerald-700 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition whitespace-nowrap" title="Открыть маршрут в Яндекс.Картах">
-                      <Navigation className="w-3.5 h-3.5" /> Маршрут
-                    </a>
-                  </div>
-                </div>
-              );
-            })}
+            {viewportList.length === 0 && (
+              <div className="px-4 py-6 text-center text-sm text-slate-500">
+                Подождите, аптеки на карте подгружаются…
+              </div>
+            )}
+            {viewportList.map(item => (
+              <ViewportListItem
+                key={item.key}
+                item={item}
+                onClick={() => {
+                  setSelectedId(item.key);
+                  setTimeout(() => priceMapRef.current?.centerOn(item.lat, item.lng, 15), 100);
+                }}
+                selected={selectedId === item.key}
+              />
+            ))}
           </div>
         </section>
       )}

@@ -137,6 +137,25 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
             response.headers["Cache-Control"] = "public, max-age=600, s-maxage=600"
         return items
 
+    @router.get("/gorzdrav/stores/bulk")
+    async def gorzdrav_stores_bulk(ids: str, response: Response = None):
+        """Bulk-выдача полных деталей для списка store_id, через запятую.
+        Используется для динамического списка "аптеки в видимой области карты" —
+        фронт считает 15 ближайших к центру карты, потом одним запросом
+        получает их полные данные."""
+        store_ids = [s.strip() for s in (ids or "").split(",") if s.strip()][:50]
+        if not store_ids:
+            return []
+        cursor = db.gorzdrav_stores.find(
+            {"store_id": {"$in": store_ids}},
+            {"_id": 0, "store_id": 1, "full_name": 1, "address": 1,
+             "phone": 1, "hours": 1, "is_24h": 1, "lat": 1, "lng": 1},
+        )
+        items = [doc async for doc in cursor]
+        if response is not None:
+            response.headers["Cache-Control"] = "public, max-age=600"
+        return items
+
     @router.get("/gorzdrav/stores/{store_id}")
     async def gorzdrav_store_detail(store_id: str, response: Response = None):
         """Полная инфо по одной Горздрав-аптеке. Запрашивается по клику на маркер."""
