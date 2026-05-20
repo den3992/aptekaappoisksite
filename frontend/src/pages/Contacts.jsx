@@ -42,10 +42,6 @@ export default function Contacts() {
             <dd className="text-slate-800 font-medium">Общество с ограниченной ответственностью «Идеал-Фарм»</dd>
           </div>
           <div className="flex flex-col">
-            <dt className="text-xs text-slate-500">Генеральный директор</dt>
-            <dd className="text-slate-800 font-medium">Файзуллин Данил Валерьевич</dd>
-          </div>
-          <div className="flex flex-col">
             <dt className="text-xs text-slate-500">ИНН</dt>
             <dd className="text-slate-800 font-medium">5050110424</dd>
           </div>
