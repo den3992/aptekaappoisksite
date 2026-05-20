@@ -47,7 +47,7 @@ export default function CategoryDetail() {
   );
 
   const icon = getCategoryStyle(slug);
-  const seo = categorySEO(city.id, cat);
+  const seo = categorySEO(city.id, cat, data.total);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-5 md:py-8">

@@ -17,9 +17,25 @@ export function homeSEO(city = 'msk') {
   };
 }
 
-export function categorySEO(city, cat) {
-  const title = `${cat.title} — препараты в аптеках ${cnGenitive(city)} | АптекаА`;
-  const description = `Каталог категории «${cat.title}» в аптеках ${cnGenitive(city)}. Сравните цены и наличие препаратов.`;
+function pluralPreparat(n) {
+  const n10 = n % 10, n100 = n % 100;
+  if (n100 >= 11 && n100 <= 14) return 'препаратов';
+  if (n10 === 1) return 'препарат';
+  if (n10 >= 2 && n10 <= 4) return 'препарата';
+  return 'препаратов';
+}
+
+export function categorySEO(city, cat, count) {
+  const g = cnGenitive(city);
+  let title, description;
+  if (count && count > 0) {
+    const pl = pluralPreparat(count);
+    title = `${cat.title} — купить в аптеках ${g}, ${count} ${pl} | АптекаА`;
+    description = `${cat.title} — ${count} ${pl} в аптеках ${g}. Сравните цены и наличие, подберите аналоги по действующему веществу. Бесплатно, без регистрации.`;
+  } else {
+    title = `${cat.title} — купить в аптеках ${g} | АптекаА`;
+    description = `${cat.title} в аптеках ${g}. Сравните цены и наличие, подберите аналоги по действующему веществу. Бесплатно, без регистрации.`;
+  }
   return {
     title,
     description,

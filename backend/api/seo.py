@@ -920,13 +920,35 @@ async def render_pharmacy_for_bot(db, city: str, pid: str, request: Request) -> 
     ))
 
 
+def _plural_preparat(n: int) -> str:
+    """Русское склонение слова 'препарат' по числу."""
+    n10, n100 = n % 10, n % 100
+    if 11 <= n100 <= 14:
+        return "препаратов"
+    if n10 == 1:
+        return "препарат"
+    if 2 <= n10 <= 4:
+        return "препарата"
+    return "препаратов"
+
+
 async def render_category_for_bot(db, city: str, cat_slug: str, request: Request) -> HTMLResponse:
     cat_title = category_title(cat_slug)
     if not cat_title:
         return HTMLResponse(_render_404(request, city), status_code=404)
     cn = city_name(city)
-    title = f"{cat_title} — препараты в аптеках {cn_genitive(cn)} | АптекаА"
-    desc = f"Каталог категории «{cat_title}» в аптеках {cn_genitive(cn)}. Сравните цены и наличие препаратов."
+    # Кол-во препаратов в категории — уникализирует title/desc и сигналит
+    # ассортимент (коммерческий фактор Яндекса).
+    count = await db.medications.count_documents(
+        {"category": cat_slug, "is_canonical": {"$ne": False}}
+    )
+    _pl = _plural_preparat(count)
+    title = f"{cat_title} — купить в аптеках {cn_genitive(cn)}, {count} {_pl} | АптекаА"
+    desc = (
+        f"{cat_title} — {count} {_pl} в аптеках {cn_genitive(cn)}. "
+        f"Сравните цены и наличие, подберите аналоги по действующему веществу. "
+        f"Бесплатно, без регистрации."
+    )
     canonical = f"{base_url(request)}/{city}/kategorii/{cat_slug}"
 
     cursor = db.medications.find(
@@ -944,7 +966,7 @@ async def render_category_for_bot(db, city: str, cat_slug: str, request: Request
         title=title,
         description=desc,
         canonical_url=canonical,
-        h1=f"{cat_title} в {cn_genitive(cn)}",
+        h1=f"{cat_title} в аптеках {cn_genitive(cn)}",
         body_html="\n".join(body),
         breadcrumbs=[
             ("Главная", f"{base_url(request)}/{city}"),
