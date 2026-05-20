@@ -337,6 +337,11 @@ async def get_stores_quantity(client: httpx.AsyncClient, ext_id: str) -> int:
     return 0
 
 
+# IndexNow: slug-и препаратов, у которых цена изменилась за прогон.
+# В конце main() выгружаются в файл, cron-обёртка шлёт их на IndexNow.
+CHANGED_SLUGS: set[str] = set()
+
+
 async def process_medication(
     client: httpx.AsyncClient,
     db,
@@ -448,6 +453,14 @@ async def process_medication(
             f"  [{item_status:12s}] pack={gz_pack:<10} | {price} руб | {stores_count} аптек | {gz_name[:50]}"
         )
 
+        # IndexNow: фиксируем изменение цены (новая запись или другая цена).
+        _prev = await db.prices_real.find_one(
+            {"medication_id": med_id, "source": "gorzdrav", "gz_pack": gz_pack},
+            {"_id": 0, "price": 1},
+        )
+        if _prev is None or _prev.get("price") != price:
+            CHANGED_SLUGS.add(slug)
+
         await db.prices_real.update_one(
             {"medication_id": med_id, "source": "gorzdrav", "gz_pack": gz_pack},
             {"$set": {
@@ -529,6 +542,16 @@ async def main(args: argparse.Namespace) -> None:
         stats[doc["_id"]] = doc["count"]
 
     log.info(f"Готово. Статистика: {stats}")
+
+    # IndexNow: выгружаем slug-и с изменившейся ценой для последующей отправки.
+    out_path = os.environ.get("INDEXNOW_CHANGED_FILE", "/tmp/indexnow_changed.txt")
+    try:
+        with open(out_path, "w") as f:
+            for sl in sorted(CHANGED_SLUGS):
+                f.write(sl + "\n")
+        log.info(f"IndexNow: {len(CHANGED_SLUGS)} изменённых slug-ов -> {out_path}")
+    except Exception as e:
+        log.warning(f"IndexNow: не смог записать {out_path}: {e}")
     client_db.close()
 
 

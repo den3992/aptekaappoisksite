@@ -451,6 +451,19 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
     if enrichment.get("summary") or enrichment.get("indications") or enrichment.get("how_to_take"):
         body.append("<h2>О препарате</h2>")
         if enrichment.get("summary"):
+            # Уникальное вводное предложение — summary генерировался по
+            # действующему веществу и дублируется у одноимённых препаратов
+            # разных производителей. Лид из (бренд+дозировка+форма+производитель)
+            # делает абзац уникальным для каждой SKU → не duplicate content.
+            _lead = name
+            if dosage:
+                _lead += f", {dosage}"
+            if form:
+                _lead += f", {form}"
+            if manufacturer_brand:
+                _lead += f" \u2014 производитель {manufacturer_brand}"
+            _lead += f". Сравнение цен и наличия в аптеках {cn_genitive(cn)}."
+            body.append(f"<p>{html.escape(_lead)}</p>")
             body.append(f"<p>{html.escape(enrichment['summary'])}</p>")
         if enrichment.get("indications"):
             body.append("<h3>Показания</h3><ul>")
@@ -569,6 +582,37 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
     low_price = min(price_values) if price_values else None
     high_price = max(price_values) if price_values else None
     offer_count = len(price_values)
+
+    # --- 1.1 Уникальное meta description ---
+    # Раньше desc = enrichment.summary, который дублируется у одноимённых
+    # препаратов. Теперь строим из per-SKU данных + цены: бренд, дозировка,
+    # упаковка, ценовой диапазон, число аптек, производитель + короткий
+    # фрагмент summary. Цена/производитель различаются → meta уникален.
+    _md = name
+    if dosage:
+        _md += f" {dosage}"
+    if pack_short:
+        _md += f" {pack_short}"
+    if low_price:
+        if low_price == high_price:
+            _md += f" \u2014 {int(low_price)} \u20bd"
+        else:
+            _md += f" \u2014 от {int(low_price)} до {int(high_price)} \u20bd"
+        if offer_count:
+            _apt = "аптеке" if (offer_count % 10 == 1 and offer_count % 100 != 11) else "аптеках"
+            _md += f" в {offer_count} {_apt} {cn_genitive(cn)}"
+        else:
+            _md += f" в аптеках {cn_genitive(cn)}"
+    else:
+        _md += f" в аптеках {cn_genitive(cn)}"
+    if manufacturer_brand:
+        _md += f". Производитель: {manufacturer_brand}"
+    if enrichment.get("summary"):
+        _snip = str(enrichment["summary"]).split(". ")[0].strip().rstrip(".")
+        if _snip:
+            _md += f". {_snip}"
+    _md += ". Наличие, аналоги, адреса аптек."
+    desc = _md[:300]
 
     # ---- Active ingredient + strength split ----
     active_ingredient = _title_case(mnn) if mnn else None

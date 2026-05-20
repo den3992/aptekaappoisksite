@@ -7,6 +7,9 @@ useDefault = true
 [allowlist]
 description = "Global allowlist for aptekaa"
 paths = [
+  # IndexNow key file - PUBLIC by protocol design (served at site root
+  # for Yandex/Bing to verify ownership). Not a secret.
+  '''[a-f0-9]{16,64}\.txt$''',
   # Lockfiles often contain integrity hashes that look like secrets
   '''yarn\.lock''',
   '''package-lock\.json''',

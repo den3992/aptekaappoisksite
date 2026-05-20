@@ -57,6 +57,11 @@ COUNT_AFTER=$(docker exec deploy-mongo-1 mongosh --quiet \
 
 echo "=== $(date -u +'%Y-%m-%d %H:%M:%S UTC') | mode=$MODE | done | before=$COUNT_BEFORE after=$COUNT_AFTER ==="
 
+# IndexNow: парсер записал slug-и с изменившейся ценой в /tmp/indexnow_changed.txt
+# внутри backend-контейнера. Шлём их на IndexNow (Яндекс/Bing быстро переиндексируют).
+echo "--- IndexNow ping ---"
+cd "$DEPLOY" && docker compose exec -T backend python -m scripts.indexnow_ping /tmp/indexnow_changed.txt || echo "IndexNow ping failed (non-fatal)"
+
 # Алерт: если резкое падение (> 20% потеря записей) — это аномалия.
 # (cron сам отправит вывод на почту root, если в /etc/aliases настроен MAILTO)
 if [ "$COUNT_AFTER" -lt $((COUNT_BEFORE * 80 / 100)) ]; then

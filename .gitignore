@@ -123,3 +123,4 @@ credentials.json
 *.pem
 *.key
 .credentials
+deploy/.indexnow_key
