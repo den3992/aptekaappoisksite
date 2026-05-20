@@ -178,6 +178,19 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
         # 25,000 slugs * 2 cities = 50,000 URLs (per-sitemap protocol limit)
         per = 25000
         skip = (idx - 1) * per
+        # Дата последнего обновления цены по каждому slug — одним запросом.
+        # Яндекс по <lastmod> понимает свежесть и приоритет переобхода.
+        lastmod_map = {}
+        async for row in db.prices_real.aggregate([
+            {"$match": {"source": "gorzdrav", "updated_at": {"$ne": None}}},
+            {"$group": {"_id": "$slug", "lm": {"$max": "$updated_at"}}},
+        ]):
+            sl, lm = row.get("_id"), row.get("lm")
+            if sl and lm:
+                try:
+                    lastmod_map[sl] = lm.strftime("%Y-%m-%d")
+                except Exception:
+                    pass
         cursor = db.medications.find(
             {"is_canonical": {"$ne": False}},
             {"_id": 0, "slug": 1},
@@ -187,9 +200,10 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
             slug = d.get("slug")
             if not slug:
                 continue
+            lm = lastmod_map.get(slug)
             for c in CITIES:
-                urls.append(f"{host}/{c['slug']}/preparaty/{slug}")
-        return _urlset(urls, lastmod_today=False)
+                urls.append((f"{host}/{c['slug']}/preparaty/{slug}", lm))
+        return _urlset(urls)
 
     # ----- yandex-verification placeholder -----
     @router.get("/yandex_verification.html", response_class=HTMLResponse)
@@ -201,11 +215,18 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
     return router
 
 
-def _urlset(urls: List[str], lastmod_today: bool = True) -> Response:
+def _urlset(urls, lastmod_today: bool = True) -> Response:
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     items = []
     for u in urls:
-        if lastmod_today:
+        # Элемент может быть строкой URL либо кортежем (url, lastmod|None).
+        if isinstance(u, tuple):
+            loc, lm = u
+            if lm:
+                items.append(f"<url><loc>{html.escape(loc)}</loc><lastmod>{lm}</lastmod></url>")
+            else:
+                items.append(f"<url><loc>{html.escape(loc)}</loc></url>")
+        elif lastmod_today:
             items.append(f"<url><loc>{html.escape(u)}</loc><lastmod>{today}</lastmod></url>")
         else:
             items.append(f"<url><loc>{html.escape(u)}</loc></url>")
