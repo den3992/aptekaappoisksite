@@ -39,6 +39,8 @@ paths = [
 
 # Regex stopwords for known non-secrets (e.g. placeholders in .env.example)
 regexes = [
+  # IndexNow key — PUBLIC by protocol (served at /<key>.txt). Not a secret.
+  '''3c6a00678b80a261eee94accd64427c7''',
   '''CHANGE_ME''',
   '''YOUR_.*_HERE''',
   '''\$\{[A-Z_]+\}''',
