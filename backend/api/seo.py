@@ -829,14 +829,40 @@ async def render_home_for_bot(db: AsyncIOMotorDatabase, city: str, request: Requ
     import json as _json
     org_schema = {
         "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "АптекаА",
-        "url": canonical,
-        "potentialAction": {
-            "@type": "SearchAction",
-            "target": f"{base_url(request)}/{city}/poisk?q={{search_term_string}}",
-            "query-input": "required name=search_term_string",
-        },
+        "@graph": [
+            {
+                "@type": "WebSite",
+                "name": "АптекаА",
+                "url": canonical,
+                "potentialAction": {
+                    "@type": "SearchAction",
+                    "target": f"{base_url(request)}/{city}/poisk?q={{search_term_string}}",
+                    "query-input": "required name=search_term_string",
+                },
+            },
+            {
+                "@type": "Organization",
+                "name": "АптекаА",
+                "legalName": "ООО «Идеал-Фарм»",
+                "url": base_url(request),
+                "logo": f"{base_url(request)}/icon-512.png",
+                "email": "info@aptekaa.ru",
+                "telephone": "+7-800-700-70-70",
+                "taxID": "5050110424",
+                "identifier": [
+                    {"@type": "PropertyValue", "propertyID": "ИНН", "value": "5050110424"},
+                    {"@type": "PropertyValue", "propertyID": "ОГРН", "value": "1145050001942"},
+                ],
+                "address": {
+                    "@type": "PostalAddress",
+                    "streetAddress": "ул. Садовая, д. 1, пом. II",
+                    "addressLocality": "Фрязино",
+                    "addressRegion": "Московская область",
+                    "postalCode": "141195",
+                    "addressCountry": "RU",
+                },
+            },
+        ],
     }
     return HTMLResponse(render_seo_html(
         title=title,
@@ -1090,9 +1116,15 @@ async def render_contacts_for_bot(db, city: str, request: Request) -> HTMLRespon
         "name": "АптекаА",
         "legalName": "ООО «Идеал-Фарм»",
         "url": f"{base_url(request)}",
-        "logo": f"{base_url(request)}/logo.png",
+        "logo": f"{base_url(request)}/icon-512.png",
         "email": "info@aptekaa.ru",
         "telephone": "+7-800-700-70-70",
+        "taxID": "5050110424",
+        "identifier": [
+            {"@type": "PropertyValue", "propertyID": "ИНН", "value": "5050110424"},
+            {"@type": "PropertyValue", "propertyID": "КПП", "value": "505001001"},
+            {"@type": "PropertyValue", "propertyID": "ОГРН", "value": "1145050001942"},
+        ],
         "address": {
             "@type": "PostalAddress",
             "streetAddress": "ул. Садовая, д. 1, пом. II",

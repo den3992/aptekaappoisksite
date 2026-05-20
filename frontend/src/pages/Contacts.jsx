@@ -31,6 +31,38 @@ export default function Contacts() {
           </div>
         ))}
       </div>
+
+      {/* Полные юридические реквизиты — коммерческий фактор для Яндекса
+          и подтверждение легальности информационного сервиса. */}
+      <section className="bg-white border border-slate-100 rounded-xl p-5 md:p-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-4">Реквизиты</h2>
+        <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-2.5 text-sm">
+          <div className="flex flex-col">
+            <dt className="text-xs text-slate-500">Полное наименование</dt>
+            <dd className="text-slate-800 font-medium">Общество с ограниченной ответственностью «Идеал-Фарм»</dd>
+          </div>
+          <div className="flex flex-col">
+            <dt className="text-xs text-slate-500">Генеральный директор</dt>
+            <dd className="text-slate-800 font-medium">Файзуллин Данил Валерьевич</dd>
+          </div>
+          <div className="flex flex-col">
+            <dt className="text-xs text-slate-500">ИНН</dt>
+            <dd className="text-slate-800 font-medium">5050110424</dd>
+          </div>
+          <div className="flex flex-col">
+            <dt className="text-xs text-slate-500">КПП</dt>
+            <dd className="text-slate-800 font-medium">505001001</dd>
+          </div>
+          <div className="flex flex-col">
+            <dt className="text-xs text-slate-500">ОГРН</dt>
+            <dd className="text-slate-800 font-medium">1145050001942</dd>
+          </div>
+          <div className="flex flex-col">
+            <dt className="text-xs text-slate-500">Юридический адрес</dt>
+            <dd className="text-slate-800 font-medium">141195, Московская обл., г. Фрязино, ул. Садовая, д. 1, помещ. II встроенное, этаж 1</dd>
+          </div>
+        </dl>
+      </section>
     </div>
   );
 }
