@@ -182,7 +182,9 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
         # Яндекс по <lastmod> понимает свежесть и приоритет переобхода.
         lastmod_map = {}
         async for row in db.prices_real.aggregate([
-            {"$match": {"source": "gorzdrav", "updated_at": {"$ne": None}}},
+            {"$match": {"source": "gorzdrav", "updated_at": {"$ne": None},
+                        "price": {"$ne": None},
+                        "match_status": {"$in": ["matched", "mnn_match", "needs_review"]}}},
             {"$group": {"_id": "$slug", "lm": {"$max": "$updated_at"}}},
         ]):
             sl, lm = row.get("_id"), row.get("lm")
@@ -191,14 +193,32 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
                     lastmod_map[sl] = lm.strftime("%Y-%m-%d")
                 except Exception:
                     pass
+        # Число канонических препаратов на каждый МНН — для определения,
+        # есть ли аналоги. Считаем в Python: Mongo $toLower НЕ понижает
+        # кириллицу, а Python .lower() — понижает.
+        mnn_count = {}
+        async for m in db.medications.find(
+            {"is_canonical": {"$ne": False}, "mnn": {"$nin": [None, ""]}},
+            {"_id": 0, "mnn": 1},
+        ):
+            k = (m.get("mnn") or "").strip().lower()
+            if k:
+                mnn_count[k] = mnn_count.get(k, 0) + 1
         cursor = db.medications.find(
             {"is_canonical": {"$ne": False}},
-            {"_id": 0, "slug": 1},
+            {"_id": 0, "slug": 1, "mnn": 1},
         ).sort("slug", 1).skip(skip).limit(per)
         urls = []
         async for d in cursor:
             slug = d.get("slug")
             if not slug:
+                continue
+            # Тупиковая страница = нет цены Горздрав И нет аналогов по МНН.
+            # Те же страницы отдаются с noindex — в sitemap им не место.
+            has_price = slug in lastmod_map
+            mnn = (d.get("mnn") or "").strip().lower()
+            has_analogs = bool(mnn) and mnn_count.get(mnn, 0) > 1
+            if not has_price and not has_analogs:
                 continue
             lm = lastmod_map.get(slug)
             for c in CITIES:
@@ -252,6 +272,7 @@ def render_seo_html(
     schema_jsonld: Optional[str] = None,
     breadcrumbs: Optional[List[Tuple[str, str]]] = None,
     image: Optional[str] = None,
+    noindex: bool = False,
 ) -> str:
     yandex_ver = os.environ.get("YANDEX_VERIFICATION", "")
     yandex_meta = f'<meta name="yandex-verification" content="{yandex_ver}">' if yandex_ver else ""
@@ -290,6 +311,7 @@ def render_seo_html(
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{html.escape(title)}</title>
 <meta name="description" content="{html.escape(description)}">
+{'<meta name="robots" content="noindex, follow">' if noindex else ''}
 <link rel="canonical" href="{html.escape(canonical_url)}">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -585,6 +607,19 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
         ph = find_pharmacy_by_id(p["pharmacy_id"])
         if ph and ph.get("city") == city and isinstance(p.get("price"), (int, float)):
             real_prices_city.append(float(p["price"]))
+    # Реальная цена для решения об индексации: партнёрский прайс ИЛИ Горздрав.
+    _gz_priced = await db.prices_real.find_one(
+        {"slug": slug, "source": "gorzdrav",
+         "match_status": {"$in": ["matched", "mnn_match", "needs_review"]},
+         "price": {"$ne": None}},
+        {"_id": 0, "price": 1},
+    )
+    has_real_price = bool(real_prices_city) or bool(_gz_priced)
+    # noindex — страница-тупик: ни реальной цены, ни аналогов по МНН.
+    # Вычисляется на лету при каждой отдаче, всегда актуально:
+    # появилась цена / аналог / СПб-данные -> страница сама становится
+    # индексируемой на следующем обходе. Ноль ручной поддержки.
+    page_noindex = (not has_real_price) and (not analogs)
     if real_prices_city:
         price_values = real_prices_city
         prices_source = "real"
@@ -794,6 +829,7 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
         schema_jsonld=schema_jsonld,
         breadcrumbs=crumbs,
         image=image_abs,
+        noindex=page_noindex,
     ))
 
 
