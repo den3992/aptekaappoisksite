@@ -1,181 +1,100 @@
-# PRD — АптекаА (Pharmacy Aggregator MVP)
-
-## ⚡ Quick Start для нового агента
-**Прежде чем что-либо делать — прочти `/app/HANDOFF.md`**. Там полный handoff на 13 разделов: архитектура, креды, история работы, lessons learned, anti-patterns, todo.
-
-## Статус: PRODUCTION
-Сайт развёрнут на `https://aptekaa.ru` с 10 мая 2026.
+# PRD — АптекаА Image Enrichment
 
 ## Original problem statement
-Сайт-агрегатор лекарств в аптеках Москвы и СПб. Минималистичный, зелёно-белый, под Яндекс. SEO-приоритет. Голосовой AI-ассистент. Yandex Maps на карточках препаратов. Лёгкая интеграция для аптек (упрощённая выгрузка прайс-листов).
+Connect to project «АптекаА» (aptekaa.ru) via SSH (ubuntu@89.169.137.36) and GitHub
+(den3992/aptekaappoisksite.git) to scrape product photos for medication cards and
+enrich the `medications` MongoDB collection.
 
- (агрегатор аптек)
-
-## Original problem statement
-MVP сайта-агрегатора аптек по образцу lekmos / 003ms / 009рф / aptekamos:
-- Минималистичный современный дизайн в зелёно-белой палитре
-- Стартовые города: Москва и Санкт-Петербург
-- Поиск лекарств (без сложного каталога) с SEO
-- Карточка препарата с интеграцией Яндекс.Карт и «облаками цен» (пины с ценами и наличием)
-- Раздел «Для аптек» — простая FTP-выгрузка прайсов (xls, xlsx, dbf, csv)
-- Юр. соответствие законам РФ. Юрлицо: ООО «Идеал-ФАРМ», ИНН 5050110424, г. Фрязино.
-- Язык: русский.
-- **Домен**: aptekaa.ru (главный, тематический, 2012 года) + аптекаа.рф → 301 редирект
-- **SEO‑приоритет**: Яндекс. Старт без рекламы, через 3–4 месяца тестовая реклама
+### Constraints
+- Photos must be saved as `.webp` in `/frontend/public/img/meds/` and pushed to git.
+- No scraping of aggregators (apteka.ru, eapteka.ru, rigla.ru).
+- Production server is geo-blocked by the proxy → all scraping runs locally in
+  `/app/enrich/`, then files/DB updates are pushed via SSH/SCP/mongosh.
 
 ## Architecture
-- **Frontend**: React 19, Tailwind CSS, Framer Motion, React Router DOM, react-helmet-async, Yandex Maps JS API
-- **Backend**: FastAPI + Motor (Async MongoDB) + httpx (Yandex SpeechKit). Все эндпоинты — под префиксом `/api`
-- **DB**: MongoDB. Коллекции: `medications_raw` (72 054 SKU), `medications` (23 303 карточки), `mnn_index` (3 054 МНН), `voice_messages`, `tts_cache`
-- **AI ассистент**: Web Speech API (mic) → `/api/voice/chat` (gpt-4o-mini) → `/api/voice/tts` (Yandex SpeechKit, голос Алёна)
-- **Карты**: Yandex Maps JS API через `REACT_APP_YANDEX_MAPS_KEY`
+```
+/app/enrich/
+├── fetch_lib.py             # parallel http + WebP conversion
+├── match_lib.py             # bulk regex matching against label_name (via SSH mongosh)
+├── apply_lib.py             # SCP files + bulk update image_url + git commit/push
+├── remote_lib.py            # equivalent of match+apply but for running ON the server
+├── mnn_translit.py          # MNN/trade name query variants for Wikimedia search
+├── *_scrape.py              # per-manufacturer scrapers (~25 in total)
+└── wc_*.py / rls_*.py       # broad scrapers
+```
+Remote server: `/home/ubuntu/aptekaa/`, mongo via `docker exec deploy-mongo-1 mongosh`.
 
-## Implemented features
+## Coverage timeline
+| Step | with_img | total | %
+|---|---|---|---|
+| Session start (fork) | 8 735 | 23 303 | 37.48 % |
+| After this session | **9 123** | 23 303 | **39.15 %** |
 
-### Frontend MVP (готово ранее)
-- Главная, категории, страница лекарства с моковой Яндекс.Картой и облаками цен
-- Список аптек, страница аптеки, страница «Для аптек»
-- Юридические страницы (Контакты, Политика конфиденциальности, Согласие)
-- Бренд «АптекаА» с 3D-логотипом таблетки
-- Подставлены реальные реквизиты ООО «Идеал-ФАРМ» (ИНН 5050110424, Фрязино)
-- Auto-scrolling маркетинговая лента партнёров
-- Контекст города (Москва / СПб)
+### This session adds (+388 cards, +1.67 pp)
+- Sotex (Playwright): +2 cards
+- Microgen (sitemap): +12
+- Berlin-Chemie (sitemap): +10
+- Biosintez (catalog index): +84
+- Avva-Rus (sitemap): +15
+- RLS v2 with expanded letter index a–z, 1–2: +4
+- Akrikhin (paginated catalog): +30
+- Wikimedia Commons rerun (800 names searched): +107
+- Dalkhim Pharm v2 (sitemap): +119
+- Vertex (sitemap iblock-2): +2
+- Veropharm (products subdomain): +3
 
-### AI голосовой ассистент (✅)
-- Backend: `POST /api/voice/chat` — gpt-4o-mini, history in `voice_messages`
-- TTS: `POST /api/voice/tts` — **Yandex SpeechKit** v1, голос **alena**, эмоция **good**, формат `oggopus`, кэш в `tts_cache` по SHA-256
-- Frontend: `VoiceAssistant.jsx` + `CallView.jsx` — два режима (chat и беседа). В режиме беседы микрофон отключается во время ответа Алёны (защита от эхо-петли).
-- Контекст бота: 20 препаратов + 11 аптек (`voice_data.py`)
-- Стоимость: ~0.4–0.5 ₽/мин беседы. 7000 мин/мес ≈ 3000 ₽
+## What works (verified accessible from container)
+- ✅ Static manufacturer sites with sitemap.xml: berlin-chemie.ru, dalkhimpharm.ru,
+  microgen.ru, biosintez.com, avva-rus.ru, akrikhin.ru, vertex.spb.ru,
+  products.veropharm.ru
+- ✅ Playwright catalogs requiring modal-dismiss: sotex.ru, endopharm.ru
+- ✅ RLS scraping (rlsnet.ru)
+- ✅ Wikimedia Commons API
 
-### Каталог из mdlp.crpt.ru (✅ 2026-02-09)
-- **ETL**: `/app/backend/scripts/import_mdlp.py` — XLSX → 3 коллекции MongoDB
-- **23 303 карточки** препаратов (группировка по ТН + дозировка + производитель)
-- **72 054 SKU** в `medications_raw` (с GTIN, РУ, ЕСКЛП, ЖНВЛП, ВЗН, ПКУ, наркотические)
-- **3 054 уникальных МНН** для подбора аналогов
-- **Авто-детект Rx** (наркотические/ПКУ/ВЗН/инъекционные → Отпускается по рецепту)
-- **Авто-категоризация** по словарю топ-МНН (11 категорий)
-- **SEO-слаги** транслитом: `paracetamol-500-mg-tabletki-pokrytye-obolochkoy`
-- Индексы: `slug` unique, text(name, mnn) russian, category, mnn, manufacturer
+## What's blocked
+- ❌ DNS does NOT resolve from the container: krka-rus.ru, krasfarma.ru, biokhimik.com,
+  pfk-obnovlenie.ru (real catalog), tulapharm.ru, sintez.org (only /lander), takedaprod.ru,
+  binnopharm.ru, welfarm.ru, niarmedic.ru, firnm.ru, gedeonrichter.ru, geropharm.com sitemap useless
+- ❌ HTTP 403/451 (geo block): nizhpharm.ru, stada.ru, drugs.com
+- ❌ JS-only SPA with no catalog API: ozonpharm.ru, takeda.com/ru-ru, sanofi.ru
 
-### Backend API (✅ 2026-02-09)
-- `GET /api/cities` — список городов
-- `GET /api/categories` — 11 категорий с реальными счётчиками
-- `GET /api/search?q=&category=&rx=&page=&page_size=` — поиск с пагинацией (стабильная сортировка по textScore + slug tiebreaker)
-- `GET /api/search/suggest?q=` — typeahead (regex по name/mnn)
-- `GET /api/medications/{slug}` — карточка + варианты + цены (с полем `prices_source: real|demo`)
-- `GET /api/medications/{slug}/analogs` — аналоги по МНН (sorted by name)
-- `GET /api/pharmacies?city=` — аптеки города
-- `GET /api/pharmacies/{id}` — карточка аптеки
+## Pending / backlog
+- P1 — Implement crowdsourcing button "Прислать фото" on empty cards for legal,
+  ongoing user contributions.
+- P1 — Generate placeholder images via Nano Banana (Gemini) for the remaining ~61%
+  cards where no real photo can be obtained.
+- P2 — Improve match_lib: add fuzzy matching by `name` (not just `label_name`) so
+  variants with non-standard tail tokens match.
+- P2 — Re-enable broader Wikimedia search with deeper query variants (currently
+  hit rate ~1 %).
 
-### Загрузка прайс-листов аптек (✅ 2026-02-09)
-- **Скрытый кабинет аптеки**: `/partner-upload?token=XXXX` (НЕ слинкован с основного сайта)
-- **Авторизация по токену** в коллекции `pharmacy_tokens` (3 партнёра засеяно)
-- `POST /api/upload/me/{token}` — данные аптеки по токену
-- `POST /api/upload/prices/{token}` — загрузка XLSX/CSV (мультипарт, до 25 МБ)
-  - Принимает английские (`gtin, name, qty, price`) и русские (`штрихкод, название, количество, цена`) заголовки в любом порядке
-  - Опциональные: `pharmacy_id` (код точки), `expiry_date` (срок годности)
-  - CSV в UTF-8 или Windows-1251, разделитель `,` или `;` (auto-sniff)
-  - Парсит цены типа `125,50` (запятая=точка), очищает `1 500 ₽`
-  - Матчит GTIN против `medications_raw` (72k SKU) → пишет в `prices` (upsert по pharmacy_id+gtin)
-  - Не сматченные GTIN → `unmatched_items` (вкладка «Требуют разбора»)
-  - Возвращает summary: total_rows, valid_rows, invalid_rows, matched, unmatched + sample_errors
-  - Уникальный `upload_id` с UUID-суффиксом (защита от двойной загрузки в одну секунду)
-- `GET /api/upload/history/{token}` — последние 20 загрузок аптеки
-- `GET /api/upload/unmatched/{token}` — товары без сопоставления с реестром
-- **Frontend**: `/app/frontend/src/pages/PartnerUpload.jsx` — drag&drop, прогресс, 3 вкладки (Загрузка / История / Требуют разбора)
-- Цены сразу видны в `/api/medications/{slug}` с флагом `prices_source: "real"`
-- Скрипт сидинга токенов: `python -m scripts.seed_pharmacy_tokens`
+## Top untouched manufacturers (no photos)
+| Cards | Manufacturer | Web status |
+|---|---|---|
+| 352 | АО БИОХИМИК | DNS blocked |
+| 274 | ООО ТУЛЬСКАЯ ФАРМАЦЕВТИЧЕСКАЯ ФАБРИКА | DNS blocked |
+| 205 | АО ПФК ОБНОВЛЕНИЕ | DNS blocked |
+| 203 | ОАО СИНТЕЗ | sintez.org has empty sitemap |
+| 154 | ООО РУЗФАРМА | unknown site |
+| 141 | ДЖОДАС ЭКСПОИМ (India) | unknown |
+| 123 | АО КРКА | DNS blocked (krka-rus.ru) |
 
-### SEO‑фундамент (✅ 2026-02-09)
-- `GET /api/seo/robots.txt` — с `Sitemap`, `Host`, `Clean-param` для Yandex
-- `GET /api/seo/sitemap.xml` — индекс sitemaps
-- `GET /api/seo/sitemap_static.xml` — главная, статичные страницы (с городскими префиксами)
-- `GET /api/seo/sitemap_categories.xml` — все категории × 2 города
-- `GET /api/seo/sitemap_pharmacies.xml` — аптеки
-- `GET /api/seo/sitemap_meds_{N}.xml` — препараты, чанками 25k слагов × 2 города = 50k URL
-- `GET /api/seo/render?path=/<city>/...` — серверный HTML рендер для ботов:
-  - `<title>`, `<meta description>`, canonical, Open Graph
-  - schema.org `Drug`, `Pharmacy`, `WebSite`, `BreadcrumbList`
-  - Видимый контент: имя, МНН, форма, дозировка, производитель, варианты упаковки, аналоги, аптеки
-  - Плашки «Отпускается по рецепту», «ЖНВЛП», «Государственная предельная цена X ₽»
-- В production CF Worker делает rewrite: бот UA → `/api/seo/render?path=...`
+## Key Mongo schema
+medications: `{slug, name, label_name, mnn, manufacturer, image_url, dedup_key, enrichment}`
 
-### Frontend миграция на API (✅ 2026-02-09)
-- `src/api/client.js` — axios клиент (fetchCities, fetchCategories, searchMeds, fetchMed, fetchAnalogs, suggestMeds)
-- `src/seo.js` + `src/components/SEOHead.jsx` — react-helmet-async + Schema.org JSON-LD
-- **Префикс города в URL**: `/msk/preparaty/<slug>`, `/spb/poisk?q=`, `/msk/kategorii/<slug>`, `/msk/apteki/<id>`
-- Бекворд-совместимость: `/preparaty/<slug>`, `/poisk` тоже работают
-- Search.jsx — реальный API с пагинацией и фильтрами (категория, rx)
-- MedDetail.jsx — реальный API с вариантами упаковки, аналогами, схема.org Drug, плашки ЖНВЛП и госцены
-- Home.jsx — API typeahead, городские ссылки
-
-## Tested
-- ✅ pytest /app/backend/tests/test_catalog_api.py: **21/21 пройдено**
-  - Cities, Categories, Search (с пагинацией, фильтрами, suggest), MedDetail, Analogs, 404, Pharmacies, SEO (robots, sitemaps, render для всех типов страниц), Voice (chat + tts smoke)
-- ✅ Playwright e2e: home → search → med-detail flow, городские префиксы, бекворд-совместимость
-- ✅ Curl: 21 эндпоинт, схема.org JSON-LD валидируется
-
-## Backlog (приоритизировано)
-
-### P0 (готово к старту)
-- ~~Импорт mdlp~~ ✅
-- ~~SEO-фундамент~~ ✅
-- ~~Каталог API + Search + MedDetail~~ ✅
-- ~~Полная миграция Frontend на API (удалён `mock.js`, `MedCard.jsx`)~~ ✅ 2026-05-10
-- ~~Форма заявки партнёров `/api/partner-requests` + admin approve/reject~~ ✅ 2026-05-10
-- ~~`prefix` фильтр в `/api/search` для каталога А–Я~~ ✅ 2026-05-10
-
-### P1
-- ~~Простая admin-страница `/partner-admin?token=...` для одобрения заявок~~ ✅ 2026-05-10
-- ~~LLM-обогащение топ-200 препаратов (описания, показания, противопоказания, способ применения) через gpt-4o-mini~~ ✅ 2026-05-10
-- Mail.ru IMAP-воркер: ждём от пользователя App Password (DKIM на проверке)
-- Расширение базы партнёров-аптек с 20 до сотен
-
-### P2
-- SFTP-выгрузка прайсов (после деплоя на VPS)
-- Аналитика поисковых запросов
-- Реальный деплой на aptekaa.ru: DNS Cloudflare, CF Worker для бот-маршрутизации
-- Регистрация в Яндекс.Вебмастере и Яндекс.Бизнесе после деплоя
-- Покупка `аптекаа.рф` (~190 ₽/год) с 301 на `aptekaa.ru`
-- Расширение LLM-обогащения с 200 до 1000-2000 препаратов
-
-## Changelog (latest)
-- **2026-05-10 (Сессия 4) — Подготовка к prod-деплою**:
-  - Настроен Yandex 360: 3 ящика (`info@`, `partners@`, `price@`)
-  - App Password для `price@aptekaa.ru` создан и проверен (IMAP+SMTP auth ✅)
-  - Куплен второй домен `аптекаа.рф` (REG.RU, до 26.04.2027)
-  - Создана VM в Yandex Cloud: `89.169.137.36`, Ubuntu 22.04, 2 vCPU / 3 GB / 40 GB SSD
-  - Сервер защищён: UFW, fail2ban, swap 2 GB, отключён парольный SSH
-  - Docker + docker compose установлены
-  - **Полный deploy-стек готов** в `/app/deploy/`:
-    - `docker-compose.yml` (mongo + backend + frontend + imap_worker + edge-nginx + certbot)
-    - `deploy.sh` (один скрипт — bootstrap → SSL → full HTTPS → cron renewal/backup)
-    - `backup.sh` (mongodump → /var/backups/aptekaa, retention 14 дней)
-    - `nginx/edge-bootstrap.conf` + `nginx/edge-ssl.conf` (HTTP-only → HTTPS с CSP, HSTS, 301 со старых URL)
-    - `nginx/static.conf` (фронтенд-контейнер — SPA fallback + cache headers)
-    - `DNS.md` (инструкция по REG.RU: A, MX Я.360, SPF, DKIM, DMARC)
-    - `README.md` (пошаговая инструкция)
-    - `.env.example` (с пред-заполненными значениями кроме секретов)
-  - Удалена страница «Доступные упаковки и формы выпуска» из MedDetail
-  - Поправлен текст hero-блока на главной (`Привлекайте новых клиентов...`)
-  - Опечатка `partner@` → `partners@` в PartnerUpload.jsx
-
-- **2026-05-10 (Сессия 3) — Security hardening**: CORS whitelist, security headers (CSP/HSTS/X-Frame), constant-time admin auth, rate-limits, sanitized errors. 88/88 ✅
-- **2026-05-10 (Сессия 2)**: LLM-обогащение топ-200, admin-UI заявок партнёров. 48/48 ✅
-- **2026-05-10 (Сессия 1)**: Миграция Frontend → API. 39/39 ✅
-
-## Files of reference
-- `/app/backend/server.py` — FastAPI: voice/chat, voice/tts, catalog router, SEO router
-- `/app/backend/api/__init__.py` — catalog endpoints
-- `/app/backend/api/seo.py` — robots, sitemap, SSR for bots
-- `/app/backend/api/pharmacies_seed.py` — CITIES, CATEGORIES, PHARMACIES seed
-- `/app/backend/scripts/import_mdlp.py` — ETL script
-- `/app/backend/voice_data.py` — context for voice bot
-- `/app/backend/data/mdlp_lp_registry.xlsx` — source registry (13 МБ, 72 054 строки)
-- `/app/backend/tests/test_catalog_api.py` — pytest suite (21 tests)
-- `/app/frontend/src/App.js` — routes with city prefix + backward-compat
-- `/app/frontend/src/api/client.js` — axios client
-- `/app/frontend/src/seo.js` + `/app/frontend/src/components/SEOHead.jsx` — SEO helpers
-- `/app/frontend/src/pages/Home.jsx`, `Search.jsx`, `MedDetail.jsx` — migrated to API
-- `/app/frontend/src/components/VoiceAssistant.jsx` + `CallView.jsx` — voice assistant
+## Critical notes for next agent
+- All commands run on the local container; the only operations on remote are
+  `scp` (image upload) + `ssh docker exec mongosh` (DB updates) + `git push` from remote.
+- `~/.ssh/id_ed25519` is the SSH key; host is `ubuntu@89.169.137.36`.
+- Playwright is installed at `/pw-browsers` — invoke with
+  `PLAYWRIGHT_BROWSERS_PATH=/pw-browsers python3 …`.
+- For ANY new manufacturer site:
+  1. curl the homepage; locate sitemap or /products|catalog/.
+  2. Pull product URLs, fetch each in parallel via `fetch_lib.parallel_fetch`.
+  3. Extract H1 (trade name) + main image via BeautifulSoup.
+  4. `find_db_matches_bulk(trade_names, manufacturer_pattern=…)` then `apply_plan`.
+- For modal-blocked or Vue-SPA catalogs: Playwright + dismiss modal + click
+  "Показать ещё" until exhausted.
+- ALWAYS pass a `manufacturer_pattern` to `find_db_matches_bulk` — otherwise
+  brand-name collisions across manufacturers (e.g. several brands of Метформин)
+  will pollute the result.
