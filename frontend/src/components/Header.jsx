@@ -85,7 +85,7 @@ export default function Header({ hideOnDesktop = false } = {}) {
       <div className="max-w-7xl mx-auto px-4 py-2 md:h-16 md:py-0 flex flex-wrap md:flex-nowrap items-center gap-y-2 gap-x-3 md:gap-6">
         <Link to="/" className="flex flex-col items-start leading-none shrink-0">
           <div className="flex items-center gap-2 md:gap-2.5">
-            <PillIcon className="w-4 h-4 md:w-5 md:h-5" />
+            <PillIcon className="h-5 md:h-6 w-auto" />
             <span className="text-lg font-extrabold text-slate-900 tracking-tight" style={{ fontFamily: "'Manrope', sans-serif" }}>Аптека<span className="text-emerald-600">А</span></span>
           </div>
           <span className="text-[13px] text-slate-500 mt-1.5 hidden sm:inline">Актуальное наличие лекарств</span>

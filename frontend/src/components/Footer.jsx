@@ -23,7 +23,7 @@ export default function Footer() {
           <div className="col-span-2">
             <Link to="/" className="flex flex-col items-start mb-3 leading-none">
               <div className="flex items-center gap-2 md:gap-2.5">
-                <PillIcon className="w-4 h-4 md:w-5 md:h-5" />
+                <PillIcon className="h-5 md:h-6 w-auto" />
                 <span className="text-lg font-extrabold text-slate-900 tracking-tight" style={{ fontFamily: "'Manrope', sans-serif" }}>Аптека<span className="text-emerald-600">А</span></span>
               </div>
               <span className="text-[13px] text-slate-500 mt-1.5">Актуальное наличие лекарств</span>
