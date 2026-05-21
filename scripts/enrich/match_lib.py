@@ -32,6 +32,23 @@ def regex_for_trade(name, mode="strict"):
     return f"(^|[^А-Яа-яЁё]){body}{tail}"
 
 
+def regex_for_name_field(name):
+    """Regex for matching trade against the `name` field (cleaner than label_name).
+
+    The `name` field typically reads "<Brand> [variant] [dose]" without form
+    descriptors or commas. We anchor at start and require a hard boundary after
+    the brand (end-of-string, whitespace, or punctuation).
+    Excludes letter+digit continuations to avoid "Мезим" matching "Мезимтекс".
+    """
+    name = re.sub(r"[®™]", "", name).strip()
+    parts = re.split(r"\s+", name)
+    parts_esc = [re.escape(p) for p in parts if p]
+    body = r"[®™]?\s+".join(parts_esc)
+    # Boundary: end-of-string OR space OR punctuation. Forbid letter/digit follow.
+    tail = r"[®™]?(\s|[,;.\/()\[\]\"«»\-+]|$)"
+    return f"^{body}{tail}"
+
+
 def find_db_matches_bulk(trade_names, manufacturer_pattern=None, exclude_manufacturers=None):
     """Bulk-match trade names. If manufacturer_pattern is set, restrict to that
     manufacturer (positive filter). If exclude_manufacturers is set, exclude
@@ -43,6 +60,7 @@ def find_db_matches_bulk(trade_names, manufacturer_pattern=None, exclude_manufac
             "name": name,
             "strict": regex_for_trade(name, "strict"),
             "loose": regex_for_trade(name, "loose"),
+            "name_re": regex_for_name_field(name),
         })
     js_items = json.dumps(items, ensure_ascii=False)
     mfg_pos = json.dumps(manufacturer_pattern) if manufacturer_pattern else "null"
@@ -62,13 +80,26 @@ def find_db_matches_bulk(trade_names, manufacturer_pattern=None, exclude_manufac
         "}\n"
         "const out = {};\n"
         "for (const it of items) {\n"
+        "  const seen = new Set();\n"
+        "  const acc = [];\n"
+        "  // Tier 1: strict regex on label_name\n"
         "  let q1 = Object.assign({ label_name: { $regex: it.strict, $options: 'i' } }, baseFilter());\n"
-        "  let docs = db.medications.find(q1, { slug:1, label_name:1, image_url:1, manufacturer:1, _id:0 }).limit(50).toArray();\n"
-        "  if (!docs.length) {\n"
-        "    let q2 = Object.assign({ label_name: { $regex: it.loose, $options: 'i' } }, baseFilter());\n"
-        "    docs = db.medications.find(q2, { slug:1, label_name:1, image_url:1, manufacturer:1, _id:0 }).limit(50).toArray();\n"
+        "  for (const d of db.medications.find(q1, { slug:1, label_name:1, image_url:1, manufacturer:1, _id:0 }).limit(50).toArray()) {\n"
+        "    if (!seen.has(d.slug)) { seen.add(d.slug); acc.push(d); }\n"
         "  }\n"
-        "  out[it.name] = docs;\n"
+        "  // Tier 2: loose regex on label_name (only if Tier 1 found nothing)\n"
+        "  if (!acc.length) {\n"
+        "    let q2 = Object.assign({ label_name: { $regex: it.loose, $options: 'i' } }, baseFilter());\n"
+        "    for (const d of db.medications.find(q2, { slug:1, label_name:1, image_url:1, manufacturer:1, _id:0 }).limit(50).toArray()) {\n"
+        "      if (!seen.has(d.slug)) { seen.add(d.slug); acc.push(d); }\n"
+        "    }\n"
+        "  }\n"
+        "  // Tier 3: match the cleaner `name` field — ALWAYS append (variants Tier 1 missed).\n"
+        "  let q3 = Object.assign({ name: { $regex: it.name_re, $options: 'i' } }, baseFilter());\n"
+        "  for (const d of db.medications.find(q3, { slug:1, label_name:1, image_url:1, manufacturer:1, _id:0 }).limit(50).toArray()) {\n"
+        "    if (!seen.has(d.slug)) { seen.add(d.slug); acc.push(d); }\n"
+        "  }\n"
+        "  out[it.name] = acc;\n"
         "}\n"
         "print('===BULK_RESULT_BEGIN===');\n"
         "print(JSON.stringify(out));\n"

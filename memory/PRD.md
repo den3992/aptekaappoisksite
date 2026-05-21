@@ -28,20 +28,30 @@ Remote server: `/home/ubuntu/aptekaa/`, mongo via `docker exec deploy-mongo-1 mo
 | Step | with_img | total | %
 |---|---|---|---|
 | Session start (fork) | 8 735 | 23 303 | 37.48 % |
-| After this session | **9 123** | 23 303 | **39.15 %** |
+| After scrapers | 9 123 | 23 303 | 39.15 % |
+| After name-field rematch | **9 252** | 23 303 | **39.70 %** |
 
-### This session adds (+388 cards, +1.67 pp)
-- Sotex (Playwright): +2 cards
+### This session adds (+517 cards, +2.22 pp)
+**Phase 1 — new scrapers (+388):**
+- Sotex (Playwright + modal dismiss): +2
 - Microgen (sitemap): +12
-- Berlin-Chemie (sitemap): +10
+- Berlin-Chemie (wp-sitemap medicines): +10
 - Biosintez (catalog index): +84
-- Avva-Rus (sitemap): +15
-- RLS v2 with expanded letter index a–z, 1–2: +4
-- Akrikhin (paginated catalog): +30
-- Wikimedia Commons rerun (800 names searched): +107
-- Dalkhim Pharm v2 (sitemap): +119
-- Vertex (sitemap iblock-2): +2
+- Avva-Rus (sitemap /production/): +15
+- RLS v2 (letter index a–z, 1–2): +4
+- Akrikhin (paginated /catalog/): +30
+- Wikimedia Commons rerun: +107
+- Dalkhim v2 (sitemap-tovar): +119
+- Vertex (sitemap-iblock-2): +2
 - Veropharm (products subdomain): +3
+
+**Phase 2 — match_lib upgraded with 3rd tier (`name` field) + rematch_all (+129):**
+- Microgen rematch: +66
+- Berlin-Chemie rematch: +10
+- Akrikhin rematch: +5
+- Dalkhim rematch: +2
+- Vertex rematch: +3
+- RLS rematch: +43
 
 ## What works (verified accessible from container)
 - ✅ Static manufacturer sites with sitemap.xml: berlin-chemie.ru, dalkhimpharm.ru,
@@ -61,12 +71,26 @@ Remote server: `/home/ubuntu/aptekaa/`, mongo via `docker exec deploy-mongo-1 mo
 ## Pending / backlog
 - P1 — Implement crowdsourcing button "Прислать фото" on empty cards for legal,
   ongoing user contributions.
-- P1 — Generate placeholder images via Nano Banana (Gemini) for the remaining ~61%
+- P1 — Generate placeholder images via Nano Banana (Gemini) for the remaining ~60%
   cards where no real photo can be obtained.
-- P2 — Improve match_lib: add fuzzy matching by `name` (not just `label_name`) so
-  variants with non-standard tail tokens match.
 - P2 — Re-enable broader Wikimedia search with deeper query variants (currently
   hit rate ~1 %).
+- P2 — Add more loose match tiers to match_lib (e.g. case-insensitive MNN
+  matching, transliteration) — already partly addressed by Tier 3.
+
+## match_lib upgrade (this session)
+Tier 1: strict regex on `label_name` (anchored brand + form keyword tail).
+Tier 2: loose regex on `label_name` (same, no leading anchor) — runs only if
+        Tier 1 yields zero.
+Tier 3: NEW — strict regex on `name` field, anchored brand + word-boundary tail
+        (allows variant/dose follow-ups like "Мезим форте 10000"). Runs ALWAYS
+        and unions into the result set. This is what unlocks variants the
+        label_name regex misses because the tail token is a variant qualifier
+        (форте, плюс, дуо, Про, 10000) not a form descriptor.
+
+Util: `rematch_all.py` re-runs find_db_matches_bulk against every prior
+manifest in /tmp/<prefix>_products.json and applies image_url to newly-matched
+unphotographed slugs. `rls_rematch.py` does the same for RLS v2 cache.
 
 ## Top untouched manufacturers (no photos)
 | Cards | Manufacturer | Web status |
