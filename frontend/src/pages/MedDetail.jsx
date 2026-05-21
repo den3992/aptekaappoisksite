@@ -513,6 +513,7 @@ export default function MedDetail() {
   // Динамический список аптек, видимых на карте + 15 ближайших к центру.
   // Обновляется при каждом moveend/zoomend (debounce внутри PriceMap).
   const [viewportList, setViewportList] = useState([]);
+  const [viewportVisible, setViewportVisible] = useState(15);
   const lastViewportRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [selectedPack, setSelectedPack] = useState(null);
@@ -713,32 +714,14 @@ export default function MedDetail() {
           }))
       : [];
 
-    // 3. Объединяем, сортируем (price asc, distance asc), берём топ-15.
+    // 3. Объединяем и сортируем (price asc, distance asc) — БЕЗ лимита.
+    //    Показываем все аптеки в зоне карты; детали Горздрав-аптек
+    //    догружаются лениво только для видимых карточек (эффект ниже).
     const combined = [...partnerEntries, ...gzCandidates]
-      .sort((a, b) => a.price - b.price || a.distance - b.distance)
-      .slice(0, 15);
-
-    // 4. Догружаем полные данные для тех Горздрав, которых ещё нет в детальной выдаче.
-    const gzIds = combined.filter(x => x.source === 'gorzdrav').map(x => x.store_id);
-    if (gzIds.length > 0) {
-      try {
-        const details = await fetchGorzdravStoresBulk(gzIds);
-        const byId = Object.fromEntries(details.map(d => [d.store_id, d]));
-        combined.forEach(item => {
-          if (item.source === 'gorzdrav') {
-            const d = byId[item.store_id];
-            if (d) {
-              item.name = d.full_name || 'Горздрав';
-              item.address = d.address;
-              item.hours = d.is_24h ? 'Круглосуточно' : d.hours;
-              item.phone = d.phone;
-            }
-          }
-        });
-      } catch (e) {}
-    }
+      .sort((a, b) => a.price - b.price || a.distance - b.distance);
 
     setViewportList(combined);
+    setViewportVisible(15);   // движение карты — снова показываем первые 15
   }, []);
 
   // Когда данные обновляются (gorzdravStores догрузились / поменялся pack / город) —
@@ -746,6 +729,34 @@ export default function MedDetail() {
   useEffect(() => {
     if (lastViewportRef.current) onMapViewportChange(lastViewportRef.current);
   }, [prices, pharmacies, gorzdravStores, onMapViewportChange]);
+
+  // Ленивая догрузка деталей Горздрав-аптек — только для видимых карточек.
+  useEffect(() => {
+    const need = viewportList
+      .slice(0, viewportVisible)
+      .filter(x => x.source === 'gorzdrav' && !x.name)
+      .map(x => x.store_id);
+    if (need.length === 0) return;
+    let cancelled = false;
+    fetchGorzdravStoresBulk(need).then(details => {
+      if (cancelled) return;
+      const byId = Object.fromEntries(details.map(d => [d.store_id, d]));
+      setViewportList(prev => prev.map(item => {
+        if (item.source === 'gorzdrav' && !item.name && byId[item.store_id]) {
+          const d = byId[item.store_id];
+          return {
+            ...item,
+            name: d.full_name || 'Горздрав',
+            address: d.address,
+            hours: d.is_24h ? 'Круглосуточно' : d.hours,
+            phone: d.phone,
+          };
+        }
+        return item;
+      }));
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [viewportList, viewportVisible]);
 
 
   if (loading) {
@@ -1038,7 +1049,7 @@ export default function MedDetail() {
                     className="flex-1 overflow-y-auto divide-y divide-slate-100 overscroll-contain"
                     style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 80px)', WebkitOverflowScrolling: 'touch' }}
                   >
-                    {viewportList.map(item => (
+                    {viewportList.slice(0, viewportVisible).map(item => (
                       <ViewportListItem
                         key={item.key}
                         item={item}
@@ -1050,6 +1061,20 @@ export default function MedDetail() {
                         selected={selectedId === item.key}
                       />
                     ))}
+                    {viewportVisible < viewportList.length && (
+                      <div className="p-3">
+                        <button
+                          type="button"
+                          onClick={() => setViewportVisible(v => v + 15)}
+                          className="w-full py-2.5 rounded-lg border border-emerald-300 text-emerald-700 text-sm font-semibold active:bg-emerald-50"
+                        >
+                          Показать ещё ({viewportList.length - viewportVisible})
+                        </button>
+                        <p className="text-[11px] text-slate-400 text-center mt-2">
+                          Приблизьте карту, чтобы сузить список аптек
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </VaulDrawer.Content>
               </VaulDrawer.Portal>
@@ -1065,7 +1090,7 @@ export default function MedDetail() {
             <h2 className="text-xl md:text-2xl font-bold text-slate-900">Цены в аптеках</h2>
             <div className="text-xs md:text-sm text-slate-500">
               {viewportList.length > 0
-                ? `15 ближайших к центру карты · сначала дешевле`
+                ? `Аптек в зоне карты: ${viewportList.length} · сначала дешевле`
                 : 'Загрузка списка аптек…'}
             </div>
           </div>
@@ -1075,7 +1100,7 @@ export default function MedDetail() {
                 Подождите, аптеки на карте подгружаются…
               </div>
             )}
-            {viewportList.map(item => (
+            {viewportList.slice(0, viewportVisible).map(item => (
               <ViewportListItem
                 key={item.key}
                 item={item}
@@ -1086,6 +1111,20 @@ export default function MedDetail() {
                 selected={selectedId === item.key}
               />
             ))}
+            {viewportVisible < viewportList.length && (
+              <div className="p-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setViewportVisible(v => v + 15)}
+                  className="w-full py-2.5 rounded-lg border border-emerald-300 text-emerald-700 text-sm font-semibold hover:bg-emerald-50 transition"
+                >
+                  Показать ещё ({viewportList.length - viewportVisible})
+                </button>
+                <p className="text-[11px] text-slate-400 text-center mt-2">
+                  Приблизьте карту, чтобы сузить список аптек
+                </p>
+              </div>
+            )}
           </div>
         </section>
       )}
