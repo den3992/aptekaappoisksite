@@ -206,7 +206,7 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
                 mnn_count[k] = mnn_count.get(k, 0) + 1
         cursor = db.medications.find(
             {"is_canonical": {"$ne": False}},
-            {"_id": 0, "slug": 1, "mnn": 1},
+            {"_id": 0, "slug": 1, "mnn": 1, "image_url": 1},
         ).sort("slug", 1).skip(skip).limit(per)
         urls = []
         async for d in cursor:
@@ -221,8 +221,12 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
             if not has_price and not has_analogs:
                 continue
             lm = lastmod_map.get(slug)
+            # Фото препарата → image sitemap extension (Яндекс.Картинки).
+            # Имена файлов могут содержать кириллицу — percent-encode пути.
+            img = d.get("image_url") or ""
+            img_abs = f"{host}{quote(img, safe='/')}" if img.startswith("/") else (img or None)
             for c in CITIES:
-                urls.append((f"{host}/{c['slug']}/preparaty/{slug}", lm))
+                urls.append((f"{host}/{c['slug']}/preparaty/{slug}", lm, img_abs))
         return _urlset(urls)
 
     # ----- yandex-verification placeholder -----
@@ -237,22 +241,30 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
 
 def _urlset(urls, lastmod_today: bool = True) -> Response:
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    # Элемент: строка URL, кортеж (url, lastmod|None) или (url, lastmod|None, image|None).
+    has_images = any(isinstance(u, tuple) and len(u) >= 3 and u[2] for u in urls)
     items = []
     for u in urls:
-        # Элемент может быть строкой URL либо кортежем (url, lastmod|None).
         if isinstance(u, tuple):
-            loc, lm = u
-            if lm:
-                items.append(f"<url><loc>{html.escape(loc)}</loc><lastmod>{lm}</lastmod></url>")
-            else:
-                items.append(f"<url><loc>{html.escape(loc)}</loc></url>")
+            loc, lm = u[0], u[1]
+            img = u[2] if len(u) >= 3 else None
+            lm_tag = f"<lastmod>{lm}</lastmod>" if lm else ""
+            img_tag = (
+                f"<image:image><image:loc>{html.escape(img)}</image:loc></image:image>"
+                if img else ""
+            )
+            items.append(f"<url><loc>{html.escape(loc)}</loc>{lm_tag}{img_tag}</url>")
         elif lastmod_today:
             items.append(f"<url><loc>{html.escape(u)}</loc><lastmod>{today}</lastmod></url>")
         else:
             items.append(f"<url><loc>{html.escape(u)}</loc></url>")
+    urlset_open = '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'
+    if has_images:
+        urlset_open += ' xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"'
+    urlset_open += ">"
     body = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + urlset_open + "\n"
         + "\n".join(items)
         + "\n</urlset>\n"
     )
