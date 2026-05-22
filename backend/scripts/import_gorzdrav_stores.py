@@ -61,31 +61,59 @@ async def main():
     ]
     log.info(f"Аптек в регионе MOS (активных): {len(mos_stores)}")
 
-    docs = []
+    # Стабильный append-only idx: существующим аптекам сохраняем idx,
+    # новым выдаём следующий по порядку. store_bitmap в prices_real
+    # позиционно завязан на idx — переиспользовать слоты нельзя.
+    existing: dict[str, int] = {}
+    async for d in db.gorzdrav_stores.find({}, {"_id": 0, "store_id": 1, "idx": 1}):
+        existing[d["store_id"]] = d.get("idx")
+    next_idx = max([i for i in existing.values() if i is not None], default=-1) + 1
+
+    seen: set[str] = set()
+    new_count = 0
     for s in mos_stores:
+        sid = s["storeId"]
+        seen.add(sid)
         info = s.get("storeInfo", {})
         sched = info.get("schedule", {})
-        docs.append({
-            "store_id": s["storeId"],
-            "name": info.get("brand", {}).get("id") == 1 and "36,6" or "Горздрав",
-            "full_name": s.get("name", ""),
-            "lat": info.get("latitude"),
-            "lng": info.get("longitude"),
-            "address": info.get("address", ""),
-            "phone": info.get("phone", ""),
-            "hours": fmt_schedule(sched),
-            "is_24h": sched.get("is24Hour", False),
-            "city": "msk",
-            "source": "gorzdrav",
-            "updated_at": datetime.now(timezone.utc),
-        })
+        idx = existing.get(sid)
+        if idx is None:
+            idx = next_idx
+            next_idx += 1
+            new_count += 1
+        await db.gorzdrav_stores.update_one(
+            {"store_id": sid},
+            {"$set": {
+                "store_id": sid,
+                "idx": idx,
+                "name": info.get("brand", {}).get("id") == 1 and "36,6" or "Горздрав",
+                "full_name": s.get("name", ""),
+                "lat": info.get("latitude"),
+                "lng": info.get("longitude"),
+                "address": info.get("address", ""),
+                "phone": info.get("phone", ""),
+                "hours": fmt_schedule(sched),
+                "is_24h": sched.get("is24Hour", False),
+                "city": "msk",
+                "source": "gorzdrav",
+                "active": True,
+                "updated_at": datetime.now(timezone.utc),
+            }},
+            upsert=True,
+        )
 
-    if docs:
-        await db.gorzdrav_stores.delete_many({})
-        await db.gorzdrav_stores.insert_many(docs)
-        await db.gorzdrav_stores.create_index("store_id", unique=True)
-        await db.gorzdrav_stores.create_index([("lat", 1), ("lng", 1)])
-        log.info(f"Сохранено в MongoDB: {len(docs)} аптек")
+    # Аптеки, пропавшие из выдачи API — деактивируем, но idx-слот сохраняем.
+    deact = await db.gorzdrav_stores.update_many(
+        {"store_id": {"$nin": list(seen)}},
+        {"$set": {"active": False}},
+    )
+    await db.gorzdrav_stores.create_index("store_id", unique=True)
+    await db.gorzdrav_stores.create_index([("lat", 1), ("lng", 1)])
+    await db.gorzdrav_stores.create_index("idx")
+    log.info(
+        f"Обновлено аптек: {len(seen)} (новых: {new_count}), "
+        f"деактивировано: {deact.modified_count}"
+    )
 
     client_db.close()
 

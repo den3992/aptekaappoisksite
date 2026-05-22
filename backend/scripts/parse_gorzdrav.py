@@ -27,6 +27,7 @@ from difflib import SequenceMatcher
 from pathlib import Path
 
 import httpx
+from bson.binary import Binary
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 
@@ -82,6 +83,12 @@ POPULAR_MNN = {
 }
 
 REQUEST_DELAY = 0.3
+
+# Фаза наличия: размер батча и пауза для delivery/map/region/detail.
+# Эндпоинт тяжёлый на стороне Горздрава (считает наличие по ~1900 аптекам);
+# на крупных батчах отдаёт 502/503 — поэтому батч небольшой + ретраи с backoff.
+AVAIL_BATCH = 100
+AVAIL_DELAY = 3.0
 NAME_THRESHOLD = 0.72
 SEARCH_SIZE = 20
 
@@ -321,25 +328,103 @@ async def search_gorzdrav(client: httpx.AsyncClient, query: str) -> list[dict]:
         return []
 
 
-async def get_stores_quantity(client: httpx.AsyncClient, ext_id: str) -> int:
-    try:
-        r = await client.post(
-            f"{GZ_BASE}/api/v2/stock/region/getStoresQuantity",
-            json={"productIds": [ext_id]},
-            timeout=15,
+def _popcount(b: bytes) -> int:
+    return sum(bin(x).count("1") for x in b)
+
+
+async def refresh_availability(
+    client: httpx.AsyncClient, db, ext_ids: list[str]
+) -> None:
+    """Фаза 2: батчевый запрос наличия по аптекам и запись битовой маски.
+
+    delivery/map/region/detail с emptyStock=False отдаёт список аптек,
+    где товар реально есть. Бит i маски store_bitmap взведён, если аптека
+    с idx=i (из gorzdrav_stores) имеет товар в продаже (customer > 0).
+    """
+    if not ext_ids:
+        return
+
+    store_idx: dict[str, int] = {}
+    max_idx = -1
+    async for s in db.gorzdrav_stores.find({}, {"_id": 0, "store_id": 1, "idx": 1}):
+        idx = s.get("idx")
+        if idx is None:
+            continue
+        store_idx[s["store_id"]] = idx
+        if idx > max_idx:
+            max_idx = idx
+    if max_idx < 0:
+        log.error("gorzdrav_stores без поля idx — сначала запусти import_gorzdrav_stores.py")
+        return
+
+    nbytes = (max_idx + 8) // 8
+    log.info(
+        f"Availability: {len(ext_ids)} ext_id, {len(store_idx)} аптек, маска {nbytes} б"
+    )
+
+    updated = 0
+    failed = 0
+    total_batches = (len(ext_ids) + AVAIL_BATCH - 1) // AVAIL_BATCH
+    for i in range(0, len(ext_ids), AVAIL_BATCH):
+        batch = ext_ids[i:i + AVAIL_BATCH]
+        stores = None
+        for attempt in range(5):
+            try:
+                r = await client.post(
+                    f"{GZ_BASE}/api/v1/delivery/map/region/detail",
+                    json={"productIds": batch, "emptyStock": False},
+                    timeout=120,
+                )
+                r.raise_for_status()
+                stores = r.json().get("stores", [])
+                break
+            except Exception as e:
+                wait = 5 * (2 ** attempt)
+                log.warning(
+                    f"availability батч @{i} попытка {attempt + 1}/5: {e} — пауза {wait}с"
+                )
+                await asyncio.sleep(wait)
+        if stores is None:
+            failed += 1
+            log.error(f"availability батч @{i}: не удалось за 5 попыток, пропуск")
+            continue
+
+        masks = {eid: bytearray(nbytes) for eid in batch}
+        for st in stores:
+            idx = store_idx.get(st.get("locationId"))
+            if idx is None:
+                continue
+            byte_i, bit = idx >> 3, idx & 7
+            for eid, stk in (st.get("stocks") or {}).items():
+                ba = masks.get(eid)
+                if ba is not None and (stk or {}).get("customer", 0) > 0:
+                    ba[byte_i] |= 1 << bit
+
+        for eid, ba in masks.items():
+            res = await db.prices_real.update_many(
+                {"source": "gorzdrav", "gz_ext_id": eid},
+                {"$set": {"store_bitmap": Binary(bytes(ba)),
+                          "stores_count": _popcount(ba)}},
+            )
+            updated += res.modified_count
+        log.info(
+            f"Availability: батч {i // AVAIL_BATCH + 1}/{total_batches}, "
+            f"ext_id {min(i + AVAIL_BATCH, len(ext_ids))}/{len(ext_ids)}"
         )
-        r.raise_for_status()
-        data = r.json()
-        if data and isinstance(data, list):
-            return data[0].get("storesQuantity", 0)
-    except Exception as e:
-        log.warning(f"stock error for extId={ext_id}: {e}")
-    return 0
+        await asyncio.sleep(AVAIL_DELAY)
+
+    log.info(
+        f"Availability: обновлено записей prices_real: {updated}, "
+        f"неудачных батчей: {failed}"
+    )
 
 
 # IndexNow: slug-и препаратов, у которых цена изменилась за прогон.
 # В конце main() выгружаются в файл, cron-обёртка шлёт их на IndexNow.
 CHANGED_SLUGS: set[str] = set()
+
+# ext_id всех упаковок, сматченных за прогон — для фазы наличия (refresh_availability).
+MATCHED_EXT_IDS: set[str] = set()
 
 
 async def process_medication(
@@ -446,11 +531,10 @@ async def process_medication(
         if price is None:
             continue
 
-        stores_count = await get_stores_quantity(client, ext_id)
-        await asyncio.sleep(REQUEST_DELAY)
-
+        # Наличие по аптекам (store_bitmap / stores_count) заполняется
+        # позже батчем в refresh_availability — здесь только фиксируем ext_id.
         log.info(
-            f"  [{item_status:12s}] pack={gz_pack:<10} | {price} руб | {stores_count} аптек | {gz_name[:50]}"
+            f"  [{item_status:12s}] pack={gz_pack:<10} | {price} руб | {gz_name[:50]}"
         )
 
         # IndexNow: фиксируем изменение цены (новая запись или другая цена).
@@ -472,13 +556,13 @@ async def process_medication(
                 "gz_ext_id": ext_id,
                 "gz_name": gz_name,
                 "price": price,
-                "stores_count": stores_count,
                 "search_query": query,
                 "search_pass": search_pass,
                 "updated_at": datetime.now(timezone.utc),
             }},
             upsert=True,
         )
+        MATCHED_EXT_IDS.add(ext_id)
         saved += 1
 
     # Удаляем устаревшие записи Горздрав для этого препарата
@@ -501,6 +585,20 @@ async def process_medication(
 async def main(args: argparse.Namespace) -> None:
     client_db = AsyncIOMotorClient(MONGO_URL)
     db = client_db[DB_NAME]
+
+    # Режим только наличия: пропускаем перематчинг, обновляем store_bitmap
+    # для всех уже сматченных упаковок. Быстро (только батчи availability).
+    if args.availability_only:
+        ext_ids = await db.prices_real.distinct("gz_ext_id", {
+            "source": "gorzdrav",
+            "match_status": {"$in": ["matched", "mnn_match", "needs_review"]},
+            "gz_ext_id": {"$ne": None},
+            "price": {"$ne": None},
+        })
+        async with httpx.AsyncClient(headers=GZ_HEADERS) as client:
+            await refresh_availability(client, db, sorted(ext_ids))
+        client_db.close()
+        return
 
     query: dict = {"is_canonical": True}
     if args.slug:
@@ -534,6 +632,9 @@ async def main(args: argparse.Namespace) -> None:
                 log.info(f"Прогресс: {i}/{len(meds)}")
             await process_medication(client, db, med, args.rematch)
 
+        # Фаза 2: наличие по аптекам для всех сматченных за прогон упаковок.
+        await refresh_availability(client, db, sorted(MATCHED_EXT_IDS))
+
     stats = {}
     async for doc in db.prices_real.aggregate([
         {"$match": {"source": "gorzdrav"}},
@@ -563,5 +664,7 @@ if __name__ == "__main__":
     parser.add_argument("--rematch", action="store_true")
     parser.add_argument("--update-only", action="store_true",
                         help="Обновить только препараты, для которых уже есть Горздрав-матчи (быстрее).")
+    parser.add_argument("--availability-only", action="store_true",
+                        help="Только наличие по аптекам (store_bitmap) для сматченных упаковок, без перематчинга.")
     args = parser.parse_args()
     asyncio.run(main(args))

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 import math
+import base64
 from typing import Optional, List
 from datetime import datetime, timezone
 
@@ -127,8 +128,9 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         Возвращает только координаты + минимум данных для маркера.
         Полная инфо (адрес, телефон, часы) — через /gorzdrav/stores/{store_id}."""
         cursor = db.gorzdrav_stores.find(
-            {"city": city, "lat": {"$ne": None}, "lng": {"$ne": None}},
-            {"_id": 0, "store_id": 1, "lat": 1, "lng": 1},
+            {"city": city, "active": {"$ne": False},
+             "lat": {"$ne": None}, "lng": {"$ne": None}},
+            {"_id": 0, "store_id": 1, "idx": 1, "lat": 1, "lng": 1},
         )
         items = [doc async for doc in cursor]
         if response is not None:
@@ -320,15 +322,18 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
                 "match_status": {"$in": ["matched", "mnn_match", "needs_review"]},
                 "price": {"$ne": None},
             },
-            {"_id": 0, "price": 1, "stores_count": 1, "gz_name": 1, "gz_pack": 1},
+            {"_id": 0, "price": 1, "stores_count": 1, "gz_name": 1,
+             "gz_pack": 1, "store_bitmap": 1},
         )
         async for gz_entry in gz_cursor:
+            _bm = gz_entry.get("store_bitmap")
             real_prices["msk"].append({
                 "pharmacy_id": "gorzdrav",
                 "price": gz_entry["price"],
                 "qty": gz_entry.get("stores_count", 0),
                 "gz_name": gz_entry.get("gz_name"),
                 "gz_pack": gz_entry.get("gz_pack"),
+                "store_bitmap": base64.b64encode(_bm).decode() if _bm else None,
             })
 
         med["prices_by_city"] = real_prices

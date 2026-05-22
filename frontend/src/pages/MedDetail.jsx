@@ -148,7 +148,24 @@ function sortPacks(items) {
   });
 }
 
-const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, gorzdravStores = [], gorzdravPrice = null, cityCenter, onSelect, selected, fullscreen = false, onInteract, onViewportChange }, externalRef) {
+// store_bitmap (base64) → Uint8Array. Бит idx взведён, если препарат есть
+// в Горздрав-аптеке с этим idx. idx — стабильный индекс из gorzdrav_stores.
+function decodeBitmap(b64) {
+  if (!b64) return null;
+  try {
+    const bin = atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return arr;
+  } catch (e) { return null; }
+}
+function bitmapHas(mask, idx) {
+  if (!mask || idx == null || idx < 0) return false;
+  const byte = idx >> 3;
+  return byte < mask.length && (mask[byte] & (1 << (idx & 7))) !== 0;
+}
+
+const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, gorzdravStores = [], gorzdravPrice = null, gorzdravBitmap = null, cityCenter, onSelect, selected, fullscreen = false, onInteract, onViewportChange }, externalRef) {
   const ref = useRef(null);
   const mapRef = useRef(null);
   const tileLayerRef = useRef(null);
@@ -292,8 +309,12 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
       });
 
       if (gorzdravPrice !== null && gorzdravStores.length > 0) {
+        // Маркер только для аптек, где препарат реально есть (store_bitmap),
+        // а не для всех ~1900 точек сети.
+        const gzMask = decodeBitmap(gorzdravBitmap);
         gorzdravStores.forEach(store => {
           if (!store.lat || !store.lng) return;
+          if (!bitmapHas(gzMask, store.idx)) return;
           const m = L.marker([store.lat, store.lng], { icon: pillIcon(gorzdravPrice) });
           // Лёгкий placeholder-popup (название + цена + кнопки маршрута).
           // Адрес, часы, телефон — догружаются по клику и подменяют popup.
@@ -408,7 +429,7 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
     };
     // eslint-disable-next-line
-  }, [med?.slug, cityCenter[0], cityCenter[1], prices.length, gorzdravStores.length, gorzdravPrice, fullscreen]);
+  }, [med?.slug, cityCenter[0], cityCenter[1], prices.length, gorzdravStores.length, gorzdravPrice, gorzdravBitmap, fullscreen]);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -699,10 +720,11 @@ export default function MedDetail() {
       })
       .filter(Boolean);
 
-    // 2. Горздрав-аптеки в bbox (если цена есть).
+    // 2. Горздрав-аптеки в bbox, где препарат реально есть (store_bitmap).
+    const gzMask = decodeBitmap(prices.find(p => p.pharmacy_id === 'gorzdrav')?.store_bitmap);
     const gzCandidates = gzPrice !== null
       ? gorzdravStores
-          .filter(s => s.lat >= bounds.south && s.lat <= bounds.north && s.lng >= bounds.west && s.lng <= bounds.east)
+          .filter(s => bitmapHas(gzMask, s.idx) && s.lat >= bounds.south && s.lat <= bounds.north && s.lng >= bounds.west && s.lng <= bounds.east)
           .map(s => ({
             key: 'gorzdrav_' + s.store_id,
             source: 'gorzdrav',
@@ -1003,6 +1025,7 @@ export default function MedDetail() {
               pharmacies={pharmacies}
               gorzdravStores={gorzdravStores}
               gorzdravPrice={prices.find(p => p.pharmacy_id === 'gorzdrav')?.price ?? null}
+              gorzdravBitmap={prices.find(p => p.pharmacy_id === 'gorzdrav')?.store_bitmap ?? null}
               cityCenter={city.center}
               onSelect={(pid) => {
                 setSelectedId(pid);
