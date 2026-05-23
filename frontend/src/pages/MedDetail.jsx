@@ -1123,7 +1123,9 @@ export default function MedDetail() {
                 ? `Аптек в зоне карты: ${viewportList.length} · сначала дешевле`
                 : !gorzdravStoresLoaded
                   ? 'Загрузка списка аптек…'
-                  : 'В видимой области карты нет аптек с препаратом'}
+                  : !prices.some(p => p.pharmacy_id === 'gorzdrav')
+                    ? 'Препарат в подключённых аптеках не найден'
+                    : 'В видимой области карты нет аптек с препаратом'}
             </div>
           </div>
           <div className="bg-white border border-slate-100 rounded-xl divide-y divide-slate-100 overflow-hidden">
@@ -1131,7 +1133,9 @@ export default function MedDetail() {
               <div className="px-4 py-6 text-center text-sm text-slate-500">
                 {!gorzdravStoresLoaded
                   ? 'Подождите, аптеки на карте подгружаются…'
-                  : 'В этой области карты нет аптек с этим препаратом — измените область или приблизьте карту.'}
+                  : !prices.some(p => p.pharmacy_id === 'gorzdrav')
+                    ? 'Этот препарат пока не найден в подключённых аптеках. Попробуйте посмотреть аналоги ниже.'
+                    : 'В этой области карты нет аптек с этим препаратом — отодвиньте карту или уменьшите масштаб.'}
               </div>
             )}
             {viewportList.slice(0, viewportVisible).map(item => (
