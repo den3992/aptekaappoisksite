@@ -140,6 +140,63 @@ export default function Home() {
           </Link>
         </div>
 
+        {/* Mobile hero — на главной мобильной шапки нет, поэтому собираем
+            логотип + город + строку поиска здесь, внутри зелёного градиента.
+            H1 «Ищите лекарства…» из следующей секции окажется ниже поиска. */}
+        <div className="md:hidden relative z-20 px-4 pt-8 pb-2">
+          <Link to="/" className="flex items-center justify-center gap-3 mb-3">
+            <PillIcon className="w-14 h-14" />
+            <span className="text-3xl font-extrabold text-slate-900 tracking-tight" style={{ fontFamily: "'Manrope', sans-serif" }}>
+              Аптека<span className="text-emerald-600">А</span>
+            </span>
+          </Link>
+          <div className="flex justify-center mb-5">
+            <label className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 bg-white/80 backdrop-blur border border-slate-200 rounded-full px-3 py-1.5 cursor-pointer shadow-sm">
+              <MapPin className="w-4 h-4 text-emerald-600" />
+              <select
+                value={city.id}
+                onChange={(e) => setCity(cities.find(c => c.id === e.target.value))}
+                className="bg-transparent outline-none appearance-none cursor-pointer pr-1"
+                aria-label="Выбор города"
+              >
+                {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </label>
+          </div>
+          <form onSubmit={submit} className="bg-white shadow-card border border-slate-100 rounded-2xl p-2 flex items-center gap-2 input-focus relative">
+            <Search className="w-5 h-5 text-rose-500 ml-2 shrink-0" />
+            <input
+              type="search"
+              inputMode="search"
+              lang="ru"
+              autoComplete="off"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Найдите препарат..."
+              aria-label="Поиск препарата"
+              className="flex-1 text-base py-2 bg-transparent outline-none min-w-0"
+            />
+            {suggestions.length > 0 && (
+              <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-100 rounded-xl shadow-card max-h-[60vh] overflow-y-auto no-scrollbar z-50 text-left" data-testid="search-suggestions-mobile">
+                {dedupeMeds(suggestions).map(s => (
+                  <Link
+                    key={s.slug}
+                    to={`/${city.id}/preparaty/${s.slug}`}
+                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-emerald-50 transition"
+                    onClick={() => setQ('')}
+                  >
+                    <Pill className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-slate-900 truncate">{formatName(s.name)}</div>
+                      <div className="text-xs text-slate-500 truncate">{[formatName(s.form), s.dosage, formatManufacturer(s.manufacturer)].filter(Boolean).join(' · ')}</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </form>
+        </div>
+
         {/* Hero */}
         <section className="relative z-20 max-w-4xl mx-auto px-4 pt-6 pb-10 md:pt-14 md:pb-24 text-center">
           {(() => {

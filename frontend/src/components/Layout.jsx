@@ -11,9 +11,10 @@ export default function Layout() {
   const isHome = location.pathname === '/' || /^\/[a-z-]+\/?$/.test(location.pathname);
   return (
     <div className="min-h-[100dvh] flex flex-col bg-white overflow-x-clip">
-      {/* Header is always rendered on mobile (sticky search is the primary tool).
-          On desktop the home page hides it because it has its own hero search. */}
-      <Header hideOnDesktop={isHome} />
+      {/* На главной (desktop + мобильный) шапка не рендерится — у главной
+          собственный hero (логотип, город, поиск), который не липнет.
+          На остальных страницах sticky-шапка работает как обычно. */}
+      {!isHome && <Header />}
       <main className="flex-1"><Outlet /></main>
       <Footer />
       <VoiceAssistant />
