@@ -230,10 +230,18 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
       ref.current.addEventListener('wheel', fireInteract, { passive: true });
 
       function pillIcon(price) {
+        // .ymap-price-pill уже сам себя позиционирует через CSS
+        // `transform: translate(-50%, -100%)` (низ-центр пилюли совпадает с
+        // верхним-левым углом контейнера), а ::after-хвост висит на 7 px
+        // ниже пилюли. Чтобы кончик хвоста попал на lat/lng, контейнер
+        // должен стоять на 7 px ВЫШЕ точки — то есть anchor = [0, 7]
+        // (lat/lng внутри иконки на 7 px ниже её top-left). Иначе iconAnchor
+        // даёт второй сдвиг поверх CSS-трансформа и маркер уезжает в сторону
+        // (на zoom 11 это ~1.7 км — видно сразу, на zoom 18 ~30 м — почти ОК).
         return L.divIcon({
           className: '',
           html: `<div class="ymap-price-pill">${price} ₽</div>`,
-          iconAnchor: [40, 36],
+          iconAnchor: [0, 7],
           iconSize: [80, 36],
         });
       }
