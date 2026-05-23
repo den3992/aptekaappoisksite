@@ -98,6 +98,14 @@ export default function Home() {
       .catch(() => setCategories([]));
   }, []);
 
+  // iOS Safari красит safe-area под статус-баром цветом body. На главной
+  // ставим body.home-bg (emerald-50), чтобы зелёный градиент визуально
+  // продолжался до верха экрана. Снимаем класс при уходе со страницы.
+  useEffect(() => {
+    document.body.classList.add('home-bg');
+    return () => document.body.classList.remove('home-bg');
+  }, []);
+
   const suggestions = apiSuggestions;
 
   const submit = (e) => {

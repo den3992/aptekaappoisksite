@@ -12,6 +12,12 @@ body {
     color: #0f172a;
     background: #ffffff;
 }
+/* iOS Safari paints the safe-area inset (зазор под статус-баром) цветом
+   body, а не вложенного Layout-div. На главной нужен зелёный — класс
+   ставит Home через useEffect, на других страницах остаётся белый. */
+body.home-bg {
+    background: #ecfdf5; /* emerald-50, под цвет верха градиента */
+}
 
 code {
     font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
