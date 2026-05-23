@@ -619,6 +619,23 @@ export default function MedDetail() {
     return m ? parseFloat(m[1]) : null;
   }
 
+  // Нормализация упаковки для сравнения с Горздрав: "N × M unit" → "N*M unit".
+  // В med.variants упаковки хранятся как "2 × 10 шт", а Горздрав отдаёт уже
+  // перемноженное "20 шт". Без нормализации матчинг по строкам теряет
+  // активную упаковку, и весь Горздрав-блок (карта, маркеры, цены) исчезает.
+  function packTotal(p) {
+    if (!p) return '';
+    const s = String(p).trim();
+    const m = s.match(/^(\d+(?:[.,]\d+)?)\s*[×xх]\s*(\d+(?:[.,]\d+)?)\s*(.*)$/i);
+    if (m) {
+      const n = parseFloat(m[1].replace(',', '.'));
+      const k = parseFloat(m[2].replace(',', '.'));
+      const unit = (m[3] || '').trim();
+      return `${Math.round(n * k)}${unit ? ' ' + unit : ''}`;
+    }
+    return s;
+  }
+
   // Deterministic 32-bit hash of a string.
   function hashStr(s) {
     let h = 0;
@@ -642,10 +659,12 @@ export default function MedDetail() {
       return qty + ' ' + m[2].toLowerCase();
     };
     const gorzdravAll = all.filter(p => p.pharmacy_id === 'gorzdrav');
+    const activeTotal = packTotal(activePack);
     const gorzdrav = packs.length >= 2 && activePack
       ? gorzdravAll.filter(p => {
           const gzPack = p.gz_pack || extractGzPack(p.gz_name);
-          return !gzPack || gzPack === activePack;
+          if (!gzPack) return true;
+          return packTotal(gzPack) === activeTotal;
         })
       : gorzdravAll;
     const list = all.filter(p => p.pharmacy_id !== 'gorzdrav');
