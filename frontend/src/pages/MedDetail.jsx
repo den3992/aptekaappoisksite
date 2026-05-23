@@ -531,6 +531,11 @@ export default function MedDetail() {
   const [analogs, setAnalogs] = useState([]);
   const [pharmacies, setPharmacies] = useState([]);
   const [gorzdravStores, setGorzdravStores] = useState([]);
+  // Флаг «список Горздрав-аптек уже загружен» (вне зависимости от того,
+  // получили ли что-то). Нужен, чтобы отличать "ещё грузим" от "загрузили,
+  // в видимой области карты ничего нет" — раньше показывался бесконечный
+  // «Загрузка списка аптек…».
+  const [gorzdravStoresLoaded, setGorzdravStoresLoaded] = useState(false);
   // Динамический список аптек, видимых на карте + 15 ближайших к центру.
   // Обновляется при каждом moveend/zoomend (debounce внутри PriceMap).
   const [viewportList, setViewportList] = useState([]);
@@ -555,12 +560,14 @@ export default function MedDetail() {
     let cancelled = false;
     setLoading(true);
     setNotFound(false);
+    setGorzdravStoresLoaded(false);
     // Горздрав-аптек 1937 штук — грузим параллельно, но НЕ блокируем рендер.
     // Карта появится сразу же с партнёрскими маркерами, кружки Горздрав
     // дорисуются как только данные приедут (~100-300мс).
     fetchGorzdravStores(city.id)
       .then(gz => { if (!cancelled) setGorzdravStores(gz); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setGorzdravStoresLoaded(true); });
     Promise.all([fetchMed(slug), fetchAnalogs(slug, 8), fetchPharmacies(city.id)])
       .then(([m, a, ph]) => {
         if (cancelled) return;
@@ -1114,13 +1121,17 @@ export default function MedDetail() {
             <div className="text-xs md:text-sm text-slate-500">
               {viewportList.length > 0
                 ? `Аптек в зоне карты: ${viewportList.length} · сначала дешевле`
-                : 'Загрузка списка аптек…'}
+                : !gorzdravStoresLoaded
+                  ? 'Загрузка списка аптек…'
+                  : 'В видимой области карты нет аптек с препаратом'}
             </div>
           </div>
           <div className="bg-white border border-slate-100 rounded-xl divide-y divide-slate-100 overflow-hidden">
             {viewportList.length === 0 && (
               <div className="px-4 py-6 text-center text-sm text-slate-500">
-                Подождите, аптеки на карте подгружаются…
+                {!gorzdravStoresLoaded
+                  ? 'Подождите, аптеки на карте подгружаются…'
+                  : 'В этой области карты нет аптек с этим препаратом — измените область или приблизьте карту.'}
               </div>
             )}
             {viewportList.slice(0, viewportVisible).map(item => (
