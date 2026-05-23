@@ -189,7 +189,7 @@ export default function Home() {
             aria-label="Открыть поиск препарата"
           >
             <Search className="w-5 h-5 text-rose-500 ml-2 shrink-0" />
-            <span className="flex-1 text-base py-2 text-slate-400">Найдите препарат...</span>
+            <span className="flex-1 text-base py-2 text-slate-400">Введите название препарата</span>
           </button>
         </div>
 
