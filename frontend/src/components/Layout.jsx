@@ -10,7 +10,7 @@ export default function Layout() {
   const location = useLocation();
   const isHome = location.pathname === '/' || /^\/[a-z-]+\/?$/.test(location.pathname);
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-white overflow-x-clip">
+    <div className={`min-h-[100dvh] flex flex-col overflow-x-clip ${isHome ? 'bg-emerald-50' : 'bg-white'}`}>
       {/* На главной (desktop + мобильный) шапка не рендерится — у главной
           собственный hero (логотип, город, поиск), который не липнет.
           На остальных страницах sticky-шапка работает как обычно. */}
