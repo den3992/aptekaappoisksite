@@ -323,11 +323,12 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
                 "price": {"$ne": None},
             },
             {"_id": 0, "price": 1, "stores_count": 1, "gz_name": 1,
-             "gz_pack": 1, "store_bitmap": 1},
+             "gz_pack": 1, "store_bitmap": 1, "city": 1},
         )
         async for gz_entry in gz_cursor:
             _bm = gz_entry.get("store_bitmap")
-            real_prices["msk"].append({
+            _city = gz_entry.get("city") or "msk"  # legacy без city → msk
+            real_prices.setdefault(_city, []).append({
                 "pharmacy_id": "gorzdrav",
                 "price": gz_entry["price"],
                 "qty": gz_entry.get("stores_count", 0),

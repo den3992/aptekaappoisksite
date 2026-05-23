@@ -46,14 +46,19 @@ MONGO_URL = os.environ["MONGO_URL"]
 DB_NAME = os.environ.get("DB_NAME", "aptekaa")
 
 GZ_BASE = "https://gorzdrav.org"
-GZ_HEADERS = {
+# Базовые заголовки. Flex-Region проставляется per-region в main().
+GZ_HEADERS_BASE = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
     "Accept": "application/json",
     "Content-Type": "application/json",
     "Flex-Locale": "country=RU;bs=gz.ru",
-    "Flex-Region": "region=MOS",
     "Flex-App": "WEB",
 }
+# (Горздрав-регион → city-id в нашем приложении).
+REGIONS = [
+    ("MOS", "msk"),
+    ("SPE", "spb"),
+]
 
 POPULAR_MNN = {
     "ПАРАЦЕТАМОЛ", "ИБУПРОФЕН", "АЦЕТИЛСАЛИЦИЛОВАЯ КИСЛОТА",
@@ -333,13 +338,15 @@ def _popcount(b: bytes) -> int:
 
 
 async def refresh_availability(
-    client: httpx.AsyncClient, db, ext_ids: list[str]
+    client: httpx.AsyncClient, db, ext_ids: list[str], city: str
 ) -> None:
     """Фаза 2: батчевый запрос наличия по аптекам и запись битовой маски.
 
     delivery/map/region/detail с emptyStock=False отдаёт список аптек,
-    где товар реально есть. Бит i маски store_bitmap взведён, если аптека
-    с idx=i (из gorzdrav_stores) имеет товар в продаже (customer > 0).
+    где товар реально есть в текущем регионе (по Flex-Region у клиента).
+    Бит i маски store_bitmap взведён, если аптека с idx=i (из gorzdrav_stores)
+    имеет товар в продаже (customer > 0). Пишем только в записи нужного city,
+    чтобы маски MSK/SPB не перетирали друг друга для одного ext_id.
     """
     if not ext_ids:
         return
@@ -402,7 +409,7 @@ async def refresh_availability(
 
         for eid, ba in masks.items():
             res = await db.prices_real.update_many(
-                {"source": "gorzdrav", "gz_ext_id": eid},
+                {"source": "gorzdrav", "city": city, "gz_ext_id": eid},
                 {"$set": {"store_bitmap": Binary(bytes(ba)),
                           "stores_count": _popcount(ba)}},
             )
@@ -423,15 +430,14 @@ async def refresh_availability(
 # В конце main() выгружаются в файл, cron-обёртка шлёт их на IndexNow.
 CHANGED_SLUGS: set[str] = set()
 
-# ext_id всех упаковок, сматченных за прогон — для фазы наличия (refresh_availability).
-MATCHED_EXT_IDS: set[str] = set()
-
 
 async def process_medication(
     client: httpx.AsyncClient,
     db,
     med: dict,
     rematch: bool,
+    city: str,
+    matched_ext_ids: set,
 ) -> None:
     med_id = med["_id"]
     slug = med.get("slug", str(med_id))
@@ -439,7 +445,9 @@ async def process_medication(
     dosage = med.get("dosage", "")
     mnn = med.get("mnn", "")
 
-    existing = await db.prices_real.find_one({"medication_id": med_id, "source": "gorzdrav"})
+    existing = await db.prices_real.find_one(
+        {"medication_id": med_id, "source": "gorzdrav", "city": city}
+    )
     if existing and not rematch:
         log.debug(f"skip (already matched): {slug}")
         return
@@ -469,11 +477,11 @@ async def process_medication(
                 status = "mnn_match"
 
     if not gz_items and (not mnn or mnn.lower() in name.lower()):
-        log.info(f"[not_found]  {slug}")
+        log.info(f"[{city}/not_found]  {slug}")
         await db.prices_real.update_one(
-            {"medication_id": med_id, "source": "gorzdrav"},
+            {"medication_id": med_id, "source": "gorzdrav", "city": city},
             {"$set": {
-                "medication_id": med_id, "slug": slug, "source": "gorzdrav",
+                "medication_id": med_id, "slug": slug, "source": "gorzdrav", "city": city,
                 "match_status": "not_found",
                 "updated_at": datetime.now(timezone.utc),
             }},
@@ -483,11 +491,11 @@ async def process_medication(
 
     if matched_item is None:
         top_name = gz_items[0].get("name", "") if gz_items else ""
-        log.info(f"[no match]   {slug} | top: {top_name[:60]}")
+        log.info(f"[{city}/no match]   {slug} | top: {top_name[:60]}")
         await db.prices_real.update_one(
-            {"medication_id": med_id, "source": "gorzdrav"},
+            {"medication_id": med_id, "source": "gorzdrav", "city": city},
             {"$set": {
-                "medication_id": med_id, "slug": slug, "source": "gorzdrav",
+                "medication_id": med_id, "slug": slug, "source": "gorzdrav", "city": city,
                 "match_status": "no_match",
                 "search_query": query,
                 "gz_top_candidate": top_name,
@@ -539,18 +547,19 @@ async def process_medication(
 
         # IndexNow: фиксируем изменение цены (новая запись или другая цена).
         _prev = await db.prices_real.find_one(
-            {"medication_id": med_id, "source": "gorzdrav", "gz_pack": gz_pack},
+            {"medication_id": med_id, "source": "gorzdrav", "city": city, "gz_pack": gz_pack},
             {"_id": 0, "price": 1},
         )
         if _prev is None or _prev.get("price") != price:
             CHANGED_SLUGS.add(slug)
 
         await db.prices_real.update_one(
-            {"medication_id": med_id, "source": "gorzdrav", "gz_pack": gz_pack},
+            {"medication_id": med_id, "source": "gorzdrav", "city": city, "gz_pack": gz_pack},
             {"$set": {
                 "medication_id": med_id,
                 "slug": slug,
                 "source": "gorzdrav",
+                "city": city,
                 "gz_pack": gz_pack,
                 "match_status": item_status,
                 "gz_ext_id": ext_id,
@@ -562,85 +571,101 @@ async def process_medication(
             }},
             upsert=True,
         )
-        MATCHED_EXT_IDS.add(ext_id)
+        matched_ext_ids.add(ext_id)
         saved += 1
 
-    # Удаляем устаревшие записи Горздрав для этого препарата
-    # (упаковки, которых больше нет в выдаче).
+    # Удаляем устаревшие записи Горздрав для этого препарата в этом городе
+    # (упаковки, которых больше нет в выдаче региона).
     if saved > 0 and seen_packs:
         await db.prices_real.delete_many({
-            "medication_id": med_id, "source": "gorzdrav",
+            "medication_id": med_id, "source": "gorzdrav", "city": city,
             "gz_pack": {"$nin": list(seen_packs), "$ne": None},
         })
         # Также удаляем старую запись без gz_pack (legacy format)
         await db.prices_real.delete_many({
-            "medication_id": med_id, "source": "gorzdrav",
+            "medication_id": med_id, "source": "gorzdrav", "city": city,
             "gz_pack": {"$exists": False},
             "match_status": {"$in": ["matched", "needs_review", "mnn_match"]},
         })
 
-    log.info(f"[{slug[:40]:<40}] saved {saved} packs (pass={search_pass})")
+    log.info(f"[{city}/{slug[:40]:<40}] saved {saved} packs (pass={search_pass})")
 
 
 async def main(args: argparse.Namespace) -> None:
     client_db = AsyncIOMotorClient(MONGO_URL)
     db = client_db[DB_NAME]
 
-    # Режим только наличия: пропускаем перематчинг, обновляем store_bitmap
-    # для всех уже сматченных упаковок. Быстро (только батчи availability).
-    if args.availability_only:
-        ext_ids = await db.prices_real.distinct("gz_ext_id", {
-            "source": "gorzdrav",
-            "match_status": {"$in": ["matched", "mnn_match", "needs_review"]},
-            "gz_ext_id": {"$ne": None},
-            "price": {"$ne": None},
-        })
-        async with httpx.AsyncClient(headers=GZ_HEADERS) as client:
-            await refresh_availability(client, db, sorted(ext_ids))
+    # Какие регионы прогонять.
+    if args.region == "both":
+        regions_to_run = REGIONS
+    else:
+        regions_to_run = [(r, c) for r, c in REGIONS if r == args.region]
+    if not regions_to_run:
+        log.error(f"Неизвестный регион: {args.region}")
         client_db.close()
         return
 
-    query: dict = {"is_canonical": True}
-    if args.slug:
-        query["slug"] = args.slug
-    if args.popular:
-        query["mnn"] = {"$in": list(POPULAR_MNN)}
-    if args.update_only:
-        # Берём slug-и тех препаратов, для которых уже есть успешный матч.
-        matched_slugs = await db.prices_real.distinct(
-            "slug",
-            {"source": "gorzdrav",
-             "match_status": {"$in": ["matched", "mnn_match", "needs_review"]},
-             "price": {"$ne": None}},
-        )
-        query["slug"] = {"$in": matched_slugs}
-        # В update-only всегда нужен rematch (иначе пропустит уже сматченные)
-        args.rematch = True
+    # Режим только наличия: пропускаем перематчинг, обновляем store_bitmap
+    # для всех уже сматченных упаковок. Быстро (только батчи availability).
+    if args.availability_only:
+        for region, city in regions_to_run:
+            ext_ids = await db.prices_real.distinct("gz_ext_id", {
+                "source": "gorzdrav",
+                "city": city,
+                "match_status": {"$in": ["matched", "mnn_match", "needs_review"]},
+                "gz_ext_id": {"$ne": None},
+                "price": {"$ne": None},
+            })
+            headers = {**GZ_HEADERS_BASE, "Flex-Region": f"region={region}"}
+            async with httpx.AsyncClient(headers=headers) as client:
+                log.info(f"=== availability-only: {region} → city={city}, {len(ext_ids)} ext_id ===")
+                await refresh_availability(client, db, sorted(ext_ids), city)
+        client_db.close()
+        return
 
-    cursor = db.medications.find(query, {
-        "name": 1, "dosage": 1, "form": 1, "manufacturer": 1, "slug": 1, "mnn": 1,
-    })
-    if args.limit:
-        cursor = cursor.limit(args.limit)
+    for region, city in regions_to_run:
+        log.info(f"=== Регион {region} → city={city} ===")
+        query: dict = {"is_canonical": True}
+        if args.slug:
+            query["slug"] = args.slug
+        if args.popular:
+            query["mnn"] = {"$in": list(POPULAR_MNN)}
+        if args.update_only:
+            # Берём slug-и, у которых уже есть успешный матч ИМЕННО в этом городе.
+            matched_slugs = await db.prices_real.distinct(
+                "slug",
+                {"source": "gorzdrav", "city": city,
+                 "match_status": {"$in": ["matched", "mnn_match", "needs_review"]},
+                 "price": {"$ne": None}},
+            )
+            query["slug"] = {"$in": matched_slugs}
+            args.rematch = True
 
-    meds = await cursor.to_list(length=None)
-    log.info(f"Препаратов для обработки: {len(meds)}")
+        cursor = db.medications.find(query, {
+            "name": 1, "dosage": 1, "form": 1, "manufacturer": 1, "slug": 1, "mnn": 1,
+        })
+        if args.limit:
+            cursor = cursor.limit(args.limit)
 
-    async with httpx.AsyncClient(headers=GZ_HEADERS) as client:
-        for i, med in enumerate(meds, 1):
-            if i % 100 == 0:
-                log.info(f"Прогресс: {i}/{len(meds)}")
-            await process_medication(client, db, med, args.rematch)
+        meds = await cursor.to_list(length=None)
+        log.info(f"[{region}] Препаратов для обработки: {len(meds)}")
 
-        # Фаза 2: наличие по аптекам для всех сматченных за прогон упаковок.
-        await refresh_availability(client, db, sorted(MATCHED_EXT_IDS))
+        matched_ext_ids: set[str] = set()
+        headers = {**GZ_HEADERS_BASE, "Flex-Region": f"region={region}"}
+        async with httpx.AsyncClient(headers=headers) as client:
+            for i, med in enumerate(meds, 1):
+                if i % 100 == 0:
+                    log.info(f"[{region}] Прогресс: {i}/{len(meds)}")
+                await process_medication(client, db, med, args.rematch, city, matched_ext_ids)
+
+            await refresh_availability(client, db, sorted(matched_ext_ids), city)
 
     stats = {}
     async for doc in db.prices_real.aggregate([
         {"$match": {"source": "gorzdrav"}},
-        {"$group": {"_id": "$match_status", "count": {"$sum": 1}}},
+        {"$group": {"_id": {"city": "$city", "status": "$match_status"}, "count": {"$sum": 1}}},
     ]):
-        stats[doc["_id"]] = doc["count"]
+        stats[f"{doc['_id'].get('city','?')}/{doc['_id'].get('status','?')}"] = doc["count"]
 
     log.info(f"Готово. Статистика: {stats}")
 
@@ -666,5 +691,7 @@ if __name__ == "__main__":
                         help="Обновить только препараты, для которых уже есть Горздрав-матчи (быстрее).")
     parser.add_argument("--availability-only", action="store_true",
                         help="Только наличие по аптекам (store_bitmap) для сматченных упаковок, без перематчинга.")
+    parser.add_argument("--region", type=str, default="both", choices=["MOS", "SPE", "both"],
+                        help="Регион Горздрав: MOS (Москва), SPE (СПб), both — по умолчанию оба.")
     args = parser.parse_args()
     asyncio.run(main(args))
