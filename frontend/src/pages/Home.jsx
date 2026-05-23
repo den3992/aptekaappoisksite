@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import NotFound from './NotFound';
-import { Search, MapPin, ShieldCheck, ArrowRight, Pill, Building2, Sparkles, Map } from 'lucide-react';
+import { Search, MapPin, ShieldCheck, ArrowRight, Pill, Building2, Sparkles, Map, ChevronDown } from 'lucide-react';
 import { useCity } from '../context/CityContext';
 import CategoryIcon from '../components/CategoryIcon';
 import PillIcon from '../components/PillIcon';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
+import { openSearchOverlay } from '../lib/searchOverlay';
 import PartnersMarquee from '../components/PartnersMarquee';
 import SEOHead from '../components/SEOHead';
 import { homeSEO } from '../seo';
@@ -150,51 +154,43 @@ export default function Home() {
               Аптека<span className="text-emerald-600">А</span>
             </span>
           </Link>
+          {/* Город — DropdownMenu, ширина «таблетки» подстраивается под имя
+              (Москва ≠ Санкт-Петербург). Стрелочка вниз подсказывает, что
+              город можно поменять. */}
           <div className="flex justify-center mb-5">
-            <label className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 bg-white/80 backdrop-blur border border-slate-200 rounded-full px-3 py-1.5 cursor-pointer shadow-sm">
-              <MapPin className="w-4 h-4 text-emerald-600" />
-              <select
-                value={city.id}
-                onChange={(e) => setCity(cities.find(c => c.id === e.target.value))}
-                className="bg-transparent outline-none appearance-none cursor-pointer pr-1"
-                aria-label="Выбор города"
-              >
-                {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </label>
-          </div>
-          <form onSubmit={submit} className="bg-white shadow-card border border-slate-100 rounded-2xl p-2 flex items-center gap-2 input-focus relative">
-            <Search className="w-5 h-5 text-rose-500 ml-2 shrink-0" />
-            <input
-              type="search"
-              inputMode="search"
-              lang="ru"
-              autoComplete="off"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Найдите препарат..."
-              aria-label="Поиск препарата"
-              className="flex-1 text-base py-2 bg-transparent outline-none min-w-0"
-            />
-            {suggestions.length > 0 && (
-              <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-100 rounded-xl shadow-card max-h-[60vh] overflow-y-auto no-scrollbar z-50 text-left" data-testid="search-suggestions-mobile">
-                {dedupeMeds(suggestions).map(s => (
-                  <Link
-                    key={s.slug}
-                    to={`/${city.id}/preparaty/${s.slug}`}
-                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-emerald-50 transition"
-                    onClick={() => setQ('')}
-                  >
-                    <Pill className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-slate-900 truncate">{formatName(s.name)}</div>
-                      <div className="text-xs text-slate-500 truncate">{[formatName(s.form), s.dosage, formatManufacturer(s.manufacturer)].filter(Boolean).join(' · ')}</div>
-                    </div>
-                  </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 bg-white/80 backdrop-blur border border-slate-200 rounded-full px-3 py-1.5 shadow-sm hover:text-emerald-700"
+                  aria-label="Выбор города"
+                >
+                  <MapPin className="w-4 h-4 text-emerald-600" />
+                  <span>{city.name}</span>
+                  <ChevronDown className="w-4 h-4 opacity-60" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-48">
+                {cities.map(c => (
+                  <DropdownMenuItem key={c.id} onClick={() => setCity(c)} className="cursor-pointer">
+                    <MapPin className="w-4 h-4 mr-2" /> {c.name}
+                  </DropdownMenuItem>
                 ))}
-              </div>
-            )}
-          </form>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          {/* Кнопка-«строка поиска» — клик открывает SearchOverlay
+              (как иконка «Поиск» в нижнем таб-баре). На главной типаhead
+              из десктопа не используется, чтобы UX поиска был единым. */}
+          <button
+            type="button"
+            onClick={openSearchOverlay}
+            className="w-full bg-white shadow-card border border-slate-100 rounded-2xl p-2 flex items-center gap-2 text-left"
+            aria-label="Открыть поиск препарата"
+          >
+            <Search className="w-5 h-5 text-rose-500 ml-2 shrink-0" />
+            <span className="flex-1 text-base py-2 text-slate-400">Найдите препарат...</span>
+          </button>
         </div>
 
         {/* Hero */}
