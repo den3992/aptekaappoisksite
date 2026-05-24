@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
-# Ежедневный/еженедельный парсер Горздрав.
+# Ежедневный/еженедельный парсер Горздрав (MOS + SPE).
 # Запускается из crontab, защита от пересечения через flock.
 #
 # Usage:
-#   parse_gorzdrav_cron.sh update   # инкрементальное обновление существующих
+#   parse_gorzdrav_cron.sh update   # инкрементальное обновление сматченных
 #   parse_gorzdrav_cron.sh full     # полный rematch всего каталога
+#
+# Парсер сам прогоняет оба региона: MOS → city=msk, SPE → city=spb
+# (--region=both — значение по умолчанию у parse_gorzdrav.py).
 
 set -euo pipefail
 
@@ -29,19 +32,27 @@ if ! flock -n 9; then
   exit 0
 fi
 
-# Запоминаем счётчики ДО запуска для health-check после.
-COUNT_BEFORE=$(docker exec deploy-mongo-1 mongosh --quiet \
-  -u aptekaa_admin -p "$(grep MONGO_PASSWORD $DEPLOY/.env|cut -d= -f2)" \
-  --authenticationDatabase admin \
-  --eval 'db.getSiblingDB("aptekaa").prices_real.countDocuments({source:"gorzdrav", price:{$ne:null}})' \
-  | tail -1)
+# Быстрый health-check счётчиков (всего + по городам).
+count_query() {
+  local q="$1"
+  docker exec deploy-mongo-1 mongosh --quiet \
+    -u aptekaa_admin -p "$(grep MONGO_PASSWORD $DEPLOY/.env|cut -d= -f2)" \
+    --authenticationDatabase admin \
+    --eval "db.getSiblingDB(\"aptekaa\").prices_real.countDocuments($q)" \
+    | tail -1
+}
+
+BEFORE_TOTAL=$(count_query '{source:"gorzdrav", price:{$ne:null}}')
+BEFORE_MSK=$(count_query   '{source:"gorzdrav", city:"msk", price:{$ne:null}}')
+BEFORE_SPB=$(count_query   '{source:"gorzdrav", city:"spb", price:{$ne:null}}')
+echo "BEFORE: total=$BEFORE_TOTAL msk=$BEFORE_MSK spb=$BEFORE_SPB"
 
 case "$MODE" in
   update)
-    cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_gorzdrav --update-only
+    cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_gorzdrav --update-only --region=both
     ;;
   full)
-    cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_gorzdrav --rematch
+    cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_gorzdrav --rematch --region=both
     ;;
   *)
     echo "ERR: unknown mode '$MODE' (use 'update' or 'full')"
@@ -49,22 +60,21 @@ case "$MODE" in
     ;;
 esac
 
-COUNT_AFTER=$(docker exec deploy-mongo-1 mongosh --quiet \
-  -u aptekaa_admin -p "$(grep MONGO_PASSWORD $DEPLOY/.env|cut -d= -f2)" \
-  --authenticationDatabase admin \
-  --eval 'db.getSiblingDB("aptekaa").prices_real.countDocuments({source:"gorzdrav", price:{$ne:null}})' \
-  | tail -1)
+AFTER_TOTAL=$(count_query '{source:"gorzdrav", price:{$ne:null}}')
+AFTER_MSK=$(count_query   '{source:"gorzdrav", city:"msk", price:{$ne:null}}')
+AFTER_SPB=$(count_query   '{source:"gorzdrav", city:"spb", price:{$ne:null}}')
 
-echo "=== $(date -u +'%Y-%m-%d %H:%M:%S UTC') | mode=$MODE | done | before=$COUNT_BEFORE after=$COUNT_AFTER ==="
+echo "=== $(date -u +'%Y-%m-%d %H:%M:%S UTC') | mode=$MODE | done ==="
+echo "AFTER:  total=$AFTER_TOTAL msk=$AFTER_MSK spb=$AFTER_SPB"
 
 # IndexNow: парсер записал slug-и с изменившейся ценой в /tmp/indexnow_changed.txt
 # внутри backend-контейнера. Шлём их на IndexNow (Яндекс/Bing быстро переиндексируют).
 echo "--- IndexNow ping ---"
 cd "$DEPLOY" && docker compose exec -T backend python -m scripts.indexnow_ping /tmp/indexnow_changed.txt || echo "IndexNow ping failed (non-fatal)"
 
-# Алерт: если резкое падение (> 20% потеря записей) — это аномалия.
-# (cron сам отправит вывод на почту root, если в /etc/aliases настроен MAILTO)
-if [ "$COUNT_AFTER" -lt $((COUNT_BEFORE * 80 / 100)) ]; then
-  echo "ALERT: gorzdrav records dropped from $COUNT_BEFORE to $COUNT_AFTER (>20% loss)"
+# Алерт: если резкое падение (> 20% потеря записей) — аномалия.
+# (cron сам отправит вывод на почту root, если в /etc/aliases настроен MAILTO).
+if [ "$AFTER_TOTAL" -lt $((BEFORE_TOTAL * 80 / 100)) ]; then
+  echo "ALERT: gorzdrav records dropped from $BEFORE_TOTAL to $AFTER_TOTAL (>20% loss)"
   exit 3
 fi

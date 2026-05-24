@@ -48,8 +48,12 @@ def main():
     if not slugs:
         print("0 changed slugs — nothing to submit")
         return
-    # Препарат: каноническая страница в Москве (gorzdrav-данные московские).
-    urls = [f"https://{HOST}/msk/preparaty/{s}" for s in slugs]
+    # Один и тот же slug индексируется отдельно для каждого города (/msk/...
+    # и /spb/...) — у Яндекса разные региональные страницы. Пинаем оба.
+    urls = []
+    for s in slugs:
+        urls.append(f"https://{HOST}/msk/preparaty/{s}")
+        urls.append(f"https://{HOST}/spb/preparaty/{s}")
     total = 0
     for i in range(0, len(urls), BATCH):
         chunk = urls[i:i + BATCH]
