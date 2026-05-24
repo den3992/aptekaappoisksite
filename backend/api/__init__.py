@@ -339,6 +339,18 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
 
         med["prices_by_city"] = real_prices
         med["prices_source"] = "real"
+
+        # Самая свежая updated_at среди гордравских цен по препарату — для
+        # отображения «Цены обновлены: …» (YMYL-сигнал свежести данных).
+        latest = await db.prices_real.find_one(
+            {"slug": slug, "source": "gorzdrav",
+             "price": {"$ne": None}, "updated_at": {"$ne": None}},
+            sort=[("updated_at", -1)],
+            projection={"_id": 0, "updated_at": 1},
+        )
+        if latest and latest.get("updated_at"):
+            med["prices_updated_at"] = latest["updated_at"].isoformat()
+
         return med
 
     @router.get("/medications/{slug}/analogs")

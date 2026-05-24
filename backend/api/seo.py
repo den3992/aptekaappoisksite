@@ -498,6 +498,16 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
     canonical_slug = med.get("canonical_slug") or slug
     canonical = f"{base_url(request)}/{city}/preparaty/{canonical_slug}"
 
+    # Самая свежая дата обновления цен Горздрав для этого города (используется
+    # ниже в body как «Цены обновлены: …» и в MedicalWebPage.lastReviewed).
+    _latest = await db.prices_real.find_one(
+        {"slug": slug, "source": "gorzdrav", "city": city,
+         "price": {"$ne": None}, "updated_at": {"$ne": None}},
+        sort=[("updated_at", -1)],
+        projection={"_id": 0, "updated_at": 1},
+    )
+    prices_updated_at = _latest.get("updated_at") if _latest else None
+
     body = []
     if rx:
         body.append('<p><strong>⚠️ Отпускается по рецепту.</strong> Препарат отпускается строго по назначению врача.</p>')
@@ -585,6 +595,16 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
         u = f"{base_url(request)}/{city}/apteki/{p['id']}"
         body.append(f'<li><a href="{u}">{html.escape(p["name"])}</a> — {html.escape(p["address"])}</li>')
     body.append("</ul>")
+
+    # Дата последнего обновления цен — YMYL-сигнал свежести.
+    if prices_updated_at:
+        _ru_months = ["января","февраля","марта","апреля","мая","июня",
+                      "июля","августа","сентября","октября","ноября","декабря"]
+        _d = prices_updated_at
+        body.append(
+            f'<p class="prices-updated"><small>Цены обновлены: '
+            f'{_d.day} {_ru_months[_d.month - 1]} {_d.year} г.</small></p>'
+        )
 
     # Mandatory medical disclaimer (ФЗ-38 «О рекламе», ст. 24).
     # Mirrors what real users see via Footer + MedDetail page, so SSR vs React are
@@ -781,7 +801,23 @@ async def render_med_for_bot(db: AsyncIOMotorDatabase, city: str, slug: str, req
         }
     product_node = {k: v for k, v in product_node.items() if v}
 
-    graph_nodes = [drug_node, product_node]
+    # MedicalWebPage — обёртка над страницей для YMYL-семантики. Связывает
+    # сам Drug-узел с типом «медицинская страница для пациента», указывает
+    # дату последней ревизии (= последняя свежая цена).
+    medweb_node = {
+        "@type": "MedicalWebPage",
+        "@id": f"{canonical}#webpage",
+        "url": canonical,
+        "name": title,
+        "description": desc,
+        "inLanguage": "ru",
+        "audience": {"@type": "MedicalAudience", "audienceType": "Patient"},
+        "mainContentOfPage": {"@id": f"{canonical}#drug"},
+        "isPartOf": {"@type": "WebSite", "name": "АптекаА", "url": base_url(request)},
+    }
+    if prices_updated_at:
+        medweb_node["lastReviewed"] = prices_updated_at.date().isoformat()
+    graph_nodes = [medweb_node, drug_node, product_node]
 
     # FAQPage from LLM enrichment (rich snippet on Yandex/Google SERPs)
     faq_pairs = []

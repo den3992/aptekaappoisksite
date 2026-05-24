@@ -1144,7 +1144,18 @@ export default function MedDetail() {
       {prices.length > 0 && (
         <section className="mb-8 md:mb-12">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1 mb-3 md:mb-4">
-            <h2 className="text-xl md:text-2xl font-bold text-slate-900">Цены в аптеках</h2>
+            <div className="flex flex-col">
+              <h2 className="text-xl md:text-2xl font-bold text-slate-900">Цены в аптеках</h2>
+              {med.prices_updated_at && (
+                <div className="text-[11px] md:text-xs text-slate-400 mt-0.5">
+                  Цены обновлены: {(() => {
+                    const d = new Date(med.prices_updated_at);
+                    const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+                    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`;
+                  })()}
+                </div>
+              )}
+            </div>
             <div className="text-xs md:text-sm text-slate-500">
               {viewportList.length > 0
                 ? `Аптек в зоне карты: ${viewportList.length} · сначала дешевле`
