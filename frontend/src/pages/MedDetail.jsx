@@ -816,8 +816,14 @@ export default function MedDetail() {
 
 
   if (loading) {
+    // Высота = viewport: пока React гидрирует и /api/medications не пришёл,
+    // главный контейнер должен занимать весь экран, иначе футер залезает в
+    // visible area и при появлении контента улетает вниз на ~2400px —
+    // даёт катастрофический CLS (0.39 в Lighthouse mobile).
     return (
-      <div className="max-w-7xl mx-auto px-4 py-16 text-center text-slate-500">Загрузка препарата…</div>
+      <div className="max-w-7xl mx-auto px-4 py-16 text-center text-slate-500 min-h-[100dvh]">
+        Загрузка препарата…
+      </div>
     );
   }
 
