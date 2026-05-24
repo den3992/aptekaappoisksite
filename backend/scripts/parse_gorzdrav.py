@@ -89,6 +89,11 @@ POPULAR_MNN = {
 
 REQUEST_DELAY = 0.3
 
+# Сколько препаратов обрабатываем параллельно. При 4 каждый воркер делает
+# свои паузы независимо — эффективная нагрузка на Горздрав ~13 req/s (4× от
+# sequential ~3.3 req/s). Полный прогон сокращается с ~7ч до ~2ч.
+CONCURRENCY = 4
+
 # Фаза наличия: размер батча и пауза для delivery/map/region/detail.
 # Эндпоинт тяжёлый на стороне Горздрава (считает наличие по ~1900 аптекам);
 # на крупных батчах отдаёт 502/503 — поэтому батч небольшой + ретраи с backoff.
@@ -320,17 +325,26 @@ def match_product(
 
 
 async def search_gorzdrav(client: httpx.AsyncClient, query: str) -> list[dict]:
-    try:
-        r = await client.post(
-            f"{GZ_BASE}/api/v1/product-search/ext",
-            json={"page": 1, "size": SEARCH_SIZE, "filters": {"q": query}},
-            timeout=15,
-        )
-        r.raise_for_status()
-        return r.json().get("data", {}).get("result", {}).get("items", [])
-    except Exception as e:
-        log.warning(f"search error for '{query}': {e}")
-        return []
+    # 3 попытки с backoff: под конкурентной нагрузкой Горздрав иногда
+    # отдаёт 429/502/503, ретрай разруливает.
+    for attempt in range(3):
+        try:
+            r = await client.post(
+                f"{GZ_BASE}/api/v1/product-search/ext",
+                json={"page": 1, "size": SEARCH_SIZE, "filters": {"q": query}},
+                timeout=20,
+            )
+            r.raise_for_status()
+            return r.json().get("data", {}).get("result", {}).get("items", [])
+        except Exception as e:
+            if attempt < 2:
+                wait = 1 + attempt * 2
+                log.warning(f"search '{query[:40]}' попытка {attempt + 1}/3: {e} — пауза {wait}с")
+                await asyncio.sleep(wait)
+                continue
+            log.warning(f"search error for '{query[:40]}' (после 3 попыток): {e}")
+            return []
+    return []
 
 
 def _popcount(b: bytes) -> int:
@@ -653,10 +667,20 @@ async def main(args: argparse.Namespace) -> None:
         matched_ext_ids: set[str] = set()
         headers = {**GZ_HEADERS_BASE, "Flex-Region": f"region={region}"}
         async with httpx.AsyncClient(headers=headers) as client:
-            for i, med in enumerate(meds, 1):
-                if i % 100 == 0:
-                    log.info(f"[{region}] Прогресс: {i}/{len(meds)}")
-                await process_medication(client, db, med, args.rematch, city, matched_ext_ids)
+            # Параллельная обработка препаратов с семафором (CONCURRENCY воркеров).
+            # search/Mongo I/O-bound, GIL не мешает; ретраи в search_gorzdrav
+            # разруливают возможные 429 под нагрузкой.
+            sem = asyncio.Semaphore(CONCURRENCY)
+            done = [0]
+
+            async def worker(med):
+                async with sem:
+                    await process_medication(client, db, med, args.rematch, city, matched_ext_ids)
+                    done[0] += 1
+                    if done[0] % 100 == 0:
+                        log.info(f"[{region}] Прогресс: {done[0]}/{len(meds)}")
+
+            await asyncio.gather(*(worker(m) for m in meds))
 
             await refresh_availability(client, db, sorted(matched_ext_ids), city)
 
