@@ -94,6 +94,22 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # Next.js приложение в процессе миграции с CRA. До Phase 8 cutover-а
+  # не получает трафика из edge — крутится только в internal-сети для
+  # тестов и parity-проверок. Никаких publish-портов, edge на него
+  # не depends_on, чтобы падение next не повлияло на production.
+  next:
+    build:
+      context: ..
+      dockerfile: deploy/next.Dockerfile
+    restart: unless-stopped
+    networks: [internal]
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
   edge:
     image: nginx:1.27-alpine
     restart: unless-stopped
