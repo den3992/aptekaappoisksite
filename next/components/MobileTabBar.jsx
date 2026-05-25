@@ -1,5 +1,7 @@
+'use client';
 import React, { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { Home, Search, LayoutGrid, MapPin, Menu, Info, Phone, Building2, ShieldCheck, FileText } from 'lucide-react';
 import { useCity } from '../context/CityContext';
 import {
@@ -73,8 +75,8 @@ function useVvBottomCssVar(vvBottom) {
 }
 
 export default function MobileTabBar() {
-  const location = useLocation();
-  const navigate = useNavigate();
+  const pathname = usePathname();
+  const router = useRouter();
   const { city } = useCity();
   const [moreOpen, setMoreOpen] = useState(false);
   const vvBottom = useVisualViewportBottom();
@@ -131,7 +133,7 @@ export default function MobileTabBar() {
         aria-label="Основная навигация"
       >
         {items.map(({ key, label, icon: Icon, to, action }) => {
-          const active = isActive(location.pathname, key);
+          const active = isActive(pathname, key);
           // The Search tab is always rose-red — both as a visual anchor
           // (mirrors the rose magnifier inside the Header search box) and to
           // draw attention to the primary action on the bar.
@@ -168,7 +170,7 @@ export default function MobileTabBar() {
           return (
             <Link
               key={key}
-              to={to}
+              href={to}
               className={baseCls}
               data-testid={`tabbar-${key}`}
               aria-label={label}
@@ -205,7 +207,7 @@ export default function MobileTabBar() {
               <button
                 key={to}
                 type="button"
-                onClick={() => { setMoreOpen(false); navigate(to); }}
+                onClick={() => { setMoreOpen(false); router.push(to); }}
                 className="flex items-center gap-3 px-3 py-3.5 rounded-xl text-slate-800 hover:bg-slate-50 active:bg-slate-100 text-left transition"
                 data-testid={`more-${to.replace(/[^a-z]/g, '')}`}
               >

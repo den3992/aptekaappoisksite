@@ -1,5 +1,7 @@
+'use client';
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Search, MapPin, ChevronDown, Pill, Mic } from 'lucide-react';
 import { useCity } from '../context/CityContext';
 import { suggestMeds } from "../api/client";
@@ -21,7 +23,7 @@ export default function Header({ hideOnDesktop = false } = {}) {
   const [q, setQ] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
+  const router = useRouter();
   const wrapRef = useRef(null);
 
   // Debounced suggestions
@@ -59,7 +61,7 @@ export default function Header({ hideOnDesktop = false } = {}) {
       document.activeElement.blur();
     }
     setOpen(false);
-    navigate(`/${city.id}/poisk?q=${encodeURIComponent(q.trim())}`);
+    router.push(`/${city.id}/poisk?q=${encodeURIComponent(q.trim())}`);
   };
 
   // On mobile, focusing/clicking the sticky header search should open the
@@ -83,7 +85,7 @@ export default function Header({ hideOnDesktop = false } = {}) {
     <header className={`sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 transition-shadow ${scrolled ? "shadow-sm" : ""} ${hideOnDesktop ? "md:hidden" : ""}`}>
       {/* main bar */}
       <div className="max-w-7xl mx-auto px-4 py-2 md:h-16 md:py-0 flex flex-wrap md:flex-nowrap items-center gap-y-2 gap-x-3 md:gap-6">
-        <Link to="/" className="flex flex-col items-start leading-none shrink-0">
+        <Link href="/" className="flex flex-col items-start leading-none shrink-0">
           <div className="flex items-center gap-2 md:gap-2.5">
             <PillIcon className="h-5 md:h-6 w-auto" />
             <span className="text-lg font-extrabold text-slate-900 tracking-tight" style={{ fontFamily: "'Manrope', sans-serif" }}>Аптека<span className="text-emerald-600">А</span></span>
@@ -146,7 +148,7 @@ export default function Header({ hideOnDesktop = false } = {}) {
               {dedupeMeds(suggestions).map((s) => (
                 <Link
                   key={s.slug}
-                  to={`/${city.id}/preparaty/${s.slug}`}
+                  href={`/${city.id}/preparaty/${s.slug}`}
                   className="flex items-center gap-3 px-4 py-2.5 hover:bg-emerald-50 transition"
                   onClick={pickSuggestion}
                 >
@@ -169,15 +171,15 @@ export default function Header({ hideOnDesktop = false } = {}) {
       {/* sub nav */}
       <nav className="hidden md:block border-t border-slate-100 bg-white">
         <div className="max-w-7xl mx-auto px-4 h-11 flex items-center gap-6 text-sm overflow-x-auto no-scrollbar">
-          <Link to="/kategorii" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Категории</Link>
-          <Link to="/preparaty" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Все препараты А–Я</Link>
-          <Link to="/kategorii/ot-prostudy" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">От простуды</Link>
-          <Link to="/kategorii/obezbolivayuschie" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Обезболивающие</Link>
-          <Link to="/kategorii/vitaminy-bady" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Витамины и БАДы</Link>
-          <Link to="/kategorii/serdce" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Сердце и сосуды</Link>
-          <Link to="/kategorii/allergiya" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Аллергия</Link>
-          <Link to="/kategorii/mat-i-ditya" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Мать и дитя</Link>
-          <Link to="/apteki" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap ml-auto">Найти аптеку</Link>
+          <Link href="/kategorii" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Категории</Link>
+          <Link href="/preparaty" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Все препараты А–Я</Link>
+          <Link href="/kategorii/ot-prostudy" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">От простуды</Link>
+          <Link href="/kategorii/obezbolivayuschie" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Обезболивающие</Link>
+          <Link href="/kategorii/vitaminy-bady" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Витамины и БАДы</Link>
+          <Link href="/kategorii/serdce" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Сердце и сосуды</Link>
+          <Link href="/kategorii/allergiya" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Аллергия</Link>
+          <Link href="/kategorii/mat-i-ditya" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Мать и дитя</Link>
+          <Link href="/apteki" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap ml-auto">Найти аптеку</Link>
         </div>
       </nav>
 

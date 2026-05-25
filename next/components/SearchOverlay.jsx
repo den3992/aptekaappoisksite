@@ -1,5 +1,7 @@
+'use client';
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Search, X, Pill } from 'lucide-react';
 import { useCity } from '../context/CityContext';
 import { suggestMeds } from '../api/client';
@@ -21,7 +23,7 @@ export default function SearchOverlay() {
   const [q, setQ] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const { city } = useCity();
-  const navigate = useNavigate();
+  const router = useRouter();
   const inputRef = useRef(null);
 
   // Open via custom event from MobileTabBar (or anywhere).
@@ -76,7 +78,7 @@ export default function SearchOverlay() {
     const term = q.trim();
     if (!term) return;
     inputRef.current?.blur();              // close keyboard
-    navigate(`/${city.id}/poisk?q=${encodeURIComponent(term)}`);
+    router.push(`/${city.id}/poisk?q=${encodeURIComponent(term)}`);
     close();
   };
 
@@ -163,7 +165,7 @@ export default function SearchOverlay() {
         {items.map((s) => (
           <Link
             key={s.slug}
-            to={`/${city.id}/preparaty/${s.slug}`}
+            href={`/${city.id}/preparaty/${s.slug}`}
             className="flex items-center gap-3 px-4 py-3 active:bg-emerald-50 transition border-b border-slate-100"
             onClick={close}
             data-testid="search-overlay-suggestion-item"
