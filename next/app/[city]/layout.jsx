@@ -13,11 +13,12 @@ export async function generateMetadata({ params }) {
   return {
     title: {
       default: `Аптечная справочная ${gen} — АптекаА`,
-      template: '%s | АптекаА',
     },
     description: `Поиск лекарств, цены и наличие в аптеках ${inLoc}. Аналоги препаратов, адреса и режим работы. Без регистрации.`,
     metadataBase: new URL('https://aptekaa.ru'),
-    alternates: { canonical: `https://aptekaa.ru/${city}` },
+    // canonical НЕ выставляем на уровне layout — иначе он применяется ко всем
+    // вложенным роутам без переопределения, и Категории/Аптеки получат canonical
+    // главной /[city]. Каждый route задаёт свой canonical в page.jsx.
     openGraph: {
       type: 'website',
       siteName: 'АптекаА',
