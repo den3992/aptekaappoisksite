@@ -1,3 +1,9 @@
+export const metadata = {
+  title: 'О сервисе АптекаА — кто мы и зачем сделали аптечную справочную',
+  description: 'АптекаА — бесплатный аптечный агрегатор по Москве и СПб. Кто мы, как работаем, почему не продаём лекарства.',
+  alternates: { canonical: 'https://aptekaa.ru/o-servise' },
+};
+
 import React from 'react';
 import Link from 'next/link';
 import { ShieldCheck, Heart, Search, Clock, Building2 } from 'lucide-react';

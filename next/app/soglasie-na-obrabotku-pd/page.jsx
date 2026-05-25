@@ -1,3 +1,9 @@
+export const metadata = {
+  title: 'Согласие на обработку персональных данных — АптекаА',
+  description: 'Согласие посетителей сайта aptekaa.ru на обработку их персональных данных.',
+  alternates: { canonical: 'https://aptekaa.ru/soglasie-na-obrabotku-pd' },
+};
+
 import React from 'react';
 import Link from 'next/link';
 

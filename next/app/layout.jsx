@@ -4,7 +4,6 @@ import Footer from '../components/Footer';
 export const metadata = {
   title: 'АптекаА — миграция Next.js (в процессе)',
   description: 'Internal preview сайта на Next.js во время миграции с CRA.',
-  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({ children }) {

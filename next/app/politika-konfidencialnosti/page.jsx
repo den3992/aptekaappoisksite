@@ -1,3 +1,9 @@
+export const metadata = {
+  title: 'Политика конфиденциальности — АптекаА',
+  description: 'Условия обработки персональных данных пользователей сайта aptekaa.ru.',
+  alternates: { canonical: 'https://aptekaa.ru/politika-konfidencialnosti' },
+};
+
 import React from 'react';
 import Link from 'next/link';
 

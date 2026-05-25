@@ -1,3 +1,9 @@
+export const metadata = {
+  title: 'Контакты АптекаА — телефон, email, юридический адрес',
+  description: 'АптекаА — горячая линия 8-800-700-70-70, info@aptekaa.ru, юр. адрес ООО «Идеал-Фарм». Часы работы, телефоны партнёров.',
+  alternates: { canonical: 'https://aptekaa.ru/kontakty' },
+};
+
 import React from 'react';
 import Link from 'next/link';
 import { Mail, Phone, MapPin, Clock, Briefcase, LifeBuoy } from 'lucide-react';
