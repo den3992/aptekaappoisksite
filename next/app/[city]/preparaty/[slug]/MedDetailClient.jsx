@@ -215,7 +215,7 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
       L.control.attribution({ prefix: false }).addTo(map);
       mapRef.current = map;
 
-      const tilesKey = process.env.REACT_APP_YANDEX_TILES_KEY;
+      const tilesKey = process.env.NEXT_PUBLIC_YANDEX_TILES_KEY;
       const tileUrl = tilesKey
         ? `https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&lang=ru_RU&apikey=${tilesKey}`
         : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';

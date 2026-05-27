@@ -8,7 +8,7 @@ export function loadYmaps() {
   ymaps3Promise = new Promise((resolve, reject) => {
     if (typeof window === 'undefined') return reject(new Error('No window'));
     if (window.ymaps3) return window.ymaps3.ready.then(() => resolve(window.ymaps3));
-    const apiKey = process.env.REACT_APP_YANDEX_MAPS_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_YANDEX_MAPS_KEY;
     const params = new URLSearchParams({ lang: 'ru_RU' });
     if (apiKey) params.set('apikey', apiKey);
     const s = document.createElement('script');
