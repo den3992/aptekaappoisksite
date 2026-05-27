@@ -10,10 +10,10 @@ import CategoryIcon from '../../../../components/CategoryIcon';
 import { getCategoryStyle } from '../../../../lib/categoryStyles';
 const PAGE_SIZE = 24;
 
-export default function CategoryDetail() {
+export default function CategoryDetail({ initialCat = null }) {
   const { slug, city: cityParam } = useParams();
   const { city, cities, setCity } = useCity();
-  const [cat, setCat] = useState(null);
+  const [cat, setCat] = useState(initialCat);
   const [page, setPage] = useState(1);
   const [data, setData] = useState({ items: [], total: 0 });
   const [loading, setLoading] = useState(true);

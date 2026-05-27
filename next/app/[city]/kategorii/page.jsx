@@ -1,4 +1,5 @@
 import CategoriesClient from './CategoriesClient';
+import { categoryListJsonLd } from '../../../lib/schemas';
 const G = { msk: 'Москвы', spb: 'Санкт-Петербурга' };
 export async function generateMetadata({ params }) {
   const { city } = await params;
@@ -9,4 +10,13 @@ export async function generateMetadata({ params }) {
     alternates: { canonical: `https://aptekaa.ru/${city}/kategorii` },
   };
 }
-export default function Page() { return <CategoriesClient />; }
+export default async function Page({ params }) {
+  const { city } = await params;
+  const graph = categoryListJsonLd(city);
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }} />
+      <CategoriesClient />
+    </>
+  );
+}

@@ -165,3 +165,109 @@ export function pharmacyJsonLd(city, ph) {
     geo: ph.lat && ph.lng ? { '@type': 'GeoCoordinates', latitude: ph.lat, longitude: ph.lng } : undefined,
   };
 }
+
+
+// =====================================================================
+// Категории (список) и категория-детали
+// =====================================================================
+
+export function categoryListJsonLd(city) {
+  const url = `${HOST}/${city}/kategorii`;
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Главная', item: `${HOST}/${city}` },
+          { '@type': 'ListItem', position: 2, name: 'Категории', item: url },
+        ],
+      },
+      {
+        '@type': 'CollectionPage',
+        '@id': `${url}#collection`,
+        url,
+        name: `Категории препаратов в аптеках ${cnGen(city)}`,
+        inLanguage: 'ru',
+        isPartOf: { '@type': 'WebSite', name: 'АптекаА', url: HOST },
+      },
+    ],
+  };
+}
+
+export function categoryDetailJsonLd(city, cat) {
+  if (!cat) return null;
+  const url = `${HOST}/${city}/kategorii/${cat.slug}`;
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Главная', item: `${HOST}/${city}` },
+          { '@type': 'ListItem', position: 2, name: 'Категории', item: `${HOST}/${city}/kategorii` },
+          { '@type': 'ListItem', position: 3, name: cat.title, item: url },
+        ],
+      },
+      {
+        '@type': 'CollectionPage',
+        '@id': `${url}#collection`,
+        url,
+        name: `${cat.title} — препараты в аптеках ${cnGen(city)}`,
+        description: `${cat.title} в аптеках ${cnGen(city)}: ${cat.count || 0} препаратов, цены, наличие.`,
+        inLanguage: 'ru',
+        isPartOf: { '@type': 'WebSite', name: 'АптекаА', url: HOST },
+      },
+    ],
+  };
+}
+
+// =====================================================================
+// /o-servise
+// =====================================================================
+
+export function aboutPageJsonLd() {
+  const url = `${HOST}/o-servise`;
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Главная', item: HOST },
+          { '@type': 'ListItem', position: 2, name: 'О сервисе', item: url },
+        ],
+      },
+      {
+        '@type': 'AboutPage',
+        '@id': `${url}#aboutpage`,
+        url,
+        name: 'О сервисе АптекаА',
+        inLanguage: 'ru',
+        isPartOf: { '@type': 'WebSite', name: 'АптекаА', url: HOST },
+        mainEntity: {
+          '@type': 'Organization',
+          name: 'АптекаА',
+          legalName: 'ООО «Идеал-Фарм»',
+          url: HOST,
+          logo: `${HOST}/icon-512.png`,
+          email: 'info@aptekaa.ru',
+          telephone: '+7-800-700-70-70',
+          identifier: [
+            { '@type': 'PropertyValue', propertyID: 'ИНН', value: '5050110424' },
+            { '@type': 'PropertyValue', propertyID: 'КПП', value: '505001001' },
+            { '@type': 'PropertyValue', propertyID: 'ОГРН', value: '1145050001942' },
+          ],
+          address: {
+            '@type': 'PostalAddress',
+            streetAddress: 'ул. Садовая, д. 1, пом. II',
+            addressLocality: 'Фрязино',
+            addressRegion: 'Московская область',
+            postalCode: '141195',
+            addressCountry: 'RU',
+          },
+        },
+      },
+    ],
+  };
+}

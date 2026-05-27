@@ -1,5 +1,6 @@
 import CategoryDetailClient from './CategoryDetailClient';
 import { fetchCategories } from '../../../../api/client';
+import { categoryDetailJsonLd } from '../../../../lib/schemas';
 const G = { msk: 'Москвы', spb: 'Санкт-Петербурга' };
 export async function generateMetadata({ params }) {
   const { city, slug } = await params;
@@ -16,4 +17,20 @@ export async function generateMetadata({ params }) {
     alternates: { canonical: `https://aptekaa.ru/${city}/kategorii/${slug}` },
   };
 }
-export default function Page() { return <CategoryDetailClient />; }
+export default async function Page({ params }) {
+  const { city, slug } = await params;
+  let cat = null;
+  try {
+    const all = await fetchCategories();
+    cat = all.find(c => c.slug === slug);
+  } catch (e) { /* ignore */ }
+  const graph = cat ? categoryDetailJsonLd(city, cat) : null;
+  return (
+    <>
+      {graph && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }} />
+      )}
+      <CategoryDetailClient initialCat={cat} />
+    </>
+  );
+}

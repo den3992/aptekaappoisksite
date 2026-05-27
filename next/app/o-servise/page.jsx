@@ -5,11 +5,15 @@ export const metadata = {
 };
 
 import React from 'react';
+import { aboutPageJsonLd } from '../../lib/schemas';
 import Link from 'next/link';
 import { ShieldCheck, Heart, Search, Clock, Building2 } from 'lucide-react';
 
 export default function About() {
+  const graph = aboutPageJsonLd();
   return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }} />
     <div className="max-w-4xl mx-auto px-4 py-5 md:py-10">
       <nav className="text-xs text-slate-500 mb-4">
         <Link href="/" className="hover:text-emerald-700">Главная</Link>
@@ -38,5 +42,6 @@ export default function About() {
         <p><strong>Важно:</strong> АптекаА не является аптекой и не осуществляет продажу и бронирование лекарств. Сведения о ценах и наличии носят справочный характер. Имеются противопоказания, необходима консультация со специалистом.</p>
       </div>
     </div>
+    </>
   );
 }
