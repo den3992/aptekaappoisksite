@@ -24,7 +24,7 @@ export default async function Page({ params }) {
       {jsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(jsonLd)}} />
       )}
-      <PharmacyDetailClient />
+      <PharmacyDetailClient initialPh={ph} />
     </>
   );
 }

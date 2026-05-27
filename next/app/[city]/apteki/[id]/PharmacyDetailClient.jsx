@@ -7,10 +7,10 @@ import { useCity } from '../../../../context/CityContext';
 import { fetchPharmacy } from '../../../../api/client';
 import { loadYmaps } from '../../../../lib/ymaps';
 
-export default function PharmacyDetail() {
+export default function PharmacyDetail({ initialPh = null }) {
   const { id, city: cityParam } = useParams();
   const { city, cities, setCity } = useCity();
-  const [ph, setPh] = useState(null);
+  const [ph, setPh] = useState(initialPh);
   const [notFound, setNotFound] = useState(false);
   const ref = useRef(null);
   const mapRef = useRef(null);
@@ -24,11 +24,14 @@ export default function PharmacyDetail() {
   }, [cityParam]);
 
   useEffect(() => {
-    setPh(null);
+    // С initialPh от SSR — спиннер на первом маунте не нужен.
+    // Сбрасываем ph только если id поменялся И initialPh не для этого id.
+    if (!ph || ph?.id !== id) setPh(null);
     setNotFound(false);
     fetchPharmacy(id)
       .then(setPh)
       .catch((e) => setNotFound(e?.response?.status === 404));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {

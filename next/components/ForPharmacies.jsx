@@ -1,31 +1,38 @@
+'use client';
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { Mail, FileSpreadsheet, Server, ShieldCheck, ArrowRight, CheckCircle2, Send } from 'lucide-react';
-import axios from 'axios';
-import { useToast } from '../hooks/use-toast';
-
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function ForPharmacies() {
-  const { toast } = useToast();
   const [form, setForm] = useState({ chain: '', city: '', email: '', phone: '', count: '', comment: '' });
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [error, setError] = useState(null);
   const onChange = (k) => (e) => setForm(s => ({ ...s, [k]: e.target.value }));
 
   const submit = async (e) => {
     e.preventDefault();
+    setError(null);
     if (!form.email || !form.chain) {
-      toast({ title: 'Заполните обязательные поля', description: 'Название и e-mail' });
+      setError('Заполните обязательные поля: название и e-mail');
       return;
     }
     setSubmitting(true);
     try {
-      await axios.post(`${API}/partner-requests`, form, { timeout: 15000 });
+      const res = await fetch('/api/partner-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        const msg = j?.detail?.[0]?.msg || j?.detail || 'Попробуйте ещё раз';
+        throw new Error(msg);
+      }
       setDone(true);
       setForm({ chain: '', city: '', email: '', phone: '', count: '', comment: '' });
     } catch (err) {
-      toast({ title: 'Ошибка отправки', description: err?.response?.data?.detail?.[0]?.msg || 'Попробуйте ещё раз' });
+      setError(err.message || 'Ошибка отправки');
     } finally {
       setSubmitting(false);
     }
@@ -36,7 +43,7 @@ export default function ForPharmacies() {
       <section className="bg-gradient-to-b from-emerald-50/60 to-white border-b border-slate-100">
         <div className="max-w-5xl mx-auto px-4 pt-5 pb-8 md:pt-12 md:pb-12">
           <nav className="text-xs text-slate-500 mb-4">
-            <Link to="/" className="hover:text-emerald-700">Главная</Link>
+            <Link href="/" className="hover:text-emerald-700">Главная</Link>
             <span className="mx-1.5">/</span><span>Для аптек</span>
           </nav>
           <div className="inline-flex items-center gap-2 bg-white border border-emerald-100 rounded-full px-3 py-1 mb-5 text-xs text-emerald-800">
@@ -108,6 +115,11 @@ export default function ForPharmacies() {
                 <CheckCircle2 className="w-4 h-4" /> Заявка отправлена! Мы свяжемся с вами в ближайшее время.
               </div>
             )}
+            {error && !done && (
+              <div className="md:col-span-2 bg-rose-50 border border-rose-200 rounded-lg px-4 py-3 text-sm text-rose-800">
+                {error}
+              </div>
+            )}
             <Field label="Название аптеки / сети*" name="chain" testId="partner-chain-input" value={form.chain} onChange={onChange('chain')} placeholder="ООО «Аптека»" />
             <Field label="Город" name="city" testId="partner-city-input" value={form.city} onChange={onChange('city')} placeholder="Москва" />
             <Field label="E-mail*" name="email" testId="partner-email-input" type="email" value={form.email} onChange={onChange('email')} placeholder="manager@apteka.ru" />
@@ -115,7 +127,7 @@ export default function ForPharmacies() {
             <Field label="Количество точек" name="count" testId="partner-count-input" value={form.count} onChange={onChange('count')} placeholder="5" />
             <Field label="Учётная система" name="comment" testId="partner-comment-input" value={form.comment} onChange={onChange('comment')} placeholder="1С, M-Аптека…" />
             <div className="md:col-span-2 flex items-center justify-between gap-3 pt-2">
-              <p className="text-xs text-slate-500">Нажимая «Отправить», вы соглашаетесь с <Link to="/soglasie-na-obrabotku-pd" className="underline">обработкой перс. данных</Link></p>
+              <p className="text-xs text-slate-500">Нажимая «Отправить», вы соглашаетесь с <Link href="/soglasie-na-obrabotku-pd" className="underline">обработкой перс. данных</Link></p>
               <button type="submit" disabled={submitting} data-testid="partner-request-submit" className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-medium px-6 py-3 rounded-lg transition">
                 {submitting ? 'Отправляем…' : 'Отправить'} <ArrowRight className="w-4 h-4" />
               </button>

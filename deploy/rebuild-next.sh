@@ -47,6 +47,7 @@ ROUTES=(
   "/msk/apteki/gorzdrav"
   "/msk/poisk"
   "/o-servise"
+  "/dlya-aptek"
   "/kontakty"
   "/politika-konfidencialnosti"
   "/soglasie-na-obrabotku-pd"
