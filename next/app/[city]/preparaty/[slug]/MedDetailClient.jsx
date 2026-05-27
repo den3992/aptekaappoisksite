@@ -514,7 +514,7 @@ function ViewportListItem({ item, onClick, selected = false }) {
   );
 }
 
-export default function MedDetail() {
+export default function MedDetail({ initialMed = null }) {
   const { slug, city: cityParam } = useParams();
   const { city, cities, setCity } = useCity();
   const [selectedId, setSelectedId] = useState(null);
@@ -535,7 +535,7 @@ export default function MedDetail() {
     window.addEventListener('keydown', onKey);
     return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onKey); };
   }, [mapFullscreen]);
-  const [med, setMed] = useState(null);
+  const [med, setMed] = useState(initialMed);
   const [analogs, setAnalogs] = useState([]);
   const [pharmacies, setPharmacies] = useState([]);
   const [gorzdravStores, setGorzdravStores] = useState([]);
@@ -549,7 +549,7 @@ export default function MedDetail() {
   const [viewportList, setViewportList] = useState([]);
   const [viewportVisible, setViewportVisible] = useState(15);
   const lastViewportRef = useRef(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialMed);
   const [selectedPack, setSelectedPack] = useState(null);
   const [notFound, setNotFound] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -566,7 +566,9 @@ export default function MedDetail() {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    // Если нет initialMed (SPA-навигация между препаратами) — показываем спиннер.
+    // При первом маунте с SSR-данными loading уже false, не перезатираем.
+    if (!med) setLoading(true);
     setNotFound(false);
     setGorzdravStoresLoaded(false);
     // Горздрав-аптек 1937 штук — грузим параллельно, но НЕ блокируем рендер.
@@ -848,18 +850,7 @@ export default function MedDetail() {
   
   const formLower = (med.form || '').toLowerCase();
 
-  // Schema.org Drug
-  const drugJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Drug',
-    name: med.name,
-    nonProprietaryName: med.mnn || undefined,
-    manufacturer: med.manufacturer ? { '@type': 'Organization', name: med.manufacturer } : undefined,
-    dosageForm: formLower || undefined,
-    description: seo.description,
-    prescriptionStatus: med.rx ? 'PrescriptionOnly' : 'OTC',
-    url: seo.canonical,
-  };
+  // (Schema.org Drug рендерится в SSR-обёртке page.jsx через medGraphJsonLd.)
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-5 md:py-8" data-testid="med-detail-page">

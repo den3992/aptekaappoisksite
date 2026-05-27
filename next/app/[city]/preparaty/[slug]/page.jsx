@@ -37,7 +37,7 @@ export default async function Page({ params }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }}
         />
       )}
-      <MedDetailClient />
+      <MedDetailClient initialMed={med} />
     </>
   );
 }

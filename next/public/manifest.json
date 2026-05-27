@@ -1,0 +1,25 @@
+{
+  "short_name": "АптекаА",
+  "name": "АптекаА — поиск лекарств в аптеках Москвы и СПб",
+  "description": "Найдите препарат, узнайте цены и наличие в ближайших аптеках. Карта, маршруты, аналоги по МНН.",
+  "icons": [
+    { "src": "/favicon.svg",          "type": "image/svg+xml", "sizes": "any" },
+    { "src": "/favicon-16x16.png",    "type": "image/png", "sizes": "16x16" },
+    { "src": "/favicon-32x32.png",    "type": "image/png", "sizes": "32x32" },
+    { "src": "/favicon-48x48.png",    "type": "image/png", "sizes": "48x48" },
+    { "src": "/apple-touch-icon.png", "type": "image/png", "sizes": "180x180" },
+    { "src": "/icon-192.png",         "type": "image/png", "sizes": "192x192", "purpose": "any" },
+    { "src": "/icon-512.png",         "type": "image/png", "sizes": "512x512", "purpose": "any" },
+    { "src": "/icon-192-maskable.png","type": "image/png", "sizes": "192x192", "purpose": "maskable" },
+    { "src": "/icon-512-maskable.png","type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#047857",
+  "background_color": "#ffffff",
+  "lang": "ru",
+  "dir": "ltr",
+  "categories": ["health", "medical", "shopping"]
+}

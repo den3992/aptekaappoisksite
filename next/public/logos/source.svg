@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AptekaA — App Icon source (1024×1024)
+  This SVG wraps the master raster (source.png) so the icon can be referenced
+  as a vector file at any size, but the underlying artwork is a raster PNG
+  generated via image-to-image AI from the original parametric SVG concept
+  (pin + capsule, brand greens, red translucent gel capsule on emerald
+  background).
+
+  To make further edits:
+    • Pixel edits  →  edit ./source.png directly in any raster editor.
+    • Rebuild rasters → /app/icon_exports/build_from_ai.py reads source.png
+      and regenerates favicon.ico + all PNG sizes.
+    • If a fully-vector parametric source is ever needed, the original flat
+      green concept is preserved at:
+         /app/icon_exports/svg/variant-a-large-capsule.svg
+      It can serve as a starting point for re-vectorisation.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="1024" height="1024" viewBox="0 0 1024 1024">
+  <image xlink:href="source.png" width="1024" height="1024"
+         preserveAspectRatio="xMidYMid meet"/>
+</svg>
