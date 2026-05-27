@@ -1,9 +1,12 @@
+'use client';
 import React from 'react';
 import Link from 'next/link';
 import { Pill, Phone, Mail, ShieldCheck } from 'lucide-react';
+import { useCity } from '../context/CityContext';
 import PillIcon from './PillIcon';
 
 export default function Footer() {
+  const { city } = useCity();
   return (
     <footer
       className="bg-slate-50 border-t border-slate-100 mt-0 md:mt-12"
@@ -43,7 +46,7 @@ export default function Footer() {
               <li><Link href="/o-servise" className="hover:text-emerald-700">О сервисе</Link></li>
               <li><Link href="/dlya-aptek" className="hover:text-emerald-700">Для аптек</Link></li>
               <li><Link href="/kontakty" className="hover:text-emerald-700">Контакты</Link></li>
-              <li><Link href="/apteki" className="hover:text-emerald-700">Аптеки</Link></li>
+              <li><Link href={`/${city.id}/apteki`} className="hover:text-emerald-700">Аптеки</Link></li>
             </ul>
           </div>
 
@@ -52,8 +55,8 @@ export default function Footer() {
             <ul className="space-y-2 text-sm text-slate-600">
               <li><Link href="/politika-konfidencialnosti" className="hover:text-emerald-700">Политика конфиденциальности</Link></li>
               <li><Link href="/soglasie-na-obrabotku-pd" className="hover:text-emerald-700">Согласие на обработку ПД</Link></li>
-              <li><Link href="/preparaty" className="hover:text-emerald-700">Каталог препаратов</Link></li>
-              <li><Link href="/kategorii" className="hover:text-emerald-700">Все категории</Link></li>
+              <li><Link href={`/${city.id}/preparaty`} className="hover:text-emerald-700">Каталог препаратов</Link></li>
+              <li><Link href={`/${city.id}/kategorii`} className="hover:text-emerald-700">Все категории</Link></li>
             </ul>
           </div>
         </div>

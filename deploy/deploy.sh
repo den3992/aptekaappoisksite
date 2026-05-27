@@ -38,7 +38,7 @@ log "Проверка .env: OK"
 # ────────────────────────────────────────────────────────────────
 log "Запускаем nginx в HTTP-режиме (для ACME-challenge)..."
 cp nginx/edge-bootstrap.conf nginx/active.conf
-docker compose up -d --build edge backend frontend mongo
+docker compose up -d --build edge backend next mongo
 sleep 5
 
 # ────────────────────────────────────────────────────────────────
@@ -67,9 +67,9 @@ docker compose up -d edge
 sleep 3
 
 # ────────────────────────────────────────────────────────────────
-# 5. Запускаем backend, frontend, imap_worker
+# 5. Запускаем backend, next, imap_worker
 # ────────────────────────────────────────────────────────────────
-log "Поднимаем backend, frontend, imap_worker..."
+log "Поднимаем backend, next, imap_worker..."
 docker compose up -d --build
 
 # ────────────────────────────────────────────────────────────────

@@ -34,8 +34,6 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
             "User-agent: *\n"
             "Allow: /\n"
             "Disallow: /api/\n"
-            "Disallow: /admin/\n"
-            "Disallow: /static/admin/\n"
             "\n"
             "User-agent: Yandex\n"
             "Allow: /\n"

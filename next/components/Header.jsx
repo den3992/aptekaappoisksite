@@ -171,15 +171,15 @@ export default function Header({ hideOnDesktop = false } = {}) {
       {/* sub nav */}
       <nav className="hidden md:block border-t border-slate-100 bg-white">
         <div className="max-w-7xl mx-auto px-4 h-11 flex items-center gap-6 text-sm overflow-x-auto no-scrollbar">
-          <Link href="/kategorii" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Категории</Link>
-          <Link href="/preparaty" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Все препараты А–Я</Link>
-          <Link href="/kategorii/ot-prostudy" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">От простуды</Link>
-          <Link href="/kategorii/obezbolivayuschie" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Обезболивающие</Link>
-          <Link href="/kategorii/vitaminy-bady" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Витамины и БАДы</Link>
-          <Link href="/kategorii/serdce" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Сердце и сосуды</Link>
-          <Link href="/kategorii/allergiya" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Аллергия</Link>
-          <Link href="/kategorii/mat-i-ditya" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Мать и дитя</Link>
-          <Link href="/apteki" className="text-slate-700 hover:text-emerald-700 whitespace-nowrap ml-auto">Найти аптеку</Link>
+          <Link href={`/${city.id}/kategorii`} className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Категории</Link>
+          <Link href={`/${city.id}/preparaty`} className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Все препараты А–Я</Link>
+          <Link href={`/${city.id}/kategorii/ot-prostudy`} className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">От простуды</Link>
+          <Link href={`/${city.id}/kategorii/obezbolivayuschie`} className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Обезболивающие</Link>
+          <Link href={`/${city.id}/kategorii/vitaminy-bady`} className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Витамины и БАДы</Link>
+          <Link href={`/${city.id}/kategorii/serdce`} className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Сердце и сосуды</Link>
+          <Link href={`/${city.id}/kategorii/allergiya`} className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Аллергия</Link>
+          <Link href={`/${city.id}/kategorii/mat-i-ditya`} className="text-slate-700 hover:text-emerald-700 whitespace-nowrap">Мать и дитя</Link>
+          <Link href={`/${city.id}/apteki`} className="text-slate-700 hover:text-emerald-700 whitespace-nowrap ml-auto">Найти аптеку</Link>
         </div>
       </nav>
 

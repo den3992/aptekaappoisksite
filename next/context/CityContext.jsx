@@ -24,6 +24,9 @@ export const CityProvider = ({ children }) => {
 
 export const useCity = () => {
   const ctx = useContext(CityContext);
-  if (!ctx) throw new Error('useCity must be used inside CityProvider');
+  // Tolerant fallback для prerender'а static-страниц (/_not-found, /о-сервисе,
+  // /политики и т.д.) которые не обёрнуты в CityProvider — отдаём дефолт
+  // (Москва) чтобы Link href'ы в Footer/Header не ломали build.
+  if (!ctx) return { city: CITIES[0], setCity: () => {}, cities: CITIES };
   return ctx;
 };
