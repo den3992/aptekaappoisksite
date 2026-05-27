@@ -1,5 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Response, Request
-from fastapi.responses import StreamingResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import StreamingResponse, RedirectResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -19,21 +19,7 @@ from voice_data import build_context_text
 from api import make_router as make_catalog_router
 from api.uploads import make_uploads_router
 from api.partners import make_partner_router
-from api.seo import (
-    make_seo_router,
-    is_bot,
-    render_med_for_bot,
-    render_home_for_bot,
-    render_pharmacy_for_bot,
-    render_category_for_bot,
-    render_catalog_index_for_bot,
-    render_pharmacies_index_for_bot,
-    render_categories_index_for_bot,
-    render_contacts_for_bot,
-    render_about_for_bot,
-    render_for_pharmacies_for_bot,
-    _render_404,
-)
+from api.seo import make_seo_router
 
 import time as _time
 from collections import defaultdict as _defaultdict
@@ -309,70 +295,12 @@ app.include_router(make_uploads_router(db), prefix="/api/upload")
 # Partner request form + admin approval flow.
 app.include_router(make_partner_router(db), prefix="/api")
 
-# SEO endpoints (robots.txt, sitemap*.xml). Mounted under /api/ because the
-# k8s ingress only routes /api/* to the backend. Production CF rewrite rules:
-#   aptekaa.ru/robots.txt        → backend /api/seo/robots.txt
-#   aptekaa.ru/sitemap.xml       → backend /api/seo/sitemap.xml
-#   aptekaa.ru/sitemap_*.xml     → backend /api/seo/sitemap_*.xml
-#   aptekaa.ru/<path>  (bot UA)  → backend /api/seo/render?path=<path>
+# SEO endpoints — теперь только robots.txt + sitemap*.xml.
+# После Phase 8 cutover Next.js SSR'ит HTML нативно для всех User-Agent'ов,
+# bot-rewrite в edge nginx удалён, эндпоинт /api/seo/render тоже удалён.
+#   aptekaa.ru/robots.txt    → backend /api/seo/robots.txt
+#   aptekaa.ru/sitemap*.xml  → backend /api/seo/sitemap*.xml
 app.include_router(make_seo_router(db), prefix="/api/seo")
-
-
-@app.get("/api/seo/render", response_class=HTMLResponse)
-async def seo_render(path: str, request: Request):
-    """Single entry point for crawler-rendered HTML.
-
-    The CF Worker / nginx detects bot User-Agent and forwards the original
-    request path to /api/seo/render?path=<original>.
-
-    For preview we accept a `?path=...&force=1` query so we can debug.
-    """
-    # Parse path: /<city>/<section>/<slug?>
-    p = (path or "/").lstrip("/")
-    parts = [x for x in p.split("/") if x]
-    if not parts:
-        return await render_home_for_bot(db, "msk", request)
-
-    # Static pages allowed at top level (no city prefix): /kontakty, /o-servise, /dlya-aptek
-    STATIC_PAGES = {"kontakty", "o-servise", "dlya-aptek"}
-
-    if parts[0] in ("msk", "spb"):
-        city = parts[0]
-        rest = parts[1:]
-    elif parts[0] in STATIC_PAGES and len(parts) == 1:
-        city = "msk"
-        rest = parts  # let the section dispatcher handle it
-    else:
-        # Unknown top-level segment (not a city, not a known static page) → 404
-        return HTMLResponse(_render_404(request, "msk"), status_code=404)
-
-    if not rest:
-        return await render_home_for_bot(db, city, request)
-    section = rest[0]
-    if section == "preparaty" and len(rest) >= 2:
-        return await render_med_for_bot(db, city, rest[1], request)
-    if section == "preparaty" and len(rest) == 1:
-        return await render_catalog_index_for_bot(db, city, request)
-    if section == "apteki" and len(rest) >= 2:
-        return await render_pharmacy_for_bot(db, city, rest[1], request)
-    if section == "apteki" and len(rest) == 1:
-        return await render_pharmacies_index_for_bot(db, city, request)
-    if section == "kategorii" and len(rest) >= 2:
-        return await render_category_for_bot(db, city, rest[1], request)
-    if section == "kategorii" and len(rest) == 1:
-        return await render_categories_index_for_bot(db, city, request)
-    # Static pages: /kontakty, /o-servise, /dlya-aptek (with or without city prefix).
-    # These have their own SSR templates so search bots see unique title/h1/content
-    # — critical for Yandex.Webmaster regionality verification (contacts page).
-    if section == "kontakty" and len(rest) == 1:
-        return await render_contacts_for_bot(db, city, request)
-    if section == "o-servise" and len(rest) == 1:
-        return await render_about_for_bot(db, city, request)
-    if section == "dlya-aptek" and len(rest) == 1:
-        return await render_for_pharmacies_for_bot(db, city, request)
-
-    # Unknown route → proper 404 with status_code=404 (no soft-404 cloaking)
-    return HTMLResponse(_render_404(request, city), status_code=404)
 
 
 app.add_middleware(
