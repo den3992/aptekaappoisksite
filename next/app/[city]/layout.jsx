@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation';
 import { CityProvider } from '../../context/CityContext';
 import Header from '../../components/Header';
 import MobileTabBar from '../../components/MobileTabBar';
@@ -5,6 +6,10 @@ import SearchOverlay from '../../components/SearchOverlay';
 
 const CITY_NAMES = { msk: 'Москве', spb: 'Санкт-Петербурге' };
 const CITY_GEN = { msk: 'Москвы', spb: 'Санкт-Петербурга' };
+// Не импортируем CITIES из CityContext: тот модуль 'use client', и в server-
+// компоненте именованный экспорт приходит client-reference прокси, а не
+// массивом (TypeError: CITIES.map is not a function на build). Хардкодим.
+const VALID_CITIES = ['msk', 'spb'];
 
 export async function generateMetadata({ params }) {
   const { city } = await params;
@@ -27,7 +32,13 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default function CityLayout({ children }) {
+export default async function CityLayout({ children, params }) {
+  // Алиасы /moskva, /sankt-peterburg редиректит edge nginx (301 → /msk, /spb).
+  // Сюда доходят только msk/spb либо мусор. Невалидный город → notFound(),
+  // чтобы Next.js отдал HTTP 404 вместо soft-404 (200 + контент «404»).
+  const { city } = await params;
+  if (!VALID_CITIES.includes(city)) notFound();
+
   return (
     <CityProvider>
       <Header />
