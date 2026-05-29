@@ -14,6 +14,7 @@ import { openSearchOverlay } from '../../lib/searchOverlay';
 import { suggestMeds, fetchCategories } from '../../api/client';
 import { formatName, formatManufacturer, dedupeMeds } from '../../utils/text';
 import { getCategoryStyle } from '../../lib/categoryStyles';
+import PartnersMarquee from '../../components/PartnersMarquee';
 
 const POPULAR_QUERIES = ['Парацетамол', 'Нурофен', 'Витамин D3', 'Омепразол', 'Кагоцел', 'Смекта'];
 
@@ -207,7 +208,8 @@ export default function Home() {
             ))}
           </div>
         </section>
-        {/* PartnersMarquee — portированный в Phase 5+ */}
+        {/* Partners marquee — внутри градиента, чтобы фон перетекал */}
+        <PartnersMarquee />
       </div>
 
       {/* Popular meds */}
