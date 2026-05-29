@@ -3,14 +3,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import NotFound from '../../components/NotFound';
-import { Search, MapPin, ShieldCheck, ArrowRight, Pill, Building2, Sparkles, Map, ChevronDown } from 'lucide-react';
+import { ShieldCheck, ArrowRight, Pill, Building2, Sparkles, Map } from 'lucide-react';
 import { useCity } from '../../context/CityContext';
 import CategoryIcon from '../../components/CategoryIcon';
-import PillIcon from '../../components/PillIcon';
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from '../../components/ui/dropdown-menu';
-import { openSearchOverlay } from '../../lib/searchOverlay';
 import { suggestMeds, fetchCategories } from '../../api/client';
 import { formatName } from '../../utils/text';
 import { getCategoryStyle } from '../../lib/categoryStyles';
@@ -91,49 +86,6 @@ export default function Home() {
         <div aria-hidden="true" className="pointer-events-none absolute inset-0">
           <div className="absolute top-20 -left-16 w-96 h-96 rounded-full bg-emerald-200/25 blur-3xl" />
           <div className="absolute bottom-0 -right-16 w-[28rem] h-[28rem] rounded-full bg-emerald-100/35 blur-3xl" />
-        </div>
-
-        {/* Brand (desktop) */}
-        <div className="relative max-w-7xl mx-auto px-4 pt-7 pb-2 hidden md:flex justify-center">
-          <Link href="/" className="inline-flex flex-col items-center leading-none">
-            <div className="flex items-center gap-2.5 md:gap-3">
-              <PillIcon className="w-6 h-6 md:w-10 md:h-10" />
-              <span className="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight" style={{ fontFamily: "'Manrope', sans-serif" }}>Аптека<span className="text-emerald-600">А</span></span>
-            </div>
-            <span className="text-sm text-slate-500 mt-2">Актуальное наличие лекарств по всей России</span>
-          </Link>
-        </div>
-
-        {/* Mobile hero */}
-        <div className="md:hidden relative z-20 px-4 pt-8 pb-2">
-          <Link href="/" className="flex items-center justify-center gap-3 mb-3">
-            <PillIcon className="w-14 h-14" />
-            <span className="text-3xl font-extrabold text-slate-900 tracking-tight" style={{ fontFamily: "'Manrope', sans-serif" }}>
-              Аптека<span className="text-emerald-600">А</span>
-            </span>
-          </Link>
-          <div className="flex justify-center mb-5">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button type="button" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 bg-white/80 backdrop-blur border border-slate-200 rounded-full px-3 py-1.5 shadow-sm hover:text-emerald-700" aria-label="Выбор города">
-                  <MapPin className="w-4 h-4 text-emerald-600" />
-                  <span>{city.name}</span>
-                  <ChevronDown className="w-4 h-4 opacity-60" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-48">
-                {cities.map(c => (
-                  <DropdownMenuItem key={c.id} onClick={() => setCity(c)} className="cursor-pointer">
-                    <MapPin className="w-4 h-4 mr-2" /> {c.name}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          <button type="button" onClick={openSearchOverlay} className="w-full bg-white shadow-card border border-slate-100 rounded-2xl p-2 flex items-center gap-2 text-left" aria-label="Открыть поиск препарата">
-            <Search className="w-5 h-5 text-rose-500 ml-2 shrink-0" />
-            <span className="flex-1 text-base py-2 text-slate-400">Введите название препарата</span>
-          </button>
         </div>
 
         {/* Hero text */}
