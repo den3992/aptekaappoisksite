@@ -172,36 +172,7 @@ export default function Home() {
             Бесплатная аптечная справочная по Москве и СПб. Сравнивайте наличие и цены на лекарства, БАДы и аптечные товары. Без регистрации.
           </p>
 
-          <form onSubmit={submit} className="hidden md:flex mt-10 mx-auto max-w-3xl bg-white shadow-card border border-slate-100 rounded-2xl p-2 flex-col sm:flex-row gap-2 input-focus text-left">
-            <div className="flex items-center gap-2 sm:border-r sm:border-slate-100 px-3 py-2 sm:py-0">
-              <MapPin className="w-4 h-4 text-emerald-600" />
-              <select value={city.id} onChange={(e) => setCity(cities.find(c => c.id === e.target.value))} className="text-sm font-medium text-slate-800 bg-transparent outline-none cursor-pointer">
-                {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </div>
-            <div className="flex-1 flex items-center gap-2 px-3 relative">
-              <Search className="w-4 h-4 text-rose-500" />
-              <input type="search" inputMode="search" lang="ru" autoComplete="off" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Введите название препарата" aria-label="Поиск препарата" className="w-full text-base py-3 bg-transparent outline-none" />
-              {suggestions.length > 0 && (
-                <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-100 rounded-xl shadow-card max-h-[60vh] overflow-y-auto no-scrollbar z-50 text-left" data-testid="search-suggestions">
-                  {dedupeMeds(suggestions).map(s => (
-                    <Link key={s.slug} href={`/${city.id}/preparaty/${s.slug}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-emerald-50 transition" onClick={() => setQ('')}>
-                      <Pill className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-slate-900 truncate">{formatName(s.name)}</div>
-                        <div className="text-xs text-slate-500 truncate">{[formatName(s.form), s.dosage, formatManufacturer(s.manufacturer)].filter(Boolean).join(' · ')}</div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-            <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-3 rounded-xl transition">
-              Найти лекарство
-            </button>
-          </form>
-
-          <div className="hidden md:flex mt-5 items-center gap-2 flex-wrap justify-center text-xs text-slate-500">
+          <div className="hidden md:flex mt-10 items-center gap-2 flex-wrap justify-center text-xs text-slate-500">
             <span>Часто ищут:</span>
             {['Парацетамол','Нурофен','Арбидол','Витамин D3','Смекта','Зодак'].map(t => (
               <button key={t} type="button" onClick={() => router.push(`/${city.id}/poisk?q=${encodeURIComponent(t)}`)} className="px-2.5 py-1 rounded-full bg-white/70 backdrop-blur border border-slate-200 hover:border-emerald-300 hover:text-emerald-700 transition">{t}</button>
