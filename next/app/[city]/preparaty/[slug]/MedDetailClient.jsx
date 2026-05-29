@@ -185,9 +185,21 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
   useEffect(() => {
     let cancelled = false;
 
-    function loadScript(src) {
+    // ready() — проверка, что нужный глобал уже зарегистрирован. Без неё была
+    // гонка: эффект перезапускается при подгрузке цен/остатков (deps prices.length,
+    // gorzdravStores.length, …); на повторном проходе тег скрипта уже в DOM →
+    // старый код резолвился сразу, и L.markerClusterGroup вызывался ДО того, как
+    // плагин успел выполниться → "markerClusterGroup is not a function", 0 маркеров.
+    function loadScript(src, ready) {
       return new Promise((res, rej) => {
-        if (document.querySelector(`script[src="${src}"]`)) { res(); return; }
+        if (ready && ready()) { res(); return; }
+        const existing = document.querySelector(`script[src="${src}"]`);
+        if (existing) {
+          // тег есть, но глобал ещё не готов → ждём реальной загрузки скрипта
+          existing.addEventListener('load', () => res(), { once: true });
+          existing.addEventListener('error', rej, { once: true });
+          return;
+        }
         const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej;
         document.head.appendChild(s);
       });
@@ -202,8 +214,8 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
       loadCss('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
       loadCss('https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css');
       loadCss('https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css');
-      await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
-      await loadScript('https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js');
+      await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', () => !!window.L);
+      await loadScript('https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js', () => !!(window.L && window.L.markerClusterGroup));
       if (cancelled || !ref.current) return;
 
       const L = window.L;
