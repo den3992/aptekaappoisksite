@@ -4,10 +4,9 @@ export const metadata = {
   alternates: { canonical: 'https://aptekaa.ru/o-servise' },
 };
 
-import React from 'react';
 import { aboutPageJsonLd } from '../../lib/schemas';
 import Link from 'next/link';
-import { ShieldCheck, Heart, Search, Clock, Building2 } from 'lucide-react';
+import { ShieldCheck, Heart, Search, Clock } from 'lucide-react';
 
 export default function About() {
   const graph = aboutPageJsonLd();

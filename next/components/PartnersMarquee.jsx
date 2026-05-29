@@ -1,6 +1,5 @@
 'use client';
-import React, { useEffect, useRef } from 'react';
-
+import { useEffect, useRef } from 'react';
 const PARTNERS = [
   { name: 'Ригла',            logo: 'rigla.png' },
   { name: '36,6',             logo: '366.png' },

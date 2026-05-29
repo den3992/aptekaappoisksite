@@ -4,7 +4,6 @@ export const metadata = {
   alternates: { canonical: 'https://aptekaa.ru/politika-konfidencialnosti' },
 };
 
-import React from 'react';
 import Link from 'next/link';
 
 export default function Privacy() {

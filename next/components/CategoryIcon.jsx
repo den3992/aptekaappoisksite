@@ -1,4 +1,3 @@
-import React from 'react';
 import { Thermometer, Pill, Leaf, Apple, HeartPulse, Wind, Shield, Baby, Eye, Sparkles, Droplets, Brain } from 'lucide-react';
 
 const MAP = { Thermometer, Pill, Leaf, Apple, HeartPulse, Wind, Shield, Baby, Eye, Sparkles, Droplets, Brain };

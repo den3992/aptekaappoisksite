@@ -1,7 +1,6 @@
 'use client';
-import React, { createContext, useContext, useEffect, useState } from 'react';
-
-export const CITIES = [
+import { createContext, useContext, useEffect, useState } from 'react';
+const CITIES = [
   { id: 'msk', name: 'Москва', inLoc: 'Москве', center: [55.751244, 37.618423], zoom: 11 },
   { id: 'spb', name: 'Санкт-Петербург', inLoc: 'Санкт-Петербурге', center: [59.9342802, 30.3350986], zoom: 11 },
 ];

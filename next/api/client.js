@@ -20,14 +20,6 @@ const http = axios.create({
 // In-memory caches for static lookups (cities, categories) so we don't hit
 // the backend on every page navigation.
 let _categoriesCache = null;
-let _citiesCache = null;
-
-export async function fetchCities() {
-  if (_citiesCache) return _citiesCache;
-  const { data } = await http.get('/cities');
-  _citiesCache = data;
-  return data;
-}
 
 export async function fetchCategories() {
   if (_categoriesCache) return _categoriesCache;
@@ -99,14 +91,4 @@ export async function fetchGorzdravStoresBulk(ids) {
     data.forEach(d => { _gorzdravStoreDetailCache[d.store_id] = d; });
   }
   return ids.map(id => _gorzdravStoreDetailCache[id]).filter(Boolean);
-}
-
-// Static helpers to keep current presentational components working
-// without major refactors.
-export function findPharmacyById(pharmacies, id) {
-  return pharmacies.find((p) => p.id === id);
-}
-
-export function pharmaciesByCity(pharmacies, city) {
-  return pharmacies.filter((p) => p.city === city);
 }

@@ -1,6 +1,6 @@
 'use client';
 import { formatName, formatManufacturer } from "../../../../utils/text";
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';

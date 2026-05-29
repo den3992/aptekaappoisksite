@@ -415,7 +415,7 @@ export function formatManufacturer(s) {
 // by different legal entities (e.g. "Велфарм" + "Велфарм-М" → Велфарм).
 //
 // Returns a lowercase token suitable as a map/group key.
-export function canonicalManufacturer(s) {
+function canonicalManufacturer(s) {
   const stripped = formatManufacturer(s);
   if (!stripped) return '';
   // Take the first dash-delimited token (drops "-М", "-Лексредства", "-Уфавита", "-Тюмень")
@@ -433,7 +433,7 @@ export function canonicalManufacturer(s) {
 
 // Group key for medication records that should appear as ONE search result.
 // We dedupe by (name + form + dosage + canonical manufacturer group).
-export function medGroupKey(m) {
+function medGroupKey(m) {
   return [
     (m.name || '').toLocaleLowerCase('ru-RU').trim(),
     (m.form || '').toLocaleLowerCase('ru-RU').trim(),

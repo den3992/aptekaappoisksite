@@ -1,5 +1,3 @@
-import React from 'react';
-
 // Real photo-rendered tablet image.
 // Pass `size` (number) for a fixed pixel size,
 // or omit `size` and pass Tailwind sizing classes (e.g. "w-4 h-4 md:w-5 md:h-5") via `className`.

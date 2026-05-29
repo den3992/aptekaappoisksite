@@ -1,7 +1,7 @@
 // Static visual styles per category slug. The list of categories themselves
 // (and their counts) comes from the backend `/api/categories` endpoint —
 // this map only provides icon name + brand colors for the UI cards.
-export const CATEGORY_STYLES = {
+const CATEGORY_STYLES = {
   'ot-prostudy':       { icon: 'Thermometer', color: '#FEE2E2', accent: '#DC2626' },
   'obezbolivayuschie': { icon: 'Pill',        color: '#FEF3C7', accent: '#D97706' },
   'vitaminy-bady':     { icon: 'Leaf',        color: '#DCFCE7', accent: '#16A34A' },

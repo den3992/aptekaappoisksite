@@ -4,9 +4,8 @@ export const metadata = {
   alternates: { canonical: 'https://aptekaa.ru/kontakty' },
 };
 
-import React from 'react';
 import Link from 'next/link';
-import { Mail, Phone, MapPin, Clock, Briefcase, LifeBuoy } from 'lucide-react';
+import { Mail, Phone, MapPin, Briefcase, LifeBuoy } from 'lucide-react';
 
 export default function Contacts() {
   return (

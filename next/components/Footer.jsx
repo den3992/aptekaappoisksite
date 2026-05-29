@@ -1,7 +1,6 @@
 'use client';
-import React from 'react';
 import Link from 'next/link';
-import { Pill, Phone, Mail, ShieldCheck } from 'lucide-react';
+import { Phone, Mail, ShieldCheck } from 'lucide-react';
 import { useCity } from '../context/CityContext';
 import PillIcon from './PillIcon';
 

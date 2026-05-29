@@ -1,6 +1,6 @@
 'use client';
 import { formatName, formatManufacturer, dedupeMeds } from "../../../utils/text";
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useParams, useRouter, usePathname } from 'next/navigation';
 import { Search as SearchIcon, SlidersHorizontal, Filter, ChevronLeft, ChevronRight, X } from 'lucide-react';

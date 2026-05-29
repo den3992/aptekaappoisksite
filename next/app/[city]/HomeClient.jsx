@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import NotFound from '../../components/NotFound';
@@ -12,7 +12,7 @@ import {
 } from '../../components/ui/dropdown-menu';
 import { openSearchOverlay } from '../../lib/searchOverlay';
 import { suggestMeds, fetchCategories } from '../../api/client';
-import { formatName, formatManufacturer, dedupeMeds } from '../../utils/text';
+import { formatName } from '../../utils/text';
 import { getCategoryStyle } from '../../lib/categoryStyles';
 import PartnersMarquee from '../../components/PartnersMarquee';
 
@@ -29,8 +29,6 @@ const TRUST_SIGNALS = [
 export default function Home() {
   const { city, cities, setCity } = useCity();
   const { city: cityParam } = useParams();
-  const [q, setQ] = useState('');
-  const [apiSuggestions, setApiSuggestions] = useState([]);
   const [popularMeds, setPopularMeds] = useState([]);
   const [categories, setCategories] = useState([]);
   const router = useRouter();
@@ -61,15 +59,6 @@ export default function Home() {
   }, [cityParam, cities]);
 
   useEffect(() => {
-    if (!q || q.trim().length < 2) { setApiSuggestions([]); return; }
-    let cancelled = false;
-    const t = setTimeout(() => {
-      suggestMeds(q.trim()).then((d) => { if (!cancelled) setApiSuggestions(d); }).catch(() => {});
-    }, 200);
-    return () => { cancelled = true; clearTimeout(t); };
-  }, [q]);
-
-  useEffect(() => {
     let cancelled = false;
     Promise.all(
       POPULAR_QUERIES.map(query =>
@@ -91,13 +80,6 @@ export default function Home() {
     document.body.classList.add('home-bg');
     return () => document.body.classList.remove('home-bg');
   }, []);
-
-  const suggestions = apiSuggestions;
-
-  const submit = (e) => {
-    e.preventDefault();
-    if (q.trim()) router.push(`/${city.id}/poisk?q=${encodeURIComponent(q.trim())}`);
-  };
 
   if (cityParam && !['moskva', 'spb', 'msk', 'sankt-peterburg'].includes(cityParam)) {
     return <NotFound />;
