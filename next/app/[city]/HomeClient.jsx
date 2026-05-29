@@ -82,7 +82,7 @@ export default function Home() {
 
   return (
     <div>
-      <div className="relative bg-gradient-to-b from-emerald-50/70 via-emerald-50/40 to-white border-b border-slate-100">
+      <div className="relative overflow-hidden bg-gradient-to-b from-emerald-50/70 via-emerald-50/40 to-white border-b border-slate-100">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0">
           <div className="absolute top-20 -left-16 w-96 h-96 rounded-full bg-emerald-200/25 blur-3xl" />
           <div className="absolute bottom-0 -right-16 w-[28rem] h-[28rem] rounded-full bg-emerald-100/35 blur-3xl" />
