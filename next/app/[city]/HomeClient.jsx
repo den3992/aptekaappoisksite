@@ -21,12 +21,14 @@ const TRUST_SIGNALS = [
   { icon: Sparkles, text: 'Бесплатно и без регистрации' },
 ];
 
-const CITY_GEN = { msk: 'Москвы', spb: 'Санкт-Петербурга' };
+const CITY_GEN = { msk: 'Москвы', moskva: 'Москвы', spb: 'Санкт-Петербурга', 'sankt-peterburg': 'Санкт-Петербурга' };
 
 export default function Home() {
   const { city, cities, setCity } = useCity();
-  const cityGen = CITY_GEN[city?.id] || 'Москвы';
   const { city: cityParam } = useParams();
+  // cityParam (из URL) доступен и при SSR — H1 сразу корректен для бота;
+  // city из контекста на сервере ещё дефолтный (msk), поэтому он лишь фолбэк.
+  const cityGen = CITY_GEN[cityParam] || CITY_GEN[city?.id] || 'Москвы';
   const [popularMeds, setPopularMeds] = useState([]);
   const [categories, setCategories] = useState([]);
   const router = useRouter();
