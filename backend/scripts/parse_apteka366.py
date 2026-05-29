@@ -253,6 +253,19 @@ async def main(args: argparse.Namespace) -> None:
             query["slug"] = args.slug
         if args.popular:
             query["mnn"] = {"$in": list(POPULAR_MNN)}
+        if args.from_gorzdrav:
+            # Узкий набор: только препараты, у которых УЖЕ есть реальный матч
+            # Горздрава в этом городе. 36,6 и Горздрав — один каталог (extId
+            # общий), поэтому ненайденное в Горздраве почти не находится и в
+            # 36,6. Это ×4 меньше работы и ровно SEO-значимые страницы.
+            gz_slugs = await db.prices_real.distinct(
+                "slug",
+                {"source": "gorzdrav", "city": city,
+                 "match_status": {"$in": ["matched", "mnn_match", "needs_review"]},
+                 "price": {"$ne": None}},
+            )
+            query["slug"] = {"$in": gz_slugs}
+            log.info(f"[{region}] --from-gorzdrav: {len(gz_slugs)} слагов с матчем Горздрава")
         if args.update_only:
             matched_slugs = await db.prices_real.distinct(
                 "slug",
@@ -314,6 +327,9 @@ if __name__ == "__main__":
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--slug", type=str, default="")
     parser.add_argument("--popular", action="store_true")
+    parser.add_argument("--from-gorzdrav", action="store_true",
+                        help="Только препараты с уже существующим матчем Горздрава "
+                             "в этом городе (×4 меньше, SEO-значимые страницы).")
     parser.add_argument("--rematch", action="store_true")
     parser.add_argument("--update-only", action="store_true",
                         help="Обновить только препараты, у которых уже есть матч 36,6 (быстрее).")
