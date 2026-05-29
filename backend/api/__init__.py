@@ -22,6 +22,7 @@ from .pharmacies_seed import (
     CATEGORIES,
     pharmacies_by_city,
     find_pharmacy_by_id,
+    find_pharmacy,
 )
 
 
@@ -116,8 +117,8 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         return pharmacies_by_city(city)
 
     @router.get("/pharmacies/{pid}")
-    async def pharmacy_detail(pid: str):
-        ph = find_pharmacy_by_id(pid)
+    async def pharmacy_detail(pid: str, city: str = Query("msk")):
+        ph = find_pharmacy(pid, city)
         if not ph:
             raise HTTPException(404, "Pharmacy not found")
         return ph

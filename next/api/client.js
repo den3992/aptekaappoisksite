@@ -33,8 +33,8 @@ export async function fetchPharmacies(city = 'msk') {
   return data;
 }
 
-export async function fetchPharmacy(id) {
-  const { data } = await http.get(`/pharmacies/${id}`);
+export async function fetchPharmacy(id, city) {
+  const { data } = await http.get(`/pharmacies/${id}`, city ? { params: { city } } : undefined);
   return data;
 }
 

@@ -30,6 +30,14 @@ PHARMACIES: list[dict] = [
         "url": "https://gorzdrav.org",
         "logo": "gorzdrav",
     },
+    {
+        "id": "gorzdrav",
+        "name": "Горздрав",
+        "city": "spb",
+        "address": "Сеть аптек по всему Санкт-Петербургу",
+        "url": "https://gorzdrav.org",
+        "logo": "gorzdrav",
+    },
 ]
 
 
@@ -42,3 +50,13 @@ def find_pharmacy_by_id(pid: str):
         if p["id"] == pid:
             return p
     return None
+
+
+def find_pharmacy(pid: str, city: str | None = None):
+    """City-aware lookup: prefer the entry matching both id and city,
+    fall back to id-only (так старые ссылки без города не ломаются)."""
+    if city:
+        for p in PHARMACIES:
+            if p["id"] == pid and p["city"] == city:
+                return p
+    return find_pharmacy_by_id(pid)
