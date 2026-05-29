@@ -14,7 +14,7 @@ from typing import Optional, List, Tuple
 from urllib.parse import quote
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import PlainTextResponse, HTMLResponse
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
@@ -108,6 +108,11 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
         # 25,000 slugs * 2 cities = 50,000 URLs (per-sitemap protocol limit)
         per = 25000
         skip = (idx - 1) * per
+        # Чанки за пределами числа канонических препаратов не существуют —
+        # отдаём 404, а не пустой 200 (иначе боты держат «мёртвые» sitemap).
+        total = await db.medications.count_documents({"is_canonical": {"$ne": False}})
+        if idx < 1 or skip >= total:
+            raise HTTPException(status_code=404, detail="sitemap chunk out of range")
         # Дата последнего обновления цены по каждому slug — одним запросом.
         # Яндекс по <lastmod> понимает свежесть и приоритет переобхода.
         lastmod_map = {}

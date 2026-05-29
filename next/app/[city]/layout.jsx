@@ -28,6 +28,7 @@ export async function generateMetadata({ params }) {
       type: 'website',
       siteName: 'АптекаА',
       locale: 'ru_RU',
+      images: [{ url: '/og-image.png?v=2', width: 512, height: 512 }],
     },
   };
 }

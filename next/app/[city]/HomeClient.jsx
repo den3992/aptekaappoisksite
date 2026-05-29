@@ -21,8 +21,11 @@ const TRUST_SIGNALS = [
   { icon: Sparkles, text: 'Бесплатно и без регистрации' },
 ];
 
+const CITY_GEN = { msk: 'Москвы', spb: 'Санкт-Петербурга' };
+
 export default function Home() {
   const { city, cities, setCity } = useCity();
+  const cityGen = CITY_GEN[city?.id] || 'Москвы';
   const { city: cityParam } = useParams();
   const [popularMeds, setPopularMeds] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -100,7 +103,7 @@ export default function Home() {
             );
           })()}
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.1] md:leading-[1.05]">
-            Ищите лекарства <span className="text-emerald-600">быстро</span><br />и по <span className="text-emerald-600">лучшей цене</span>
+            Лекарства в аптеках {cityGen}:<br /><span className="text-emerald-600">цены и наличие</span>
           </h1>
           <p className="mt-4 md:mt-6 text-base md:text-lg text-slate-600 max-w-2xl mx-auto">
             Бесплатная аптечная справочная по Москве и СПб. Сравнивайте наличие и цены на лекарства, БАДы и аптечные товары. Без регистрации.
