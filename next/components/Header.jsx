@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Search, MapPin, ChevronDown, Pill, Mic } from 'lucide-react';
 import { useCity } from '../context/CityContext';
 import { suggestMeds } from "../api/client";
@@ -25,6 +25,9 @@ export default function Header({ hideOnDesktop = false } = {}) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const wrapRef = useRef(null);
+  // Главная (корень города) — увеличенный логотип без подписи на десктопе.
+  const pathname = usePathname();
+  const isHome = /^\/(msk|spb)\/?$/.test(pathname || '');
 
   // Debounced suggestions
   useEffect(() => {
@@ -87,10 +90,10 @@ export default function Header({ hideOnDesktop = false } = {}) {
       <div className="max-w-7xl mx-auto px-4 py-2 md:h-16 md:py-0 flex flex-wrap md:flex-nowrap items-center gap-y-2 gap-x-3 md:gap-6">
         <Link href="/" className="flex flex-col items-start leading-none shrink-0">
           <div className="flex items-center gap-2 md:gap-2.5">
-            <PillIcon className="h-5 md:h-6 w-auto" />
-            <span className="text-lg font-extrabold text-slate-900 tracking-tight" style={{ fontFamily: "'Manrope', sans-serif" }}>Аптека<span className="text-emerald-600">А</span></span>
+            <PillIcon className={`h-5 w-auto ${isHome ? 'md:h-10' : 'md:h-6'}`} />
+            <span className={`text-lg font-extrabold text-slate-900 tracking-tight ${isHome ? 'md:text-3xl' : ''}`} style={{ fontFamily: "'Manrope', sans-serif" }}>Аптека<span className="text-emerald-600">А</span></span>
           </div>
-          <span className="text-[13px] text-slate-500 mt-1.5 hidden sm:inline">Актуальное наличие лекарств</span>
+          <span className={`text-[13px] text-slate-500 mt-1.5 ${isHome ? 'hidden' : 'hidden sm:inline'}`}>Актуальное наличие лекарств</span>
         </Link>
 
         <DropdownMenu>
