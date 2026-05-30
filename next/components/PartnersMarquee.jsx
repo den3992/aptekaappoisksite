@@ -9,7 +9,6 @@ const PARTNERS = [
   { name: 'Самсон-Фарма',     logo: 'samson-pharma.png' },
   { name: 'Ноль Боли',        logo: '0boli.png' },
   { name: 'Доктор Столетов',  logo: 'drstoletov.png' },
-  { name: 'Wer.ru',           logo: 'wer.svg' },
   { name: 'Планета Здоровья', logo: 'planetazdorovo.png' },
   { name: 'Первая помощь',    logo: 'pervaya-pomosh.png' },
   { name: 'Озерки',           logo: 'ozerki.png' },
