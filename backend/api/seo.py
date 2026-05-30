@@ -117,7 +117,7 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
         # Яндекс по <lastmod> понимает свежесть и приоритет переобхода.
         lastmod_map = {}
         async for row in db.prices_real.aggregate([
-            {"$match": {"source": {"$in": ["gorzdrav", "apteka366"]},
+            {"$match": {"source": {"$in": ["gorzdrav", "apteka366", "rigla"]},
                         "updated_at": {"$ne": None},
                         "price": {"$ne": None},
                         "match_status": {"$in": ["matched", "mnn_match", "needs_review"]}}},

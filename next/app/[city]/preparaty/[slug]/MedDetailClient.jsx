@@ -696,7 +696,7 @@ export default function MedDetail({ initialMed = null }) {
     // Реальные сети с настоящими ценами (Горздрав + Аптека 36,6). Их цены
     // НЕ синтезируются (в отличие от legacy-партнёров в list ниже) и
     // фильтруются по активной упаковке через gz_pack.
-    const REAL_SOURCES = ['gorzdrav', 'apteka366'];
+    const REAL_SOURCES = ['gorzdrav', 'apteka366', 'rigla'];
     const networkAll = all.filter(p => REAL_SOURCES.includes(p.pharmacy_id));
     const activeTotal = packTotal(activePack);
     const networks = packs.length >= 2 && activePack
@@ -945,8 +945,11 @@ export default function MedDetail({ initialMed = null }) {
               сетей с ценой + in-content ссылка на категорию (перелинковка). */}
           {(() => {
             const nm = formatName(med.name);
-            const nets = new Set(prices.map(p => p.pharmacy_id).filter(id => id === 'gorzdrav' || id === 'apteka366'));
+            const NET_NAMES = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла' };
+            const nets = new Set(prices.map(p => p.pharmacy_id).filter(id => NET_NAMES[id]));
             const multi = nets.size >= 2;
+            const netNames = [...nets].map(id => NET_NAMES[id]).filter(Boolean);
+            const netStr = netNames.length <= 1 ? (netNames[0] || '') : netNames.slice(0, -1).join(', ') + ' и ' + netNames.slice(-1);
             const priceStr = minPrice == null ? null : (minPrice === maxPrice ? `${minPrice}\u00a0\u20bd` : `от\u00a0${minPrice} до\u00a0${maxPrice}\u00a0\u20bd`);
             const catTitle = (med.category && med.category !== 'other')
               ? ((categories.find(c => c.slug === med.category) || {}).title || null)
@@ -957,7 +960,7 @@ export default function MedDetail({ initialMed = null }) {
                 {catTitle ? <> из категории <Link href={`/${city.id}/kategorii/${med.category}`} className="text-emerald-700 hover:underline">{catTitle.toLowerCase()}</Link></> : null}.{' '}
                 {priceStr
                   ? (multi
-                      ? <>Сравните цены в аптечных сетях Горздрав и Аптека 36,6 в {city.inLoc}: {priceStr} — и проверьте наличие в ближайших аптеках на карте.</>
+                      ? <>Сравните цены в аптечных сетях {netStr} в {city.inLoc}: {priceStr} — и проверьте наличие в ближайших аптеках на карте.</>
                       : <>Цена в {city.inLoc}: {priceStr}. Проверьте наличие в ближайших аптеках на карте.</>)
                   : <>Посмотрите аналоги и проверьте наличие в аптеках на карте.</>}
               </p>
@@ -1023,7 +1026,7 @@ export default function MedDetail({ initialMed = null }) {
               Показываем только когда есть >=2 сети с ценой для активной
               упаковки — иначе сравнивать нечего. */}
           {(() => {
-            const NET_LABELS = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6' };
+            const NET_LABELS = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла' };
             const byNet = {};
             for (const p of prices) {
               if (!NET_LABELS[p.pharmacy_id]) continue;

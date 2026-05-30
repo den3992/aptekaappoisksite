@@ -323,7 +323,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         # упаковкам — фронт показывает их как сравнение цен по сетям. find
         # (а не find_one) — чтобы при переключении упаковки показать данные
         # именно для активной фасовки. pharmacy_id = имя источника.
-        for _src in ("gorzdrav", "apteka366"):
+        for _src in ("gorzdrav", "apteka366", "rigla"):
             net_cursor = db.prices_real.find(
                 {
                     "slug": slug,
