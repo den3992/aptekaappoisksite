@@ -131,9 +131,15 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         cursor = db.gorzdrav_stores.find(
             {"city": city, "active": {"$ne": False},
              "lat": {"$ne": None}, "lng": {"$ne": None}},
-            {"_id": 0, "store_id": 1, "idx": 1, "lat": 1, "lng": 1},
+            {"_id": 0, "store_id": 1, "idx": 1, "lat": 1, "lng": 1, "name": 1},
         )
-        items = [doc async for doc in cursor]
+        items = []
+        async for doc in cursor:
+            # Аптеки 36,6 физически входят в сеть пунктов выдачи Горздрава, но
+            # это отдельный бренд со своей ценой. Помечаем brand, чтобы фронт
+            # красил их маркеры ценой 36,6, а не Горздрава.
+            doc["brand"] = "apteka366" if doc.pop("name", None) == "36,6" else "gorzdrav"
+            items.append(doc)
         if response is not None:
             # Список меняется редко (раз в сутки при cron-парсинге),
             # поэтому кэшируем у клиента и на CDN на 10 минут.

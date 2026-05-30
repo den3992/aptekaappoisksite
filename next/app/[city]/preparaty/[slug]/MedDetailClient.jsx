@@ -165,7 +165,7 @@ function bitmapHas(mask, idx) {
   return byte < mask.length && (mask[byte] & (1 << (idx & 7))) !== 0;
 }
 
-const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, gorzdravStores = [], gorzdravPrice = null, gorzdravBitmap = null, cityCenter, onSelect, selected, fullscreen = false, onInteract, onViewportChange }, externalRef) {
+const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, gorzdravStores = [], gorzdravPrice = null, gorzdravBitmap = null, apteka366Price = null, cityCenter, onSelect, selected, fullscreen = false, onInteract, onViewportChange }, externalRef) {
   const ref = useRef(null);
   const mapRef = useRef(null);
   const tileLayerRef = useRef(null);
@@ -328,22 +328,29 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
         partnerBounds.push([ph.lat, ph.lng]);
       });
 
-      if (gorzdravPrice !== null && gorzdravStores.length > 0) {
+      if ((gorzdravPrice !== null || apteka366Price !== null) && gorzdravStores.length > 0) {
         // Маркер только для аптек, где препарат реально есть (store_bitmap),
         // а не для всех ~1900 точек сети.
         const gzMask = decodeBitmap(gorzdravBitmap);
         gorzdravStores.forEach(store => {
           if (!store.lat || !store.lng) return;
           if (!bitmapHas(gzMask, store.idx)) return;
-          const m = L.marker([store.lat, store.lng], { icon: pillIcon(gorzdravPrice) });
+          // 36,6-брендированные точки красим ценой сети 36,6 (если она есть для
+          // активной упаковки), иначе точка работает как пункт выдачи Горздрава
+          // по его цене. Наличие — из gorzdrav store_bitmap (idx общий).
+          const is366 = store.brand === 'apteka366' && apteka366Price !== null;
+          const markerPrice = is366 ? apteka366Price : gorzdravPrice;
+          if (markerPrice == null) return;
+          const markerTitle = is366 ? 'Аптека 36,6' : 'Горздрав';
+          const m = L.marker([store.lat, store.lng], { icon: pillIcon(markerPrice) });
           // Лёгкий placeholder-popup (название + цена + кнопки маршрута).
           // Адрес, часы, телефон — догружаются по клику и подменяют popup.
           m.bindPopup(popupContent({
-            title: 'Горздрав',
+            title: markerTitle,
             address: null,
             hours: null,
             phone: null,
-            price: gorzdravPrice,
+            price: markerPrice,
             lat: store.lat,
             lng: store.lng,
           }), { maxWidth: 280, autoPan: true });
@@ -354,11 +361,11 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
               const popup = m.getPopup();
               if (!popup) return;
               popup.setContent(popupContent({
-                title: full.full_name || 'Горздрав',
+                title: full.full_name || markerTitle,
                 address: full.address,
                 hours: full.is_24h ? 'Круглосуточно' : full.hours,
                 phone: full.phone,
-                price: gorzdravPrice,
+                price: markerPrice,
                 lat: full.lat || store.lat,
                 lng: full.lng || store.lng,
               }));
@@ -449,7 +456,7 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
     };
     // eslint-disable-next-line
-  }, [med?.slug, cityCenter[0], cityCenter[1], prices.length, gorzdravStores.length, gorzdravPrice, gorzdravBitmap, fullscreen]);
+  }, [med?.slug, cityCenter[0], cityCenter[1], prices.length, gorzdravStores.length, gorzdravPrice, gorzdravBitmap, apteka366Price, fullscreen]);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -486,7 +493,7 @@ function ViewportListItem({ item, onClick, selected = false }) {
     >
       <button type="button" onClick={onClick} className="w-full text-left flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <div className="font-semibold text-slate-900 text-sm leading-tight">{item.name || (item.source === 'gorzdrav' ? 'Горздрав' : 'Аптека')}</div>
+          <div className="font-semibold text-slate-900 text-sm leading-tight">{item.name || (item.source === 'gorzdrav' ? 'Горздрав' : item.source === 'apteka366' ? 'Аптека 36,6' : 'Аптека')}</div>
           {item.address && (
             <div className="text-[11px] text-slate-500 mt-0.5 flex items-start gap-1">
               <MapPin className="w-3 h-3 shrink-0 mt-0.5" />
@@ -747,6 +754,7 @@ export default function MedDetail({ initialMed = null }) {
     lastViewportRef.current = { center, bounds };
     const { prices, pharmacies, gorzdravStores } = dataRef.current;
     const gzPrice = prices.find(p => p.pharmacy_id === 'gorzdrav')?.price ?? null;
+    const a366Price = prices.find(p => p.pharmacy_id === 'apteka366')?.price ?? null;
 
     // 1. Партнёрские аптеки в bbox + у них есть цена для активной упаковки.
     const partnerEntries = prices
@@ -774,19 +782,23 @@ export default function MedDetail({ initialMed = null }) {
 
     // 2. Горздрав-аптеки в bbox, где препарат реально есть (store_bitmap).
     const gzMask = decodeBitmap(prices.find(p => p.pharmacy_id === 'gorzdrav')?.store_bitmap);
-    const gzCandidates = gzPrice !== null
-      ? gorzdravStores
-          .filter(s => bitmapHas(gzMask, s.idx) && s.lat >= bounds.south && s.lat <= bounds.north && s.lng >= bounds.west && s.lng <= bounds.east)
-          .map(s => ({
-            key: 'gorzdrav_' + s.store_id,
-            source: 'gorzdrav',
-            store_id: s.store_id,
-            lat: s.lat,
-            lng: s.lng,
-            price: gzPrice,
-            distance: haversine(center.lat, center.lng, s.lat, s.lng),
-          }))
-      : [];
+    const gzCandidates = gorzdravStores
+      .filter(s => bitmapHas(gzMask, s.idx) && s.lat >= bounds.south && s.lat <= bounds.north && s.lng >= bounds.west && s.lng <= bounds.east)
+      .map(s => {
+        const is366 = s.brand === 'apteka366' && a366Price !== null;
+        const price = is366 ? a366Price : gzPrice;
+        if (price == null) return null;
+        return {
+          key: 'gorzdrav_' + s.store_id,
+          source: is366 ? 'apteka366' : 'gorzdrav',
+          store_id: s.store_id,
+          lat: s.lat,
+          lng: s.lng,
+          price,
+          distance: haversine(center.lat, center.lng, s.lat, s.lng),
+        };
+      })
+      .filter(Boolean);
 
     // 3. Объединяем и сортируем (price asc, distance asc) — БЕЗ лимита.
     //    Показываем все аптеки в зоне карты; детали Горздрав-аптек
@@ -808,7 +820,7 @@ export default function MedDetail({ initialMed = null }) {
   useEffect(() => {
     const need = viewportList
       .slice(0, viewportVisible)
-      .filter(x => x.source === 'gorzdrav' && !x.name)
+      .filter(x => (x.source === 'gorzdrav' || x.source === 'apteka366') && !x.name)
       .map(x => x.store_id);
     if (need.length === 0) return;
     let cancelled = false;
@@ -816,11 +828,11 @@ export default function MedDetail({ initialMed = null }) {
       if (cancelled) return;
       const byId = Object.fromEntries(details.map(d => [d.store_id, d]));
       setViewportList(prev => prev.map(item => {
-        if (item.source === 'gorzdrav' && !item.name && byId[item.store_id]) {
+        if ((item.source === 'gorzdrav' || item.source === 'apteka366') && !item.name && byId[item.store_id]) {
           const d = byId[item.store_id];
           return {
             ...item,
-            name: d.full_name || 'Горздрав',
+            name: d.full_name || (item.source === 'apteka366' ? 'Аптека 36,6' : 'Горздрав'),
             address: d.address,
             hours: d.is_24h ? 'Круглосуточно' : d.hours,
             phone: d.phone,
@@ -1115,6 +1127,7 @@ export default function MedDetail({ initialMed = null }) {
               gorzdravStores={gorzdravStores}
               gorzdravPrice={prices.find(p => p.pharmacy_id === 'gorzdrav')?.price ?? null}
               gorzdravBitmap={prices.find(p => p.pharmacy_id === 'gorzdrav')?.store_bitmap ?? null}
+              apteka366Price={prices.find(p => p.pharmacy_id === 'apteka366')?.price ?? null}
               cityCenter={city.center}
               onSelect={(pid) => {
                 setSelectedId(pid);
