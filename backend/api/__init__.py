@@ -313,30 +313,32 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
                 "expiry_date": p.get("expiry_date"),
             })
 
-        # Добавляем цены Горздрав по ВСЕМ упаковкам (если матч есть).
-        # Раньше was find_one — теперь find, чтобы при переключении упаковки
-        # на фронте можно было показать данные именно для активной фасовки.
-        gz_cursor = db.prices_real.find(
-            {
-                "slug": slug,
-                "source": "gorzdrav",
-                "match_status": {"$in": ["matched", "mnn_match", "needs_review"]},
-                "price": {"$ne": None},
-            },
-            {"_id": 0, "price": 1, "stores_count": 1, "gz_name": 1,
-             "gz_pack": 1, "store_bitmap": 1, "city": 1},
-        )
-        async for gz_entry in gz_cursor:
-            _bm = gz_entry.get("store_bitmap")
-            _city = gz_entry.get("city") or "msk"  # legacy без city → msk
-            real_prices.setdefault(_city, []).append({
-                "pharmacy_id": "gorzdrav",
-                "price": gz_entry["price"],
-                "qty": gz_entry.get("stores_count", 0),
-                "gz_name": gz_entry.get("gz_name"),
-                "gz_pack": gz_entry.get("gz_pack"),
-                "store_bitmap": base64.b64encode(_bm).decode() if _bm else None,
-            })
+        # Добавляем цены аптечных сетей (Горздрав + Аптека 36,6) по ВСЕМ
+        # упаковкам — фронт показывает их как сравнение цен по сетям. find
+        # (а не find_one) — чтобы при переключении упаковки показать данные
+        # именно для активной фасовки. pharmacy_id = имя источника.
+        for _src in ("gorzdrav", "apteka366"):
+            net_cursor = db.prices_real.find(
+                {
+                    "slug": slug,
+                    "source": _src,
+                    "match_status": {"$in": ["matched", "mnn_match", "needs_review"]},
+                    "price": {"$ne": None},
+                },
+                {"_id": 0, "price": 1, "stores_count": 1, "gz_name": 1,
+                 "gz_pack": 1, "store_bitmap": 1, "city": 1},
+            )
+            async for gz_entry in net_cursor:
+                _bm = gz_entry.get("store_bitmap")
+                _city = gz_entry.get("city") or "msk"  # legacy без city → msk
+                real_prices.setdefault(_city, []).append({
+                    "pharmacy_id": _src,
+                    "price": gz_entry["price"],
+                    "qty": gz_entry.get("stores_count", 0),
+                    "gz_name": gz_entry.get("gz_name"),
+                    "gz_pack": gz_entry.get("gz_pack"),
+                    "store_bitmap": base64.b64encode(_bm).decode() if _bm else None,
+                })
 
         med["prices_by_city"] = real_prices
         med["prices_source"] = "real"

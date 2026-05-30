@@ -680,16 +680,20 @@ export default function MedDetail({ initialMed = null }) {
       const qty = m[1].replace(',', '.');
       return qty + ' ' + m[2].toLowerCase();
     };
-    const gorzdravAll = all.filter(p => p.pharmacy_id === 'gorzdrav');
+    // Реальные сети с настоящими ценами (Горздрав + Аптека 36,6). Их цены
+    // НЕ синтезируются (в отличие от legacy-партнёров в list ниже) и
+    // фильтруются по активной упаковке через gz_pack.
+    const REAL_SOURCES = ['gorzdrav', 'apteka366'];
+    const networkAll = all.filter(p => REAL_SOURCES.includes(p.pharmacy_id));
     const activeTotal = packTotal(activePack);
-    const gorzdrav = packs.length >= 2 && activePack
-      ? gorzdravAll.filter(p => {
+    const networks = packs.length >= 2 && activePack
+      ? networkAll.filter(p => {
           const gzPack = p.gz_pack || extractGzPack(p.gz_name);
           if (!gzPack) return true;
           return packTotal(gzPack) === activeTotal;
         })
-      : gorzdravAll;
-    const list = all.filter(p => p.pharmacy_id !== 'gorzdrav');
+      : networkAll;
+    const list = all.filter(p => !REAL_SOURCES.includes(p.pharmacy_id));
 
     let result;
     if (packs.length >= 2 && activePack && list.length > 0) {
@@ -719,7 +723,7 @@ export default function MedDetail({ initialMed = null }) {
       result = list;
     }
 
-    return [...result, ...gorzdrav].sort((a, b) => a.price - b.price);
+    return [...result, ...networks].sort((a, b) => a.price - b.price);
   }, [med, city.id, packs, activePack]);
 
   // Гаверсин-расстояние в км между двумя точками.
@@ -747,7 +751,7 @@ export default function MedDetail({ initialMed = null }) {
     // 1. Партнёрские аптеки в bbox + у них есть цена для активной упаковки.
     const partnerEntries = prices
       .map(pr => {
-        if (pr.pharmacy_id === 'gorzdrav') return null;
+        if (pr.pharmacy_id === 'gorzdrav' || pr.pharmacy_id === 'apteka366') return null;
         const ph = pharmacies.find(p => p.id === pr.pharmacy_id);
         if (!ph || !ph.lat || !ph.lng) return null;
         if (ph.lat < bounds.south || ph.lat > bounds.north) return null;
@@ -970,6 +974,48 @@ export default function MedDetail({ initialMed = null }) {
               </div>
             </div>
           )}
+
+          {/* Сравнение цен по аптечным сетям (Горздрав vs Аптека 36,6).
+              Показываем только когда есть >=2 сети с ценой для активной
+              упаковки — иначе сравнивать нечего. */}
+          {(() => {
+            const NET_LABELS = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6' };
+            const byNet = {};
+            for (const p of prices) {
+              if (!NET_LABELS[p.pharmacy_id]) continue;
+              if (byNet[p.pharmacy_id] == null || p.price < byNet[p.pharmacy_id]) {
+                byNet[p.pharmacy_id] = p.price;
+              }
+            }
+            const rows = Object.entries(byNet)
+              .map(([id, price]) => ({ id, price, name: NET_LABELS[id] }))
+              .sort((a, b) => a.price - b.price);
+            if (rows.length < 2) return null;
+            const best = rows[0].price;
+            return (
+              <div className="mt-4 bg-white border border-slate-200 rounded-xl p-4" data-testid="network-price-compare">
+                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                  Сравнение цен по сетям{activePack ? ` · ${activePack}` : ''}
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {rows.map(r => (
+                    <div key={r.id} className="flex items-center justify-between py-2">
+                      <span className="text-sm font-medium text-slate-800">{r.name}</span>
+                      <span className="flex items-center gap-2">
+                        {r.price === best && rows.some(x => x.price > best) && (
+                          <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-2 py-0.5">дешевле</span>
+                        )}
+                        <span className={`text-base font-bold ${r.price === best ? 'text-emerald-700' : 'text-slate-700'}`}>
+                          {r.price}&nbsp;₽
+                        </span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="text-[11px] text-slate-400 mt-2">Цены сетей могут отличаться от цен в конкретной аптеке.</div>
+              </div>
+            );
+          })()}
 
           {prices.length === 0 && (
             <div className="mt-5 bg-amber-50/50 border border-amber-200 rounded-xl p-4" data-testid="out-of-stock-section">
