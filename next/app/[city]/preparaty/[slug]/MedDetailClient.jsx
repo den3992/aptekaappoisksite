@@ -536,7 +536,12 @@ function ViewportListItem({ item, onClick, selected = false }) {
 
 export default function MedDetail({ initialMed = null }) {
   const { slug, city: cityParam } = useParams();
-  const { city, cities, setCity } = useCity();
+  const { city: ctxCity, cities, setCity } = useCity();
+  // Город из URL до гидрации, затем из контекста — см. шапку файла фикса.
+  const [_hydrated, _setHydrated] = useState(false);
+  useEffect(() => { _setHydrated(true); }, []);
+  const _urlCity = cityParam ? cities.find(c => c.id === cityParam) : null;
+  const city = (!_hydrated && _urlCity) ? _urlCity : ctxCity;
   const [selectedId, setSelectedId] = useState(null);
   const [mapFullscreen, setMapFullscreen] = useState(false);
   const priceMapRef = useRef(null);
@@ -579,7 +584,7 @@ export default function MedDetail({ initialMed = null }) {
   useEffect(() => {
     if (cityParam && cities) {
       const found = cities.find(c => c.id === cityParam);
-      if (found && found.id !== city.id) setCity(found);
+      if (found && found.id !== ctxCity.id) setCity(found);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cityParam]);
