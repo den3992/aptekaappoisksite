@@ -2,6 +2,7 @@
 // (render_medication_for_bot / render_pharmacy_for_bot).
 
 import { categoryContent } from './categoryContent';
+import { formatName } from '../utils/text';
 
 const HOST = 'https://aptekaa.ru';
 
@@ -20,7 +21,7 @@ export function medFaqItems(city, med) {
   if (!med) return [];
   const loc = cnLoc(city);
   const gen = cnGen(city);
-  const name = med.name;
+  const name = formatName(med.name);
   const arr = (med.prices_by_city && med.prices_by_city[city]) || [];
   const prices = arr.map((o) => o && o.price).filter((p) => typeof p === 'number');
   const nets = new Set(arr.map((o) => o && o.pharmacy_id).filter(Boolean));
@@ -66,7 +67,8 @@ export function medMetadata(city, med) {
   const _nets = new Set(_arr.map((o) => o && o.pharmacy_id).filter(Boolean));
   const _multi = _nets.size >= 2;
   const _hasPrice = _arr.length > 0;
-  const parts = [med.name];
+  const name = formatName(med.name);
+  const parts = [name];
   if (med.dosage) parts.push(med.dosage);
   parts.push(
     _multi
@@ -81,10 +83,10 @@ export function medMetadata(city, med) {
     (med.form ? `, ${med.form.toLowerCase()}` : '') +
     (med.dosage ? `, ${med.dosage}` : '');
   const _lead = _multi
-    ? `Сравните цены на ${med.name}${_ingr} в сетях Горздрав и Аптека 36,6`
+    ? `Сравните цены на ${name}${_ingr} в сетях Горздрав и Аптека 36,6`
     : _hasPrice
-      ? `Узнайте цену и наличие ${med.name}${_ingr}`
-      : `${med.name}${_ingr}: аналоги и наличие`;
+      ? `Узнайте цену и наличие ${name}${_ingr}`
+      : `${name}${_ingr}: аналоги и наличие`;
   const description = (
     `${_lead} в аптеках ${cnGen(city)}. Аналоги, наличие, адреса на карте. ` +
     (med.rx ? 'Отпускается по рецепту. ' : '') +
@@ -110,11 +112,12 @@ export function medGraphJsonLd(city, med) {
   if (!med) return null;
   const canonical = `${HOST}/${city}/preparaty/${med.canonical_slug || med.slug}`;
   const image = med.image_url ? `${HOST}${med.image_url}` : undefined;
+  const name = formatName(med.name);
 
   const drug = {
     '@type': 'Drug',
     '@id': `${canonical}#drug`,
-    name: med.name,
+    name: name,
     nonProprietaryName: med.mnn ? titleCase(med.mnn) : undefined,
     activeIngredient: med.mnn ? titleCase(med.mnn) : undefined,
     dosageForm: med.form ? med.form.toLowerCase() : undefined,
@@ -129,7 +132,7 @@ export function medGraphJsonLd(city, med) {
   const product = {
     '@type': 'Product',
     '@id': `${canonical}#product`,
-    name: [med.name, med.dosage].filter(Boolean).join(' '),
+    name: [name, med.dosage].filter(Boolean).join(' '),
     brand: med.manufacturer ? { '@type': 'Brand', name: med.manufacturer } : undefined,
     description: drug.name,
     image,
@@ -159,7 +162,7 @@ export function medGraphJsonLd(city, med) {
     '@type': 'MedicalWebPage',
     '@id': `${canonical}#webpage`,
     url: canonical,
-    name: `${med.name} ${med.dosage || ''}`.trim(),
+    name: `${name} ${med.dosage || ''}`.trim(),
     inLanguage: 'ru',
     audience: { '@type': 'MedicalAudience', audienceType: 'Patient' },
     mainContentOfPage: { '@id': `${canonical}#drug` },
@@ -176,7 +179,7 @@ export function medGraphJsonLd(city, med) {
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Главная', item: `${HOST}/${city}` },
       { '@type': 'ListItem', position: 2, name: 'Препараты', item: `${HOST}/${city}/preparaty` },
-      { '@type': 'ListItem', position: 3, name: med.name, item: canonical },
+      { '@type': 'ListItem', position: 3, name: name, item: canonical },
     ],
   };
 
