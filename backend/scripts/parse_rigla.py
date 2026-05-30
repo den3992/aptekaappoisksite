@@ -133,6 +133,68 @@ def rigla_extract_pack(name: str) -> str | None:
     return extract_pack(name)
 
 
+# Ригла отдаёт расписание как «09:00-22:00;...;10:00-22:00» (7 сегментов
+# Пн..Вс, дефис -). Горздрав/36,6 хранят человекочитаемо: «Круглосуточно» /
+# «Ежедневно HH:MM–HH:MM» (en-dash). Приводим Риглу к тому же виду; смешанные
+# расписания группируем по подряд идущим дням.
+_DAY_LABELS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
+_RANGE_RE = re.compile(r"^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})$")
+
+
+def _is_24h_range(r) -> bool:
+    return r is not None and r[0] == "00:00" and r[1] in ("24:00", "00:00")
+
+
+def fmt_rigla_schedule(raw: str) -> tuple[str, bool]:
+    """Сырое расписание Ригла → (hours_str в формате Горздрава, is_24h).
+    Идемпотентна: уже отформатированное значение (без ';') возвращает как есть."""
+    if not raw or not isinstance(raw, str):
+        return "", False
+    parts = [p.strip() for p in raw.split(";")]
+    # Не сырой формат (одиночная строка) — оставляем как есть.
+    if len(parts) < 2:
+        s = raw.strip()
+        return s, s == "Круглосуточно"
+
+    ranges: list[tuple[str, str] | None] = []
+    for p in parts[:7]:
+        m = _RANGE_RE.match(p)
+        if not m:
+            ranges.append(None)  # выходной / нераспознано
+            continue
+        a = f"{int(m.group(1)):02d}:{m.group(2)}"
+        b = f"{int(m.group(3)):02d}:{m.group(4)}"
+        ranges.append((a, b))
+    while len(ranges) < 7:
+        ranges.append(None)
+
+    if all(_is_24h_range(r) for r in ranges):
+        return "Круглосуточно", True
+
+    def label(r) -> str:
+        if r is None:
+            return "выходной"
+        if _is_24h_range(r):
+            return "круглосуточно"
+        return f"{r[0]}–{r[1]}"
+
+    # Все 7 дней одинаковые и рабочие → «Ежедневно ...».
+    if len(set(ranges)) == 1 and ranges[0] is not None:
+        return f"Ежедневно {label(ranges[0])}", False
+
+    # Иначе — группируем подряд идущие дни с одинаковым расписанием.
+    out: list[str] = []
+    i = 0
+    while i < 7:
+        j = i
+        while j + 1 < 7 and ranges[j + 1] == ranges[i]:
+            j += 1
+        day = _DAY_LABELS[i] if i == j else f"{_DAY_LABELS[i]}–{_DAY_LABELS[j]}"
+        out.append(f"{day} {label(ranges[i])}")
+        i = j + 1
+    return ", ".join(out), False
+
+
 def _normalize_item(raw: dict) -> dict:
     """Приводим листинг Ригла к структуре, которую ждёт матчинг Горздрава
     (name + attributes). attributes пустые: manufacturer Ригла нестабилен."""
@@ -401,6 +463,7 @@ async def refresh_stores_rigla(client: httpx.AsyncClient, db) -> dict[str, int]:
             lat = float(it["latitude"]); lng = float(it["longitude"])
         except (TypeError, ValueError):
             continue
+        hours, is_24h = fmt_rigla_schedule(it.get("schedule") or "")
         await db.gorzdrav_stores.update_one(
             {"store_id": sid},
             {"$setOnInsert": {"store_id": sid, "idx": idx},
@@ -410,7 +473,8 @@ async def refresh_stores_rigla(client: httpx.AsyncClient, db) -> dict[str, int]:
                  "lat": lat, "lng": lng,
                  "address": (it.get("address") or "").strip(),
                  "phone": it.get("phone") or "",
-                 "hours": it.get("schedule") or "",
+                 "hours": hours,
+                 "is_24h": is_24h,
                  "city": CITY,
                  "source": SOURCE,
                  "active": True,
