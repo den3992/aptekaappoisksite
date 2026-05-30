@@ -69,7 +69,9 @@ export function medMetadata(city, med) {
   parts.push(
     _multi
       ? `купить в ${cnLoc(city)} — сравните цены в аптеках | АптекаА`
-      : `купить в ${cnLoc(city)} — цена и наличие в аптеках | АптекаА`,
+      : _hasPrice
+        ? `купить в ${cnLoc(city)} — цена и наличие в аптеках | АптекаА`
+        : `в ${cnLoc(city)} — аналоги и наличие в аптеках | АптекаА`,
   );
   const title = parts.join(' ');
   const _ingr =

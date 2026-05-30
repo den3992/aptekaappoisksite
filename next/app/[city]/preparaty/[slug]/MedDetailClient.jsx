@@ -1354,7 +1354,9 @@ export default function MedDetail({ initialMed = null }) {
       {/* FAQ — частые вопросы. Контент совпадает с FAQPage JSON-LD (page.jsx),
           чтобы разметка соответствовала видимому тексту (требование Яндекса). */}
       {(() => {
-        const faq = medFaqItems(city.id, med);
+        // Город из URL (useParams), НЕ из useCity() — контекст на сервере
+        // дефолтит на msk, что ломало SSR-FAQ для SPB (несовпадение с JSON-LD).
+        const faq = medFaqItems(cityParam || city.id, med);
         if (!faq.length) return null;
         return (
           <section className="mb-8 md:mb-12" data-testid="faq-section">
