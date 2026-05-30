@@ -166,7 +166,7 @@ function bitmapHas(mask, idx) {
   return byte < mask.length && (mask[byte] & (1 << (idx & 7))) !== 0;
 }
 
-const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, gorzdravStores = [], gorzdravPrice = null, gorzdravBitmap = null, apteka366Price = null, apteka366Bitmap = null, cityCenter, onSelect, selected, fullscreen = false, onInteract, onViewportChange }, externalRef) {
+const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, gorzdravStores = [], gorzdravPrice = null, gorzdravBitmap = null, apteka366Price = null, apteka366Bitmap = null, riglaPrice = null, riglaBitmap = null, cityCenter, onSelect, selected, fullscreen = false, onInteract, onViewportChange }, externalRef) {
   const ref = useRef(null);
   const mapRef = useRef(null);
   const tileLayerRef = useRef(null);
@@ -329,20 +329,27 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
         partnerBounds.push([ph.lat, ph.lng]);
       });
 
-      if ((gorzdravPrice !== null || apteka366Price !== null) && gorzdravStores.length > 0) {
+      if ((gorzdravPrice !== null || apteka366Price !== null || riglaPrice !== null) && gorzdravStores.length > 0) {
         // Маркер только для аптек, где препарат реально есть (store_bitmap),
-        // а не для всех ~1900 точек сети.
-        const gzMask = decodeBitmap(gorzdravBitmap);
-        const a366Mask = decodeBitmap(apteka366Bitmap);
+        // а не для всех ~1900 точек сети. Каждая сеть красит свои точки своей
+        // ценой и своей РЕАЛЬНОЙ маской наличия (idx общий — единый реестр).
+        const BRAND_MASK = {
+          gorzdrav: decodeBitmap(gorzdravBitmap),
+          apteka366: decodeBitmap(apteka366Bitmap),
+          rigla: decodeBitmap(riglaBitmap),
+        };
+        const BRAND_PRICE = { gorzdrav: gorzdravPrice, apteka366: apteka366Price, rigla: riglaPrice };
+        const BRAND_TITLE = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла' };
         gorzdravStores.forEach(store => {
           if (!store.lat || !store.lng) return;
-          // 36,6-точки красим ценой 36,6 и берут РЕАЛЬНУЮ маску наличия 36,6
-          // (Этап 2); Горздрав-точки — свою маску. idx общий (единый реестр).
-          const is366 = store.brand === 'apteka366' && apteka366Price !== null;
-          if (!bitmapHas(is366 ? a366Mask : gzMask, store.idx)) return;
-          const markerPrice = is366 ? apteka366Price : gorzdravPrice;
+          // Бренд точки: если у сети нет цены для упаковки — откатываемся на
+          // Горздрав (общий пункт выдачи gz/36,6). Ригла — отдельная сеть.
+          let brand = store.brand || 'gorzdrav';
+          if (BRAND_PRICE[brand] == null) brand = 'gorzdrav';
+          if (!bitmapHas(BRAND_MASK[brand], store.idx)) return;
+          const markerPrice = BRAND_PRICE[brand];
           if (markerPrice == null) return;
-          const markerTitle = is366 ? 'Аптека 36,6' : 'Горздрав';
+          const markerTitle = BRAND_TITLE[brand] || 'Горздрав';
           const m = L.marker([store.lat, store.lng], { icon: pillIcon(markerPrice) });
           // Лёгкий placeholder-popup (название + цена + кнопки маршрута).
           // Адрес, часы, телефон — догружаются по клику и подменяют popup.
@@ -457,7 +464,7 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
     };
     // eslint-disable-next-line
-  }, [med?.slug, cityCenter[0], cityCenter[1], prices.length, gorzdravStores.length, gorzdravPrice, gorzdravBitmap, apteka366Price, apteka366Bitmap, fullscreen]);
+  }, [med?.slug, cityCenter[0], cityCenter[1], prices.length, gorzdravStores.length, gorzdravPrice, gorzdravBitmap, apteka366Price, apteka366Bitmap, riglaPrice, riglaBitmap, fullscreen]);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -494,7 +501,7 @@ function ViewportListItem({ item, onClick, selected = false }) {
     >
       <button type="button" onClick={onClick} className="w-full text-left flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <div className="font-semibold text-slate-900 text-sm leading-tight">{item.name || (item.source === 'gorzdrav' ? 'Горздрав' : item.source === 'apteka366' ? 'Аптека 36,6' : 'Аптека')}</div>
+          <div className="font-semibold text-slate-900 text-sm leading-tight">{item.name || (item.source === 'gorzdrav' ? 'Горздрав' : item.source === 'apteka366' ? 'Аптека 36,6' : item.source === 'rigla' ? 'Ригла' : 'Аптека')}</div>
           {item.address && (
             <div className="text-[11px] text-slate-500 mt-0.5 flex items-start gap-1">
               <MapPin className="w-3 h-3 shrink-0 mt-0.5" />
@@ -759,13 +766,16 @@ export default function MedDetail({ initialMed = null }) {
   const onMapViewportChange = useCallback(async ({ center, bounds }) => {
     lastViewportRef.current = { center, bounds };
     const { prices, pharmacies, gorzdravStores } = dataRef.current;
-    const gzPrice = prices.find(p => p.pharmacy_id === 'gorzdrav')?.price ?? null;
-    const a366Price = prices.find(p => p.pharmacy_id === 'apteka366')?.price ?? null;
+    const BRAND_PRICE = {
+      gorzdrav: prices.find(p => p.pharmacy_id === 'gorzdrav')?.price ?? null,
+      apteka366: prices.find(p => p.pharmacy_id === 'apteka366')?.price ?? null,
+      rigla: prices.find(p => p.pharmacy_id === 'rigla')?.price ?? null,
+    };
 
     // 1. Партнёрские аптеки в bbox + у них есть цена для активной упаковки.
     const partnerEntries = prices
       .map(pr => {
-        if (pr.pharmacy_id === 'gorzdrav' || pr.pharmacy_id === 'apteka366') return null;
+        if (pr.pharmacy_id === 'gorzdrav' || pr.pharmacy_id === 'apteka366' || pr.pharmacy_id === 'rigla') return null;
         const ph = pharmacies.find(p => p.id === pr.pharmacy_id);
         if (!ph || !ph.lat || !ph.lng) return null;
         if (ph.lat < bounds.south || ph.lat > bounds.north) return null;
@@ -786,20 +796,25 @@ export default function MedDetail({ initialMed = null }) {
       })
       .filter(Boolean);
 
-    // 2. Горздрав-аптеки в bbox, где препарат реально есть (store_bitmap).
-    const gzMask = decodeBitmap(prices.find(p => p.pharmacy_id === 'gorzdrav')?.store_bitmap);
-    const a366Mask = decodeBitmap(prices.find(p => p.pharmacy_id === 'apteka366')?.store_bitmap);
+    // 2. Сетевые аптеки в bbox, где препарат реально есть (store_bitmap).
+    //    Каждая сеть — своя маска + своя цена (idx общий, единый реестр).
+    const BRAND_MASK = {
+      gorzdrav: decodeBitmap(prices.find(p => p.pharmacy_id === 'gorzdrav')?.store_bitmap),
+      apteka366: decodeBitmap(prices.find(p => p.pharmacy_id === 'apteka366')?.store_bitmap),
+      rigla: decodeBitmap(prices.find(p => p.pharmacy_id === 'rigla')?.store_bitmap),
+    };
     const gzCandidates = gorzdravStores
       .filter(s => s.lat >= bounds.south && s.lat <= bounds.north && s.lng >= bounds.west && s.lng <= bounds.east)
       .map(s => {
-        const is366 = s.brand === 'apteka366' && a366Price !== null;
-        // Наличие: 36,6-точки — реальная маска 36,6 (Этап 2), иначе gorzdrav.
-        if (!bitmapHas(is366 ? a366Mask : gzMask, s.idx)) return null;
-        const price = is366 ? a366Price : gzPrice;
+        // Бренд точки; без цены сети — откат на Горздрав (общий пункт gz/36,6).
+        let brand = s.brand || 'gorzdrav';
+        if (BRAND_PRICE[brand] == null) brand = 'gorzdrav';
+        if (!bitmapHas(BRAND_MASK[brand], s.idx)) return null;
+        const price = BRAND_PRICE[brand];
         if (price == null) return null;
         return {
           key: 'gorzdrav_' + s.store_id,
-          source: is366 ? 'apteka366' : 'gorzdrav',
+          source: brand,
           store_id: s.store_id,
           lat: s.lat,
           lng: s.lng,
@@ -829,7 +844,7 @@ export default function MedDetail({ initialMed = null }) {
   useEffect(() => {
     const need = viewportList
       .slice(0, viewportVisible)
-      .filter(x => (x.source === 'gorzdrav' || x.source === 'apteka366') && !x.name)
+      .filter(x => (x.source === 'gorzdrav' || x.source === 'apteka366' || x.source === 'rigla') && !x.name)
       .map(x => x.store_id);
     if (need.length === 0) return;
     let cancelled = false;
@@ -837,11 +852,11 @@ export default function MedDetail({ initialMed = null }) {
       if (cancelled) return;
       const byId = Object.fromEntries(details.map(d => [d.store_id, d]));
       setViewportList(prev => prev.map(item => {
-        if ((item.source === 'gorzdrav' || item.source === 'apteka366') && !item.name && byId[item.store_id]) {
+        if ((item.source === 'gorzdrav' || item.source === 'apteka366' || item.source === 'rigla') && !item.name && byId[item.store_id]) {
           const d = byId[item.store_id];
           return {
             ...item,
-            name: d.full_name || (item.source === 'apteka366' ? 'Аптека 36,6' : 'Горздрав'),
+            name: d.full_name || (item.source === 'apteka366' ? 'Аптека 36,6' : item.source === 'rigla' ? 'Ригла' : 'Горздрав'),
             address: d.address,
             hours: d.is_24h ? 'Круглосуточно' : d.hours,
             phone: d.phone,
@@ -1164,6 +1179,8 @@ export default function MedDetail({ initialMed = null }) {
               gorzdravBitmap={prices.find(p => p.pharmacy_id === 'gorzdrav')?.store_bitmap ?? null}
               apteka366Price={prices.find(p => p.pharmacy_id === 'apteka366')?.price ?? null}
               apteka366Bitmap={prices.find(p => p.pharmacy_id === 'apteka366')?.store_bitmap ?? null}
+              riglaPrice={prices.find(p => p.pharmacy_id === 'rigla')?.price ?? null}
+              riglaBitmap={prices.find(p => p.pharmacy_id === 'rigla')?.store_bitmap ?? null}
               cityCenter={city.center}
               onSelect={(pid) => {
                 setSelectedId(pid);

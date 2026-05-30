@@ -4,10 +4,12 @@
 # блэкаута 03-07 UTC (Горздрав) и не в 01:00 (36,6).
 #
 # Usage:
-#   parse_rigla_cron.sh update   # быстрый рефреш цен уже сматченных Ригла
-#   parse_rigla_cron.sh full     # перематч всего gorzdrav-набора msk (еженед.)
+#   parse_rigla_cron.sh update        # быстрый рефреш цен уже сматченных Ригла
+#   parse_rigla_cron.sh full          # перематч всего gorzdrav-набора msk (еженед.)
+#   parse_rigla_cron.sh availability  # только маски наличия (store_bitmap) по аптекам
 #
-# Карты наличия у Ригла нет (Этап 2) — режима availability нет.
+# Маски наличия Ригла (pvzList + pvzStocks) также обновляются автоматически
+# в конце update/full-ранов. Отдельный режим availability — для интрадей-рефреша.
 
 set -euo pipefail
 
@@ -48,8 +50,15 @@ case "$MODE" in
   full)
     cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_rigla --from-gorzdrav --rematch
     ;;
+  availability)
+    # Только маски наличия (store_bitmap) по аптекам Ригла — без перематчинга
+    # цен. Цена не меняется → IndexNow и алерт >20% не нужны (выходим раньше).
+    cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_rigla --availability-only
+    echo "=== $(date -u +'%Y-%m-%d %H:%M:%S UTC') | mode=$MODE | done ==="
+    exit 0
+    ;;
   *)
-    echo "ERR: unknown mode '$MODE' (use 'update' or 'full')"
+    echo "ERR: unknown mode '$MODE' (use 'update', 'full' or 'availability')"
     exit 2
     ;;
 esac

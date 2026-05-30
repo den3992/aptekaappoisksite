@@ -64,15 +64,27 @@ from motor.motor_asyncio import AsyncIOMotorClient
 # Переиспользуем матчинг и константы Горздрава (импорт read-only).
 from scripts.parse_gorzdrav import (
     MONGO_URL, DB_NAME, POPULAR_MNN,
-    REQUEST_DELAY, CONCURRENCY,
+    REQUEST_DELAY, CONCURRENCY, _popcount,
     match_product, match_products, extract_pack,
     log,
 )
+from bson.binary import Binary
 
 SOURCE = "rigla"
 CITY = "msk"  # Ригла — только Москва (домен www.rigla.ru)
 GRAPHQL_URL = "https://www.rigla.ru/graphql"
 PAGE_SIZE = 50  # верхних 50 листингов достаточно для всех упаковок препарата
+
+# --- Фаза наличия (Этап 2) ---
+# pvzList отдаёт пункты выдачи (аптеки) по всей РФ — фильтруем Москву по адресу.
+# pvzStocks(store_id, skus) — наличие набора sku в КОНКРЕТНОЙ аптеке (инверсия
+# к Горздраву, где запрос product→аптеки). Поэтому идём по аптекам: для каждой
+# спрашиваем, какие из наших sku есть в наличии, и взводим бит этой аптеки.
+PVZ_PAGE_SIZE = 5000       # pvzList постранично (всего ~7000 точек по РФ)
+STOCK_BATCH = 1000         # макс. sku за один pvzStocks (проверено: 1000 ок, 3000 — Bad Request)
+STORE_CONCURRENCY = 4      # параллельные аптеки в фазе наличия
+STOCK_DELAY = 0.2          # пауза между батчами sku одной аптеки
+MSK_MARKER = "Москва"      # фильтр московских аптек по адресу
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -81,6 +93,16 @@ HEADERS = {
     "Content-Type": "application/json",
     "X-APP": "WEB",
 }
+
+GQL_PVZ_LIST = (
+    "query P($pageSize:Int,$currentPage:Int){ pvzList(pageSize:$pageSize,"
+    " currentPage:$currentPage){ items{ entity_id name address latitude"
+    " longitude schedule phone is_active } } }"
+)
+GQL_PVZ_STOCKS = (
+    "query S($skus:[String],$store:Int!){ pvzStocks(skus:$skus,"
+    " store_id:$store){ sku is_in_stock } }"
+)
 
 # sort ОБЯЗАТЕЛЕН (без него GraphQL отдаёт 500).
 GQL_SEARCH = (
@@ -295,11 +317,198 @@ async def process_medication(
     log.info(f"[{CITY}/{slug[:40]:<40}] saved {saved} packs (pass={search_pass})")
 
 
+async def _gql(client: httpx.AsyncClient, payload: dict, what: str) -> dict | None:
+    """POST GraphQL, 4 попытки с backoff. Возвращает data или None."""
+    for attempt in range(4):
+        try:
+            r = await client.post(GRAPHQL_URL, json=payload, timeout=90)
+            r.raise_for_status()
+            data = r.json()
+            if data.get("errors"):
+                log.warning(f"[rigla] {what} GraphQL errors: {data['errors'][0].get('message','')[:120]}")
+                return None
+            return data.get("data") or {}
+        except Exception as e:
+            wait = 2 + attempt * 3
+            log.warning(f"[rigla] {what} попытка {attempt + 1}/4: {e} — пауза {wait}с")
+            await asyncio.sleep(wait)
+    return None
+
+
+async def refresh_stores_rigla(client: httpx.AsyncClient, db) -> dict[str, int]:
+    """Подтягиваем московские аптеки Ригла в общий реестр gorzdrav_stores
+    (append-only idx, source='rigla', чтобы импорт Горздрава их не трогал).
+    Возвращает {store_id(str): idx} для активных московских точек с координатами.
+    """
+    # Собираем все страницы pvzList.
+    raw: list[dict] = []
+    page = 1
+    while True:
+        data = await _gql(client, {"query": GQL_PVZ_LIST,
+                                   "variables": {"pageSize": PVZ_PAGE_SIZE, "currentPage": page}},
+                          f"pvzList p{page}")
+        items = ((data or {}).get("pvzList") or {}).get("items") or []
+        if not items:
+            break
+        raw.extend(items)
+        if len(items) < PVZ_PAGE_SIZE:
+            break
+        page += 1
+        if page > 10:  # предохранитель
+            break
+    log.info(f"[rigla] pvzList всего точек по РФ: {len(raw)}")
+
+    # Фильтр: Москва + активные + с координатами.
+    msk = []
+    for it in raw:
+        addr = it.get("address") or ""
+        if MSK_MARKER not in addr:
+            continue
+        if str(it.get("is_active")) not in ("1", "true", "True"):
+            continue
+        if it.get("latitude") is None or it.get("longitude") is None:
+            continue
+        msk.append(it)
+    log.info(f"[rigla] московских активных аптек: {len(msk)}")
+
+    # Загружаем существующие idx (по всему реестру — append-only).
+    store_idx: dict[str, int] = {}
+    next_idx = -1
+    async for st in db.gorzdrav_stores.find({}, {"_id": 0, "store_id": 1, "idx": 1}):
+        i = st.get("idx")
+        if i is None:
+            continue
+        store_idx[st["store_id"]] = i
+        if i > next_idx:
+            next_idx = i
+    next_idx += 1
+
+    out: dict[str, int] = {}
+    seen: list[str] = []
+    for it in msk:
+        # Namespace: entity_id Ригла — мелкий numeric, КОЛЛИДИРУЕТ с locationId
+        # Горздрава/36,6 в общем реестре. Префиксуем, чтобы upsert не затирал
+        # чужие документы. Сырой entity_id восстанавливаем из префикса в фазе
+        # наличия (pvzStocks ждёт numeric store_id).
+        sid = f"rigla_{it['entity_id']}"
+        seen.append(sid)
+        idx = store_idx.get(sid)
+        if idx is None:
+            idx = next_idx
+            next_idx += 1
+            store_idx[sid] = idx
+        try:
+            lat = float(it["latitude"]); lng = float(it["longitude"])
+        except (TypeError, ValueError):
+            continue
+        await db.gorzdrav_stores.update_one(
+            {"store_id": sid},
+            {"$setOnInsert": {"store_id": sid, "idx": idx},
+             "$set": {
+                 "name": "Ригла",
+                 "full_name": it.get("name") or "Аптека «Ригла»",
+                 "lat": lat, "lng": lng,
+                 "address": (it.get("address") or "").strip(),
+                 "phone": it.get("phone") or "",
+                 "hours": it.get("schedule") or "",
+                 "city": CITY,
+                 "source": SOURCE,
+                 "active": True,
+                 "updated_at": datetime.now(timezone.utc),
+             }},
+            upsert=True,
+        )
+        out[sid] = idx
+
+    # Деактивируем пропавшие московские аптеки Ригла (idx-слот сохраняем).
+    deact = await db.gorzdrav_stores.update_many(
+        {"source": SOURCE, "city": CITY, "store_id": {"$nin": seen}},
+        {"$set": {"active": False}},
+    )
+    log.info(f"[rigla] реестр обновлён: {len(out)} активных, деактивировано {deact.modified_count}")
+    return out
+
+
+async def refresh_availability_rigla(client: httpx.AsyncClient, db, skus: list[str]) -> None:
+    """Фаза наличия Ригла: для каждой московской аптеки запрашиваем pvzStocks
+    по нашим sku батчами, взводим бит idx этой аптеки в store_bitmap каждого sku.
+    """
+    if not skus:
+        log.info("[rigla] availability: нет sku — пропуск")
+        return
+    store_idx = await refresh_stores_rigla(client, db)
+    if not store_idx:
+        log.warning("[rigla] availability: нет московских аптек — пропуск")
+        return
+
+    # nbytes по максимальному idx ВСЕГО реестра (общий с Горздрав/36,6).
+    max_idx = -1
+    async for st in db.gorzdrav_stores.find({}, {"_id": 0, "idx": 1}):
+        i = st.get("idx")
+        if i is not None and i > max_idx:
+            max_idx = i
+    nbytes = (max_idx + 8) // 8
+    log.info(f"[rigla] availability: {len(skus)} sku × {len(store_idx)} аптек, маска {nbytes} б")
+
+    masks: dict[str, bytearray] = {s: bytearray(nbytes) for s in skus}
+    batches = [skus[i:i + STOCK_BATCH] for i in range(0, len(skus), STOCK_BATCH)]
+    sem = asyncio.Semaphore(STORE_CONCURRENCY)
+    done = [0]
+    total = len(store_idx)
+
+    async def one_store(sid: str, idx: int):
+        # sid = "rigla_<entity_id>"; pvzStocks ждёт сырой numeric store_id.
+        try:
+            store_int = int(sid.split("_", 1)[1] if "_" in sid else sid)
+        except (TypeError, ValueError):
+            return
+        byte_i, bit = idx >> 3, idx & 7
+        async with sem:
+            for batch in batches:
+                data = await _gql(client, {"query": GQL_PVZ_STOCKS,
+                                           "variables": {"skus": batch, "store": store_int}},
+                                  f"pvzStocks store={sid}")
+                rows = (data or {}).get("pvzStocks") or []
+                for r in rows:
+                    if str(r.get("is_in_stock")) == "true":
+                        ba = masks.get(r.get("sku"))
+                        if ba is not None:
+                            ba[byte_i] |= 1 << bit
+                await asyncio.sleep(STOCK_DELAY)
+        done[0] += 1
+        if done[0] % 50 == 0:
+            log.info(f"[rigla] availability: аптек обработано {done[0]}/{total}")
+
+    await asyncio.gather(*(one_store(sid, idx) for sid, idx in store_idx.items()))
+
+    # Пишем маски в prices_real по gz_ext_id (sku). Все упаковки с этим sku 1:1.
+    updated = 0
+    for sku, ba in masks.items():
+        res = await db.prices_real.update_many(
+            {"source": SOURCE, "city": CITY, "gz_ext_id": sku},
+            {"$set": {"store_bitmap": Binary(bytes(ba)), "stores_count": _popcount(ba)}},
+        )
+        updated += res.modified_count
+    log.info(f"[rigla] availability: обновлено записей prices_real: {updated}")
+
+
 async def main(args: argparse.Namespace) -> None:
     client_db = AsyncIOMotorClient(MONGO_URL)
     db = client_db[DB_NAME]
 
     log.info(f"=== [rigla] city={CITY} (Москва) ===")
+
+    if args.availability_only:
+        skus = await db.prices_real.distinct(
+            "gz_ext_id",
+            {"source": SOURCE, "city": CITY, "price": {"$ne": None},
+             "gz_ext_id": {"$nin": [None, ""]}},
+        )
+        skus = sorted(s for s in skus if s)
+        async with httpx.AsyncClient(headers=HEADERS) as client:
+            await refresh_availability_rigla(client, db, skus)
+        client_db.close()
+        return
 
     query: dict = {"is_canonical": True}
     if args.slug:
@@ -350,6 +559,10 @@ async def main(args: argparse.Namespace) -> None:
 
         await asyncio.gather(*(worker(m) for m in meds))
 
+        if not args.no_availability:
+            avail_skus = sorted(s for s in matched_ext_ids if s)
+            await refresh_availability_rigla(client, db, avail_skus)
+
     stats = {}
     async for doc in db.prices_real.aggregate([
         {"$match": {"source": SOURCE}},
@@ -381,5 +594,9 @@ if __name__ == "__main__":
     parser.add_argument("--update-only", action="store_true",
                         help="Обновить только препараты с уже существующим матчем Ригла.")
     parser.add_argument("--rematch", action="store_true")
+    parser.add_argument("--availability-only", action="store_true",
+                        help="Только маски наличия Ригла (store_bitmap), без перематчинга цен.")
+    parser.add_argument("--no-availability", action="store_true",
+                        help="Не запускать фазу наличия после матчинга цен.")
     args = parser.parse_args()
     asyncio.run(main(args))
