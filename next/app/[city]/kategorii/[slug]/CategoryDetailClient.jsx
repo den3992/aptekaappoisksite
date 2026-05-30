@@ -8,6 +8,7 @@ import { useCity } from '../../../../context/CityContext';
 import { fetchCategories, searchMeds } from '../../../../api/client';
 import CategoryIcon from '../../../../components/CategoryIcon';
 import { getCategoryStyle } from '../../../../lib/categoryStyles';
+import { categoryContent, CAT_TITLES } from '../../../../lib/categoryContent';
 const PAGE_SIZE = 24;
 
 export default function CategoryDetail({ initialCat = null }) {
@@ -53,6 +54,7 @@ export default function CategoryDetail({ initialCat = null }) {
   );
 
   const icon = getCategoryStyle(slug);
+  const content = categoryContent(slug, city.id);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-5 md:py-8">
@@ -120,6 +122,46 @@ export default function CategoryDetail({ initialCat = null }) {
             </div>
           )}
         </>
+      )}
+
+      {content && (
+        <section className="mt-10 md:mt-14 max-w-3xl" data-testid="category-seo">
+          <h2 className="text-lg md:text-xl font-bold text-slate-900 mb-3">О категории «{cat.title}»</h2>
+          {content.body.map((p, i) => (
+            <p key={i} className="text-slate-600 text-sm md:text-base leading-relaxed mb-3">{p}</p>
+          ))}
+
+          {content.faq.length > 0 && (
+            <div className="mt-8" data-testid="category-faq">
+              <h2 className="text-lg md:text-xl font-bold text-slate-900 mb-3">Частые вопросы</h2>
+              <div className="space-y-2">
+                {content.faq.map((qa, i) => (
+                  <details key={i} className="group bg-white border border-slate-100 rounded-xl px-4 py-3">
+                    <summary className="cursor-pointer font-semibold text-slate-900 text-sm md:text-base list-none flex items-center justify-between">
+                      {qa.q}
+                      <ChevronRight className="w-4 h-4 text-slate-400 group-open:rotate-90 transition shrink-0" />
+                    </summary>
+                    <p className="text-slate-600 text-sm md:text-base leading-relaxed mt-2">{qa.a}</p>
+                  </details>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {content.related.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-base md:text-lg font-bold text-slate-900 mb-3">Смотрите также</h2>
+              <div className="flex flex-wrap gap-2">
+                {content.related.map((rs) => (
+                  <Link key={rs} href={`/${city.id}/kategorii/${rs}`}
+                    className="inline-flex items-center px-3 h-9 rounded-lg border border-slate-200 text-sm text-slate-700 hover:border-emerald-400 hover:text-emerald-700 transition">
+                    {CAT_TITLES[rs]}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
       )}
     </div>
   );

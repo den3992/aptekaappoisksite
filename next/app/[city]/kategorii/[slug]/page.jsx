@@ -1,6 +1,6 @@
 import CategoryDetailClient from './CategoryDetailClient';
 import { fetchCategories } from '../../../../api/client';
-import { categoryDetailJsonLd } from '../../../../lib/schemas';
+import { categoryDetailJsonLd, categoryFaqJsonLd } from '../../../../lib/schemas';
 const G = { msk: 'Москвы', spb: 'Санкт-Петербурга' };
 export async function generateMetadata({ params }) {
   const { city, slug } = await params;
@@ -25,10 +25,14 @@ export default async function Page({ params }) {
     cat = all.find(c => c.slug === slug);
   } catch (e) { /* ignore */ }
   const graph = cat ? categoryDetailJsonLd(city, cat) : null;
+  const faqGraph = cat ? categoryFaqJsonLd(city, cat) : null;
   return (
     <>
       {graph && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }} />
+      )}
+      {faqGraph && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqGraph) }} />
       )}
       <CategoryDetailClient initialCat={cat} />
     </>

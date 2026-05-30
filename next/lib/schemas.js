@@ -1,6 +1,8 @@
 // Сборщики schema.org @graph для Next.js SSR — портированы из seo.py
 // (render_medication_for_bot / render_pharmacy_for_bot).
 
+import { categoryContent } from './categoryContent';
+
 const HOST = 'https://aptekaa.ru';
 
 const cnGen = (city) => (city === 'msk' ? 'Москвы' : 'Санкт-Петербурга');
@@ -309,6 +311,22 @@ export function categoryDetailJsonLd(city, cat) {
         isPartOf: { '@type': 'WebSite', name: 'АптекаА', url: HOST },
       },
     ],
+  };
+}
+
+// FAQPage для страницы категории (видимый блок = эта же разметка).
+export function categoryFaqJsonLd(city, cat) {
+  if (!cat) return null;
+  const c = categoryContent(cat.slug, city);
+  if (!c || !c.faq.length) return null;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: c.faq.map((qa) => ({
+      '@type': 'Question',
+      name: qa.q,
+      acceptedAnswer: { '@type': 'Answer', text: qa.a },
+    })),
   };
 }
 
