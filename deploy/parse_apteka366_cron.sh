@@ -6,6 +6,7 @@
 # Usage:
 #   parse_apteka366_cron.sh update   # быстрый рефреш цен уже сматченных 36,6
 #   parse_apteka366_cron.sh full     # перематч всего gorzdrav-набора (еженед.)
+#   parse_apteka366_cron.sh availability  # только маски наличия 36,6 (интрадей)
 #
 # Парсер сам прогоняет оба региона (--region=both по умолчанию).
 
@@ -48,8 +49,11 @@ case "$MODE" in
   full)
     cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_apteka366 --from-gorzdrav --rematch --region=both
     ;;
+  availability)
+    cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_apteka366 --availability-only --region=both
+    ;;
   *)
-    echo "ERR: unknown mode '$MODE' (use 'update' or 'full')"
+    echo "ERR: unknown mode '$MODE' (use 'update', 'full' or 'availability')"
     exit 2
     ;;
 esac
