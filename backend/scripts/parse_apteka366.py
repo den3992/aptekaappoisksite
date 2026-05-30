@@ -39,12 +39,14 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from motor.motor_asyncio import AsyncIOMotorClient
+from bson.binary import Binary
 
 # Переиспользуем матчинг и константы Горздрава (импорт read-only,
 # на работающий крон parse_gorzdrav никак не влияет).
 from scripts.parse_gorzdrav import (
     MONGO_URL, DB_NAME, REGIONS, POPULAR_MNN,
     SEARCH_SIZE, REQUEST_DELAY, CONCURRENCY,
+    AVAIL_BATCH, AVAIL_DELAY, _popcount,
     match_product, match_products, extract_pack,
     log,
 )
@@ -233,6 +235,106 @@ async def process_medication(
     log.info(f"[{city}/{slug[:40]:<40}] saved {saved} packs (pass={search_pass})")
 
 
+# В API 366.ru (bs=366.ru) brand.id==1 == «36,6», id==2 == «Горздрав».
+# (В gz.ru API кодировка та же: id==1 → 36,6.) Фильтруем 36,6-точки по этому id.
+BRAND_366_ID = 1
+
+
+async def refresh_availability_366(client, db, ext_ids, city):
+    """Фаза наличия 36,6: батчевый map/region/detail → store_bitmap.
+
+    Реестр аптек общий (gorzdrav_stores, locationId==store_id). 36,6 показывает
+    больше точек, чем выгрузка gz.ru → недостающие 36,6-аптеки (brand.id==1)
+    доимпортируем сюда же с append-only idx (source='apteka366', чтобы gz-импорт
+    их не деактивировал). Бит idx взведён, если customer>0. Пишем в записи
+    нужного city, чтобы маски MSK/SPB не перетирались.
+    """
+    if not ext_ids:
+        return
+    store_idx = {}
+    next_idx = -1
+    async for st in db.gorzdrav_stores.find({}, {"_id": 0, "store_id": 1, "idx": 1}):
+        i = st.get("idx")
+        if i is None:
+            continue
+        store_idx[st["store_id"]] = i
+        if i > next_idx:
+            next_idx = i
+    next_idx += 1
+
+    updated = failed = new_stores = 0
+    total_batches = (len(ext_ids) + AVAIL_BATCH - 1) // AVAIL_BATCH
+    for i in range(0, len(ext_ids), AVAIL_BATCH):
+        batch = ext_ids[i:i + AVAIL_BATCH]
+        stores = None
+        for attempt in range(5):
+            try:
+                r = await client.post(
+                    f"{BASE}/api/v1/delivery/map/region/detail",
+                    json={"productIds": batch, "emptyStock": False},
+                    timeout=120,
+                )
+                r.raise_for_status()
+                stores = r.json().get("stores", [])
+                break
+            except Exception as e:
+                wait = 5 * (2 ** attempt)
+                log.warning(f"[366] availability батч @{i} попытка {attempt + 1}/5: {e} — пауза {wait}с")
+                await asyncio.sleep(wait)
+        if stores is None:
+            failed += 1
+            log.error(f"[366] availability батч @{i}: не удалось за 5 попыток, пропуск")
+            continue
+
+        s366 = [st for st in stores if (st.get("brand") or {}).get("id") == BRAND_366_ID]
+        # доимпорт недостающих 36,6-точек (append-only idx)
+        for st in s366:
+            sid = st.get("locationId")
+            if not sid or sid in store_idx:
+                continue
+            store_idx[sid] = next_idx
+            await db.gorzdrav_stores.update_one(
+                {"store_id": sid},
+                {"$setOnInsert": {"store_id": sid, "idx": next_idx},
+                 "$set": {
+                     "name": "36,6",
+                     "full_name": st.get("name", ""),
+                     "lat": st.get("latitude"),
+                     "lng": st.get("longitude"),
+                     "address": st.get("address", ""),
+                     "city": city,
+                     "source": "apteka366",
+                     "active": True,
+                     "updated_at": datetime.now(timezone.utc),
+                 }},
+                upsert=True,
+            )
+            next_idx += 1
+            new_stores += 1
+
+        nbytes = (max(store_idx.values()) + 8) // 8 if store_idx else 0
+        masks = {eid: bytearray(nbytes) for eid in batch}
+        for st in s366:
+            idx = store_idx.get(st.get("locationId"))
+            if idx is None:
+                continue
+            byte_i, bit = idx >> 3, idx & 7
+            for eid, stk in (st.get("stocks") or {}).items():
+                ba = masks.get(eid)
+                if ba is not None and (stk or {}).get("customer", 0) > 0:
+                    ba[byte_i] |= 1 << bit
+        for eid, ba in masks.items():
+            res = await db.prices_real.update_many(
+                {"source": SOURCE, "city": city, "gz_ext_id": eid},
+                {"$set": {"store_bitmap": Binary(bytes(ba)), "stores_count": _popcount(ba)}},
+            )
+            updated += res.modified_count
+        log.info(f"[366] Availability: батч {i // AVAIL_BATCH + 1}/{total_batches}")
+        await asyncio.sleep(AVAIL_DELAY)
+
+    log.info(f"[366] Availability: обновлено {updated}, новых 36,6-аптек {new_stores}, неудачных батчей {failed}")
+
+
 async def main(args: argparse.Namespace) -> None:
     client_db = AsyncIOMotorClient(MONGO_URL)
     db = client_db[DB_NAME]
@@ -248,6 +350,18 @@ async def main(args: argparse.Namespace) -> None:
 
     for region, city in regions_to_run:
         log.info(f"=== [366] Регион {region} → city={city} ===")
+        if args.availability_only:
+            ext_ids = await db.prices_real.distinct(
+                "gz_ext_id",
+                {"source": SOURCE, "city": city, "price": {"$ne": None},
+                 "gz_ext_id": {"$nin": [None, ""]}},
+            )
+            ext_ids = sorted(e for e in ext_ids if e)
+            log.info(f"[{region}] availability-only: {len(ext_ids)} ext_id")
+            headers = {**HEADERS_BASE, "Flex-Region": f"region={region}"}
+            async with httpx.AsyncClient(headers=headers) as client:
+                await refresh_availability_366(client, db, ext_ids, city)
+            continue
         query: dict = {"is_canonical": True}
         if args.slug:
             query["slug"] = args.slug
@@ -300,6 +414,9 @@ async def main(args: argparse.Namespace) -> None:
 
             await asyncio.gather(*(worker(m) for m in meds))
 
+            if not args.no_availability and matched_ext_ids:
+                await refresh_availability_366(client, db, sorted(matched_ext_ids), city)
+
     stats = {}
     async for doc in db.prices_real.aggregate([
         {"$match": {"source": SOURCE}},
@@ -333,6 +450,10 @@ if __name__ == "__main__":
     parser.add_argument("--rematch", action="store_true")
     parser.add_argument("--update-only", action="store_true",
                         help="Обновить только препараты, у которых уже есть матч 36,6 (быстрее).")
+    parser.add_argument("--availability-only", action="store_true",
+                        help="Только маски наличия 36,6 (store_bitmap), без перематчинга цен.")
+    parser.add_argument("--no-availability", action="store_true",
+                        help="Не запускать фазу наличия после матчинга цен.")
     parser.add_argument("--region", type=str, default="both", choices=["MOS", "SPE", "both"],
                         help="Регион: MOS (Москва), SPE (СПб), both — по умолчанию оба.")
     args = parser.parse_args()

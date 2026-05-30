@@ -166,7 +166,7 @@ function bitmapHas(mask, idx) {
   return byte < mask.length && (mask[byte] & (1 << (idx & 7))) !== 0;
 }
 
-const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, gorzdravStores = [], gorzdravPrice = null, gorzdravBitmap = null, apteka366Price = null, cityCenter, onSelect, selected, fullscreen = false, onInteract, onViewportChange }, externalRef) {
+const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, gorzdravStores = [], gorzdravPrice = null, gorzdravBitmap = null, apteka366Price = null, apteka366Bitmap = null, cityCenter, onSelect, selected, fullscreen = false, onInteract, onViewportChange }, externalRef) {
   const ref = useRef(null);
   const mapRef = useRef(null);
   const tileLayerRef = useRef(null);
@@ -333,13 +333,13 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
         // Маркер только для аптек, где препарат реально есть (store_bitmap),
         // а не для всех ~1900 точек сети.
         const gzMask = decodeBitmap(gorzdravBitmap);
+        const a366Mask = decodeBitmap(apteka366Bitmap);
         gorzdravStores.forEach(store => {
           if (!store.lat || !store.lng) return;
-          if (!bitmapHas(gzMask, store.idx)) return;
-          // 36,6-брендированные точки красим ценой сети 36,6 (если она есть для
-          // активной упаковки), иначе точка работает как пункт выдачи Горздрава
-          // по его цене. Наличие — из gorzdrav store_bitmap (idx общий).
+          // 36,6-точки красим ценой 36,6 и берут РЕАЛЬНУЮ маску наличия 36,6
+          // (Этап 2); Горздрав-точки — свою маску. idx общий (единый реестр).
           const is366 = store.brand === 'apteka366' && apteka366Price !== null;
+          if (!bitmapHas(is366 ? a366Mask : gzMask, store.idx)) return;
           const markerPrice = is366 ? apteka366Price : gorzdravPrice;
           if (markerPrice == null) return;
           const markerTitle = is366 ? 'Аптека 36,6' : 'Горздрав';
@@ -457,7 +457,7 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
     };
     // eslint-disable-next-line
-  }, [med?.slug, cityCenter[0], cityCenter[1], prices.length, gorzdravStores.length, gorzdravPrice, gorzdravBitmap, apteka366Price, fullscreen]);
+  }, [med?.slug, cityCenter[0], cityCenter[1], prices.length, gorzdravStores.length, gorzdravPrice, gorzdravBitmap, apteka366Price, apteka366Bitmap, fullscreen]);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -788,10 +788,13 @@ export default function MedDetail({ initialMed = null }) {
 
     // 2. Горздрав-аптеки в bbox, где препарат реально есть (store_bitmap).
     const gzMask = decodeBitmap(prices.find(p => p.pharmacy_id === 'gorzdrav')?.store_bitmap);
+    const a366Mask = decodeBitmap(prices.find(p => p.pharmacy_id === 'apteka366')?.store_bitmap);
     const gzCandidates = gorzdravStores
-      .filter(s => bitmapHas(gzMask, s.idx) && s.lat >= bounds.south && s.lat <= bounds.north && s.lng >= bounds.west && s.lng <= bounds.east)
+      .filter(s => s.lat >= bounds.south && s.lat <= bounds.north && s.lng >= bounds.west && s.lng <= bounds.east)
       .map(s => {
         const is366 = s.brand === 'apteka366' && a366Price !== null;
+        // Наличие: 36,6-точки — реальная маска 36,6 (Этап 2), иначе gorzdrav.
+        if (!bitmapHas(is366 ? a366Mask : gzMask, s.idx)) return null;
         const price = is366 ? a366Price : gzPrice;
         if (price == null) return null;
         return {
@@ -1157,6 +1160,7 @@ export default function MedDetail({ initialMed = null }) {
               gorzdravPrice={prices.find(p => p.pharmacy_id === 'gorzdrav')?.price ?? null}
               gorzdravBitmap={prices.find(p => p.pharmacy_id === 'gorzdrav')?.store_bitmap ?? null}
               apteka366Price={prices.find(p => p.pharmacy_id === 'apteka366')?.price ?? null}
+              apteka366Bitmap={prices.find(p => p.pharmacy_id === 'apteka366')?.store_bitmap ?? null}
               cityCenter={city.center}
               onSelect={(pid) => {
                 setSelectedId(pid);

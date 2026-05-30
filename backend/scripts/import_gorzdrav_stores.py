@@ -118,7 +118,7 @@ async def main():
 
     # Аптеки, пропавшие из выдачи API — деактивируем, idx-слот сохраняем.
     deact = await db.gorzdrav_stores.update_many(
-        {"store_id": {"$nin": list(seen)}},
+        {"store_id": {"$nin": list(seen)}, "source": "gorzdrav"},
         {"$set": {"active": False}},
     )
     await db.gorzdrav_stores.create_index("store_id", unique=True)
