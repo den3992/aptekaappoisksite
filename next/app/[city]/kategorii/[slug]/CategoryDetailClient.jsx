@@ -12,7 +12,13 @@ const PAGE_SIZE = 24;
 
 export default function CategoryDetail({ initialCat = null }) {
   const { slug, city: cityParam } = useParams();
-  const { city, cities, setCity } = useCity();
+  const { city: ctxCity, cities, setCity } = useCity();
+  // SSR-фикс города: до гидрации берём из URL, после — из контекста
+  // (чтобы переключатель города в шапке продолжал работать). См. MedDetailClient.
+  const [_hydrated, _setHydrated] = useState(false);
+  useEffect(() => { _setHydrated(true); }, []);
+  const _urlCity = cityParam ? cities.find(c => c.id === cityParam) : null;
+  const city = (!_hydrated && _urlCity) ? _urlCity : ctxCity;
   const [cat, setCat] = useState(initialCat);
   const [page, setPage] = useState(1);
   const [data, setData] = useState({ items: [], total: 0 });
@@ -21,7 +27,7 @@ export default function CategoryDetail({ initialCat = null }) {
   useEffect(() => {
     if (cityParam && cities) {
       const f = cities.find(c => c.id === cityParam);
-      if (f && f.id !== city.id) setCity(f);
+      if (f && f.id !== ctxCity.id) setCity(f);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cityParam]);
@@ -63,9 +69,21 @@ export default function CategoryDetail({ initialCat = null }) {
         </div>
         <div>
           <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 leading-tight">{cat.title}</h1>
-          <p className="text-slate-500 text-xs md:text-sm mt-0.5 md:mt-1">{data.total.toLocaleString('ru')} препаратов в категории</p>
+          <p className="text-slate-500 text-xs md:text-sm mt-0.5 md:mt-1">{(data.total || cat.count || 0).toLocaleString('ru')} препаратов в категории</p>
         </div>
       </div>
+
+      {/* Лид-абзац категории (SEO): keyword + город + сети Горздрав/36,6. */}
+      {(() => {
+        const GEN = { msk: 'Москвы', spb: 'Санкт-Петербурга' };
+        const g = GEN[city.id] || GEN.msk;
+        const cnt = (data.total || cat.count || 0).toLocaleString('ru');
+        return (
+          <p className="text-slate-600 text-sm md:text-base leading-relaxed max-w-3xl mb-6 md:mb-8" data-testid="category-lead">
+            {cat.title} в аптеках {g}: {cnt} препаратов — цены и наличие. Сравнивайте цены аптечных сетей Горздрав и Аптека 36,6 и проверяйте наличие в ближайших аптеках на карте. Поиск бесплатный, без регистрации.
+          </p>
+        );
+      })()}
 
       {!loading && data.items.length === 0 ? (
         <div className="bg-white border border-slate-100 rounded-xl p-12 text-center text-slate-500">В этой категории пока нет препаратов</div>

@@ -938,6 +938,29 @@ export default function MedDetail({ initialMed = null }) {
           {med.dosage && <p className="text-slate-700 font-medium mt-1">{med.dosage}</p>}
           <p className="text-slate-600 mt-0.5">{formLower}</p>
 
+          {/* Лид-абзац (SEO): keyword + город + условное «сравните» по числу
+              сетей с ценой + in-content ссылка на категорию (перелинковка). */}
+          {(() => {
+            const nm = formatName(med.name);
+            const nets = new Set(prices.map(p => p.pharmacy_id).filter(id => id === 'gorzdrav' || id === 'apteka366'));
+            const multi = nets.size >= 2;
+            const priceStr = minPrice == null ? null : (minPrice === maxPrice ? `${minPrice}\u00a0\u20bd` : `от\u00a0${minPrice} до\u00a0${maxPrice}\u00a0\u20bd`);
+            const catTitle = (med.category && med.category !== 'other')
+              ? ((categories.find(c => c.slug === med.category) || {}).title || null)
+              : null;
+            return (
+              <p className="text-slate-600 mt-3 text-sm leading-relaxed max-w-3xl" data-testid="med-lead">
+                {nm} — {formLower}{med.mnn ? <>, действующее вещество {titleCase(med.mnn)}</> : null}
+                {catTitle ? <> из категории <Link href={`/${city.id}/kategorii/${med.category}`} className="text-emerald-700 hover:underline">{catTitle.toLowerCase()}</Link></> : null}.{' '}
+                {priceStr
+                  ? (multi
+                      ? <>Сравните цены в аптечных сетях Горздрав и Аптека 36,6 в {city.inLoc}: {priceStr} — и проверьте наличие в ближайших аптеках на карте.</>
+                      : <>Цена в {city.inLoc}: {priceStr}. Проверьте наличие в ближайших аптеках на карте.</>)
+                  : <>Посмотрите аналоги и проверьте наличие в аптеках на карте.</>}
+              </p>
+            );
+          })()}
+
           <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
             <div className="bg-slate-50 rounded-lg p-3 min-w-0"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Производитель</div><div className="font-medium text-slate-800 break-words">{formatManufacturer(med.manufacturer) || "—"}</div></div>
             <div className="bg-slate-50 rounded-lg p-3 min-w-0"><div className="text-[11px] text-slate-500 uppercase tracking-wide">Страна</div><div className="font-medium text-slate-800 break-words">{normalizeCountry(med.manufacturer_country) || '—'}</div></div>
