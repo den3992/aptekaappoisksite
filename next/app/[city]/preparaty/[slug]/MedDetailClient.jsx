@@ -7,6 +7,7 @@ import { ChevronRight, ChevronLeft, MapPin, Phone, Clock, Pill, ShieldAlert, Tag
 import { useCity } from '../../../../context/CityContext';
 import { Drawer as VaulDrawer } from 'vaul';
 import { fetchMed, fetchAnalogs, fetchPharmacies, fetchCategories, fetchGorzdravStores, fetchGorzdravStoreDetail, fetchGorzdravStoresBulk } from '../../../../api/client';
+import { medFaqItems } from '../../../../lib/schemas';
 // map: Leaflet + OSM (no API key needed)
 
 // Capitalize first letter, lowercase the rest.
@@ -1349,6 +1350,32 @@ export default function MedDetail({ initialMed = null }) {
           )}
         </section>
       )}
+
+      {/* FAQ — частые вопросы. Контент совпадает с FAQPage JSON-LD (page.jsx),
+          чтобы разметка соответствовала видимому тексту (требование Яндекса). */}
+      {(() => {
+        const faq = medFaqItems(city.id, med);
+        if (!faq.length) return null;
+        return (
+          <section className="mb-8 md:mb-12" data-testid="faq-section">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center"><Pill className="w-5 h-5" /></div>
+              <h2 className="text-xl md:text-2xl font-bold text-slate-900 leading-tight">Частые вопросы</h2>
+            </div>
+            <div className="divide-y divide-slate-100 bg-white border border-slate-200 rounded-xl">
+              {faq.map((it, i) => (
+                <details key={i} className="group px-4 py-3" {...(i === 0 ? { open: true } : {})}>
+                  <summary className="cursor-pointer list-none flex items-center justify-between gap-3 font-semibold text-slate-900 text-sm md:text-base">
+                    <span>{it.q}</span>
+                    <ChevronRight className="w-4 h-4 shrink-0 text-slate-400 transition group-open:rotate-90" />
+                  </summary>
+                  <p className="text-sm text-slate-600 leading-relaxed mt-2">{it.a}</p>
+                </details>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
     </div>
   );
 }

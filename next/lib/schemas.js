@@ -12,18 +12,77 @@ function titleCase(s) {
   return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
 }
 
+// Вопрос-ответ для FAQPage (JSON-LD) И видимого блока на странице препарата —
+// контент один и тот же (требование Яндекса: разметка = видимый текст).
+export function medFaqItems(city, med) {
+  if (!med) return [];
+  const loc = cnLoc(city);
+  const gen = cnGen(city);
+  const name = med.name;
+  const arr = (med.prices_by_city && med.prices_by_city[city]) || [];
+  const prices = arr.map((o) => o && o.price).filter((p) => typeof p === 'number');
+  const nets = new Set(arr.map((o) => o && o.pharmacy_id).filter(Boolean));
+  const items = [];
+  if (prices.length) {
+    const low = Math.min(...prices);
+    const high = Math.max(...prices);
+    const priceStr = low === high ? `${low} ₽` : `от ${low} до ${high} ₽`;
+    items.push({
+      q: `Сколько стоит ${name} в ${loc}?`,
+      a: `Цена ${name} в аптеках ${gen} — ${priceStr}. Актуальные цены и наличие в конкретных аптеках показаны на карте на этой странице.`,
+    });
+  }
+  const netNames = [];
+  if (nets.has('gorzdrav')) netNames.push('Горздрав');
+  if (nets.has('apteka366')) netNames.push('Аптека 36,6');
+  if (netNames.length) {
+    items.push({
+      q: `Где купить ${name} в ${loc}?`,
+      a: `${name} есть в наличии в аптеках ${netNames.length > 1 ? `сетей ${netNames.join(' и ')}` : `сети ${netNames[0]}`} в ${loc}. Аптеки с этим препаратом отмечены на карте — выберите ближайшую и постройте маршрут.`,
+    });
+  }
+  if (med.mnn) {
+    items.push({
+      q: `Какие аналоги у ${name}?`,
+      a: `Аналоги ${name} по действующему веществу (${med.mnn.toLowerCase()}) перечислены в разделе «Аналоги по МНН» на этой странице — с ценами и наличием в ${loc}.`,
+    });
+  }
+  items.push({
+    q: `${name} отпускается по рецепту?`,
+    a: med.rx
+      ? `Да, ${name} отпускается по рецепту врача.`
+      : `Нет, ${name} отпускается без рецепта.`,
+  });
+  return items;
+}
+
 export function medMetadata(city, med) {
   if (!med) return {};
+  // Кол-во аптечных сетей с ценой в городе → условная формулировка:
+  // «сравните цены» честно показываем только когда сетей >=2.
+  const _arr = (med.prices_by_city && med.prices_by_city[city]) || [];
+  const _nets = new Set(_arr.map((o) => o && o.pharmacy_id).filter(Boolean));
+  const _multi = _nets.size >= 2;
+  const _hasPrice = _arr.length > 0;
   const parts = [med.name];
   if (med.dosage) parts.push(med.dosage);
-  parts.push(`купить в ${cnLoc(city)} — цены и наличие в аптеках | АптекаА`);
+  parts.push(
+    _multi
+      ? `купить в ${cnLoc(city)} — сравните цены в аптеках | АптекаА`
+      : `купить в ${cnLoc(city)} — цена и наличие в аптеках | АптекаА`,
+  );
   const title = parts.join(' ');
-  const description = (
-    `Сравните цены на ${med.name}` +
+  const _ingr =
     (med.mnn ? ` (${med.mnn.toLowerCase()})` : '') +
     (med.form ? `, ${med.form.toLowerCase()}` : '') +
-    (med.dosage ? `, ${med.dosage}` : '') +
-    ` в аптеках ${cnGen(city)}. Аналоги, наличие, адреса. ` +
+    (med.dosage ? `, ${med.dosage}` : '');
+  const _lead = _multi
+    ? `Сравните цены на ${med.name}${_ingr} в сетях Горздрав и Аптека 36,6`
+    : _hasPrice
+      ? `Узнайте цену и наличие ${med.name}${_ingr}`
+      : `${med.name}${_ingr}: аналоги и наличие`;
+  const description = (
+    `${_lead} в аптеках ${cnGen(city)}. Аналоги, наличие, адреса на карте. ` +
     (med.rx ? 'Отпускается по рецепту. ' : '') +
     'Бесплатный поиск.'
   ).slice(0, 300);
@@ -76,6 +135,22 @@ export function medGraphJsonLd(city, med) {
   };
   Object.keys(product).forEach(k => product[k] === undefined && delete product[k]);
 
+  // AggregateOffer — ценовой rich-сниппет в Яндексе. Цены из всех сетей города
+  // (Горздрав + Аптека 36,6), по всем упаковкам.
+  const _offerPrices = ((med.prices_by_city && med.prices_by_city[city]) || [])
+    .map((o) => o && o.price)
+    .filter((p) => typeof p === 'number');
+  if (_offerPrices.length) {
+    product.offers = {
+      '@type': 'AggregateOffer',
+      priceCurrency: 'RUB',
+      lowPrice: Math.min(..._offerPrices),
+      highPrice: Math.max(..._offerPrices),
+      offerCount: _offerPrices.length,
+      availability: 'https://schema.org/InStock',
+    };
+  }
+
   const medweb = {
     '@type': 'MedicalWebPage',
     '@id': `${canonical}#webpage`,
@@ -101,9 +176,22 @@ export function medGraphJsonLd(city, med) {
     ],
   };
 
+  const _faqItems = medFaqItems(city, med);
+  const faq = _faqItems.length
+    ? {
+        '@type': 'FAQPage',
+        '@id': `${canonical}#faq`,
+        mainEntity: _faqItems.map((it) => ({
+          '@type': 'Question',
+          name: it.q,
+          acceptedAnswer: { '@type': 'Answer', text: it.a },
+        })),
+      }
+    : null;
+
   return {
     '@context': 'https://schema.org',
-    '@graph': [medweb, drug, product, breadcrumbs],
+    '@graph': [medweb, drug, product, breadcrumbs, ...(faq ? [faq] : [])],
   };
 }
 
