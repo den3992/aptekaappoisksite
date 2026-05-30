@@ -166,6 +166,31 @@ function bitmapHas(mask, idx) {
   return byte < mask.length && (mask[byte] & (1 << (idx & 7))) !== 0;
 }
 
+// Разбор телефона аптеки в массив { display, tel } — отдельная tap-ссылка на
+// каждый номер. Ригла отдаёт «+74952311697 доб.1981/1302\n+74991585248»:
+// общий номер с добавочным (несколько через «/» — берём ТОЛЬКО первый) и
+// отдельный прямой номер на новой строке. Горздрав/36,6 — один обычный номер
+// без добавочного (вернётся единственная запись). Добавочный кодируем паузой
+// «,» в tel: — набиратель введёт его как extension, а не слитной цифрой.
+function parsePhones(raw) {
+  if (!raw) return [];
+  return String(raw)
+    .split(/[\n;]+/)
+    .map(s => s.trim())
+    .filter(Boolean)
+    .map(part => {
+      const extMatch = part.match(/доб\.?\s*([\d/]+)/i);
+      const ext = extMatch ? extMatch[1].split('/')[0].trim() : '';
+      const base = part.replace(/доб\.?\s*[\d/]+/i, '').replace(/[^+\d]/g, '');
+      if (!base) return null;
+      return {
+        display: ext ? `${base} доб. ${ext}` : base,
+        tel: ext ? `${base},${ext}` : base,
+      };
+    })
+    .filter(Boolean);
+}
+
 const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, gorzdravStores = [], gorzdravPrice = null, gorzdravBitmap = null, apteka366Price = null, apteka366Bitmap = null, riglaPrice = null, riglaBitmap = null, cityCenter, onSelect, selected, fullscreen = false, onInteract, onViewportChange }, externalRef) {
   const ref = useRef(null);
   const mapRef = useRef(null);
@@ -287,7 +312,7 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
         return String(h).split(/[,;·]\s*/).map(s => s.trim()).filter(Boolean);
       };
       const popupContent = ({ title, address, hours, phone, price, lat, lng }) => {
-        const phoneClean = (phone || '').replace(/[^+\d]/g, '');
+        const phones = parsePhones(phone);
         const hoursLines = splitHours(hours);
         // Координаты для deep-link'ов.
         // Я.Карты: rtext=~LAT,LNG;  2GIS: routeSearch/.../to/LNG,LAT (порядок обратный).
@@ -300,7 +325,7 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
           `<div class="ymap-popup__title">${esc(title)}</div>`,
           address ? `<div class="ymap-popup__row">📍 <span>${esc(address)}</span></div>` : '',
           hoursLines.length ? `<div class="ymap-popup__row">🕒 <span>${hoursLines.map(esc).join('<br>')}</span></div>` : '',
-          phone   ? `<div class="ymap-popup__row">📞 <a href="tel:${esc(phoneClean)}">${esc(phone)}</a></div>` : '',
+          phones.length ? `<div class="ymap-popup__row">📞 <span>${phones.map(p => `<a href="tel:${esc(p.tel)}">${esc(p.display)}</a>`).join('<br>')}</span></div>` : '',
           price != null ? `<div class="ymap-popup__price">${esc(price)} ₽</div>` : '',
           '<div class="ymap-popup__routes">',
             `<button type="button" class="ymap-popup__route ymap-popup__route--ya" data-app="${esc(yandexApp)}" data-web="${esc(yandexWeb)}">Я.Карты</button>`,
@@ -493,7 +518,7 @@ function ViewportListItem({ item, onClick, selected = false }) {
   const ya = `https://yandex.ru/maps/?rtext=~${item.lat}%2C${item.lng}&rtt=auto&z=15`;
   const dgis = `https://2gis.ru/routeSearch/rsType/car/to/${item.lng},${item.lat}/go`;
   const hoursLines = item.hours ? String(item.hours).split(/[,;·]\s*/).map(s => s.trim()).filter(Boolean) : [];
-  const phoneClean = (item.phone || '').replace(/[^+\d]/g, '');
+  const phones = parsePhones(item.phone);
   return (
     <div
       className={`px-4 py-3 active:bg-slate-50 transition ${selected ? 'bg-emerald-50/60' : ''}`}
@@ -514,10 +539,15 @@ function ViewportListItem({ item, onClick, selected = false }) {
               <span>{hoursLines.map((h,i) => <React.Fragment key={i}>{i>0 && <br/>}{h}</React.Fragment>)}</span>
             </div>
           )}
-          {item.phone && (
-            <div className="text-[11px] mt-0.5 flex items-center gap-1">
+          {phones.length > 0 && (
+            <div className="text-[11px] mt-0.5 flex items-center gap-1 flex-wrap">
               <Phone className="w-3 h-3 shrink-0 text-emerald-700" />
-              <a href={`tel:${phoneClean}`} onClick={(e) => e.stopPropagation()} className="text-emerald-700 font-medium">{item.phone}</a>
+              {phones.map((p, i) => (
+                <React.Fragment key={i}>
+                  {i > 0 && <span className="text-slate-300">·</span>}
+                  <a href={`tel:${p.tel}`} onClick={(e) => e.stopPropagation()} className="text-emerald-700 font-medium">{p.display}</a>
+                </React.Fragment>
+              ))}
             </div>
           )}
         </div>

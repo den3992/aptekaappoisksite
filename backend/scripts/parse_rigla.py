@@ -195,6 +195,20 @@ def fmt_rigla_schedule(raw: str) -> tuple[str, bool]:
     return ", ".join(out), False
 
 
+# Телефон Ригла: «+74952311697 доб.1981/1302\n+74991585248» — общий номер с
+# добавочным (несколько через «/») + отдельный прямой номер. Оставляем только
+# ПЕРВЫЙ добавочный (второй удаляем), номера нормализуем по одному на строку.
+_PHONE_EXT_RE = re.compile(r"(доб\.?\s*)([\d/]+)", re.IGNORECASE)
+
+
+def normalize_phone(raw: str) -> str:
+    if not raw:
+        return ""
+    s = _PHONE_EXT_RE.sub(lambda m: f"{m.group(1)}{m.group(2).split('/')[0].strip()}", raw)
+    parts = [p.strip() for p in s.replace(";", "\n").split("\n") if p.strip()]
+    return "\n".join(parts)
+
+
 def _normalize_item(raw: dict) -> dict:
     """Приводим листинг Ригла к структуре, которую ждёт матчинг Горздрава
     (name + attributes). attributes пустые: manufacturer Ригла нестабилен."""
@@ -472,7 +486,7 @@ async def refresh_stores_rigla(client: httpx.AsyncClient, db) -> dict[str, int]:
                  "full_name": it.get("name") or "Аптека «Ригла»",
                  "lat": lat, "lng": lng,
                  "address": (it.get("address") or "").strip(),
-                 "phone": it.get("phone") or "",
+                 "phone": normalize_phone(it.get("phone") or ""),
                  "hours": hours,
                  "is_24h": is_24h,
                  "city": CITY,
