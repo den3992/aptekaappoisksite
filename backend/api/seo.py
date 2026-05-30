@@ -117,7 +117,8 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
         # Яндекс по <lastmod> понимает свежесть и приоритет переобхода.
         lastmod_map = {}
         async for row in db.prices_real.aggregate([
-            {"$match": {"source": "gorzdrav", "updated_at": {"$ne": None},
+            {"$match": {"source": {"$in": ["gorzdrav", "apteka366"]},
+                        "updated_at": {"$ne": None},
                         "price": {"$ne": None},
                         "match_status": {"$in": ["matched", "mnn_match", "needs_review"]}}},
             {"$group": {"_id": "$slug", "lm": {"$max": "$updated_at"}}},
@@ -148,7 +149,7 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
             slug = d.get("slug")
             if not slug:
                 continue
-            # Тупиковая страница = нет цены Горздрав И нет аналогов по МНН.
+            # Тупиковая страница = нет цены ни в одной сети И нет аналогов по МНН.
             # Те же страницы отдаются с noindex — в sitemap им не место.
             has_price = slug in lastmod_map
             mnn = (d.get("mnn") or "").strip().lower()
