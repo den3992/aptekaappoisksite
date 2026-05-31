@@ -434,8 +434,12 @@ async def refresh_stores_rigla(client: httpx.AsyncClient, db) -> dict[str, int]:
             break
     log.info(f"[rigla] pvzList всего точек по РФ: {len(raw)}")
 
-    # Фильтр: Москва + активные + с координатами.
+    # Фильтр: Москва + активные + с координатами + бренд «Ригла».
+    # pvzList маркетплейса rigla.ru отдаёт ВСЕ ПВЗ группы «Протек»
+    # (Ригла + ЗдравСити + Будь Здоров + ...). Берём только настоящие
+    # аптеки Ригла — иначе чужие сети попадают на карту под лейблом «Ригла».
     msk = []
+    skipped_brand = 0
     for it in raw:
         addr = it.get("address") or ""
         if MSK_MARKER not in addr:
@@ -444,8 +448,12 @@ async def refresh_stores_rigla(client: httpx.AsyncClient, db) -> dict[str, int]:
             continue
         if it.get("latitude") is None or it.get("longitude") is None:
             continue
+        if "ригла" not in (it.get("name") or "").lower():
+            skipped_brand += 1
+            continue
         msk.append(it)
-    log.info(f"[rigla] московских активных аптек: {len(msk)}")
+    log.info(f"[rigla] московских активных аптек Ригла: {len(msk)} "
+             f"(отброшено чужих ПВЗ: {skipped_brand})")
 
     # Загружаем существующие idx (по всему реестру — append-only).
     store_idx: dict[str, int] = {}
