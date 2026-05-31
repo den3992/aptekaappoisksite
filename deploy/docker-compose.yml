@@ -20,7 +20,7 @@ services:
       dockerfile: deploy/backend.Dockerfile
     restart: unless-stopped
     environment:
-      MONGO_URL: "mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/${MONGO_DB}?authSource=admin"
+      MONGO_URL: "mongodb://${MONGO_APP_USER}:${MONGO_APP_PASSWORD}@mongo:27017/${MONGO_DB}?authSource=admin"
       DB_NAME: ${MONGO_DB}
       CORS_ORIGINS: ${CORS_ORIGINS}
       EMERGENT_LLM_KEY: ${EMERGENT_LLM_KEY}
@@ -57,7 +57,7 @@ services:
     restart: unless-stopped
     command: ["python", "-m", "scripts.email_imap_worker", "--loop"]
     environment:
-      MONGO_URL: "mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/${MONGO_DB}?authSource=admin"
+      MONGO_URL: "mongodb://${MONGO_APP_USER}:${MONGO_APP_PASSWORD}@mongo:27017/${MONGO_DB}?authSource=admin"
       DB_NAME: ${MONGO_DB}
       IMAP_HOST: ${IMAP_HOST}
       IMAP_PORT: ${IMAP_PORT}
