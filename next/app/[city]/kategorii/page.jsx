@@ -1,6 +1,6 @@
 import CategoriesClient from './CategoriesClient';
 import { categoryListJsonLd } from '../../../lib/schemas';
-const G = { msk: 'Москвы', spb: 'Санкт-Петербурга' };
+const G = { msk: 'Москвы', spb: 'Санкт-Петербурга', krd: 'Краснодара', nn: 'Нижнего Новгорода' };
 export async function generateMetadata({ params }) {
   const { city } = await params;
   const g = G[city] || 'Москвы';

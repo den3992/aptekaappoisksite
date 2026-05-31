@@ -6,8 +6,11 @@ import { formatName } from '../utils/text';
 
 const HOST = 'https://aptekaa.ru';
 
-const cnGen = (city) => (city === 'msk' ? 'Москвы' : 'Санкт-Петербурга');
-const cnLoc = (city) => (city === 'msk' ? 'Москве' : 'Санкт-Петербурге');
+const CN_GEN = { msk: 'Москвы', spb: 'Санкт-Петербурга', krd: 'Краснодара', nn: 'Нижнего Новгорода' };
+const CN_LOC = { msk: 'Москве', spb: 'Санкт-Петербурге', krd: 'Краснодаре', nn: 'Нижнем Новгороде' };
+const CN_NOM = { msk: 'Москва', spb: 'Санкт-Петербург', krd: 'Краснодар', nn: 'Нижний Новгород' };
+const cnGen = (city) => CN_GEN[city] || CN_GEN.msk;
+const cnLoc = (city) => CN_LOC[city] || CN_LOC.msk;
 
 function titleCase(s) {
   if (!s) return '';
@@ -252,7 +255,7 @@ export function pharmacyJsonLd(city, ph) {
     address: {
       '@type': 'PostalAddress',
       streetAddress: ph.address,
-      addressLocality: city === 'msk' ? 'Москва' : 'Санкт-Петербург',
+      addressLocality: CN_NOM[city] || CN_NOM.msk,
       addressCountry: 'RU',
     },
     telephone: ph.phone,

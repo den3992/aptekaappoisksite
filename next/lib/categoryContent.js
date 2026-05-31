@@ -162,8 +162,8 @@ export const CATEGORY_CONTENT = {
   },
 };
 
-const GEN = { msk: 'Москвы', spb: 'Санкт-Петербурга' };
-const LOC = { msk: 'Москве', spb: 'Санкт-Петербурге' };
+const GEN = { msk: 'Москвы', spb: 'Санкт-Петербурга', krd: 'Краснодара', nn: 'Нижнего Новгорода' };
+const LOC = { msk: 'Москве', spb: 'Санкт-Петербурге', krd: 'Краснодаре', nn: 'Нижнем Новгороде' };
 
 function fill(str, city) {
   const g = GEN[city] || GEN.msk;

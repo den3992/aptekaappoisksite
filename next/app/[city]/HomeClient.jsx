@@ -21,7 +21,12 @@ const TRUST_SIGNALS = [
   { icon: Sparkles, text: 'Бесплатно и без регистрации' },
 ];
 
-const CITY_GEN = { msk: 'Москвы', moskva: 'Москвы', spb: 'Санкт-Петербурга', 'sankt-peterburg': 'Санкт-Петербурга' };
+const CITY_GEN = {
+  msk: 'Москвы', moskva: 'Москвы',
+  spb: 'Санкт-Петербурга', 'sankt-peterburg': 'Санкт-Петербурга',
+  krd: 'Краснодара', krasnodar: 'Краснодара',
+  nn: 'Нижнего Новгорода', 'nizhniy-novgorod': 'Нижнего Новгорода',
+};
 
 export default function Home() {
   const { city, cities, setCity } = useCity();
@@ -48,7 +53,12 @@ export default function Home() {
 
   useEffect(() => {
     if (cityParam && cities && cities.length > 0) {
-      const slugToId = { moskva: 'msk', 'sankt-peterburg': 'spb', msk: 'msk', spb: 'spb' };
+      const slugToId = {
+        moskva: 'msk', msk: 'msk',
+        'sankt-peterburg': 'spb', spb: 'spb',
+        krasnodar: 'krd', krd: 'krd',
+        'nizhniy-novgorod': 'nn', nn: 'nn',
+      };
       const targetId = slugToId[cityParam];
       if (targetId) {
         const found = cities.find(c => c.id === targetId);
@@ -81,7 +91,7 @@ export default function Home() {
     return () => document.body.classList.remove('home-bg');
   }, []);
 
-  if (cityParam && !['moskva', 'spb', 'msk', 'sankt-peterburg'].includes(cityParam)) {
+  if (cityParam && !['moskva', 'msk', 'spb', 'sankt-peterburg', 'krd', 'krasnodar', 'nn', 'nizhniy-novgorod'].includes(cityParam)) {
     return <NotFound />;
   }
 

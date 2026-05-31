@@ -5,6 +5,8 @@ Static seed for cities, categories and partner pharmacies.
 CITIES = [
     {"slug": "msk", "name": "Москва", "lat": 55.7558, "lng": 37.6173},
     {"slug": "spb", "name": "Санкт-Петербург", "lat": 59.9343, "lng": 30.3351},
+    {"slug": "krd", "name": "Краснодар", "lat": 45.0355, "lng": 38.9753},
+    {"slug": "nn", "name": "Нижний Новгород", "lat": 56.3268, "lng": 44.0065},
 ]
 
 CATEGORIES = [

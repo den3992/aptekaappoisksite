@@ -1,5 +1,5 @@
 import CatalogClient from './CatalogClient';
-const G = { msk: 'Москвы', spb: 'Санкт-Петербурга' };
+const G = { msk: 'Москвы', spb: 'Санкт-Петербурга', krd: 'Краснодара', nn: 'Нижнего Новгорода' };
 export async function generateMetadata({ params }) {
   const { city } = await params;
   const g = G[city] || 'Москвы';

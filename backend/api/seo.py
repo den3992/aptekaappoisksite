@@ -50,8 +50,10 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
     async def sitemap_index():
         host = f"https://{CANONICAL_HOST}"
         now = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        # Each sitemap chunk holds 25k slugs × 2 cities = 50k URLs (the per-sitemap limit)
-        per_chunk_slugs = 25000
+        # Каждый чанк не должен превышать 50k URL (лимит протокола sitemap).
+        # На каждый slug приходится len(CITIES) URL (по одному на город),
+        # поэтому делим лимит на число городов.
+        per_chunk_slugs = max(1, 50000 // max(1, len(CITIES)))
         # Sitemap only lists canonical pages (duplicates are hidden via rel=canonical)
         total = await db.medications.count_documents({"is_canonical": {"$ne": False}})
         chunks = max(1, (total + per_chunk_slugs - 1) // per_chunk_slugs)
@@ -105,8 +107,8 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
     @router.get("/sitemap_meds_{idx}.xml")
     async def sitemap_meds(idx: int):
         host = f"https://{CANONICAL_HOST}"
-        # 25,000 slugs * 2 cities = 50,000 URLs (per-sitemap protocol limit)
-        per = 25000
+        # len(CITIES) URL на slug; держим чанк ≤ 50k URL (лимит протокола).
+        per = max(1, 50000 // max(1, len(CITIES)))
         skip = (idx - 1) * per
         # Чанки за пределами числа канонических препаратов не существуют —
         # отдаём 404, а не пустой 200 (иначе боты держат «мёртвые» sitemap).
@@ -117,7 +119,7 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
         # Яндекс по <lastmod> понимает свежесть и приоритет переобхода.
         lastmod_map = {}
         async for row in db.prices_real.aggregate([
-            {"$match": {"source": {"$in": ["gorzdrav", "apteka366", "rigla"]},
+            {"$match": {"source": {"$in": ["gorzdrav", "apteka366", "rigla", "maksavit"]},
                         "updated_at": {"$ne": None},
                         "price": {"$ne": None},
                         "match_status": {"$in": ["matched", "mnn_match", "needs_review"]}}},

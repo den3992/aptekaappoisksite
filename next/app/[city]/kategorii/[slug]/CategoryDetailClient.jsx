@@ -77,7 +77,7 @@ export default function CategoryDetail({ initialCat = null }) {
 
       {/* Лид-абзац категории (SEO): keyword + город + сети Горздрав/36,6. */}
       {(() => {
-        const GEN = { msk: 'Москвы', spb: 'Санкт-Петербурга' };
+        const GEN = { msk: 'Москвы', spb: 'Санкт-Петербурга', krd: 'Краснодара', nn: 'Нижнего Новгорода' };
         const g = GEN[city.id] || GEN.msk;
         const cnt = (data.total || cat.count || 0).toLocaleString('ru');
         return (

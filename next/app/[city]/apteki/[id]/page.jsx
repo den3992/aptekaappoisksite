@@ -2,7 +2,7 @@ import PharmacyDetailClient from './PharmacyDetailClient';
 import { fetchPharmacy } from '../../../../api/client';
 import { pharmacyJsonLd } from '../../../../lib/schemas';
 import { notFound } from 'next/navigation';
-const L = { msk: 'Москве', spb: 'Санкт-Петербурге' };
+const L = { msk: 'Москве', spb: 'Санкт-Петербурге', krd: 'Краснодаре', nn: 'Нижнем Новгороде' };
 export async function generateMetadata({ params }) {
   const { city, id } = await params;
   const loc = L[city] || 'Москве';

@@ -144,6 +144,8 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
             _name = doc.pop("name", None)
             if _src == "rigla":
                 doc["brand"] = "rigla"
+            elif _src == "maksavit":
+                doc["brand"] = "maksavit"
             elif _name == "36,6":
                 doc["brand"] = "apteka366"
             else:
@@ -332,7 +334,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         # упаковкам — фронт показывает их как сравнение цен по сетям. find
         # (а не find_one) — чтобы при переключении упаковки показать данные
         # именно для активной фасовки. pharmacy_id = имя источника.
-        for _src in ("gorzdrav", "apteka366", "rigla"):
+        for _src in ("gorzdrav", "apteka366", "rigla", "maksavit"):
             net_cursor = db.prices_real.find(
                 {
                     "slug": slug,
@@ -358,10 +360,12 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         med["prices_by_city"] = real_prices
         med["prices_source"] = "real"
 
-        # Самая свежая updated_at среди гордравских цен по препарату — для
+        # Самая свежая updated_at среди цен сетей по препарату — для
         # отображения «Цены обновлены: …» (YMYL-сигнал свежести данных).
+        # Любой источник (для городов без Горздрава — krd/nn — берём Максавит).
         latest = await db.prices_real.find_one(
-            {"slug": slug, "source": "gorzdrav",
+            {"slug": slug,
+             "source": {"$in": ["gorzdrav", "apteka366", "rigla", "maksavit"]},
              "price": {"$ne": None}, "updated_at": {"$ne": None}},
             sort=[("updated_at", -1)],
             projection={"_id": 0, "updated_at": 1},

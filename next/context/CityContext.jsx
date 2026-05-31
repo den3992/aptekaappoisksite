@@ -3,6 +3,8 @@ import { createContext, useContext, useEffect, useState } from 'react';
 const CITIES = [
   { id: 'msk', name: 'Москва', inLoc: 'Москве', center: [55.751244, 37.618423], zoom: 11 },
   { id: 'spb', name: 'Санкт-Петербург', inLoc: 'Санкт-Петербурге', center: [59.9342802, 30.3350986], zoom: 11 },
+  { id: 'krd', name: 'Краснодар', inLoc: 'Краснодаре', center: [45.03547, 38.975313], zoom: 11 },
+  { id: 'nn', name: 'Нижний Новгород', inLoc: 'Нижнем Новгороде', center: [56.326797, 44.006516], zoom: 11 },
 ];
 
 const CityContext = createContext(null);
