@@ -26,8 +26,9 @@ JWT_TTL_HOURS = 8
 # Two compatible mechanisms:
 #   1. Bearer JWT in Authorization header — issued by /api/admin/login.
 #      Preferred. Carries username + expiry.
-#   2. X-Admin-Token header / `token_query` — legacy shared-secret used by
-#      partner-upload IMAP integrations. Kept active during migration.
+#   2. X-Admin-Token header — legacy shared-secret used by partner-upload
+#      IMAP integrations. Header-only (query-param приёмку убрали: токен в
+#      URL утекает в логи/историю/Referer).
 # ---------------------------------------------------------------------------
 def _expected_admin_token() -> str:
     return os.environ.get("ADMIN_TOKEN", "")
@@ -88,18 +89,19 @@ def _verify_admin_jwt(token: str) -> bool:
 def verify_admin(
     authorization: Optional[str] = Header(default=None),
     x_admin_token: Optional[str] = Header(default=None),
-    token_query: Optional[str] = None,
 ) -> None:
-    """Dependency: 403 unless Bearer JWT or legacy shared-secret matches."""
+    """Dependency: 403 unless Bearer JWT or legacy shared-secret (header) matches."""
     # 1. Bearer JWT
     if authorization and authorization.lower().startswith("bearer "):
         token = authorization[7:].strip()
         if token and _verify_admin_jwt(token):
             return
-    # 2. Legacy shared-secret header / query
+    # 2. Legacy shared-secret — ТОЛЬКО через заголовок X-Admin-Token.
+    #    Приёмку токена из query-параметра убрали: токен в URL утекает в
+    #    access-логи nginx, историю браузера и Referer.
     expected = _expected_admin_token()
     if expected:
-        candidate = x_admin_token or token_query or ""
+        candidate = x_admin_token or ""
         if candidate and secrets.compare_digest(candidate, expected):
             return
     raise HTTPException(403, "Bad admin credentials")
