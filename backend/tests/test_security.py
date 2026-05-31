@@ -78,41 +78,6 @@ class TestAdminAuth:
         assert "token" in ar.json()
 
 
-# ------------------------------------------------------------------ voice/chat session_id validation + error sanitization
-class TestVoiceChatValidation:
-    def test_bad_session_id_script_tag(self):
-        r = requests.post(f"{BASE_URL}/api/voice/chat", json={
-            "session_id": "<script>alert(1)</script>",
-            "message": "Привет"
-        })
-        # rate limit may also kick in; treat 429 as acceptable env condition
-        if r.status_code == 429:
-            pytest.skip("rate-limited")
-        assert r.status_code == 400
-
-    def test_bad_session_id_too_long(self):
-        # max_length is enforced by Pydantic at 64 -> expect 422 OR 400
-        r = requests.post(f"{BASE_URL}/api/voice/chat", json={
-            "session_id": "a" * 120,
-            "message": "Привет"
-        })
-        if r.status_code == 429:
-            pytest.skip("rate-limited")
-        assert r.status_code in (400, 422)
-
-    def test_error_does_not_leak_internals(self):
-        # Provide invalid session_id; ensure response body doesn't leak Python tracebacks/'LLM error'.
-        r = requests.post(f"{BASE_URL}/api/voice/chat", json={
-            "session_id": "###",
-            "message": "test"
-        })
-        if r.status_code == 429:
-            pytest.skip("rate-limited")
-        body = r.text.lower()
-        for forbidden in ("traceback", "llm error:", "openai", "exception"):
-            assert forbidden not in body, f"leak found: {forbidden}"
-
-
 # ------------------------------------------------------------------ Rate limits
 class TestRateLimits:
     def test_partner_requests_rate_limit_5_per_hour(self):
@@ -129,20 +94,6 @@ class TestRateLimits:
         if 429 not in statuses:
             pytest.skip(f"rate limit not triggered (k8s ingress IP fan-out); saw {statuses}")
         assert 429 in statuses
-
-    def test_voice_chat_invalid_payload_does_not_consume_or_429_consistent(self):
-        # Burst > 40 to overcome 2-pod ingress fan-out (limit=20 per IP).
-        codes = []
-        for i in range(45):
-            r = requests.post(f"{BASE_URL}/api/voice/chat", json={
-                "session_id": "###",
-                "message": "x"
-            })
-            codes.append(r.status_code)
-        if 429 not in codes:
-            pytest.skip(f"rate limit not triggered (k8s ingress IP fan-out); saw {codes[:5]}...")
-        assert 429 in codes
-
 
 # ------------------------------------------------------------------ Regression smoke
 class TestRegressionSmoke:

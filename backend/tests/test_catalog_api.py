@@ -203,13 +203,6 @@ class TestSEO:
 
 # ---------- Voice smoke ----------
 class TestVoiceSmoke:
-    def test_voice_chat_smoke(self, s):
-        r = s.post(f"{API}/voice/chat", json={"message": "Здравствуйте"}, timeout=60)
-        assert r.status_code == 200, r.text[:300]
-        d = r.json()
-        assert "reply" in d and isinstance(d["reply"], str) and len(d["reply"]) > 0
-        assert "session_id" in d
-
     def test_voice_tts_smoke(self, s):
         r = s.post(f"{API}/voice/tts", json={"text": "Тест"}, timeout=60)
         assert r.status_code == 200, r.text[:300]

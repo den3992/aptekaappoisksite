@@ -1,4 +1,4 @@
-# Backend Dockerfile — FastAPI + Mongo client + emergentintegrations
+# Backend Dockerfile — FastAPI + Mongo client
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
