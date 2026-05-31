@@ -29,12 +29,18 @@ if ! flock -n 9; then
   exit 0
 fi
 
+# Пароль Mongo читаем ОДИН раз в переменную окружения и прокидываем в
+# контейнер через `docker exec -e MONGO_PW` (имя без значения → docker берёт
+# значение из окружения вызывающего процесса). Так пароль НЕ попадает в argv
+# и не виден в `ps aux` на хосте. Внутри контейнера sh подставляет $MONGO_PW.
+# Сам запрос (не секрет) передаём через -e CQ — это снимает проблему кавычек.
+MONGO_PW="$(grep '^MONGO_PASSWORD=' "$DEPLOY/.env" | cut -d= -f2-)"
+export MONGO_PW
+
 count_query() {
   local q="$1"
-  docker exec deploy-mongo-1 mongosh --quiet \
-    -u aptekaa_admin -p "$(grep MONGO_PASSWORD $DEPLOY/.env|cut -d= -f2)" \
-    --authenticationDatabase admin \
-    --eval "db.getSiblingDB(\"aptekaa\").prices_real.countDocuments($q)" \
+  docker exec -e MONGO_PW -e CQ="$q" deploy-mongo-1 sh -c \
+    'mongosh --quiet -u aptekaa_admin -p "$MONGO_PW" --authenticationDatabase admin --eval "db.getSiblingDB(\"aptekaa\").prices_real.countDocuments($CQ)"' \
     | tail -1
 }
 
