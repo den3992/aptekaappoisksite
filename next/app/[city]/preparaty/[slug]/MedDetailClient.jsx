@@ -735,7 +735,9 @@ export default function MedDetail({ initialMed = null }) {
     // НЕ синтезируются (в отличие от legacy-партнёров в list ниже) и
     // фильтруются по активной упаковке через gz_pack.
     const REAL_SOURCES = ['gorzdrav', 'apteka366', 'rigla', 'maksavit'];
-    const networkAll = all.filter(p => REAL_SOURCES.includes(p.pharmacy_id));
+    // price>0: 0 = сматчено, но цены/наличия нет — такую сеть не показываем
+    // (иначе на упаковке с единственной 0-строкой она всплывала как «0 ₽ дешевле»).
+    const networkAll = all.filter(p => REAL_SOURCES.includes(p.pharmacy_id) && p.price > 0);
     const activeTotal = packTotal(activePack);
     const networks = packs.length >= 2 && activePack
       ? networkAll.filter(p => {
