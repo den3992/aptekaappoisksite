@@ -1,20 +1,13 @@
 'use client';
 import { useEffect, useRef } from 'react';
+// Только сети, цены которых мы реально агрегируем (есть данные в prices_real).
+// Не показываем «партнёров», которых у нас нет — это вводило бы в заблуждение.
 const PARTNERS = [
-  { name: 'Ригла',            logo: 'rigla.png' },
-  { name: '36,6',             logo: '366.png' },
-  { name: 'Горздрав',         logo: 'gorzdrav.png' },
-  { name: 'Аптечество',       logo: 'aptechestvo.png' },
-  { name: 'Столички',         logo: 'stolichki.png' },
-  { name: 'Будь Здоров',      logo: 'budzdorov.png' },
-  { name: 'Самсон-Фарма',     logo: 'samson-pharma.png' },
-  { name: 'Ноль Боли',        logo: '0boli.png' },
-  { name: 'Доктор Столетов',  logo: 'drstoletov.png' },
-  { name: 'Планета Здоровья', logo: 'planetazdorovo.png' },
-  { name: 'Первая помощь',    logo: 'pervaya-pomosh.png' },
-  { name: 'Озерки',           logo: 'ozerki.png' },
-  { name: 'Радуга',           logo: 'raduga.png' },
-  { name: 'Невис',            logo: 'nevis.png' },
+  { name: 'Горздрав',    logo: 'gorzdrav.png' },     // msk, spb
+  { name: 'Аптека 36,6', logo: '366.png' },          // msk, spb
+  { name: 'Ригла',       logo: 'rigla.png' },         // msk
+  { name: 'Максавит',    logo: 'maksavit.png' },      // msk, spb, krd, nn
+  { name: 'Аптечество',  logo: 'aptechestvo.png' },   // nn
 ];
 
 function initials(name) {
@@ -138,7 +131,7 @@ export default function PartnersMarquee() {
         </h2>
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-xs font-semibold text-emerald-700">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-          {PARTNERS.length}+ аптечных сетей
+          {PARTNERS.length} аптечных сетей
         </span>
       </div>
 
