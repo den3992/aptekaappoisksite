@@ -127,7 +127,7 @@ export default function PartnersMarquee() {
     <section className="relative py-12 md:py-10">
       <div className="max-w-7xl mx-auto px-4 mb-7 md:mb-5 flex items-center justify-between">
         <h2 className="font-extrabold text-slate-900 text-xl md:text-2xl tracking-tight" style={{ fontFamily: "'Manrope', sans-serif" }}>
-          Наши партнёры
+          Аптеки в каталоге
         </h2>
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-xs font-semibold text-emerald-700">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
