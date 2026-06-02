@@ -165,6 +165,19 @@ function bitmapHas(mask, idx) {
   const byte = idx >> 3;
   return byte < mask.length && (mask[byte] & (1 << (idx & 7))) !== 0;
 }
+// Число взведённых битов в store_bitmap (base64) = сколько аптек сети реально
+// имеют препарат. Используется для счётчика «в N аптеках», чтобы он совпадал
+// с числом маркеров на карте (там тоже идём по битам store_bitmap).
+function popcountBitmap(b64) {
+  const mask = decodeBitmap(b64);
+  if (!mask) return 0;
+  let n = 0;
+  for (let i = 0; i < mask.length; i++) {
+    let v = mask[i];
+    while (v) { v &= v - 1; n++; }
+  }
+  return n;
+}
 
 // Разбор телефона аптеки в массив { display, tel } — отдельная tap-ссылка на
 // каждый номер. Ригла отдаёт «+74952311697 доб.1981/1302\n+74991585248»:
@@ -930,8 +943,13 @@ export default function MedDetail({ initialMed = null }) {
 
   const minPrice = prices.length ? Math.min(...prices.map(p => p.price)) : null;
   const maxPrice = prices.length ? Math.max(...prices.map(p => p.price)) : null;
-  // For Gorzdrav entries qty = number of stores; for partner pharmacies count = 1 each.
+  // Число аптек = popcount store_bitmap по каждой сети (как на карте: маркер
+  // ставится на каждый взведённый бит). Так заголовок «в N аптеках» совпадает
+  // с числом точек на карте. Откат: Горздрав → qty (= число аптек), прочие → 1,
+  // если битмапа нет (старые/синтетические записи).
   const totalPharmacyCount = prices.reduce((sum, p) => {
+    const fromBitmap = popcountBitmap(p.store_bitmap);
+    if (fromBitmap > 0) return sum + fromBitmap;
     return sum + (p.pharmacy_id === 'gorzdrav' ? (p.qty || 0) : 1);
   }, 0);
   
