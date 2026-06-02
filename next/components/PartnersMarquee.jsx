@@ -4,6 +4,7 @@ const PARTNERS = [
   { name: 'Ригла',            logo: 'rigla.png' },
   { name: '36,6',             logo: '366.png' },
   { name: 'Горздрав',         logo: 'gorzdrav.png' },
+  { name: 'Аптечество',       logo: 'aptechestvo.png' },
   { name: 'Столички',         logo: 'stolichki.png' },
   { name: 'Будь Здоров',      logo: 'budzdorov.png' },
   { name: 'Самсон-Фарма',     logo: 'samson-pharma.png' },
