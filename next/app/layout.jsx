@@ -18,6 +18,19 @@ export const metadata = {
   },
   description: 'Бесплатная аптечная справочная по Москве и СПб: поиск лекарств, цены и наличие в 2000+ аптеках. Адреса, режим работы, аналоги препаратов. Без регистрации.',
   metadataBase: new URL('https://aptekaa.ru'),
+  // Иконки сайта — без этого Next.js (App Router) НЕ выводит <link rel="icon">
+  // в <head> (файлы в public/ сами по себе не линкуются). Нужно для значка
+  // сайта в выдаче Яндекса/Google и на вкладках браузера.
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon-32x32.png', type: 'image/png', sizes: '32x32' },
+      { url: '/favicon-16x16.png', type: 'image/png', sizes: '16x16' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
+  },
+  manifest: '/manifest.json',
   openGraph: {
     type: 'website',
     siteName: 'АптекаА',
