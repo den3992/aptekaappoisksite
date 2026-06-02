@@ -45,13 +45,13 @@ sleep 5
 # 3. Получаем SSL сертификат от Let's Encrypt
 # ────────────────────────────────────────────────────────────────
 if [ ! -f /var/lib/docker/volumes/deploy_certbot_etc/_data/live/aptekaa.ru/fullchain.pem ]; then
-    log "Запрашиваем SSL у Let's Encrypt для aptekaa.ru, www.aptekaa.ru..."
-    # Примечание: xn--80aerl0afi.xn--p1ai (аптекаа.рф) исключён — DNS на момент
-    # первого деплоя ещё пропагировал. Добавить отдельно через certbot --expand,
-    # когда DNS для .рф-домена прогреется глобально.
+    log "Запрашиваем SSL у Let's Encrypt для aptekaa.ru, www.aptekaa.ru, аптекаа.рф..."
+    # аптекаа.рф = xn--80aaasz2av.xn--p1ai (+ www). Включён в общий сертификат как
+    # дополнительные SAN — HTTPS-блок .рф в active.conf переиспользует live/aptekaa.ru/.
     docker compose run --rm certbot \
         certbot certonly --webroot -w /var/www/certbot \
         -d aptekaa.ru -d www.aptekaa.ru \
+        -d xn--80aaasz2av.xn--p1ai -d www.xn--80aaasz2av.xn--p1ai \
         --email "${LETSENCRYPT_EMAIL}" --agree-tos --non-interactive --no-eff-email
     log "Сертификат получен ✅"
 else
