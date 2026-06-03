@@ -378,7 +378,7 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
           maksavit: decodeBitmap(maksavitBitmap),
         };
         const BRAND_PRICE = { gorzdrav: gorzdravPrice, apteka366: apteka366Price, rigla: riglaPrice, maksavit: maksavitPrice };
-        const BRAND_TITLE = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество' };
+        const BRAND_TITLE = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье' };
         gorzdravStores.forEach(store => {
           if (!store.lat || !store.lng) return;
           // Бренд точки: если у сети нет цены для упаковки — откатываемся на
@@ -747,7 +747,7 @@ export default function MedDetail({ initialMed = null }) {
     // Реальные сети с настоящими ценами (Горздрав + Аптека 36,6). Их цены
     // НЕ синтезируются (в отличие от legacy-партнёров в list ниже) и
     // фильтруются по активной упаковке через gz_pack.
-    const REAL_SOURCES = ['gorzdrav', 'apteka366', 'rigla', 'maksavit', 'aptechestvo'];
+    const REAL_SOURCES = ['gorzdrav', 'apteka366', 'rigla', 'maksavit', 'aptechestvo', 'zdorovie'];
     // price>0: 0 = сматчено, но цены/наличия нет — такую сеть не показываем
     // (иначе на упаковке с единственной 0-строкой она всплывала как «0 ₽ дешевле»).
     const networkAll = all.filter(p => REAL_SOURCES.includes(p.pharmacy_id) && p.price > 0);
@@ -1013,7 +1013,7 @@ export default function MedDetail({ initialMed = null }) {
               сетей с ценой + in-content ссылка на категорию (перелинковка). */}
           {(() => {
             const nm = formatName(med.name);
-            const NET_NAMES = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество' };
+            const NET_NAMES = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье' };
             const nets = new Set(prices.map(p => p.pharmacy_id).filter(id => NET_NAMES[id]));
             const multi = nets.size >= 2;
             const netNames = [...nets].map(id => NET_NAMES[id]).filter(Boolean);
@@ -1094,7 +1094,7 @@ export default function MedDetail({ initialMed = null }) {
               Показываем только когда есть >=2 сети с ценой для активной
               упаковки — иначе сравнивать нечего. */}
           {(() => {
-            const NET_LABELS = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество' };
+            const NET_LABELS = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье' };
             const byNet = {};
             for (const p of prices) {
               if (!NET_LABELS[p.pharmacy_id]) continue;
