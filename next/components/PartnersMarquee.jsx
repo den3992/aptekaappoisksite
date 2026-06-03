@@ -8,6 +8,7 @@ const PARTNERS = [
   { name: 'Ригла',       logo: 'rigla.png' },         // msk
   { name: 'Максавит',    logo: 'maksavit.png' },      // msk, spb, krd, nn
   { name: 'Аптечество',  logo: 'aptechestvo.png' },   // msk, spb, nn
+  { name: 'Здоровье',    logo: 'zdorovie.png' },       // krd
 ];
 
 function initials(name) {
