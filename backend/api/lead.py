@@ -38,8 +38,25 @@ _MSG_LABEL = {"max": "Max", "whatsapp": "WhatsApp", "telegram": "Telegram"}
 _RATE = defaultdict(list)
 
 
+def _client_ip(request: Request) -> str:
+    # За nginx request.client.host = IP прокси. Берём X-Real-IP — его выставляет
+    # НАШ edge ($remote_addr), клиент его подделать не может. X-Forwarded-For для
+    # ключа НЕ берём с первого хопа: клиент может прислать свой XFF, а edge лишь
+    # дописывает реальный IP в конец → первый элемент подделываем. Если X-Real-IP
+    # вдруг нет — берём ПОСЛЕДНИЙ хоп XFF (добавленный доверенным прокси).
+    xri = request.headers.get("x-real-ip", "").strip()
+    if xri:
+        return xri
+    xff = request.headers.get("x-forwarded-for", "")
+    if xff:
+        last = xff.split(",")[-1].strip()
+        if last:
+            return last
+    return request.client.host if request.client else "anon"
+
+
 def _rate_limit_or_429(request: Request, limit: int, per_seconds: int) -> None:
-    ip = request.client.host if request.client else "anon"
+    ip = _client_ip(request)
     now = time.time()
     bucket = _RATE[ip]
     cutoff = now - per_seconds
@@ -117,7 +134,9 @@ def make_lead_router() -> APIRouter:
 
         msgs = [_MSG_LABEL[m] for m in payload.messengers] or ["—"]
         when = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-        med = payload.medication or "—"
+        # medication попадает в Subject (заголовок письма) — вырезаем CR/LF,
+        # иначе возможна инъекция заголовков (Bcc:, и т.п.).
+        med = (payload.medication or "—").replace("\r", " ").replace("\n", " ").strip() or "—"
         url = ""
         if payload.slug:
             c = payload.city or "msk"

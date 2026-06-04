@@ -612,6 +612,13 @@ function LeadModal({ open, onClose, medication, slug, city }) {
     return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prevOverflow; };
   }, [open, onClose]);
 
+  // Сброс на любую смену open: при открытии — свежая форма (в т.ч. после
+  // гонки «закрыли во время отправки»), при закрытии — не держим ПД в памяти.
+  useEffect(() => {
+    setName(''); setAddress(''); setPhone(''); setMessengers([]);
+    setConsent(false); setWebsite(''); setStatus('idle'); setErrMsg('');
+  }, [open]);
+
   if (!open) return null;
 
   const toggleMsg = (id) =>
