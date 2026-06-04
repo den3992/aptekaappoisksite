@@ -1342,20 +1342,20 @@ export default function MedDetail({ initialMed = null }) {
                       Показать аналоги <ChevronRight className="w-4 h-4" />
                     </button>
                   )}
-                  <div className="mt-3">
-                    <button
-                      data-testid="lead-open-btn"
-                      onClick={() => setLeadOpen(true)}
-                      className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 transition-colors"
-                    >
-                      <Search className="w-4 h-4" />
-                      Оставить заявку на поиск лекарства
-                    </button>
-                    <p className="text-xs text-slate-500 mt-1.5">
-                      Найдём препарат в ближайшей к вам аптеке и сообщим, где он есть.
-                    </p>
-                  </div>
                 </div>
+              </div>
+              <div className="mt-3">
+                <button
+                  data-testid="lead-open-btn"
+                  onClick={() => setLeadOpen(true)}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 transition-colors"
+                >
+                  <Search className="w-4 h-4 shrink-0" />
+                  Оставить заявку на поиск лекарства
+                </button>
+                <p className="text-xs text-slate-500 mt-1.5 text-center">
+                  Найдём препарат в ближайшей к вам аптеке и сообщим, где он есть.
+                </p>
               </div>
             </div>
           )}
