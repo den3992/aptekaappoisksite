@@ -17,6 +17,7 @@ from api import make_router as make_catalog_router
 from api.uploads import make_uploads_router
 from api.partners import make_partner_router
 from api.seo import make_seo_router
+from api.lead import make_lead_router
 
 import time as _time
 from collections import defaultdict as _defaultdict
@@ -195,6 +196,9 @@ app.include_router(make_uploads_router(db), prefix="/api/upload")
 
 # Partner request form + admin approval flow.
 app.include_router(make_partner_router(db), prefix="/api")
+
+# Заявка на поиск лекарства — письмо на info@aptekaa.ru, БЕЗ записи в БД.
+app.include_router(make_lead_router(), prefix="/api")
 
 # SEO endpoints — теперь только robots.txt + sitemap*.xml.
 # После Phase 8 cutover Next.js SSR'ит HTML нативно для всех User-Agent'ов,
