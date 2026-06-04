@@ -1346,7 +1346,7 @@ export default function MedDetail({ initialMed = null }) {
                     <button
                       data-testid="lead-open-btn"
                       onClick={() => setLeadOpen(true)}
-                      className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors"
+                      className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 transition-colors"
                     >
                       <Search className="w-4 h-4" />
                       Оставить заявку на поиск лекарства
