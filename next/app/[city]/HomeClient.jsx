@@ -3,13 +3,14 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import NotFound from '../../components/NotFound';
-import { ShieldCheck, ArrowRight, Pill, Building2, Sparkles, Map } from 'lucide-react';
+import { ShieldCheck, ArrowRight, Pill, Building2, Sparkles, Map, Search } from 'lucide-react';
 import { useCity } from '../../context/CityContext';
 import CategoryIcon from '../../components/CategoryIcon';
 import { suggestMeds, fetchCategories } from '../../api/client';
 import { formatName } from '../../utils/text';
 import { getCategoryStyle } from '../../lib/categoryStyles';
 import PartnersMarquee from '../../components/PartnersMarquee';
+import LeadModal from '../../components/LeadModal';
 
 const POPULAR_QUERIES = ['Парацетамол', 'Нурофен', 'Витамин D3', 'Омепразол', 'Кагоцел', 'Смекта'];
 
@@ -37,6 +38,7 @@ export default function Home() {
   // city из контекста на сервере ещё дефолтный (msk), поэтому он лишь фолбэк.
   const cityGen = CITY_GEN[cityParam] || CITY_GEN[city?.id] || 'Москвы';
   const [popularMeds, setPopularMeds] = useState([]);
+  const [leadOpen, setLeadOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const router = useRouter();
 
@@ -174,23 +176,31 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA for pharmacies */}
+      {/* CTA: заявка на поиск лекарства */}
       <section className="max-w-7xl mx-auto px-4 py-10 md:py-14">
         <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl p-6 md:p-12 text-white relative overflow-hidden">
           <div className="max-w-2xl relative z-10">
-            <div className="inline-block px-3 py-1 bg-white/15 rounded-full text-xs font-medium mb-4">Для аптек</div>
-            <h2 className="text-2xl md:text-4xl font-bold mb-3">Привлекайте новых клиентов в вашу аптеку</h2>
-            <p className="text-emerald-50 leading-relaxed mb-6">
-              Простая выгрузка ассортимента. Поможем с настройкой.
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/15 rounded-full text-xs font-medium mb-4">
+              <Search className="w-3.5 h-3.5" /> Не нашли лекарство?
+            </div>
+            <h2 className="text-2xl md:text-4xl font-bold mb-3">Найдём нужный препарат в ближайшей к вам аптеке</h2>
+            <p className="text-emerald-50 leading-relaxed mb-6 max-w-xl">
+              Оставьте заявку — подберём, где лекарство есть в наличии рядом с вами, и сообщим. Бесплатно, без регистрации.
             </p>
-            <Link href="/dlya-aptek" className="inline-flex items-center gap-2 bg-white text-emerald-700 hover:bg-emerald-50 font-semibold px-6 py-3 rounded-xl transition">
-              Подробнее <ArrowRight className="w-4 h-4" />
-            </Link>
+            <button
+              type="button"
+              onClick={() => setLeadOpen(true)}
+              data-testid="home-lead-btn"
+              className="inline-flex items-center gap-2 bg-white text-emerald-700 hover:bg-emerald-50 font-semibold px-6 py-3 rounded-xl transition"
+            >
+              <Search className="w-4 h-4" /> Оставить заявку на поиск лекарства
+            </button>
           </div>
           <div className="absolute -right-12 -bottom-16 w-72 h-72 rounded-full bg-white/5" />
           <div className="absolute -right-24 -top-12 w-56 h-56 rounded-full bg-white/5" />
         </div>
       </section>
+      <LeadModal open={leadOpen} onClose={() => setLeadOpen(false)} city={cityParam || (city && city.id)} />
     </div>
   );
 }
