@@ -20,6 +20,7 @@ export default function LeadModal({ open, onClose, medication, slug, city }) {
   const [website, setWebsite] = useState(''); // honeypot
   const [status, setStatus] = useState('idle'); // idle | sending | done | error
   const [errMsg, setErrMsg] = useState('');
+  const [med, setMed] = useState(medication || '');
 
   useEffect(() => {
     if (!open) return;
@@ -35,6 +36,7 @@ export default function LeadModal({ open, onClose, medication, slug, city }) {
   useEffect(() => {
     setName(''); setAddress(''); setPhone(''); setMessengers([]);
     setConsent(false); setWebsite(''); setStatus('idle'); setErrMsg('');
+    setMed(medication || '');
   }, [open]);
 
   if (!open) return null;
@@ -42,7 +44,7 @@ export default function LeadModal({ open, onClose, medication, slug, city }) {
   const toggleMsg = (id) =>
     setMessengers((prev) => prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]);
 
-  const canSubmit = name.trim().length >= 2 && address.trim().length >= 3
+  const canSubmit = med.trim().length >= 2 && name.trim().length >= 2 && address.trim().length >= 3
     && phone.replace(/\D/g, '').length >= 5 && consent && status !== 'sending';
 
   const submit = async (e) => {
@@ -55,7 +57,7 @@ export default function LeadModal({ open, onClose, medication, slug, city }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name, address, phone, messengers, consent, website,
-          medication: medication || null, slug: slug || null, city: city || null,
+          medication: med.trim() || null, slug: slug || null, city: city || null,
         }),
       });
       if (!res.ok) {
@@ -86,7 +88,6 @@ export default function LeadModal({ open, onClose, medication, slug, city }) {
         <div className="flex items-start justify-between p-5 pb-3 border-b border-slate-100">
           <div className="min-w-0">
             <h3 className="text-lg font-bold text-slate-900 leading-tight">Заявка на поиск лекарства</h3>
-            {medication && <p className="text-sm text-slate-500 mt-0.5 truncate">{medication}</p>}
           </div>
           <button onClick={onClose} aria-label="Закрыть" className="shrink-0 -mr-1 -mt-1 p-2 text-slate-400 hover:text-slate-700">
             <X className="w-5 h-5" />
@@ -117,6 +118,15 @@ export default function LeadModal({ open, onClose, medication, slug, city }) {
               name="website" tabIndex={-1} autoComplete="off"
               className="hidden" aria-hidden="true"
             />
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Название препарата</label>
+              <input
+                type="text" value={med} onChange={(e) => setMed(e.target.value)}
+                required maxLength={300} placeholder="Например, Нурофен Экспресс 200 мг"
+                data-testid="lead-med-input"
+                className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
+              />
+            </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Имя</label>
               <input

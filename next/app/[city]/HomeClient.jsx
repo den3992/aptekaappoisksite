@@ -185,7 +185,7 @@ export default function Home() {
             </div>
             <h2 className="text-2xl md:text-4xl font-bold mb-3">Найдём нужный препарат в ближайшей к вам аптеке</h2>
             <p className="text-emerald-50 leading-relaxed mb-6 max-w-xl">
-              Оставьте заявку — подберём, где лекарство есть в наличии рядом с вами, и сообщим. Бесплатно, без регистрации.
+              Оставьте заявку — найдём, где лекарство есть в наличии рядом с вами, и сообщим.
             </p>
             <button
               type="button"
