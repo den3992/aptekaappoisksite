@@ -78,7 +78,8 @@ HEADERS = {
     "X-Device-Type": "desktop",
 }
 SITEMAP_URL = f"{BASE}/sitemap-parts/products-0.xml"
-CONCURRENCY = 6
+CONCURRENCY = 14       # одновременных HTTP-запросов к webgate (общий лимит)
+MED_CONCURRENCY = 8    # препаратов в обработке одновременно
 
 CHANGED_SLUGS: set[str] = set()
 
@@ -365,11 +366,20 @@ async def main(args):
         meds = await cur.to_list(length=None)
         log.info(f"[magnit] препаратов: {len(meds)}")
 
-        sem = asyncio.Semaphore(CONCURRENCY)
-        for i, med in enumerate(meds, 1):
-            await process_med(client, db, med, index, sgcs, match_city, sem)
-            if i % 200 == 0:
-                log.info(f"[magnit] прогресс {i}/{len(meds)}")
+        sem = asyncio.Semaphore(CONCURRENCY)         # лимит HTTP к webgate
+        med_sem = asyncio.Semaphore(MED_CONCURRENCY)  # параллелизм по препаратам
+        done = [0]
+        total = len(meds)
+        async def worker(med):
+            async with med_sem:
+                try:
+                    await process_med(client, db, med, index, sgcs, match_city, sem)
+                except Exception as e:
+                    log.warning(f"[magnit] med {med.get('slug')} err: {e}")
+            done[0] += 1
+            if done[0] % 200 == 0:
+                log.info(f"[magnit] прогресс {done[0]}/{total}")
+        await asyncio.gather(*(worker(m) for m in meds))
 
     stats = {}
     async for doc in db.prices_real.aggregate([

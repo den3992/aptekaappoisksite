@@ -9,6 +9,7 @@ const PARTNERS = [
   { name: 'Максавит',    logo: 'maksavit.png' },      // msk, spb, krd, nn
   { name: 'Аптечество',  logo: 'aptechestvo.png' },   // msk, spb, nn
   { name: 'Здоровье',    logo: 'zdorovie.png' },       // krd
+  { name: 'Магнит Аптека', logo: 'magnit.png' },       // msk, spb, krd, nn (+ новые города Фаза 2)
 ];
 
 function initials(name) {
