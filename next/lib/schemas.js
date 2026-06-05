@@ -69,6 +69,13 @@ export function medMetadata(city, med) {
   const _arr = (med.prices_by_city && med.prices_by_city[city]) || [];
   const _nets = new Set(_arr.map((o) => o && o.pharmacy_id).filter(Boolean));
   const _multi = _nets.size >= 2;
+  // Реальные сети препарата в городе — для честного перечисления в мете
+  // (city-точно: в krd/nn это не Горздрав/36,6, а свои сети).
+  const _NET_LABELS = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека' };
+  const _netNames = [..._nets].map((id) => _NET_LABELS[id]).filter(Boolean);
+  const _netStr = _netNames.length <= 3
+    ? _netNames.slice(0, -1).join(', ') + ' и ' + _netNames.slice(-1)
+    : _netNames.slice(0, 2).join(', ') + ' и других';
   const _hasPrice = _arr.length > 0;
   const name = formatName(med.name);
   const parts = [name];
@@ -86,7 +93,7 @@ export function medMetadata(city, med) {
     (med.form ? `, ${med.form.toLowerCase()}` : '') +
     (med.dosage ? `, ${med.dosage}` : '');
   const _lead = _multi
-    ? `Сравните цены на ${name}${_ingr} в сетях Горздрав и Аптека 36,6`
+    ? `Сравните цены на ${name}${_ingr} в сетях ${_netStr}`
     : _hasPrice
       ? `Узнайте цену и наличие ${name}${_ingr}`
       : `${name}${_ingr}: аналоги и наличие`;

@@ -78,11 +78,18 @@ export default function CategoryDetail({ initialCat = null }) {
       {/* Лид-абзац категории (SEO): keyword + город + сети Горздрав/36,6. */}
       {(() => {
         const GEN = { msk: 'Москвы', spb: 'Санкт-Петербурга', krd: 'Краснодара', nn: 'Нижнего Новгорода' };
+        const NETS = {
+          msk: 'Горздрав, Аптека 36,6, Ригла и других',
+          spb: 'Горздрав, Аптека 36,6, Максавит и других',
+          krd: 'Максавит, Здоровье и Магнит Аптека',
+          nn: 'Максавит, Аптечество и Магнит Аптека',
+        };
         const g = GEN[city.id] || GEN.msk;
+        const nets = NETS[city.id] || NETS.msk;
         const cnt = (data.total || cat.count || 0).toLocaleString('ru');
         return (
           <p className="text-slate-600 text-sm md:text-base leading-relaxed max-w-3xl mb-6 md:mb-8" data-testid="category-lead">
-            {cat.title} в аптеках {g}: {cnt} препаратов — цены и наличие. Сравнивайте цены аптечных сетей Горздрав и Аптека 36,6 и проверяйте наличие в ближайших аптеках на карте. Поиск бесплатный, без регистрации.
+            {cat.title} в аптеках {g}: {cnt} препаратов — цены и наличие. Сравнивайте цены аптечных сетей {nets} и проверяйте наличие в ближайших аптеках на карте. Поиск бесплатный, без регистрации.
           </p>
         );
       })()}
