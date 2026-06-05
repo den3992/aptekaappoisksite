@@ -17,7 +17,7 @@ LOG_DIR=/var/log/aptekaa
 LOG="${LOG_DIR}/parse_magnit-${MODE}-${DATE}.log"
 LOCK=/var/lock/aptekaa_parse_magnit.lock
 DEPLOY=/home/ubuntu/aptekaa/deploy
-CITIES="msk,spb,krd,nn"
+CITIES="msk,spb,krd,nn,ekb,kzn,nsk,sam,chel,ufa"
 
 mkdir -p "$LOG_DIR"
 exec > >(tee -a "$LOG") 2>&1
