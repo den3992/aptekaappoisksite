@@ -109,6 +109,20 @@ PHARMACIES: list[dict] = [
         "url": "https://s-zdorovie.ru",
         "logo": "zdorovie",
     },
+    # Магнит Аптека (apteka.magnit.ru) — федеральная сеть, мультигород через FIAS.
+    # Фаза 1: наши 4 города. Цена И остаток по городу (webgate). Этап 1: без карты
+    # по аптекам — БЕЗ lat/lng (маркеров нет, как у 36,6/Ригла/Аптечество Этап 1).
+    *[
+        {
+            "id": "magnit",
+            "name": "Магнит Аптека",
+            "city": _c,
+            "address": "Сеть аптек Магнит",
+            "url": "https://apteka.magnit.ru",
+            "logo": "magnit",
+        }
+        for _c in ("msk", "spb", "krd", "nn")
+    ],
 ]
 
 
