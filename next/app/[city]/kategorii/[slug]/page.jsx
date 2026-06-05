@@ -1,7 +1,7 @@
 import CategoryDetailClient from './CategoryDetailClient';
 import { fetchCategories } from '../../../../api/client';
 import { categoryDetailJsonLd, categoryFaqJsonLd } from '../../../../lib/schemas';
-const G = { msk: 'Москвы', spb: 'Санкт-Петербурга', krd: 'Краснодара', nn: 'Нижнего Новгорода' };
+const G = { msk: 'Москвы', spb: 'Санкт-Петербурга', krd: 'Краснодара', nn: 'Нижнего Новгорода', ekb: 'Екатеринбурга', kzn: 'Казани', nsk: 'Новосибирска', sam: 'Самары', chel: 'Челябинска', ufa: 'Уфы' };
 export async function generateMetadata({ params }) {
   const { city, slug } = await params;
   const g = G[city] || 'Москвы';

@@ -26,6 +26,8 @@ const CITY_GEN = {
   spb: 'Санкт-Петербурга', 'sankt-peterburg': 'Санкт-Петербурга',
   krd: 'Краснодара', krasnodar: 'Краснодара',
   nn: 'Нижнего Новгорода', 'nizhniy-novgorod': 'Нижнего Новгорода',
+  ekb: 'Екатеринбурга', kzn: 'Казани', nsk: 'Новосибирска',
+  sam: 'Самары', chel: 'Челябинска', ufa: 'Уфы',
 };
 
 export default function Home() {

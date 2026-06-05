@@ -5,6 +5,12 @@ const CITIES = [
   { id: 'spb', name: 'Санкт-Петербург', inLoc: 'Санкт-Петербурге', center: [59.9342802, 30.3350986], zoom: 11 },
   { id: 'krd', name: 'Краснодар', inLoc: 'Краснодаре', center: [45.03547, 38.975313], zoom: 11 },
   { id: 'nn', name: 'Нижний Новгород', inLoc: 'Нижнем Новгороде', center: [56.326797, 44.006516], zoom: 11 },
+  { id: 'ekb', name: 'Екатеринбург', inLoc: 'Екатеринбурге', center: [56.838011, 60.597474], zoom: 11 },
+  { id: 'kzn', name: 'Казань', inLoc: 'Казани', center: [55.796127, 49.106414], zoom: 11 },
+  { id: 'nsk', name: 'Новосибирск', inLoc: 'Новосибирске', center: [55.030199, 82.920430], zoom: 11 },
+  { id: 'sam', name: 'Самара', inLoc: 'Самаре', center: [53.195873, 50.100193], zoom: 11 },
+  { id: 'chel', name: 'Челябинск', inLoc: 'Челябинске', center: [55.159897, 61.402554], zoom: 11 },
+  { id: 'ufa', name: 'Уфа', inLoc: 'Уфе', center: [54.735152, 55.958736], zoom: 11 },
 ];
 
 const CityContext = createContext(null);

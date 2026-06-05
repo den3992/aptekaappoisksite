@@ -4,12 +4,12 @@ import Header from '../../components/Header';
 import MobileTabBar from '../../components/MobileTabBar';
 import SearchOverlay from '../../components/SearchOverlay';
 
-const CITY_NAMES = { msk: 'Москве', spb: 'Санкт-Петербурге', krd: 'Краснодаре', nn: 'Нижнем Новгороде' };
-const CITY_GEN = { msk: 'Москвы', spb: 'Санкт-Петербурга', krd: 'Краснодара', nn: 'Нижнего Новгорода' };
+const CITY_NAMES = { msk: 'Москве', spb: 'Санкт-Петербурге', krd: 'Краснодаре', nn: 'Нижнем Новгороде', ekb: 'Екатеринбурге', kzn: 'Казани', nsk: 'Новосибирске', sam: 'Самаре', chel: 'Челябинске', ufa: 'Уфе' };
+const CITY_GEN = { msk: 'Москвы', spb: 'Санкт-Петербурга', krd: 'Краснодара', nn: 'Нижнего Новгорода', ekb: 'Екатеринбурга', kzn: 'Казани', nsk: 'Новосибирска', sam: 'Самары', chel: 'Челябинска', ufa: 'Уфы' };
 // Не импортируем CITIES из CityContext: тот модуль 'use client', и в server-
 // компоненте именованный экспорт приходит client-reference прокси, а не
 // массивом (TypeError: CITIES.map is not a function на build). Хардкодим.
-const VALID_CITIES = ['msk', 'spb', 'krd', 'nn'];
+const VALID_CITIES = ['msk', 'spb', 'krd', 'nn', 'ekb', 'kzn', 'nsk', 'sam', 'chel', 'ufa'];
 
 export async function generateMetadata({ params }) {
   const { city } = await params;
