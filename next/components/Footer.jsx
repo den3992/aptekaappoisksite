@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { Phone, Mail, ShieldCheck } from 'lucide-react';
+import { Mail, ShieldCheck } from 'lucide-react';
 import { useCity } from '../context/CityContext';
 import PillIcon from './PillIcon';
 
@@ -34,7 +34,6 @@ export default function Footer() {
               Информационный сервис по поиску лекарств, бадов и медицинских изделий в аптеках России. Не продаём и не бронируем препараты.
             </p>
             <div className="mt-4 space-y-1.5 text-sm text-slate-700">
-              <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-emerald-600" /> 8 (800) 700-70-70</div>
               <div className="flex items-center gap-2"><Mail className="w-4 h-4 text-emerald-600" /> info@aptekaa.ru</div>
             </div>
           </div>
@@ -61,7 +60,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-2 md:mt-10 pt-6 border-t border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-xs text-slate-500">
-          <div>© {new Date().getFullYear()} АптекаА · ООО «Идеал-Фарм» · ИНН 5050110424. Все права защищены.</div>
+          <div>© {new Date().getFullYear()} АптекаА · ИП Егорова А. В. Все права защищены.</div>
           <div>Сервис соответствует требованиям ФЗ №152 «О персональных данных». 18+</div>
         </div>
       </div>

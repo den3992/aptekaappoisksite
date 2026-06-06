@@ -1,11 +1,11 @@
 export const metadata = {
-  title: 'Контакты АптекаА — телефон, email, юридический адрес',
-  description: 'АптекаА — горячая линия 8-800-700-70-70, info@aptekaa.ru, юр. адрес ООО «Идеал-Фарм». Часы работы, телефоны партнёров.',
+  title: 'Контакты АптекаА — email и реквизиты',
+  description: 'АптекаА — почта info@aptekaa.ru для вопросов посетителей и подключения аптек-партнёров. Реквизиты сервиса.',
   alternates: { canonical: 'https://aptekaa.ru/kontakty' },
 };
 
 import Link from 'next/link';
-import { Mail, Phone, MapPin, Briefcase, LifeBuoy } from 'lucide-react';
+import { Mail, Briefcase, LifeBuoy } from 'lucide-react';
 
 export default function Contacts() {
   return (
@@ -19,12 +19,10 @@ export default function Contacts() {
 
       <div className="grid sm:grid-cols-2 gap-3 mb-8">
         {[
-          { i: Phone, t: 'Горячая линия', v: '8 (800) 700-70-70', s: 'Бесплатно по РФ' },
           { i: Mail, t: 'Общая почта', v: 'info@aptekaa.ru', s: 'Для любых вопросов от посетителей сайта' },
           { i: Briefcase, t: 'Для аптек-партнёров', v: 'partner@aptekaa.ru', s: 'Подключение и настройка' },
           { i: LifeBuoy, t: 'Техподдержка для аптек', v: 'support@aptekaa.ru', s: 'Уже подключённым партнёрам' },
           { i: Mail, t: 'Загрузка прайс-листов', v: 'price@aptekaa.ru', s: 'Отправка XLSX/CSV прайсов' },
-          { i: MapPin, t: 'Юридический адрес', v: '141195, Московская обл., г. Фрязино, ул. Садовая, д. 1, пом. II', s: 'ООО «Идеал-Фарм»' },
         ].map((c, i) => (
           <div key={i} className="bg-white border border-slate-100 rounded-xl p-5">
             <div className="flex items-center gap-3 mb-2">
@@ -44,23 +42,15 @@ export default function Contacts() {
         <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-2.5 text-sm">
           <div className="flex flex-col">
             <dt className="text-xs text-slate-500">Полное наименование</dt>
-            <dd className="text-slate-800 font-medium">Общество с ограниченной ответственностью «Идеал-Фарм»</dd>
+            <dd className="text-slate-800 font-medium">Индивидуальный предприниматель Егорова Анастасия Васильевна</dd>
           </div>
           <div className="flex flex-col">
             <dt className="text-xs text-slate-500">ИНН</dt>
-            <dd className="text-slate-800 font-medium">5050110424</dd>
+            <dd className="text-slate-800 font-medium">—</dd>
           </div>
           <div className="flex flex-col">
-            <dt className="text-xs text-slate-500">КПП</dt>
-            <dd className="text-slate-800 font-medium">505001001</dd>
-          </div>
-          <div className="flex flex-col">
-            <dt className="text-xs text-slate-500">ОГРН</dt>
-            <dd className="text-slate-800 font-medium">1145050001942</dd>
-          </div>
-          <div className="flex flex-col">
-            <dt className="text-xs text-slate-500">Юридический адрес</dt>
-            <dd className="text-slate-800 font-medium">141195, Московская обл., г. Фрязино, ул. Садовая, д. 1, помещ. II встроенное, этаж 1</dd>
+            <dt className="text-xs text-slate-500">ОГРНИП</dt>
+            <dd className="text-slate-800 font-medium">—</dd>
           </div>
         </dl>
       </section>
