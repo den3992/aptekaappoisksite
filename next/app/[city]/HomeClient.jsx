@@ -15,9 +15,9 @@ import LeadModal from '../../components/LeadModal';
 const POPULAR_QUERIES = ['Парацетамол', 'Нурофен', 'Витамин D3', 'Омепразол', 'Кагоцел', 'Смекта'];
 
 const TRUST_SIGNALS = [
-  { icon: ShieldCheck, text: 'Более 2000 аптек-партнёров в Москве и СПб' },
+  { icon: ShieldCheck, text: 'Тысячи аптек в 10 городах России' },
   { icon: Pill, text: 'Более 23 000 препаратов в каталоге' },
-  { icon: Building2, text: '14+ аптечных сетей по всей России' },
+  { icon: Building2, text: '7 аптечных сетей в каталоге' },
   { icon: Map, text: 'Цены и наличие на интерактивной карте' },
   { icon: Sparkles, text: 'Бесплатно и без регистрации' },
 ];
@@ -122,7 +122,7 @@ export default function Home() {
             Лекарства в аптеках {cityGen}:<br /><span className="text-emerald-600">цены и наличие</span>
           </h1>
           <p className="mt-4 md:mt-6 text-base md:text-lg text-slate-600 max-w-2xl mx-auto">
-            Бесплатная аптечная справочная по Москве и СПб. Сравнивайте наличие и цены на лекарства, БАДы и аптечные товары. Без регистрации.
+            Бесплатная аптечная справочная по крупным городам России. Сравнивайте наличие и цены на лекарства, БАДы и аптечные товары. Без регистрации.
           </p>
 
           <div className="hidden md:flex mt-10 items-center gap-2 flex-wrap justify-center text-xs text-slate-500">

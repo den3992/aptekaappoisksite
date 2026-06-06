@@ -3,7 +3,7 @@ import { formatName, formatManufacturer } from "../../../../utils/text";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ChevronRight, ChevronLeft, MapPin, Phone, Clock, Pill, ShieldAlert, Tag, PackageX, Maximize2, Minimize2, Search, X, Send } from 'lucide-react';
+import { ChevronRight, ChevronLeft, MapPin, Phone, Clock, Pill, ShieldAlert, Tag, PackageX, Maximize2, Minimize2, Search } from 'lucide-react';
 import { useCity } from '../../../../context/CityContext';
 import { Drawer as VaulDrawer } from 'vaul';
 import { fetchMed, fetchAnalogs, fetchPharmacies, fetchCategories, fetchGorzdravStores, fetchGorzdravStoreDetail, fetchGorzdravStoresBulk } from '../../../../api/client';
