@@ -66,6 +66,8 @@ MAGNIT_FIAS = {
     "sam":  ("Самара",            "bb035cc3-1dc2-4627-9d25-a1bf2d4b936b"),
     "chel": ("Челябинск",         "a376e68d-724a-4472-be7c-891bdb09ae32"),
     "ufa":  ("Уфа",               "7339e834-2cb4-4734-a4c7-1fca2c66e562"),
+    "rnd":  ("Ростов-на-Дону",    "c1cfe4b9-f7c2-423c-abfa-6ed1c05a15c5"),
+    "vrn":  ("Воронеж",           "5bf5ddff-6353-4a3d-80c4-6fb27f00c6c1"),
 }
 DEFAULT_CITIES = list(MAGNIT_FIAS.keys())
 

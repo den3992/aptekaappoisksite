@@ -29,6 +29,7 @@ const CITY_GEN = {
   nn: 'Нижнего Новгорода', 'nizhniy-novgorod': 'Нижнего Новгорода',
   ekb: 'Екатеринбурга', kzn: 'Казани', nsk: 'Новосибирска',
   sam: 'Самары', chel: 'Челябинска', ufa: 'Уфы',
+  rnd: 'Ростова-на-Дону', vrn: 'Воронежа',
 };
 
 export default function Home() {

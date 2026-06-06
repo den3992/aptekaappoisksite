@@ -36,7 +36,7 @@ from scripts.parse_gorzdrav import MONGO_URL, DB_NAME, log
 API = "https://api.webmaster.yandex.net/v4"
 HOST_NAME = "aptekaa.ru"
 SITE = "https://aptekaa.ru"
-NEW_CITIES = ["ekb", "kzn", "nsk", "sam", "chel", "ufa"]
+NEW_CITIES = ["ekb", "kzn", "nsk", "sam", "chel", "ufa", "rnd", "vrn"]
 REAL = ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie"]
 DAILY_LIMIT = 470
 TOKEN = os.environ.get("YANDEX_WEBMASTER_TOKEN", "")

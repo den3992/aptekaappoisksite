@@ -52,7 +52,7 @@ def main():
     # разные региональные страницы. Пинаем все обслуживаемые города. (Если в
     # каком-то городе у slug нет цены — страница noindex, Яндекс её просто
     # пропустит, вреда нет.)
-    cities = ["msk", "spb", "krd", "nn", "ekb", "kzn", "nsk", "sam", "chel", "ufa"]
+    cities = ["msk", "spb", "krd", "nn", "ekb", "kzn", "nsk", "sam", "chel", "ufa", "rnd", "vrn"]
     urls = []
     for s in slugs:
         for c in cities:

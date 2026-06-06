@@ -2,7 +2,7 @@ import PharmacyDetailClient from './PharmacyDetailClient';
 import { fetchPharmacy } from '../../../../api/client';
 import { pharmacyJsonLd } from '../../../../lib/schemas';
 import { notFound } from 'next/navigation';
-const L = { msk: 'Москве', spb: 'Санкт-Петербурге', krd: 'Краснодаре', nn: 'Нижнем Новгороде', ekb: 'Екатеринбурге', kzn: 'Казани', nsk: 'Новосибирске', sam: 'Самаре', chel: 'Челябинске', ufa: 'Уфе' };
+const L = { msk: 'Москве', spb: 'Санкт-Петербурге', krd: 'Краснодаре', nn: 'Нижнем Новгороде', ekb: 'Екатеринбурге', kzn: 'Казани', nsk: 'Новосибирске', sam: 'Самаре', chel: 'Челябинске', ufa: 'Уфе', rnd: 'Ростове-на-Дону', vrn: 'Воронеже' };
 export async function generateMetadata({ params }) {
   const { city, id } = await params;
   const loc = L[city] || 'Москве';

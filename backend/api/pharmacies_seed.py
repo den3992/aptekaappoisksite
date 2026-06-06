@@ -13,6 +13,8 @@ CITIES = [
     {"slug": "sam", "name": "Самара", "lat": 53.2415, "lng": 50.2212},
     {"slug": "chel", "name": "Челябинск", "lat": 55.1644, "lng": 61.4368},
     {"slug": "ufa", "name": "Уфа", "lat": 54.7388, "lng": 55.9721},
+    {"slug": "rnd", "name": "Ростов-на-Дону", "lat": 47.2225, "lng": 39.7188},
+    {"slug": "vrn", "name": "Воронеж", "lat": 51.6608, "lng": 39.2003},
 ]
 
 CATEGORIES = [
@@ -127,7 +129,7 @@ PHARMACIES: list[dict] = [
             "url": "https://apteka.magnit.ru",
             "logo": "magnit",
         }
-        for _c in ("msk", "spb", "krd", "nn", "ekb", "kzn", "nsk", "sam", "chel", "ufa")
+        for _c in ("msk", "spb", "krd", "nn", "ekb", "kzn", "nsk", "sam", "chel", "ufa", "rnd", "vrn")
     ],
 ]
 

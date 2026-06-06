@@ -11,6 +11,8 @@ const CITIES = [
   { id: 'sam', name: 'Самара', inLoc: 'Самаре', center: [53.195873, 50.100193], zoom: 11 },
   { id: 'chel', name: 'Челябинск', inLoc: 'Челябинске', center: [55.159897, 61.402554], zoom: 11 },
   { id: 'ufa', name: 'Уфа', inLoc: 'Уфе', center: [54.735152, 55.958736], zoom: 11 },
+  { id: 'rnd', name: 'Ростов-на-Дону', inLoc: 'Ростове-на-Дону', center: [47.222531, 39.718705], zoom: 11 },
+  { id: 'vrn', name: 'Воронеж', inLoc: 'Воронеже', center: [51.660781, 39.200296], zoom: 11 },
 ];
 
 const CityContext = createContext(null);
