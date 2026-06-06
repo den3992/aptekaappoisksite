@@ -541,7 +541,7 @@ function ViewportListItem({ item, onClick, selected = false }) {
     >
       <button type="button" onClick={onClick} className="w-full text-left flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <div className="font-semibold text-slate-900 text-sm leading-tight">{item.name || (item.source === 'gorzdrav' ? 'Горздрав' : item.source === 'apteka366' ? 'Аптека 36,6' : item.source === 'rigla' ? 'Ригла' : item.source === 'maksavit' ? 'Максавит' : 'Аптека')}</div>
+          <div className="font-semibold text-slate-900 text-sm leading-tight">{item.name || (item.source === 'gorzdrav' ? 'Горздрав' : item.source === 'apteka366' ? 'Аптека 36,6' : item.source === 'rigla' ? 'Ригла' : item.source === 'maksavit' ? 'Максавит' : item.source === 'aptechestvo' ? 'Аптечество' : item.source === 'zdorovie' ? 'Здоровье' : item.source === 'magnit' ? 'Магнит Аптека' : 'Аптека')}</div>
           {item.address && (
             <div className="text-[11px] text-slate-500 mt-0.5 flex items-start gap-1">
               <MapPin className="w-3 h-3 shrink-0 mt-0.5" />
@@ -954,9 +954,15 @@ export default function MedDetail({ initialMed = null }) {
   const totalPharmacyCount = prices.reduce((sum, p) => {
     const fromBitmap = popcountBitmap(p.store_bitmap);
     if (fromBitmap > 0) return sum + fromBitmap;
-    return sum + (p.pharmacy_id === 'gorzdrav' ? (p.qty || 0) : 1);
+    return sum + (p.pharmacy_id === 'gorzdrav' ? (p.qty || 0) : 0);
   }, 0);
   
+  // Сети без по-аптечных координат (Магнит/Аптечество/Здоровье) — нет адресов
+  // отдельных точек; показываем как сеть, а не как «1 аптеку» с пустой картой.
+  const NET_NAMES_ALL = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека' };
+  const networkNames = [...new Set(prices.filter(p => NET_NAMES_ALL[p.pharmacy_id] && p.price > 0).map(p => NET_NAMES_ALL[p.pharmacy_id]))];
+  const networkStr = networkNames.length <= 1 ? (networkNames[0] || '') : networkNames.slice(0, -1).join(', ') + ' и ' + networkNames.slice(-1);
+  const networkWord = networkNames.length > 1 ? 'в сетях' : 'в сети';
   const formLower = (med.form || '').toLowerCase();
 
   // (Schema.org Drug рендерится в SSR-обёртке page.jsx через medGraphJsonLd.)
@@ -1086,9 +1092,9 @@ export default function MedDetail({ initialMed = null }) {
               </div>
               <div className="text-sm text-slate-600 mt-1">
                 {minPrice !== maxPrice ? (
-                  <>от&nbsp;{minPrice}&nbsp;₽ до&nbsp;{maxPrice}&nbsp;₽ · в&nbsp;{totalPharmacyCount}&nbsp;аптеках</>
+                  <>от&nbsp;{minPrice}&nbsp;₽ до&nbsp;{maxPrice}&nbsp;₽{totalPharmacyCount > 0 ? <> · в&nbsp;{totalPharmacyCount}&nbsp;аптеках</> : (networkStr ? <> · {networkWord} {networkStr}</> : null)}</>
                 ) : (
-                  <>в&nbsp;{totalPharmacyCount}&nbsp;аптеках</>
+                  totalPharmacyCount > 0 ? <>в&nbsp;{totalPharmacyCount}&nbsp;аптеках</> : (networkStr ? <>{networkWord} {networkStr}</> : null)
                 )}
               </div>
             </div>
@@ -1136,6 +1142,14 @@ export default function MedDetail({ initialMed = null }) {
             );
           })()}
 
+          {totalPharmacyCount === 0 && networkNames.length >= 1 && (
+            <div className="mt-4 bg-white border border-slate-200 rounded-xl p-4" data-testid="network-only-note">
+              <div className="text-sm text-slate-700 leading-relaxed">
+                Наличие в {networkNames.length > 1 ? 'сетях' : 'сети'} <b>{networkStr}</b> — цена указана по&nbsp;{city.inLoc}. Адреса конкретных аптек и точный остаток уточняйте на&nbsp;сайте сети.
+              </div>
+            </div>
+          )}
+
           {prices.length === 0 && (
             <div className="mt-5 bg-amber-50/50 border border-amber-200 rounded-xl p-4" data-testid="out-of-stock-section">
               <div className="flex items-start gap-3">
@@ -1182,8 +1196,9 @@ export default function MedDetail({ initialMed = null }) {
         </div>
       </div>
 
-      {/* Map */}
-      {prices.length > 0 && (
+      {/* Map — только когда есть аптеки с координатами. Сети без адресов точек
+          (Магнит и пр.) карту не показывают — вместо неё карточка сети выше. */}
+      {totalPharmacyCount > 0 && (
         <section
           className={mapFullscreen ? "fixed inset-0 z-[70] bg-white flex flex-col" : "mb-8 md:mb-10"}
           data-testid="med-map-section"
