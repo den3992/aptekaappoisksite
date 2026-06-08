@@ -181,9 +181,9 @@ export default function Home() {
       <section className="max-w-7xl mx-auto px-4 py-10 md:py-14">
         <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl p-6 md:p-12 text-white relative overflow-hidden">
           <div className="max-w-2xl relative z-10">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/15 rounded-full text-xs font-medium mb-4">
+            <button type="button" onClick={() => setLeadOpen(true)} data-testid="home-lead-badge" className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/15 hover:bg-white/25 rounded-full text-xs font-medium mb-4 transition cursor-pointer">
               <Search className="w-3.5 h-3.5" /> Не нашли лекарство?
-            </div>
+            </button>
             <h2 className="text-2xl md:text-4xl font-bold mb-3">Найдём нужный препарат в ближайшей к вам аптеке</h2>
             <p className="text-emerald-50 leading-relaxed mb-6 max-w-xl">
               Оставьте заявку — найдём, где лекарство есть в наличии рядом с вами, и сообщим.
