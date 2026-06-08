@@ -18,7 +18,7 @@ function isActive(pathname, target) {
   if (target === 'home') return pathname === '/' || /^\/[a-z-]+\/?$/.test(pathname);
   if (target === 'search') return /\/poisk(\b|$)/.test(pathname);
   if (target === 'catalog') return /\/kategorii(\b|$)/.test(pathname) || /\/preparaty(\b|$)/.test(pathname);
-  if (target === 'pharmacies') return /\/apteki(\b|$)/.test(pathname);
+  if (target === 'about') return /\/o-servise(\b|$)/.test(pathname);
   return false;
 }
 
@@ -108,7 +108,7 @@ export default function MobileTabBar() {
     { key: 'home', label: 'Главная', icon: Home, to: `${cityPrefix}` || '/' },
     { key: 'catalog', label: 'Каталог', icon: LayoutGrid, to: `${cityPrefix}/kategorii` },
     { key: 'search', label: 'Поиск', icon: Search, action: openSearchOverlay },
-    { key: 'pharmacies', label: 'Аптеки', icon: MapPin, to: `${cityPrefix}/apteki` },
+    { key: 'about', label: 'О сервисе', icon: Info, to: '/o-servise' },
     { key: 'more', label: 'Ещё', icon: Menu, action: () => setMoreOpen(true) },
   ];
 
@@ -199,7 +199,7 @@ export default function MobileTabBar() {
           <div className="px-4 pb-6 grid grid-cols-1 gap-1">
             {[
               { to: '/dlya-aptek', label: 'Для аптек', icon: Building2 },
-              { to: '/o-servise', label: 'О сервисе', icon: Info },
+              { to: `${cityPrefix}/apteki`, label: 'Аптеки', icon: MapPin },
               { to: '/kontakty', label: 'Контакты', icon: Phone },
               { to: '/politika-konfidencialnosti', label: 'Конфиденциальность', icon: ShieldCheck },
               { to: '/soglasie-na-obrabotku-pd', label: 'Согласие на ОПД', icon: FileText },
