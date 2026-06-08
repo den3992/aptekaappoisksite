@@ -1,6 +1,9 @@
 import './globals.css';
 import Script from 'next/script';
 import Footer from '../components/Footer';
+import MobileTabBar from '../components/MobileTabBar';
+import SearchOverlay from '../components/SearchOverlay';
+import { CityProvider } from '../context/CityContext';
 
 // Я.Метрика counter ID — установлен в CRA-версии сайта, перенесён в Next.js
 // при Phase 9 cleanup. Без этого счётчика обрывается:
@@ -44,8 +47,12 @@ export default function RootLayout({ children }) {
   return (
     <html lang="ru">
       <body className="min-h-[100dvh] flex flex-col overflow-x-clip bg-white">
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <CityProvider>
+          <main className="flex-1">{children}</main>
+          <Footer />
+          <MobileTabBar />
+          <SearchOverlay />
+        </CityProvider>
         {/* Я.Метрика — strategy="afterInteractive" грузит счётчик после
             hydration, не блокируя FCP/LCP. */}
         <Script

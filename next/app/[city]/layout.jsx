@@ -1,8 +1,5 @@
 import { notFound } from 'next/navigation';
-import { CityProvider } from '../../context/CityContext';
 import Header from '../../components/Header';
-import MobileTabBar from '../../components/MobileTabBar';
-import SearchOverlay from '../../components/SearchOverlay';
 
 const CITY_NAMES = { msk: 'Москве', spb: 'Санкт-Петербурге', krd: 'Краснодаре', nn: 'Нижнем Новгороде', ekb: 'Екатеринбурге', kzn: 'Казани', nsk: 'Новосибирске', sam: 'Самаре', chel: 'Челябинске', ufa: 'Уфе', rnd: 'Ростове-на-Дону', vrn: 'Воронеже' };
 const CITY_GEN = { msk: 'Москвы', spb: 'Санкт-Петербурга', krd: 'Краснодара', nn: 'Нижнего Новгорода', ekb: 'Екатеринбурга', kzn: 'Казани', nsk: 'Новосибирска', sam: 'Самары', chel: 'Челябинска', ufa: 'Уфы', rnd: 'Ростова-на-Дону', vrn: 'Воронежа' };
@@ -41,11 +38,9 @@ export default async function CityLayout({ children, params }) {
   if (!VALID_CITIES.includes(city)) notFound();
 
   return (
-    <CityProvider>
+    <>
       <Header />
       {children}
-      <MobileTabBar />
-      <SearchOverlay />
-    </CityProvider>
+    </>
   );
 }
