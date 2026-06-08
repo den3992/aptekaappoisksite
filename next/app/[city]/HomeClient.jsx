@@ -192,7 +192,7 @@ export default function Home() {
               type="button"
               onClick={() => setLeadOpen(true)}
               data-testid="home-lead-btn"
-              className="inline-flex items-center gap-2 bg-white text-emerald-700 hover:bg-emerald-50 font-semibold px-6 py-3 rounded-xl transition"
+              className="inline-flex items-center gap-2 bg-white text-red-600 hover:bg-red-50 font-semibold px-6 py-3 rounded-xl transition"
             >
               <Search className="w-4 h-4" /> Оставить заявку на поиск лекарства
             </button>
