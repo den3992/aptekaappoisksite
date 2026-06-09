@@ -410,7 +410,7 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
               const popup = m.getPopup();
               if (!popup) return;
               popup.setContent(popupContent({
-                title: full.full_name || markerTitle,
+                title: brand === 'magnit' ? markerTitle : (full.full_name || markerTitle),
                 address: full.address,
                 hours: full.is_24h ? 'Круглосуточно' : full.hours,
                 phone: full.phone,
@@ -899,7 +899,7 @@ export default function MedDetail({ initialMed = null }) {
   useEffect(() => {
     const need = viewportList
       .slice(0, viewportVisible)
-      .filter(x => (x.source === 'gorzdrav' || x.source === 'apteka366' || x.source === 'rigla' || x.source === 'maksavit') && !x.name)
+      .filter(x => (x.source === 'gorzdrav' || x.source === 'apteka366' || x.source === 'rigla' || x.source === 'maksavit' || x.source === 'magnit') && !x.name)
       .map(x => x.store_id);
     if (need.length === 0) return;
     let cancelled = false;
@@ -907,11 +907,11 @@ export default function MedDetail({ initialMed = null }) {
       if (cancelled) return;
       const byId = Object.fromEntries(details.map(d => [d.store_id, d]));
       setViewportList(prev => prev.map(item => {
-        if ((item.source === 'gorzdrav' || item.source === 'apteka366' || item.source === 'rigla' || item.source === 'maksavit') && !item.name && byId[item.store_id]) {
+        if ((item.source === 'gorzdrav' || item.source === 'apteka366' || item.source === 'rigla' || item.source === 'maksavit' || item.source === 'magnit') && !item.name && byId[item.store_id]) {
           const d = byId[item.store_id];
           return {
             ...item,
-            name: d.full_name || (item.source === 'apteka366' ? 'Аптека 36,6' : item.source === 'rigla' ? 'Ригла' : item.source === 'maksavit' ? 'Максавит' : 'Горздрав'),
+            name: item.source === 'magnit' ? 'Магнит Аптека' : (d.full_name || (item.source === 'apteka366' ? 'Аптека 36,6' : item.source === 'rigla' ? 'Ригла' : item.source === 'maksavit' ? 'Максавит' : 'Горздрав')),
             address: d.address,
             hours: d.is_24h ? 'Круглосуточно' : d.hours,
             phone: d.phone,
