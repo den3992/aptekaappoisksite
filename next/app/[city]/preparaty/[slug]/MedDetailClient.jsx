@@ -685,7 +685,7 @@ export default function MedDetail({ initialMed = null }) {
   // Упаковки, для которых у Горздрав есть реальные данные — приоритет дефолта.
   const inStockPacks = useMemo(() => {
     const arr = (med?.prices_by_city?.[city.id] || [])
-      .filter(p => p.pharmacy_id === 'gorzdrav')
+      .filter(p => p.store_bitmap)
       .map(p => p.gz_pack)
       .filter(Boolean);
     return new Set(arr);
