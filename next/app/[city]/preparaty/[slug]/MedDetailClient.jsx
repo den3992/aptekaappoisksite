@@ -205,7 +205,7 @@ function parsePhones(raw) {
     .filter(Boolean);
 }
 
-const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, gorzdravStores = [], gorzdravPrice = null, gorzdravBitmap = null, apteka366Price = null, apteka366Bitmap = null, riglaPrice = null, riglaBitmap = null, maksavitPrice = null, maksavitBitmap = null, cityCenter, onSelect, selected, fullscreen = false, onInteract, onViewportChange }, externalRef) {
+const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, gorzdravStores = [], gorzdravPrice = null, gorzdravBitmap = null, apteka366Price = null, apteka366Bitmap = null, riglaPrice = null, riglaBitmap = null, maksavitPrice = null, maksavitBitmap = null, magnitPrice = null, magnitBitmap = null, cityCenter, onSelect, selected, fullscreen = false, onInteract, onViewportChange }, externalRef) {
   const ref = useRef(null);
   const mapRef = useRef(null);
   const tileLayerRef = useRef(null);
@@ -368,7 +368,7 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
         partnerBounds.push([ph.lat, ph.lng]);
       });
 
-      if ((gorzdravPrice !== null || apteka366Price !== null || riglaPrice !== null || maksavitPrice !== null) && gorzdravStores.length > 0) {
+      if ((gorzdravPrice !== null || apteka366Price !== null || riglaPrice !== null || maksavitPrice !== null || magnitPrice !== null) && gorzdravStores.length > 0) {
         // Маркер только для аптек, где препарат реально есть (store_bitmap),
         // а не для всех ~1900 точек сети. Каждая сеть красит свои точки своей
         // ценой и своей РЕАЛЬНОЙ маской наличия (idx общий — единый реестр).
@@ -377,8 +377,9 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
           apteka366: decodeBitmap(apteka366Bitmap),
           rigla: decodeBitmap(riglaBitmap),
           maksavit: decodeBitmap(maksavitBitmap),
+          magnit: decodeBitmap(magnitBitmap),
         };
-        const BRAND_PRICE = { gorzdrav: gorzdravPrice, apteka366: apteka366Price, rigla: riglaPrice, maksavit: maksavitPrice };
+        const BRAND_PRICE = { gorzdrav: gorzdravPrice, apteka366: apteka366Price, rigla: riglaPrice, maksavit: maksavitPrice, magnit: magnitPrice };
         const BRAND_TITLE = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека' };
         gorzdravStores.forEach(store => {
           if (!store.lat || !store.lng) return;
@@ -504,7 +505,7 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
     };
     // eslint-disable-next-line
-  }, [med?.slug, cityCenter[0], cityCenter[1], prices.length, gorzdravStores.length, gorzdravPrice, gorzdravBitmap, apteka366Price, apteka366Bitmap, riglaPrice, riglaBitmap, maksavitPrice, maksavitBitmap, fullscreen]);
+  }, [med?.slug, cityCenter[0], cityCenter[1], prices.length, gorzdravStores.length, gorzdravPrice, gorzdravBitmap, apteka366Price, apteka366Bitmap, riglaPrice, riglaBitmap, maksavitPrice, maksavitBitmap, magnitPrice, magnitBitmap, fullscreen]);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -821,12 +822,13 @@ export default function MedDetail({ initialMed = null }) {
       apteka366: prices.find(p => p.pharmacy_id === 'apteka366')?.price ?? null,
       rigla: prices.find(p => p.pharmacy_id === 'rigla')?.price ?? null,
       maksavit: prices.find(p => p.pharmacy_id === 'maksavit')?.price ?? null,
+      magnit: prices.find(p => p.pharmacy_id === 'magnit')?.price ?? null,
     };
 
     // 1. Партнёрские аптеки в bbox + у них есть цена для активной упаковки.
     const partnerEntries = prices
       .map(pr => {
-        if (pr.pharmacy_id === 'gorzdrav' || pr.pharmacy_id === 'apteka366' || pr.pharmacy_id === 'rigla' || pr.pharmacy_id === 'maksavit') return null;
+        if (pr.pharmacy_id === 'gorzdrav' || pr.pharmacy_id === 'apteka366' || pr.pharmacy_id === 'rigla' || pr.pharmacy_id === 'maksavit' || pr.pharmacy_id === 'magnit') return null;
         const ph = pharmacies.find(p => p.id === pr.pharmacy_id);
         if (!ph || !ph.lat || !ph.lng) return null;
         if (ph.lat < bounds.south || ph.lat > bounds.north) return null;
@@ -854,6 +856,7 @@ export default function MedDetail({ initialMed = null }) {
       apteka366: decodeBitmap(prices.find(p => p.pharmacy_id === 'apteka366')?.store_bitmap),
       rigla: decodeBitmap(prices.find(p => p.pharmacy_id === 'rigla')?.store_bitmap),
       maksavit: decodeBitmap(prices.find(p => p.pharmacy_id === 'maksavit')?.store_bitmap),
+      magnit: decodeBitmap(prices.find(p => p.pharmacy_id === 'magnit')?.store_bitmap),
     };
     const gzCandidates = gorzdravStores
       .filter(s => s.lat >= bounds.south && s.lat <= bounds.north && s.lng >= bounds.west && s.lng <= bounds.east)
@@ -1268,6 +1271,8 @@ export default function MedDetail({ initialMed = null }) {
               riglaBitmap={prices.find(p => p.pharmacy_id === 'rigla')?.store_bitmap ?? null}
               maksavitPrice={prices.find(p => p.pharmacy_id === 'maksavit')?.price ?? null}
               maksavitBitmap={prices.find(p => p.pharmacy_id === 'maksavit')?.store_bitmap ?? null}
+              magnitPrice={prices.find(p => p.pharmacy_id === 'magnit')?.price ?? null}
+              magnitBitmap={prices.find(p => p.pharmacy_id === 'magnit')?.store_bitmap ?? null}
               cityCenter={city.center}
               onSelect={(pid) => {
                 setSelectedId(pid);

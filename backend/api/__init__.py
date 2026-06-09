@@ -146,6 +146,8 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
                 doc["brand"] = "rigla"
             elif _src == "maksavit":
                 doc["brand"] = "maksavit"
+            elif _src == "magnit":
+                doc["brand"] = "magnit"
             elif _name == "36,6":
                 doc["brand"] = "apteka366"
             else:
