@@ -36,6 +36,9 @@ ALLOWED_MESSENGERS = {"max", "whatsapp", "telegram"}
 _MSG_LABEL = {"max": "Max", "whatsapp": "WhatsApp", "telegram": "Telegram"}
 
 _RATE = defaultdict(list)
+_GLOBAL: list = []          # все заявки — глобальный потолок против флуда с ротацией IP
+_LAST_SWEEP = [0.0]         # время последней очистки устаревших ключей _RATE
+GLOBAL_LIMIT = 60           # макс. заявок/час суммарно (на воркер)
 
 
 def _client_ip(request: Request) -> str:
@@ -58,13 +61,30 @@ def _client_ip(request: Request) -> str:
 def _rate_limit_or_429(request: Request, limit: int, per_seconds: int) -> None:
     ip = _client_ip(request)
     now = time.time()
-    bucket = _RATE[ip]
     cutoff = now - per_seconds
+
+    # Периодически чистим устаревшие ключи, чтобы _RATE не рос неограниченно
+    # (in-memory, без внешнего стора — ПД намеренно не персистим).
+    if now - _LAST_SWEEP[0] > 600:
+        for k in [k for k, b in _RATE.items() if not b or b[-1] < cutoff]:
+            _RATE.pop(k, None)
+        _LAST_SWEEP[0] = now
+
+    # Глобальный потолок — ограничивает суммарный поток писем даже при ротации IP.
+    while _GLOBAL and _GLOBAL[0] < cutoff:
+        _GLOBAL.pop(0)
+    if len(_GLOBAL) >= GLOBAL_LIMIT:
+        raise HTTPException(429, "Слишком много заявок. Попробуйте позже.")
+
+    # Пер-IP лимит.
+    bucket = _RATE[ip]
     while bucket and bucket[0] < cutoff:
         bucket.pop(0)
     if len(bucket) >= limit:
         raise HTTPException(429, "Слишком много заявок. Попробуйте позже.")
+
     bucket.append(now)
+    _GLOBAL.append(now)
 
 
 class SearchRequestIn(BaseModel):
