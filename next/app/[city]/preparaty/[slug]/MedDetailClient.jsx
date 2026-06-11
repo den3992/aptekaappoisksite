@@ -1523,6 +1523,26 @@ export default function MedDetail({ initialMed = null }) {
         );
       })()}
 
+      {/* Перелинковка между городами — SEO discovery + внутренний PageRank.
+          Один и тот же препарат есть во всех городах (slug общий, отличаются
+          цены/наличие). Помогает ботам обойти гео-варианты и юзеру сменить город. */}
+      {med && cities && cities.length > 1 && (
+        <section className="mb-8 md:mb-12" data-testid="other-cities-section">
+          <h2 className="text-lg md:text-xl font-bold text-slate-900 mb-3">{formatName(med.name)} в других городах</h2>
+          <div className="flex flex-wrap gap-2">
+            {cities.filter(c => c.id !== city.id).map(c => (
+              <Link
+                key={c.id}
+                href={`/${c.id}/preparaty/${slug}`}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 text-sm text-slate-700 hover:border-emerald-300 hover:text-emerald-700 transition"
+              >
+                {c.name}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       <LeadModal
         open={leadOpen}
         onClose={() => setLeadOpen(false)}
