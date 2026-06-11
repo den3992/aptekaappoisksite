@@ -38,7 +38,7 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
             "User-agent: Yandex\n"
             "Allow: /\n"
             "Disallow: /api/\n"
-            "Clean-param: utm_source&utm_medium&utm_campaign&utm_content&utm_term\n"
+            "Clean-param: utm_source&utm_medium&utm_campaign&utm_content&utm_term&yclid&gclid&v&cb&security\n"
             f"Host: {host}\n"
             "\n"
             f"Sitemap: https://{host}/sitemap.xml\n"
