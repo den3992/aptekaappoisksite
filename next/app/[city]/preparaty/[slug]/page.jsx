@@ -6,7 +6,7 @@
 // Клиент-компонент сам перерисовывает интерактив.
 import MedDetailClient from './MedDetailClient';
 import { medMetadata, medGraphJsonLd } from '../../../../lib/schemas';
-import { fetchMed, fetchAnalogs } from '../../../../api/client';
+import { fetchMed } from '../../../../api/client';
 import { notFound } from 'next/navigation';
 
 export async function generateMetadata({ params }) {
@@ -18,21 +18,12 @@ export async function generateMetadata({ params }) {
     // аналогов по МНН (seo.py, commit 6303b81 — потеряно при миграции на Next,
     // восстановлено в audit #3). ~1099 страниц. Sitemap их и так исключает;
     // meta noindex не даёт им попасть в индекс по внутренним ссылкам.
-    const hasPrice =
-      med?.prices_by_city &&
-      Object.values(med.prices_by_city).some(
-        (arr) => Array.isArray(arr) && arr.length > 0,
-      );
-    let hasAnalogs = false;
+    // Индексируем гео-страницу ТОЛЬКО при реальном наличии в ЭТОМ городе.
+    // Пустые (нет в наличии в данном городе) Яндекс всё равно бракует как
+    // «малоценные» — noindex концентрирует бюджет обхода на ценных страницах.
+    const cityPrices = med?.prices_by_city?.[city];
+    const hasPrice = Array.isArray(cityPrices) && cityPrices.length > 0;
     if (!hasPrice) {
-      try {
-        const analogs = await fetchAnalogs(slug, 1);
-        hasAnalogs = Array.isArray(analogs) && analogs.length > 0;
-      } catch (e) {
-        /* при ошибке analogs не трогаем индексацию */
-      }
-    }
-    if (!hasPrice && !hasAnalogs) {
       meta.robots = { index: false, follow: true };
     }
     return meta;

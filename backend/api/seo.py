@@ -131,40 +131,35 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
                     lastmod_map[sl] = lm.strftime("%Y-%m-%d")
                 except Exception:
                     pass
-        # Число канонических препаратов на каждый МНН — для определения,
-        # есть ли аналоги. Считаем в Python: Mongo $toLower НЕ понижает
-        # кириллицу, а Python .lower() — понижает.
-        mnn_count = {}
-        async for m in db.medications.find(
-            {"is_canonical": {"$ne": False}, "mnn": {"$nin": [None, ""]}},
-            {"_id": 0, "mnn": 1},
-        ):
-            k = (m.get("mnn") or "").strip().lower()
-            if k:
-                mnn_count[k] = mnn_count.get(k, 0) + 1
+        # Карта наличия по парам (город, slug) — в sitemap идут ТОЛЬКО реальные
+        # пары. Пустые гео-страницы Яндекс бракует как «малоценные», их не
+        # рекламируем (бюджет обхода — на ценные). Те же страницы → noindex.
+        from collections import defaultdict as _dd
+        priced_by_city = _dd(set)
+        async for row in db.prices_real.aggregate([
+            {"$match": {"source": {"$in": ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit"]},
+                        "price": {"$ne": None},
+                        "match_status": {"$in": ["matched", "mnn_match", "needs_review"]}}},
+            {"$group": {"_id": {"c": "$city", "s": "$slug"}}},
+        ]):
+            _id = row.get("_id") or {}
+            if _id.get("c") and _id.get("s"):
+                priced_by_city[_id["c"]].add(_id["s"])
         cursor = db.medications.find(
             {"is_canonical": {"$ne": False}},
-            {"_id": 0, "slug": 1, "mnn": 1, "image_url": 1},
+            {"_id": 0, "slug": 1, "image_url": 1},
         ).sort("slug", 1).skip(skip).limit(per)
         urls = []
         async for d in cursor:
             slug = d.get("slug")
             if not slug:
                 continue
-            # Тупиковая страница = нет цены ни в одной сети И нет аналогов по МНН.
-            # Те же страницы отдаются с noindex — в sitemap им не место.
-            has_price = slug in lastmod_map
-            mnn = (d.get("mnn") or "").strip().lower()
-            has_analogs = bool(mnn) and mnn_count.get(mnn, 0) > 1
-            if not has_price and not has_analogs:
-                continue
             lm = lastmod_map.get(slug)
-            # Фото препарата → image sitemap extension (Яндекс.Картинки).
-            # Имена файлов могут содержать кириллицу — percent-encode пути.
             img = d.get("image_url") or ""
             img_abs = f"{host}{quote(img, safe='/')}" if img.startswith("/") else (img or None)
             for c in CITIES:
-                urls.append((f"{host}/{c['slug']}/preparaty/{slug}", lm, img_abs))
+                if slug in priced_by_city.get(c["slug"], ()):
+                    urls.append((f"{host}/{c['slug']}/preparaty/{slug}", lm, img_abs))
         return _urlset(urls)
 
     # ----- yandex-verification placeholder -----
