@@ -168,6 +168,36 @@ export function medGraphJsonLd(city, med) {
     };
   }
 
+  // AggregateRating + Review — звёзды отзывов в выдаче. ТОЛЬКО при наличии
+  // реальных опубликованных отзывов (разметка = видимый блок, требование
+  // Яндекса). Никнейм не собираем → автор обобщённый. Отзывы — на канонический
+  // препарат, поэтому одинаковы во всех городах (это норма для UGC о товаре).
+  const _rv = med.reviews;
+  if (_rv && _rv.count >= 1 && _rv.avg >= 1) {
+    product.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: _rv.avg,
+      reviewCount: _rv.count,
+      bestRating: 5,
+      worstRating: 1,
+    };
+    const _items = Array.isArray(_rv.items) ? _rv.items : [];
+    if (_items.length) {
+      product.review = _items.map((r) => {
+        const rev = {
+          '@type': 'Review',
+          author: { '@type': 'Person', name: 'Посетитель сайта' },
+          reviewRating: { '@type': 'Rating', ratingValue: r.rating, bestRating: 5, worstRating: 1 },
+          reviewBody: r.text,
+        };
+        if (r.created_at) {
+          try { rev.datePublished = new Date(r.created_at).toISOString().slice(0, 10); } catch (e) { /* ignore */ }
+        }
+        return rev;
+      });
+    }
+  }
+
   const medweb = {
     '@type': 'MedicalWebPage',
     '@id': `${canonical}#webpage`,

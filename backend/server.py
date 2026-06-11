@@ -18,6 +18,7 @@ from api.uploads import make_uploads_router
 from api.partners import make_partner_router
 from api.seo import make_seo_router
 from api.lead import make_lead_router
+from api.reviews import make_reviews_router
 
 import time as _time
 from collections import defaultdict as _defaultdict
@@ -200,6 +201,9 @@ app.include_router(make_partner_router(db), prefix="/api")
 # Заявка на поиск лекарства — письмо на info@aptekaa.ru, БЕЗ записи в БД.
 app.include_router(make_lead_router(), prefix="/api")
 
+# Отзывы о препаратах (UGC) — оценка + текст, публикация сразу, анти-спам.
+app.include_router(make_reviews_router(db), prefix="/api")
+
 # SEO endpoints — теперь только robots.txt + sitemap*.xml.
 # После Phase 8 cutover Next.js SSR'ит HTML нативно для всех User-Agent'ов,
 # bot-rewrite в edge nginx удалён, эндпоинт /api/seo/render тоже удалён.
@@ -232,6 +236,10 @@ async def ensure_indexes():
         await db.unmatched_items.create_index([("upload_id", 1)])
         await db.unmatched_items.create_index([("pharmacy_id", 1), ("gtin", 1)])
         await db.pharmacy_uploads.create_index([("pharmacy_id", 1), ("uploaded_at", -1)])
+        # Отзывы: список опубликованных по препарату (новые сверху) + анти-спам.
+        await db.reviews.create_index([("slug", 1), ("status", 1), ("created_at", -1)])
+        await db.reviews.create_index([("ip_hash", 1), ("created_at", -1)])
+        await db.reviews.create_index([("id", 1)], unique=True)
     except Exception as e:
         logger.warning(f"Index creation skipped: {e}")
 

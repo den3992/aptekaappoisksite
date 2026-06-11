@@ -375,6 +375,47 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         if latest and latest.get("updated_at"):
             med["prices_updated_at"] = latest["updated_at"].isoformat()
 
+        # Отзывы (UGC): агрегат + первая страница для SSR/schema. Блок и звёзды
+        # в выдаче показываются ТОЛЬКО при count>=1 (иначе фронт ничего не рисует
+        # — не плодим тонкость на пустых страницах). Один пул на канонический
+        # препарат (по slug), общий для всех городов.
+        try:
+            r_pipeline = [
+                {"$match": {"slug": slug, "status": "published"}},
+                {"$facet": {
+                    "stats": [{"$group": {"_id": None, "count": {"$sum": 1}, "avg": {"$avg": "$rating"}}}],
+                    "dist": [{"$group": {"_id": "$rating", "n": {"$sum": 1}}}],
+                    "items": [
+                        {"$sort": {"created_at": -1}},
+                        {"$limit": 5},
+                        {"$project": {"_id": 0, "id": 1, "rating": 1, "text": 1, "created_at": 1}},
+                    ],
+                }},
+            ]
+            r_doc = await db.reviews.aggregate(r_pipeline).to_list(1)
+            r_doc = r_doc[0] if r_doc else {"stats": [], "dist": [], "items": []}
+            r_stats = r_doc["stats"][0] if r_doc["stats"] else {"count": 0, "avg": 0}
+            r_count = int(r_stats.get("count", 0))
+            if r_count:
+                r_dist = {str(i): 0 for i in range(1, 6)}
+                for d in r_doc["dist"]:
+                    r_dist[str(d["_id"])] = d["n"]
+                r_items = []
+                for it in r_doc["items"]:
+                    ca = it.get("created_at")
+                    r_items.append({
+                        "id": it["id"], "rating": it["rating"], "text": it["text"],
+                        "created_at": ca.isoformat() if hasattr(ca, "isoformat") else ca,
+                    })
+                med["reviews"] = {
+                    "count": r_count,
+                    "avg": round(float(r_stats.get("avg") or 0), 1),
+                    "dist": r_dist,
+                    "items": r_items,
+                }
+        except Exception:
+            pass
+
         return med
 
     @router.get("/medications/{slug}/analogs")

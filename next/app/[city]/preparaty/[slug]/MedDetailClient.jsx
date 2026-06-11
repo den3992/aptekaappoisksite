@@ -9,6 +9,7 @@ import { Drawer as VaulDrawer } from 'vaul';
 import { fetchMed, fetchAnalogs, fetchPharmacies, fetchCategories, fetchGorzdravStores, fetchGorzdravStoreDetail, fetchGorzdravStoresBulk } from '../../../../api/client';
 import { medFaqItems } from '../../../../lib/schemas';
 import LeadModal from '../../../../components/LeadModal';
+import ReviewsSection from '../../../../components/ReviewsSection';
 // map: Leaflet + OSM (no API key needed)
 
 // Capitalize first letter, lowercase the rest.
@@ -1522,6 +1523,10 @@ export default function MedDetail({ initialMed = null }) {
           </section>
         );
       })()}
+
+      {/* Отзывы о препарате (UGC). Один пул на канонический препарат (slug),
+          общий для всех городов. Блок и звёзды-schema — только при ≥1 отзыве. */}
+      <ReviewsSection slug={slug} initialReviews={med && med.reviews} />
 
       {/* Перелинковка между городами — SEO discovery + внутренний PageRank.
           Один и тот же препарат есть во всех городах (slug общий, отличаются
