@@ -42,7 +42,26 @@ function ReviewModal({ open, onClose, slug, onPublished }) {
   const [status, setStatus] = useState('idle'); // idle|sending|done|error
   const [doneKind, setDoneKind] = useState('published'); // published|hold
   const [errMsg, setErrMsg] = useState('');
+  const [photos, setPhotos] = useState([]); // File[]
+  const [previews, setPreviews] = useState([]); // object URLs
   const tsRef = useRef(0);
+
+  const MAX_PHOTOS = 3;
+  const addPhotos = (fileList) => {
+    const incoming = Array.from(fileList || []).filter((f) => f.type.startsWith('image/'));
+    setPhotos((prev) => {
+      const merged = [...prev, ...incoming].slice(0, MAX_PHOTOS);
+      setPreviews((old) => { old.forEach((u) => URL.revokeObjectURL(u)); return merged.map((f) => URL.createObjectURL(f)); });
+      return merged;
+    });
+  };
+  const removePhoto = (idx) => {
+    setPhotos((prev) => {
+      const next = prev.filter((_, i) => i !== idx);
+      setPreviews((old) => { old.forEach((u) => URL.revokeObjectURL(u)); return next.map((f) => URL.createObjectURL(f)); });
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -58,6 +77,8 @@ function ReviewModal({ open, onClose, slug, onPublished }) {
     // Сброс при каждом открытии/закрытии.
     setRating(0); setHover(0); setText(''); setConsent(false);
     setWebsite(''); setStatus('idle'); setErrMsg(''); setDoneKind('published');
+    setPreviews((old) => { old.forEach((u) => URL.revokeObjectURL(u)); return []; });
+    setPhotos([]);
   }, [open]);
 
   if (!open) return null;
@@ -69,11 +90,16 @@ function ReviewModal({ open, onClose, slug, onPublished }) {
     if (!canSubmit) return;
     setStatus('sending'); setErrMsg('');
     try {
-      const res = await fetch('/api/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug, rating, text: text.trim(), consent, website, ts: tsRef.current }),
-      });
+      const fd = new FormData();
+      fd.append('slug', slug);
+      fd.append('rating', String(rating));
+      fd.append('text', text.trim());
+      fd.append('consent', 'true');
+      fd.append('website', website);
+      fd.append('ts', String(tsRef.current));
+      photos.forEach((f) => fd.append('photos', f, f.name));
+      // Content-Type не ставим — браузер сам выставит multipart boundary.
+      const res = await fetch('/api/reviews', { method: 'POST', body: fd });
       if (!res.ok) {
         let m = 'Не удалось отправить отзыв. Попробуйте позже.';
         try { const j = await res.json(); if (j && j.detail) m = j.detail; } catch {}
@@ -159,6 +185,32 @@ function ReviewModal({ open, onClose, slug, onPublished }) {
               <p className="mt-1 text-xs text-slate-400">{text.trim().length}/20 минимум. Без ссылок и контактов.</p>
             </div>
 
+            <div>
+              <span className="block text-sm font-medium text-slate-700 mb-1.5">Фото (необязательно, до {MAX_PHOTOS})</span>
+              <div className="flex flex-wrap items-center gap-2">
+                {previews.map((src, i) => (
+                  <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200">
+                    <img src={src} alt="" className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => removePhoto(i)} aria-label="Убрать фото"
+                      className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/55 text-white flex items-center justify-center">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                {photos.length < MAX_PHOTOS && (
+                  <label className="w-16 h-16 rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-2xl text-slate-400 cursor-pointer hover:border-emerald-400 hover:text-emerald-500">
+                    +
+                    <input type="file" accept="image/*" multiple className="hidden"
+                      data-testid="review-photo-input"
+                      onChange={(e) => { addPhotos(e.target.files); e.target.value = ''; }} />
+                  </label>
+                )}
+              </div>
+              {photos.length > 0 && (
+                <p className="mt-1 text-xs text-amber-600">Отзыв с фото публикуется после проверки модератором.</p>
+              )}
+            </div>
+
             <label className="flex items-start gap-2.5 cursor-pointer pt-0.5">
               <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)}
                 className="mt-0.5 w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
@@ -197,6 +249,7 @@ export default function ReviewsSection({ slug, initialReviews }) {
   const [apiPage, setApiPage] = useState(0); // 0 = ещё не грузили через API
   const [loadingMore, setLoadingMore] = useState(false);
   const [open, setOpen] = useState(false);
+  const [lightbox, setLightbox] = useState(null); // URL увеличенного фото
 
   const loadMore = useCallback(async () => {
     if (loadingMore) return;
@@ -290,6 +343,16 @@ export default function ReviewsSection({ slug, initialReviews }) {
                     <time className="text-xs text-slate-400">{RU_DATE(r.created_at)}</time>
                   </div>
                   <p className="mt-2 text-sm text-slate-700 leading-relaxed whitespace-pre-line">{r.text}</p>
+                  {Array.isArray(r.photos) && r.photos.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2" data-testid="review-photos">
+                      {r.photos.map((src, i) => (
+                        <button key={i} type="button" onClick={() => setLightbox(src)}
+                          className="w-20 h-20 rounded-lg overflow-hidden border border-slate-200 hover:opacity-90">
+                          <img src={src} alt="Фото из отзыва" loading="lazy" className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
@@ -322,6 +385,15 @@ export default function ReviewsSection({ slug, initialReviews }) {
       )}
 
       <ReviewModal open={open} onClose={() => setOpen(false)} slug={slug} onPublished={onPublished} />
+
+      {lightbox && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 p-4" onClick={() => setLightbox(null)} data-testid="review-lightbox">
+          <img src={lightbox} alt="Фото из отзыва" className="max-w-full max-h-full rounded-lg" />
+          <button onClick={() => setLightbox(null)} aria-label="Закрыть" className="absolute top-4 right-4 p-2 text-white/80 hover:text-white">
+            <X className="w-7 h-7" />
+          </button>
+        </div>
+      )}
     </section>
   );
 }

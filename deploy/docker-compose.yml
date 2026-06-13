@@ -19,6 +19,10 @@ services:
       context: ..
       dockerfile: deploy/backend.Dockerfile
     restart: unless-stopped
+    volumes:
+      # Фото отзывов: backend пишет сюда WebP, edge отдаёт их по /img/reviews/*
+      # (та же live-папка ../next/public/img смонтирована в edge на чтение).
+      - ../next/public/img/reviews:/app/review_photos
     environment:
       MONGO_URL: "mongodb://${MONGO_APP_USER}:${MONGO_APP_PASSWORD}@mongo:27017/${MONGO_DB}?authSource=admin"
       DB_NAME: ${MONGO_DB}

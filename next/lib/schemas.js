@@ -195,6 +195,13 @@ export function medGraphJsonLd(city, med) {
         }
         return rev;
       });
+      // Фото из отзывов — дополнительные изображения товара (image-выдача).
+      const _photoUrls = _items.flatMap((r) => (Array.isArray(r.photos) ? r.photos : [])
+        .map((p) => (p && p.startsWith('http') ? p : `${HOST}${p}`)));
+      if (_photoUrls.length) {
+        const _base = product.image ? (Array.isArray(product.image) ? product.image : [product.image]) : [];
+        product.image = [..._base, ..._photoUrls];
+      }
     }
   }
 

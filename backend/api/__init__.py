@@ -388,7 +388,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
                     "items": [
                         {"$sort": {"created_at": -1}},
                         {"$limit": 5},
-                        {"$project": {"_id": 0, "id": 1, "rating": 1, "text": 1, "created_at": 1}},
+                        {"$project": {"_id": 0, "id": 1, "rating": 1, "text": 1, "photos": 1, "created_at": 1}},
                     ],
                 }},
             ]
@@ -405,6 +405,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
                     ca = it.get("created_at")
                     r_items.append({
                         "id": it["id"], "rating": it["rating"], "text": it["text"],
+                        "photos": it.get("photos") or [],
                         "created_at": ca.isoformat() if hasattr(ca, "isoformat") else ca,
                     })
                 med["reviews"] = {
