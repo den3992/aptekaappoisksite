@@ -47,10 +47,39 @@ function ReviewModal({ open, onClose, slug, onPublished }) {
   const tsRef = useRef(0);
 
   const MAX_PHOTOS = 3;
-  const addPhotos = (fileList) => {
-    const incoming = Array.from(fileList || []).filter((f) => f.type.startsWith('image/'));
+
+  // Сжимаем фото в браузере ДО отправки: ресайз ≤1280px → JPEG q0.82.
+  // Так аплоад с телефона занимает килобайты, а не мегабайты (фикс «Load Failed»
+  // на медленном мобильном). Любой декодируемый браузером формат (вкл. HEIC на
+  // iOS) превращается в компактный JPEG. На сервере фото ещё раз пережимается в
+  // WebP. Если декод не удался — отправляем оригинал (сервер обработает).
+  const downscale = async (file) => {
+    try {
+      const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+      const max = 1280;
+      const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+      const w = Math.max(1, Math.round(bmp.width * scale));
+      const h = Math.max(1, Math.round(bmp.height * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(bmp, 0, 0, w, h);
+      if (bmp.close) bmp.close();
+      const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', 0.82));
+      if (!blob) return file;
+      const base = (file.name || 'photo').replace(/\.[^.]+$/, '');
+      return new File([blob], base + '.jpg', { type: 'image/jpeg' });
+    } catch {
+      return file;
+    }
+  };
+
+  const addPhotos = async (fileList) => {
+    const incoming = Array.from(fileList || []);
+    if (!incoming.length) return;
+    const slots = MAX_PHOTOS - photos.length;
+    const processed = await Promise.all(incoming.slice(0, Math.max(0, slots)).map(downscale));
     setPhotos((prev) => {
-      const merged = [...prev, ...incoming].slice(0, MAX_PHOTOS);
+      const merged = [...prev, ...processed].slice(0, MAX_PHOTOS);
       setPreviews((old) => { old.forEach((u) => URL.revokeObjectURL(u)); return merged.map((f) => URL.createObjectURL(f)); });
       return merged;
     });
