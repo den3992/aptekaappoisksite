@@ -303,7 +303,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
     # ----- Medication detail -----
 
     @router.get("/medications/{slug}")
-    async def medication_detail(slug: str):
+    async def medication_detail(slug: str, city: str = Query(None)):
         med = await db.medications.find_one({"slug": slug}, {"_id": 0})
         if not med:
             raise HTTPException(404, "Medication not found")
@@ -416,6 +416,64 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
                 }
         except Exception:
             pass
+
+        # Гео-сводка по конкретному городу (SEO #1: локальный контент). Городской
+        # уровень (все упаковки/сети), НЕ зависит от активной упаковки → стабильно
+        # в SSR и при гидрации. Раскодируем store_bitmap (бит idx = аптека есть)
+        # × gorzdrav_stores → число аптек + реальные адреса. Сети без по-аптечных
+        # координат (Аптечество/Здоровье) дают только цену, без адресов.
+        if city:
+            try:
+                city_entries = real_prices.get(city, [])
+                idx_brand = {}      # idx -> {brand, price}
+                price_list = []
+                for e in city_entries:
+                    pr = e.get("price")
+                    pr = pr if (isinstance(pr, (int, float)) and pr > 0) else None
+                    if pr is not None:
+                        price_list.append(pr)
+                    bm_b64 = e.get("store_bitmap")
+                    brand = e.get("pharmacy_id")
+                    if not bm_b64:
+                        continue
+                    bm = base64.b64decode(bm_b64)
+                    for byte_i, byte in enumerate(bm):
+                        if not byte:
+                            continue
+                        for bit in range(8):
+                            if byte & (1 << bit):
+                                idx = byte_i * 8 + bit
+                                cur = idx_brand.get(idx)
+                                if cur is None:
+                                    idx_brand[idx] = {"brand": brand, "price": pr}
+                                elif pr is not None and (cur["price"] is None or pr < cur["price"]):
+                                    idx_brand[idx] = {"brand": brand, "price": pr}
+                if price_list:
+                    stores = []
+                    if idx_brand:
+                        st_cursor = db.gorzdrav_stores.find(
+                            {"city": city, "idx": {"$in": list(idx_brand.keys())},
+                             "address": {"$nin": [None, ""]}, "active": {"$ne": False}},
+                            {"_id": 0, "idx": 1, "name": 1, "full_name": 1, "address": 1},
+                        )
+                        async for s in st_cursor:
+                            ib = idx_brand.get(s["idx"]) or {}
+                            stores.append({
+                                "name": s.get("full_name") or s.get("name"),
+                                "address": s.get("address"),
+                                "brand": ib.get("brand"),
+                                "price": ib.get("price"),
+                            })
+                        stores.sort(key=lambda x: (x["price"] is None, x["price"] or 0))
+                    med["geo"] = {
+                        "city": city,
+                        "count": len(idx_brand),
+                        "min_price": min(price_list),
+                        "max_price": max(price_list),
+                        "stores": stores[:5],
+                    }
+            except Exception:
+                pass
 
         return med
 

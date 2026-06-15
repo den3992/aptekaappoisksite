@@ -660,7 +660,7 @@ export default function MedDetail({ initialMed = null }) {
       .then(gz => { if (!cancelled) setGorzdravStores(gz); })
       .catch(() => {})
       .finally(() => { if (!cancelled) setGorzdravStoresLoaded(true); });
-    Promise.all([fetchMed(slug), fetchAnalogs(slug, 8), fetchPharmacies(city.id)])
+    Promise.all([fetchMed(slug, city.id), fetchAnalogs(slug, 8), fetchPharmacies(city.id)])
       .then(([m, a, ph]) => {
         if (cancelled) return;
         setMed(m);
@@ -1040,7 +1040,9 @@ export default function MedDetail({ initialMed = null }) {
               <p className="text-slate-600 mt-3 text-sm leading-relaxed max-w-3xl" data-testid="med-lead">
                 {nm} — {formLower}{med.mnn ? <>, действующее вещество {titleCase(med.mnn)}</> : null}
                 {catTitle ? <> из категории <Link href={`/${city.id}/kategorii/${med.category}`} className="text-emerald-700 hover:underline">{catTitle.toLowerCase()}</Link></> : null}.{' '}
-                {priceStr
+                {med.geo && med.geo.count > 0
+                  ? <>В {city.inLoc} есть в {med.geo.count}&nbsp;{med.geo.count === 1 ? 'аптеке' : 'аптеках'} от {med.geo.min_price}&nbsp;₽{multi ? <> — сравните цены в сетях {netStr}</> : null}. Проверьте наличие в ближайших аптеках на карте ниже.</>
+                  : priceStr
                   ? (multi
                       ? <>Сравните цены в аптечных сетях {netStr} в {city.inLoc}: {priceStr} — и проверьте наличие в ближайших аптеках на карте.</>
                       : <>Цена в {city.inLoc}: {priceStr}. Проверьте наличие в ближайших аптеках на карте.</>)
@@ -1101,6 +1103,37 @@ export default function MedDetail({ initialMed = null }) {
                   totalPharmacyCount > 0 ? <>в&nbsp;{totalPharmacyCount}&nbsp;аптеках</> : (networkStr ? <>{networkWord} {networkStr}</> : null)
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Гео-блок (SEO #1: локальный контент). Реальные адреса аптек города,
+              где препарат есть. Данные из med.geo (бэкенд, городской уровень) →
+              видны в SSR-HTML боту, уникальны по каждому городу. */}
+          {med.geo && Array.isArray(med.geo.stores) && med.geo.stores.length > 0 && (
+            <div className="mt-6 bg-white border border-slate-200 rounded-xl p-5" data-testid="geo-block">
+              <div className="flex items-center gap-2 text-base font-semibold text-slate-900">
+                <MapPin className="w-5 h-5 text-emerald-600 shrink-0" />
+                Где купить в {city.inLoc}
+              </div>
+              <p className="text-sm text-slate-600 mt-1">
+                {formatName(med.name)} есть в {med.geo.count}&nbsp;{med.geo.count === 1 ? 'аптеке' : 'аптеках'} города. Например:
+              </p>
+              <div className="mt-3 divide-y divide-slate-100">
+                {med.geo.stores.map((s, i) => (
+                  <div key={i} className="flex items-baseline justify-between gap-3 py-2">
+                    <div className="min-w-0">
+                      <div className="text-sm text-slate-800">{s.address}</div>
+                      {NET_NAMES_ALL[s.brand] && <div className="text-xs text-slate-400">{NET_NAMES_ALL[s.brand]}</div>}
+                    </div>
+                    {typeof s.price === 'number' && (
+                      <div className="text-sm font-medium text-slate-900 whitespace-nowrap">{s.price}&nbsp;₽</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {med.geo.count > med.geo.stores.length && (
+                <p className="mt-3 text-xs text-slate-400">Все {med.geo.count}&nbsp;аптек с этим препаратом — на карте ниже.</p>
+              )}
             </div>
           )}
 

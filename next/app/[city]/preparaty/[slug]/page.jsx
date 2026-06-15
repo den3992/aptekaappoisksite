@@ -12,7 +12,7 @@ import { notFound } from 'next/navigation';
 export async function generateMetadata({ params }) {
   const { city, slug } = await params;
   try {
-    const med = await fetchMed(slug);
+    const med = await fetchMed(slug, city);
     const meta = medMetadata(city, med);
     // Динамический noindex для тупиковых страниц: нет реальной цены И нет
     // аналогов по МНН (seo.py, commit 6303b81 — потеряно при миграции на Next,
@@ -36,7 +36,7 @@ export default async function Page({ params }) {
   const { city, slug } = await params;
   let med = null;
   try {
-    med = await fetchMed(slug);
+    med = await fetchMed(slug, city);
   } catch (e) {
     /* fall through to notFound */
   }

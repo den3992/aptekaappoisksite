@@ -54,8 +54,8 @@ export async function suggestMeds(q, limit = 8) {
   return data;
 }
 
-export async function fetchMed(slug) {
-  const { data } = await http.get(`/medications/${slug}`);
+export async function fetchMed(slug, city) {
+  const { data } = await http.get(`/medications/${slug}`, city ? { params: { city } } : undefined);
   return data;
 }
 
