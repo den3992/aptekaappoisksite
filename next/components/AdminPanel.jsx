@@ -15,6 +15,16 @@ function Stars({ value }) {
   );
 }
 
+function StatusBadge({ status }) {
+  const map = {
+    new: ['Новая', 'bg-amber-50 text-amber-700 border-amber-200'],
+    approved: ['Одобрена', 'bg-emerald-50 text-emerald-700 border-emerald-200'],
+    rejected: ['Отклонена', 'bg-red-50 text-red-600 border-red-200'],
+  };
+  const [label, cls] = map[status] || [status, 'bg-slate-50 text-slate-600 border-slate-200'];
+  return <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${cls}`}>{label}</span>;
+}
+
 export default function AdminPanel() {
   const [token, setToken] = useState(null);
   const [booted, setBooted] = useState(false);
@@ -30,6 +40,10 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(null); // id, действие в процессе
+  // разделы панели
+  const [section, setSection] = useState('reviews'); // reviews | partners
+  const [partners, setPartners] = useState([]);
+  const [partnersLoading, setPartnersLoading] = useState(false);
 
   useEffect(() => {
     try { setToken(sessionStorage.getItem(TOKEN_KEY)); } catch {}
@@ -57,6 +71,32 @@ export default function AdminPanel() {
   }, [logout]);
 
   useEffect(() => { if (token) load(token, tab); }, [token, tab, load]);
+
+  const loadPartners = useCallback(async (tk) => {
+    if (!tk) return;
+    setPartnersLoading(true); setErr('');
+    try {
+      const res = await fetch('/api/admin/partner-requests', { headers: { Authorization: `Bearer ${tk}` } });
+      if (res.status === 401 || res.status === 403) { logout(); setErr('Сессия истекла, войдите снова.'); return; }
+      const j = await res.json();
+      setPartners(Array.isArray(j) ? j : []);
+    } catch { setErr('Не удалось загрузить заявки.'); }
+    setPartnersLoading(false);
+  }, [logout]);
+
+  useEffect(() => { if (token && section === 'partners') loadPartners(token); }, [token, section, loadPartners]);
+
+  const partnerAct = async (id, action) => {
+    setBusy(id + action);
+    try {
+      const res = await fetch(`/api/admin/partner-requests/${id}/${action}`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.status === 401 || res.status === 403) { logout(); return; }
+      if (res.ok) setPartners((prev) => prev.map((p) => p.id === id ? { ...p, status: action === 'approve' ? 'approved' : 'rejected' } : p));
+    } catch {}
+    setBusy(null);
+  };
 
   const doLogin = async (e) => {
     e.preventDefault();
@@ -120,12 +160,22 @@ export default function AdminPanel() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-5">
-        <h1 className="text-xl font-bold text-slate-900">Модерация отзывов</h1>
+        <h1 className="text-xl font-bold text-slate-900">Админ-панель</h1>
         <button onClick={logout} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800">
           <LogOut className="w-4 h-4" /> Выйти
         </button>
       </div>
 
+      <div className="flex gap-2 mb-5 border-b border-slate-200 pb-3">
+        {[['reviews', 'Отзывы'], ['partners', 'Заявки партнёров']].map(([k, label]) => (
+          <button key={k} onClick={() => setSection(k)}
+            className={`px-3.5 py-2 rounded-xl text-sm font-medium transition ${section === k ? 'bg-slate-900 text-white' : 'bg-white border border-slate-300 text-slate-600 hover:border-slate-400'}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {section === 'reviews' && (<>
       <div className="flex gap-2 mb-4">
         {[['hold', `На проверке${pending ? ` (${pending})` : ''}`], ['published', 'Опубликованные']].map(([k, label]) => (
           <button key={k} onClick={() => setTab(k)}
@@ -174,6 +224,50 @@ export default function AdminPanel() {
             </li>
           ))}
         </ul>
+      )}
+      </>)}
+
+      {section === 'partners' && (
+        <>
+          {err && <p className="text-sm text-red-600 mb-3">{err}</p>}
+          {partnersLoading ? (
+            <p className="text-sm text-slate-500">Загрузка…</p>
+          ) : partners.length === 0 ? (
+            <p className="text-sm text-slate-500">Заявок партнёров нет.</p>
+          ) : (
+            <ul className="space-y-3">
+              {partners.map((p) => (
+                <li key={p.id} className="bg-white border border-slate-200 rounded-xl p-4">
+                  <div className="flex items-center justify-between gap-3 mb-1">
+                    <div className="font-medium text-slate-900">{p.chain}{p.city ? `, ${p.city}` : ''}</div>
+                    <StatusBadge status={p.status} />
+                  </div>
+                  <div className="text-xs text-slate-400 mb-2">{p.created_at ? new Date(p.created_at).toLocaleString('ru-RU') : ''}</div>
+                  <table className="text-sm text-slate-700">
+                    <tbody>
+                      <tr><td className="text-slate-400 pr-3 py-0.5 align-top">Email</td><td><a href={`mailto:${p.email}`} className="text-emerald-700 underline break-all">{p.email}</a></td></tr>
+                      {p.phone ? <tr><td className="text-slate-400 pr-3 py-0.5 align-top">Телефон</td><td>{p.phone}</td></tr> : null}
+                      {p.count ? <tr><td className="text-slate-400 pr-3 py-0.5 align-top">Аптек</td><td>{p.count}</td></tr> : null}
+                    </tbody>
+                  </table>
+                  {p.comment ? <p className="mt-2 text-sm text-slate-600 whitespace-pre-line">{p.comment}</p> : null}
+                  {p.status === 'new' && (
+                    <div className="mt-3 flex gap-2">
+                      <button onClick={() => partnerAct(p.id, 'approve')} disabled={busy === p.id + 'approve'}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
+                        <Check className="w-4 h-4" /> Одобрить
+                      </button>
+                      <button onClick={() => partnerAct(p.id, 'reject')} disabled={busy === p.id + 'reject'}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50">
+                        <X className="w-4 h-4" /> Отклонить
+                      </button>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </div>
   );
