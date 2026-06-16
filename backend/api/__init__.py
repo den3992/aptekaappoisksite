@@ -325,6 +325,8 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
             ph = find_pharmacy_by_id(p["pharmacy_id"])
             if not ph:
                 continue
+            if not (isinstance(p.get("price"), (int, float)) and p["price"] > 0):
+                continue  # цена 0/None = нет реальной цены → не показываем и не индексируем
             real_prices.setdefault(ph["city"], []).append({
                 "pharmacy_id": p["pharmacy_id"],
                 "price": p["price"],
@@ -342,7 +344,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
                     "slug": slug,
                     "source": _src,
                     "match_status": {"$in": ["matched", "mnn_match", "needs_review"]},
-                    "price": {"$ne": None},
+                    "price": {"$gt": 0},
                 },
                 {"_id": 0, "price": 1, "stores_count": 1, "gz_name": 1,
                  "gz_pack": 1, "store_bitmap": 1, "city": 1},
@@ -368,7 +370,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         latest = await db.prices_real.find_one(
             {"slug": slug,
              "source": {"$in": ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit"]},
-             "price": {"$ne": None}, "updated_at": {"$ne": None}},
+             "price": {"$gt": 0}, "updated_at": {"$ne": None}},
             sort=[("updated_at", -1)],
             projection={"_id": 0, "updated_at": 1},
         )

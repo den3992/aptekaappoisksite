@@ -121,7 +121,7 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
         async for row in db.prices_real.aggregate([
             {"$match": {"source": {"$in": ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit"]},
                         "updated_at": {"$ne": None},
-                        "price": {"$ne": None},
+                        "price": {"$gt": 0},
                         "match_status": {"$in": ["matched", "mnn_match", "needs_review"]}}},
             {"$group": {"_id": "$slug", "lm": {"$max": "$updated_at"}}},
         ]):
@@ -138,7 +138,7 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
         priced_by_city = _dd(set)
         async for row in db.prices_real.aggregate([
             {"$match": {"source": {"$in": ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit"]},
-                        "price": {"$ne": None},
+                        "price": {"$gt": 0},
                         "match_status": {"$in": ["matched", "mnn_match", "needs_review"]}}},
             {"$group": {"_id": {"c": "$city", "s": "$slug"}}},
         ]):

@@ -25,7 +25,7 @@ async def main():
         for cat in cat_slugs:
             urls.append(f"https://{HOST}/{c}/kategorii/{cat}")
         slugs = await db.prices_real.distinct(
-            "slug", {"city": c, "source": {"$in": SOURCES}, "price": {"$ne": None}}
+            "slug", {"city": c, "source": {"$in": SOURCES}, "price": {"$gt": 0}}
         )
         total_priced += len(slugs)
         for s in slugs:
