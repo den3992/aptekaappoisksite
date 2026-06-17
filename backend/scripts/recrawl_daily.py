@@ -36,8 +36,9 @@ from scripts.parse_gorzdrav import MONGO_URL, DB_NAME, log
 API = "https://api.webmaster.yandex.net/v4"
 HOST_NAME = "aptekaa.ru"
 SITE = "https://aptekaa.ru"
-NEW_CITIES = ["ekb", "kzn", "nsk", "sam", "chel", "ufa", "rnd", "vrn"]
-REAL = ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie"]
+ALL_CITIES = ["msk", "spb", "krd", "nn", "ekb", "kzn", "nsk", "sam", "chel", "ufa", "rnd", "vrn"]
+REAL = ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit"]
+MATCH_OK = ["matched", "mnn_match", "needs_review"]
 DAILY_LIMIT = 470
 TOKEN = os.environ.get("YANDEX_WEBMASTER_TOKEN", "")
 
@@ -62,32 +63,32 @@ async def resolve_ids(client: httpx.AsyncClient):
 
 
 async def build_queue(db) -> list[str]:
-    """Приоритетная очередь URL: препараты по популярности × 6 новых городов."""
-    # популярность = число реальных сетей с ценой в msk
-    pop = {}
+    """Приоритетная очередь: ВСЕ ценные (price>0) страницы по 12 городам.
+    Приоритет: широта (в скольких городах есть) → насыщенность msk сетями →
+    slug. Внутри препарата города в порядке ALL_CITIES (msk/spb первыми).
+    Совпадает с индексируемым набором (тот же price>0 + match_status, что в
+    medication_detail/sitemap)."""
+    from collections import Counter
+    priced_by_city = {}
+    for c in ALL_CITIES:
+        priced_by_city[c] = set(await db.prices_real.distinct(
+            "slug", {"city": c, "price": {"$gt": 0}, "source": {"$in": REAL},
+                     "match_status": {"$in": MATCH_OK}}))
+    pop_cities = Counter()
+    for c in ALL_CITIES:
+        for s in priced_by_city[c]:
+            pop_cities[s] += 1
+    # тай-брейк: число сетей с ценой в msk (прокси спроса по самому ценному городу)
+    msk_nets = {}
     async for row in db.prices_real.aggregate([
-        {"$match": {"city": "msk", "price": {"$ne": None}, "source": {"$in": REAL}}},
+        {"$match": {"city": "msk", "price": {"$gt": 0}, "source": {"$in": REAL}}},
         {"$group": {"_id": "$slug", "nets": {"$addToSet": "$source"}}},
     ]):
-        pop[row["_id"]] = len(row.get("nets", []))
-    # слаги с ценой Магнита в новых городах (берём union по городам, матч в ekb как референс наличия)
-    magnit_slugs = set()
-    for c in NEW_CITIES:
-        for s in await db.prices_real.distinct(
-            "slug", {"source": "magnit", "city": c, "price": {"$ne": None},
-                     "match_status": {"$in": ["matched", "mnn_match", "needs_review"]}}):
-            magnit_slugs.add(s)
-    # сортировка по популярности (desc), затем по slug для стабильности
-    ordered = sorted(magnit_slugs, key=lambda s: (-pop.get(s, 0), s))
-    # URL: препарат во всех городах, где у него есть цена Магнита
-    priced_by_city = {}
-    for c in NEW_CITIES:
-        priced_by_city[c] = set(await db.prices_real.distinct(
-            "slug", {"source": "magnit", "city": c, "price": {"$ne": None},
-                     "match_status": {"$in": ["matched", "mnn_match", "needs_review"]}}))
+        msk_nets[row["_id"]] = len(row.get("nets", []))
+    ordered = sorted(pop_cities.keys(), key=lambda s: (-pop_cities[s], -msk_nets.get(s, 0), s))
     urls = []
     for s in ordered:
-        for c in NEW_CITIES:
+        for c in ALL_CITIES:  # msk/spb первыми
             if s in priced_by_city[c]:
                 urls.append(f"{SITE}/{c}/preparaty/{s}")
     return urls
