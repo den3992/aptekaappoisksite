@@ -59,6 +59,7 @@ from scripts.parse_gorzdrav import (
     match_product, match_products, extract_pack,
     log,
 )
+from bson.binary import Binary
 
 SOURCE = "zdorovie"
 CITY = "krd"
@@ -318,9 +319,114 @@ async def process_medication(db, med: dict, index: dict, rematch: bool,
         log.info(f"[krd/{slug[:40]:<40}] saved {saved} packs")
 
 
+# ---------- ЭТАП 2: наличие по аптекам (карта) ----------
+# На странице товара ymaps-плейсмарки: BX_YMapAddPlacemark(map,{'LAT':..,'LON':..,
+# 'TEXT':'...Аптека №44 (г.Краснодар, пр.Чекистов,7/1)...В наличии...'}). Каждый
+# плейсмарк = аптека, где товар ЕСТЬ. Номер аптеки = стабильный id (zdorovie_N).
+_PM_RE = re.compile(r"BX_YMapAddPlacemark\(map,\s*\{'LAT':'([^']+)','LON':'([^']+)','TEXT':'(.*?)'\}\)", re.S)
+_APT_RE = re.compile(r"Аптека\s*№\s*(\d+)\s*\(([^)]+)\)")
+
+
+def _parse_pharmacies(text_html: str) -> dict:
+    """{store_id: (name, address, lat, lng)} — только краснодарские аптеки с товаром."""
+    out = {}
+    for lat, lon, text in _PM_RE.findall(text_html):
+        m = _APT_RE.search(text)
+        if not m:
+            continue
+        num = m.group(1)
+        addr = html.unescape(m.group(2)).strip()
+        al = addr.lower()
+        if "краснодар" not in al or "край" in al:
+            continue  # только город Краснодар (исключаем край/Адыгею/Ставрополь/Ростов)
+        try:
+            la, lo = float(lat), float(lon)
+        except ValueError:
+            continue
+        out[f"zdorovie_{num}"] = (f"Аптека №{num}", addr, la, lo)
+    return out
+
+
+async def refresh_availability_zdorovie(db, client, slug_filter=None, limit=0) -> None:
+    """Фаза наличия Здоровья: страница товара → плейсмарки аптек → store_bitmap.
+    Реестр аптек — общий gorzdrav_stores (append-only idx, source=zdorovie,
+    store_id=zdorovie_N namespace, чтобы не коллидировать с idx других сетей)."""
+    store_idx = {}
+    mx = -1
+    async for st in db.gorzdrav_stores.find({}, {"_id": 0, "store_id": 1, "idx": 1}):
+        i = st.get("idx")
+        if i is None:
+            continue
+        store_idx[st["store_id"]] = i
+        if i > mx:
+            mx = i
+    next_idx = [mx + 1]
+    lock = asyncio.Lock()
+
+    q = {"source": SOURCE, "city": CITY, "price": {"$gt": 0}, "gz_url_key": {"$nin": [None, ""]}}
+    if slug_filter:
+        q["slug"] = {"$in": slug_filter}
+    recs = await db.prices_real.find(
+        q, {"_id": 0, "medication_id": 1, "slug": 1, "gz_pack": 1, "gz_url_key": 1}
+    ).to_list(length=None)
+    if limit:
+        recs = recs[:limit]
+    log.info(f"[zdorovie-avail] записей к обработке: {len(recs)}")
+
+    sem = asyncio.Semaphore(6)
+    stats = {"ok": 0, "empty": 0, "fail": 0}
+
+    async def handle(rec):
+        async with sem:
+            page = await _get(client, BASE + rec["gz_url_key"])
+        if not page:
+            stats["fail"] += 1
+            return
+        phs = _parse_pharmacies(page)
+        if not phs:
+            stats["empty"] += 1
+            return
+        idxs = []
+        async with lock:
+            for sid, (name, addr, la, lo) in phs.items():
+                if sid not in store_idx:
+                    store_idx[sid] = next_idx[0]
+                    next_idx[0] += 1
+                    await db.gorzdrav_stores.update_one(
+                        {"store_id": sid},
+                        {"$set": {"store_id": sid, "idx": store_idx[sid], "source": SOURCE,
+                                  "city": CITY, "name": name, "full_name": name,
+                                  "address": addr, "lat": la, "lng": lo, "active": True}},
+                        upsert=True,
+                    )
+                idxs.append(store_idx[sid])
+        mxi = max(idxs)
+        bm = bytearray(mxi // 8 + 1)
+        for ix in idxs:
+            bm[ix // 8] |= (1 << (ix % 8))
+        await db.prices_real.update_one(
+            {"medication_id": rec["medication_id"], "source": SOURCE, "city": CITY, "gz_pack": rec["gz_pack"]},
+            {"$set": {"store_bitmap": Binary(bytes(bm)), "stores_count": len(idxs)}},
+        )
+        stats["ok"] += 1
+        await asyncio.sleep(REQUEST_DELAY)
+
+    await asyncio.gather(*[handle(r) for r in recs])
+    n_zd = sum(1 for s in store_idx if s.startswith("zdorovie_"))
+    log.info(f"[zdorovie-avail] Готово: {stats}, аптек Здоровья в реестре={n_zd}")
+
+
 async def main(args: argparse.Namespace) -> None:
     client_db = AsyncIOMotorClient(MONGO_URL)
     db = client_db[DB_NAME]
+
+    # Только фаза наличия (без краула/матчинга) — по уже сматченным записям.
+    if getattr(args, "availability_only", False):
+        slug_filter = [args.slug] if args.slug else None
+        async with httpx.AsyncClient(headers=HEADERS, follow_redirects=True) as client:
+            await refresh_availability_zdorovie(db, client, slug_filter=slug_filter, limit=args.limit)
+        client_db.close()
+        return
 
     async with httpx.AsyncClient(headers=HEADERS, follow_redirects=True) as client:
         catalog = await crawl_catalog(client)
@@ -374,6 +480,12 @@ async def main(args: argparse.Namespace) -> None:
         stats[doc["_id"]] = doc["count"]
     log.info(f"[zdorovie] Готово. Статистика: {stats}")
 
+    # Фаза наличия (карта аптек) по обработанным слугам — если не отключена.
+    if not getattr(args, "no_availability", False):
+        slug_filter = [m.get("slug") for m in meds if m.get("slug")]
+        async with httpx.AsyncClient(headers=HEADERS, follow_redirects=True) as client:
+            await refresh_availability_zdorovie(db, client, slug_filter=slug_filter)
+
     out_path = os.environ.get("INDEXNOW_CHANGED_FILE_ZDOROVIE", "/tmp/indexnow_changed_zdorovie.txt")
     try:
         with open(out_path, "w") as f:
@@ -395,5 +507,9 @@ if __name__ == "__main__":
     parser.add_argument("--update-only", action="store_true",
                         help="Обновить только препараты с уже существующим матчем Здоровья.")
     parser.add_argument("--rematch", action="store_true")
+    parser.add_argument("--availability-only", dest="availability_only", action="store_true",
+                        help="Только фаза наличия (карта аптек) по уже сматченным записям.")
+    parser.add_argument("--no-availability", dest="no_availability", action="store_true",
+                        help="Не запускать фазу наличия после матчинга.")
     args = parser.parse_args()
     asyncio.run(main(args))
