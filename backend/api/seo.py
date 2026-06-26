@@ -140,7 +140,8 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
             {"$match": {"source": {"$in": ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit"]},
                         "price": {"$gt": 0},
                         "match_status": {"$in": ["matched", "mnn_match", "needs_review"]}}},
-            {"$group": {"_id": {"c": "$city", "s": "$slug"}}},
+            {"$group": {"_id": {"c": "$city", "s": "$slug"}, "nets": {"$addToSet": "$source"}}},
+            {"$match": {"$expr": {"$gte": [{"$size": "$nets"}, 2]}}},
         ]):
             _id = row.get("_id") or {}
             if _id.get("c") and _id.get("s"):

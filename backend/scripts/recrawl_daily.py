@@ -71,9 +71,14 @@ async def build_queue(db) -> list[str]:
     from collections import Counter
     priced_by_city = {}
     for c in ALL_CITIES:
-        priced_by_city[c] = set(await db.prices_real.distinct(
-            "slug", {"city": c, "price": {"$gt": 0}, "source": {"$in": REAL},
-                     "match_status": {"$in": MATCH_OK}}))
+        s2 = set()
+        async for row in db.prices_real.aggregate([
+            {"$match": {"city": c, "price": {"$gt": 0}, "source": {"$in": REAL}, "match_status": {"$in": MATCH_OK}}},
+            {"$group": {"_id": "$slug", "nets": {"$addToSet": "$source"}}},
+            {"$match": {"$expr": {"$gte": [{"$size": "$nets"}, 2]}}},
+        ]):
+            s2.add(row["_id"])
+        priced_by_city[c] = s2
     pop_cities = Counter()
     for c in ALL_CITIES:
         for s in priced_by_city[c]:
