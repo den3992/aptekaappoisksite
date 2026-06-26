@@ -49,7 +49,7 @@ echo "BEFORE: zdorovie priced=$BEFORE_TOTAL"
 
 case "$MODE" in
   update)
-    cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_zdorovie --update-only
+    cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_zdorovie --update-only --no-availability
     ;;
   full)
     cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_zdorovie --from-maksavit --rematch
