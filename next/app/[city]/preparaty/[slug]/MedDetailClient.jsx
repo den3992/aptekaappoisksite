@@ -206,7 +206,7 @@ function parsePhones(raw) {
     .filter(Boolean);
 }
 
-const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, gorzdravStores = [], gorzdravPrice = null, gorzdravBitmap = null, apteka366Price = null, apteka366Bitmap = null, riglaPrice = null, riglaBitmap = null, maksavitPrice = null, maksavitBitmap = null, magnitPrice = null, magnitBitmap = null, cityCenter, onSelect, selected, fullscreen = false, onInteract, onViewportChange }, externalRef) {
+const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, gorzdravStores = [], gorzdravPrice = null, gorzdravBitmap = null, apteka366Price = null, apteka366Bitmap = null, riglaPrice = null, riglaBitmap = null, maksavitPrice = null, maksavitBitmap = null, magnitPrice = null, magnitBitmap = null, zdoroviePrice = null, zdorovieBitmap = null, cityCenter, onSelect, selected, fullscreen = false, onInteract, onViewportChange }, externalRef) {
   const ref = useRef(null);
   const mapRef = useRef(null);
   const tileLayerRef = useRef(null);
@@ -379,8 +379,9 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
           rigla: decodeBitmap(riglaBitmap),
           maksavit: decodeBitmap(maksavitBitmap),
           magnit: decodeBitmap(magnitBitmap),
+          zdorovie: decodeBitmap(zdorovieBitmap),
         };
-        const BRAND_PRICE = { gorzdrav: gorzdravPrice, apteka366: apteka366Price, rigla: riglaPrice, maksavit: maksavitPrice, magnit: magnitPrice };
+        const BRAND_PRICE = { gorzdrav: gorzdravPrice, apteka366: apteka366Price, rigla: riglaPrice, maksavit: maksavitPrice, magnit: magnitPrice, zdorovie: zdoroviePrice };
         const BRAND_TITLE = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека' };
         gorzdravStores.forEach(store => {
           if (!store.lat || !store.lng) return;
@@ -506,7 +507,7 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
     };
     // eslint-disable-next-line
-  }, [med?.slug, cityCenter[0], cityCenter[1], prices.length, gorzdravStores.length, gorzdravPrice, gorzdravBitmap, apteka366Price, apteka366Bitmap, riglaPrice, riglaBitmap, maksavitPrice, maksavitBitmap, magnitPrice, magnitBitmap, fullscreen]);
+  }, [med?.slug, cityCenter[0], cityCenter[1], prices.length, gorzdravStores.length, gorzdravPrice, gorzdravBitmap, apteka366Price, apteka366Bitmap, riglaPrice, riglaBitmap, maksavitPrice, maksavitBitmap, magnitPrice, magnitBitmap, zdoroviePrice, zdorovieBitmap, fullscreen]);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -824,6 +825,7 @@ export default function MedDetail({ initialMed = null }) {
       rigla: prices.find(p => p.pharmacy_id === 'rigla')?.price ?? null,
       maksavit: prices.find(p => p.pharmacy_id === 'maksavit')?.price ?? null,
       magnit: prices.find(p => p.pharmacy_id === 'magnit')?.price ?? null,
+      zdorovie: prices.find(p => p.pharmacy_id === 'zdorovie')?.price ?? null,
     };
 
     // 1. Партнёрские аптеки в bbox + у них есть цена для активной упаковки.
@@ -858,6 +860,7 @@ export default function MedDetail({ initialMed = null }) {
       rigla: decodeBitmap(prices.find(p => p.pharmacy_id === 'rigla')?.store_bitmap),
       maksavit: decodeBitmap(prices.find(p => p.pharmacy_id === 'maksavit')?.store_bitmap),
       magnit: decodeBitmap(prices.find(p => p.pharmacy_id === 'magnit')?.store_bitmap),
+      zdorovie: decodeBitmap(prices.find(p => p.pharmacy_id === 'zdorovie')?.store_bitmap),
     };
     const gzCandidates = gorzdravStores
       .filter(s => s.lat >= bounds.south && s.lat <= bounds.north && s.lng >= bounds.west && s.lng <= bounds.east)
@@ -1307,6 +1310,8 @@ export default function MedDetail({ initialMed = null }) {
               maksavitBitmap={prices.find(p => p.pharmacy_id === 'maksavit')?.store_bitmap ?? null}
               magnitPrice={prices.find(p => p.pharmacy_id === 'magnit')?.price ?? null}
               magnitBitmap={prices.find(p => p.pharmacy_id === 'magnit')?.store_bitmap ?? null}
+              zdoroviePrice={prices.find(p => p.pharmacy_id === 'zdorovie')?.price ?? null}
+              zdorovieBitmap={prices.find(p => p.pharmacy_id === 'zdorovie')?.store_bitmap ?? null}
               cityCenter={city.center}
               onSelect={(pid) => {
                 setSelectedId(pid);
