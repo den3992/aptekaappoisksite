@@ -10,7 +10,7 @@ KEY = "3c6a00678b80a261eee94accd64427c7"
 HOST = "aptekaa.ru"
 ENDPOINT = "https://api.indexnow.org/indexnow"
 DRY = "--dry" in sys.argv
-SOURCES = ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit"]
+SOURCES = ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit", "farmakopeika"]
 
 
 async def main():

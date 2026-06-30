@@ -382,7 +382,7 @@ const PriceMap = React.forwardRef(function PriceMap({ med, prices, pharmacies, g
           zdorovie: decodeBitmap(zdorovieBitmap),
         };
         const BRAND_PRICE = { gorzdrav: gorzdravPrice, apteka366: apteka366Price, rigla: riglaPrice, maksavit: maksavitPrice, magnit: magnitPrice, zdorovie: zdoroviePrice };
-        const BRAND_TITLE = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека' };
+        const BRAND_TITLE = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека', farmakopeika: 'Фармакопейка' };
         gorzdravStores.forEach(store => {
           if (!store.lat || !store.lng) return;
           // Бренд точки: если у сети нет цены для упаковки — откатываемся на
@@ -544,7 +544,7 @@ function ViewportListItem({ item, onClick, selected = false }) {
     >
       <button type="button" onClick={onClick} className="w-full text-left flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <div className="font-semibold text-slate-900 text-sm leading-tight">{item.name || (item.source === 'gorzdrav' ? 'Горздрав' : item.source === 'apteka366' ? 'Аптека 36,6' : item.source === 'rigla' ? 'Ригла' : item.source === 'maksavit' ? 'Максавит' : item.source === 'aptechestvo' ? 'Аптечество' : item.source === 'zdorovie' ? 'Здоровье' : item.source === 'magnit' ? 'Магнит Аптека' : 'Аптека')}</div>
+          <div className="font-semibold text-slate-900 text-sm leading-tight">{item.name || (item.source === 'gorzdrav' ? 'Горздрав' : item.source === 'apteka366' ? 'Аптека 36,6' : item.source === 'rigla' ? 'Ригла' : item.source === 'maksavit' ? 'Максавит' : item.source === 'aptechestvo' ? 'Аптечество' : item.source === 'zdorovie' ? 'Здоровье' : item.source === 'magnit' ? 'Магнит Аптека' : item.source === 'farmakopeika' ? 'Фармакопейка' : 'Аптека')}</div>
           {item.address && (
             <div className="text-[11px] text-slate-500 mt-0.5 flex items-start gap-1">
               <MapPin className="w-3 h-3 shrink-0 mt-0.5" />
@@ -754,7 +754,7 @@ export default function MedDetail({ initialMed = null }) {
     // Реальные сети с настоящими ценами (Горздрав + Аптека 36,6). Их цены
     // НЕ синтезируются (в отличие от legacy-партнёров в list ниже) и
     // фильтруются по активной упаковке через gz_pack.
-    const REAL_SOURCES = ['gorzdrav', 'apteka366', 'rigla', 'maksavit', 'aptechestvo', 'zdorovie', 'magnit'];
+    const REAL_SOURCES = ['gorzdrav', 'apteka366', 'rigla', 'maksavit', 'aptechestvo', 'zdorovie', 'magnit', 'farmakopeika'];
     // price>0: 0 = сматчено, но цены/наличия нет — такую сеть не показываем
     // (иначе на упаковке с единственной 0-строкой она всплывала как «0 ₽ дешевле»).
     const networkAll = all.filter(p => REAL_SOURCES.includes(p.pharmacy_id) && p.price > 0);
@@ -966,7 +966,7 @@ export default function MedDetail({ initialMed = null }) {
   
   // Сети без по-аптечных координат (Магнит/Аптечество/Здоровье) — нет адресов
   // отдельных точек; показываем как сеть, а не как «1 аптеку» с пустой картой.
-  const NET_NAMES_ALL = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека' };
+  const NET_NAMES_ALL = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека', farmakopeika: 'Фармакопейка' };
   const networkNames = [...new Set(prices.filter(p => NET_NAMES_ALL[p.pharmacy_id] && p.price > 0).map(p => NET_NAMES_ALL[p.pharmacy_id]))];
   const networkStr = networkNames.length <= 1 ? (networkNames[0] || '') : networkNames.slice(0, -1).join(', ') + ' и ' + networkNames.slice(-1);
   const networkWord = networkNames.length > 1 ? 'в сетях' : 'в сети';
@@ -1030,7 +1030,7 @@ export default function MedDetail({ initialMed = null }) {
               сетей с ценой + in-content ссылка на категорию (перелинковка). */}
           {(() => {
             const nm = formatName(med.name);
-            const NET_NAMES = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека' };
+            const NET_NAMES = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека', farmakopeika: 'Фармакопейка' };
             const nets = new Set(prices.map(p => p.pharmacy_id).filter(id => NET_NAMES[id]));
             const multi = nets.size >= 2;
             const netNames = [...nets].map(id => NET_NAMES[id]).filter(Boolean);
@@ -1144,7 +1144,7 @@ export default function MedDetail({ initialMed = null }) {
               Показываем только когда есть >=2 сети с ценой для активной
               упаковки — иначе сравнивать нечего. */}
           {(() => {
-            const NET_LABELS = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека' };
+            const NET_LABELS = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека', farmakopeika: 'Фармакопейка' };
             const byNet = {};
             for (const p of prices) {
               if (!NET_LABELS[p.pharmacy_id]) continue;

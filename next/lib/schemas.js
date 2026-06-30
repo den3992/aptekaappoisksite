@@ -71,7 +71,7 @@ export function medMetadata(city, med) {
   const _multi = _nets.size >= 2;
   // Реальные сети препарата в городе — для честного перечисления в мете
   // (city-точно: в krd/nn это не Горздрав/36,6, а свои сети).
-  const _NET_LABELS = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека' };
+  const _NET_LABELS = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека', farmakopeika: 'Фармакопейка' };
   const _netNames = [..._nets].map((id) => _NET_LABELS[id]).filter(Boolean);
   const _netStr = _netNames.length <= 3
     ? _netNames.slice(0, -1).join(', ') + ' и ' + _netNames.slice(-1)

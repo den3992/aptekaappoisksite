@@ -340,7 +340,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         # упаковкам — фронт показывает их как сравнение цен по сетям. find
         # (а не find_one) — чтобы при переключении упаковки показать данные
         # именно для активной фасовки. pharmacy_id = имя источника.
-        for _src in ("gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit"):
+        for _src in ("gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit", "farmakopeika"):
             net_cursor = db.prices_real.find(
                 {
                     "slug": slug,
@@ -371,7 +371,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         # Любой источник (для городов без Горздрава — krd/nn — берём Максавит).
         latest = await db.prices_real.find_one(
             {"slug": slug,
-             "source": {"$in": ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit"]},
+             "source": {"$in": ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit", "farmakopeika"]},
              "price": {"$gt": 0}, "updated_at": {"$ne": None}},
             sort=[("updated_at", -1)],
             projection={"_id": 0, "updated_at": 1},

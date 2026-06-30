@@ -117,6 +117,17 @@ PHARMACIES: list[dict] = [
         "url": "https://s-zdorovie.ru",
         "logo": "zdorovie",
     },
+    # Фармакопейка (farmakopeika.ru) — 2-й источник цен для Новосибирска (1-й —
+    # Магнит). Сибирская сеть, регион = поддомен novosibirsk.farmakopeika.ru.
+    # Этап 1: только цена, без карты наличия — намеренно БЕЗ lat/lng.
+    {
+        "id": "farmakopeika",
+        "name": "Фармакопейка",
+        "city": "nsk",
+        "address": "Сеть аптек по всему Новосибирску",
+        "url": "https://novosibirsk.farmakopeika.ru",
+        "logo": "farmakopeika",
+    },
     # Магнит Аптека (apteka.magnit.ru) — федеральная сеть, мультигород через FIAS.
     # Фаза 1: наши 4 города. Цена И остаток по городу (webgate). Этап 1: без карты
     # по аптекам — БЕЗ lat/lng (маркеров нет, как у 36,6/Ригла/Аптечество Этап 1).

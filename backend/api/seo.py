@@ -119,7 +119,7 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
         # Яндекс по <lastmod> понимает свежесть и приоритет переобхода.
         lastmod_map = {}
         async for row in db.prices_real.aggregate([
-            {"$match": {"source": {"$in": ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit"]},
+            {"$match": {"source": {"$in": ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit", "farmakopeika"]},
                         "updated_at": {"$ne": None},
                         "price": {"$gt": 0},
                         "match_status": {"$in": ["matched", "mnn_match", "needs_review"]}}},
@@ -137,7 +137,7 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
         from collections import defaultdict as _dd
         priced_by_city = _dd(set)
         async for row in db.prices_real.aggregate([
-            {"$match": {"source": {"$in": ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit"]},
+            {"$match": {"source": {"$in": ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit", "farmakopeika"]},
                         "price": {"$gt": 0},
                         "match_status": {"$in": ["matched", "mnn_match", "needs_review"]}}},
             {"$group": {"_id": {"c": "$city", "s": "$slug"}, "nets": {"$addToSet": "$source"}}},
