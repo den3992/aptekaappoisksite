@@ -76,10 +76,19 @@ CITY_CODES: dict[str, str] = {
     "spb": "0000103664",  # Санкт-Петербург
     "krd": "0000386590",  # Краснодар
     "msk": "0000058308",  # Пушкино (Московская обл.) — вешаем на Москву
+    # Расширение на слабые города, где Максавит реально работает (2-я сеть →
+    # города становятся «сильными», ≥2 сети). Коды из /api/location/city-list.
+    "kzn": "0000550426",  # Казань (Татарстан)
+    "vrn": "0000293598",  # Воронеж
+    "ufa": "0000728734",  # Уфа (Башкортостан)
+    "rnd": "0000445112",  # Ростов-на-Дону
+    "nsk": "0000949228",  # Новосибирск (3-я сеть: +Магнит +Фармакопейка)
 }
 # Человекочитаемое имя для логов.
 CITY_NAMES = {"nn": "Нижний Новгород", "spb": "Санкт-Петербург",
-              "krd": "Краснодар", "msk": "Пушкино (МО)"}
+              "krd": "Краснодар", "msk": "Пушкино (МО)",
+              "kzn": "Казань", "vrn": "Воронеж", "ufa": "Уфа",
+              "rnd": "Ростов-на-Дону", "nsk": "Новосибирск"}
 
 # Параллельность фазы наличия (запросы /api/product тяжёлые, ~1 МБ).
 AVAIL_CONCURRENCY = 6
@@ -528,7 +537,7 @@ async def main(args: argparse.Namespace) -> None:
     client_db = AsyncIOMotorClient(MONGO_URL)
     db = client_db[DB_NAME]
 
-    cities = [args.city] if args.city else list(CITY_CODES.keys())
+    cities = [c.strip() for c in args.city.split(",")] if args.city else list(CITY_CODES.keys())
     cities = [c for c in cities if c in CITY_CODES]
     if not cities:
         log.error(f"Неизвестный город. Доступно: {list(CITY_CODES)}")
@@ -544,6 +553,13 @@ async def main(args: argparse.Namespace) -> None:
             query["slug"] = args.slug
         if args.popular:
             query["mnn"] = {"$in": list(POPULAR_MNN)}
+        if args.from_magnit:
+            mg_slugs = await db.prices_real.distinct(
+                "slug",
+                {"source": "magnit", "city": {"$in": cities}, "price": {"$gt": 0}},
+            )
+            query["slug"] = {"$in": mg_slugs}
+            log.info(f"[maksavit] --from-magnit: {len(mg_slugs)} слагов с Магнитом в {cities}")
         if args.update_only:
             matched_slugs = await db.prices_real.distinct(
                 "slug",
@@ -589,6 +605,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--city", type=str, default="", help="nn|spb|krd|msk (по умолч. все)")
     parser.add_argument("--limit", type=int, default=0)
+    parser.add_argument("--from-magnit", dest="from_magnit", action="store_true",
+                        help="Только препараты с ценой Магнита в целевых городах (будущие сильные страницы).")
     parser.add_argument("--slug", type=str, default="")
     parser.add_argument("--popular", action="store_true")
     parser.add_argument("--update-only", action="store_true",
