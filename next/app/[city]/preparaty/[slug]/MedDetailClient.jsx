@@ -1462,6 +1462,36 @@ export default function MedDetail({ initialMed = null }) {
         <section className="mb-8 md:mb-12" data-testid="enrichment-section">
           <div className="bg-white border border-slate-100 rounded-2xl p-5 md:p-8">
             <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-3">О препарате</h2>
+            {/* SEO #1: городской абзац — уникальный локальный текст в самом
+                крупном блоке страницы (тело «О препарате» иначе идентично по всем
+                12 городам → «малоценность»). Данные из med.geo/prices, рендерится
+                только при реальной цене города (пустые = noindex, абзац скрыт).
+                Формулировки отличаются от лида и гео-блока — не дублируем. */}
+            {(() => {
+              const g = med.geo;
+              if (!g || typeof g.min_price !== 'number') return null;
+              const nm = formatName(med.name);
+              const nets = [...new Set(prices.map(p => p.pharmacy_id).filter(id => NET_NAMES_ALL[id]))].map(id => NET_NAMES_ALL[id]);
+              const multi = nets.length >= 2;
+              const netStr = nets.length <= 1 ? (nets[0] || '') : nets.slice(0, -1).join(', ') + ' и ' + nets.slice(-1);
+              const range = (typeof g.max_price === 'number' && g.max_price !== g.min_price)
+                ? <>от&nbsp;{g.min_price}&nbsp;₽ до&nbsp;{g.max_price}&nbsp;₽</>
+                : <>от&nbsp;{g.min_price}&nbsp;₽</>;
+              const st0 = Array.isArray(g.stores) && g.stores[0] && g.stores[0].address ? g.stores[0] : null;
+              const exAddr = st0 ? st0.address.replace(/^[^,]*(обл|область|край|респ|автономн)[^,]*,\s*/i, '') : null;
+              return (
+                <p className="text-slate-700 leading-relaxed mb-6" data-testid="med-city-about">
+                  {g.count > 0
+                    ? <>В {city.inLoc} {nm} представлен в {g.count}&nbsp;{g.count === 1 ? 'аптеке' : 'аптеках'} по цене {range}.</>
+                    : <>В {city.inLoc} {nm} доступен по цене {range}{netStr ? <> в {nets.length > 1 ? 'сетях' : 'сети'} {netStr}</> : null}.</>}
+                  {multi
+                    ? <> Стоимость отличается между сетями {netStr} — на этой странице можно сравнить цены и выбрать выгодный вариант.</>
+                    : (nets.length === 1 && g.count > 0 ? <> Препарат представлен в сети {netStr}.</> : null)}
+                  {exAddr ? <> Например, в аптеке по адресу {exAddr}{typeof st0.price === 'number' ? <> — {st0.price}&nbsp;₽</> : null}.</> : null}
+                  {' '}Актуальное наличие и адреса всех аптек — на карте выше.
+                </p>
+              );
+            })()}
             {med.enrichment.summary && (
               <p className="text-slate-700 leading-relaxed mb-6">{med.enrichment.summary}</p>
             )}
