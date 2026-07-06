@@ -6,7 +6,7 @@
 // Клиент-компонент сам перерисовывает интерактив.
 import MedDetailClient from './MedDetailClient';
 import { medMetadata, medGraphJsonLd } from '../../../../lib/schemas';
-import { fetchMed } from '../../../../api/client';
+import { fetchMed, fetchCategories } from '../../../../api/client';
 import { notFound } from 'next/navigation';
 
 export async function generateMetadata({ params }) {
@@ -41,6 +41,10 @@ export default async function Page({ params }) {
     /* fall through to notFound */
   }
   if (!med) notFound();
+  // categories отдаём в SSR-проп, чтобы название категории в лиде и хлебных
+  // крошках совпало сервер↔клиент (иначе hydration mismatch, React #418, и
+  // бот видит SSR без категорийной перелинковки). fetchCategories кэширован.
+  const categories = await fetchCategories().catch(() => []);
   const graph = medGraphJsonLd(city, med);
   return (
     <>
@@ -50,7 +54,7 @@ export default async function Page({ params }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }}
         />
       )}
-      <MedDetailClient initialMed={med} />
+      <MedDetailClient initialMed={med} initialCategories={categories} />
     </>
   );
 }

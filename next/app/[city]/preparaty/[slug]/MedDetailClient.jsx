@@ -591,7 +591,7 @@ function ViewportListItem({ item, onClick, selected = false }) {
 
 // Модалка «Заявка на поиск лекарства». ПД уходят письмом на info@aptekaa.ru
 // и НИГДЕ не сохраняются. Открывается с карточки «препарата нет в аптеках».
-export default function MedDetail({ initialMed = null }) {
+export default function MedDetail({ initialMed = null, initialCategories = [] }) {
   const { slug, city: cityParam } = useParams();
   const { city: ctxCity, cities, setCity } = useCity();
   // Город из URL до гидрации, затем из контекста — см. шапку файла фикса.
@@ -635,8 +635,11 @@ export default function MedDetail({ initialMed = null }) {
   const [selectedPack, setSelectedPack] = useState(null);
   const [notFound, setNotFound] = useState(false);
   const [leadOpen, setLeadOpen] = useState(false);
-  const [categories, setCategories] = useState([]);
-  useEffect(() => { fetchCategories().then(setCategories).catch(() => {}); }, []);
+  const [categories, setCategories] = useState(initialCategories);
+  // categories нужны для названия категории в лиде и хлебных крошках. Приходят
+  // из SSR (initialCategories) → на сервере и клиенте одинаковы, без hydration
+  // mismatch. Дозагружаем только если сервер их не передал (SPA-навигация).
+  useEffect(() => { if (!initialCategories.length) fetchCategories().then(setCategories).catch(() => {}); }, []);
 
   // Sync URL city → context
   useEffect(() => {
