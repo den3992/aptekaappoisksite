@@ -71,7 +71,21 @@ from scripts.parse_gorzdrav import (
 from bson.binary import Binary
 
 SOURCE = "rigla"
-CITY = "msk"  # Ригла — только Москва (домен www.rigla.ru)
+
+# Ригла — федеральная сеть, регион = ПОДДОМЕН (pvzCities → base_url). GraphQL
+# на поддомене отдаёт региональные цены (проверено: Нурофен Интенсив msk 364 /
+# sam 381 / chel 360). ekb НЕ обслуживается (Свердловской обл нет в pvzCities).
+CITY_BASE = {
+    "msk": "https://www.rigla.ru",
+    "sam": "https://samara.rigla.ru",       # region_id=63 Самарская область
+    "chel": "https://chelyabinsk.rigla.ru", # region_id=74 Челябинская область
+}
+CITY_MARKER = {"msk": "Москва", "sam": "Самара", "chel": "Челябинск"}
+DEFAULT_CITIES = ["msk", "sam", "chel"]
+
+# Активный город: глобалы переустанавливаются в __main__ перед прогоном каждого
+# города (все функции читают их в рантайме).
+CITY = "msk"
 GRAPHQL_URL = "https://www.rigla.ru/graphql"
 PAGE_SIZE = 50  # верхних 50 листингов достаточно для всех упаковок препарата
 
@@ -84,7 +98,7 @@ PVZ_PAGE_SIZE = 5000       # pvzList постранично (всего ~7000 т
 STOCK_BATCH = 1000         # макс. sku за один pvzStocks (проверено: 1000 ок, 3000 — Bad Request)
 STORE_CONCURRENCY = 4      # параллельные аптеки в фазе наличия
 STOCK_DELAY = 0.2          # пауза между батчами sku одной аптеки
-MSK_MARKER = "Москва"      # фильтр московских аптек по адресу
+MSK_MARKER = "Москва"      # фильтр аптек по адресу (переустанавливается per-city)
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -582,7 +596,7 @@ async def main(args: argparse.Namespace) -> None:
     client_db = AsyncIOMotorClient(MONGO_URL)
     db = client_db[DB_NAME]
 
-    log.info(f"=== [rigla] city={CITY} (Москва) ===")
+    log.info(f"=== [rigla] city={CITY} ({GRAPHQL_URL}) ===")
 
     if args.availability_only:
         skus = await db.prices_real.distinct(
@@ -612,6 +626,13 @@ async def main(args: argparse.Namespace) -> None:
         )
         query["slug"] = {"$in": gz_slugs}
         log.info(f"--from-gorzdrav: {len(gz_slugs)} слагов с матчем Горздрава")
+    if getattr(args, "from_magnit", False):
+        mg_slugs = await db.prices_real.distinct(
+            "slug",
+            {"source": "magnit", "city": CITY, "price": {"$gt": 0}},
+        )
+        query["slug"] = {"$in": mg_slugs}
+        log.info(f"--from-magnit [{CITY}]: {len(mg_slugs)} слагов с ценой Магнита")
     if args.update_only:
         matched_slugs = await db.prices_real.distinct(
             "slug",
@@ -684,5 +705,17 @@ if __name__ == "__main__":
                         help="Только маски наличия Ригла (store_bitmap), без перематчинга цен.")
     parser.add_argument("--no-availability", action="store_true",
                         help="Не запускать фазу наличия после матчинга цен.")
+    parser.add_argument("--from-magnit", dest="from_magnit", action="store_true",
+                        help="Только препараты с ценой Магнита в текущем городе (будущие сильные страницы).")
+    parser.add_argument("--city", type=str, default="msk",
+                        help="msk|sam|chel, через запятую (по умолчанию msk — исторический моногород).")
     args = parser.parse_args()
-    asyncio.run(main(args))
+    _cities = [c.strip() for c in args.city.split(",") if c.strip()]
+    _bad = [c for c in _cities if c not in CITY_BASE]
+    if _bad:
+        raise SystemExit(f"неизвестные города: {_bad} (доступно: {list(CITY_BASE)})")
+    for _c in _cities:
+        CITY = _c
+        GRAPHQL_URL = CITY_BASE[_c] + "/graphql"
+        MSK_MARKER = CITY_MARKER[_c]
+        asyncio.run(main(args))

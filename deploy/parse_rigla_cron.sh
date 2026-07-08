@@ -50,15 +50,19 @@ echo "BEFORE: rigla priced=$BEFORE_TOTAL"
 
 case "$MODE" in
   update)
-    cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_rigla --update-only
+    cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_rigla --update-only --city msk,sam,chel
     ;;
   full)
-    cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_rigla --from-gorzdrav --rematch
+    # msk — от набора Горздрава (исторически); sam/chel — от набора Магнита
+    # (Горздрава в этих городах нет). Два вызова под одним flock-локом.
+    cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_rigla --from-gorzdrav --rematch --city msk
+    cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_rigla --from-magnit --rematch --no-availability --city sam,chel
     ;;
   availability)
     # Только маски наличия (store_bitmap) по аптекам Ригла — без перематчинга
     # цен. Цена не меняется → IndexNow и алерт >20% не нужны (выходим раньше).
-    cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_rigla --availability-only
+    # Только msk: карта Риглы (Этап 2) для sam/chel не включена.
+    cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_rigla --availability-only --city msk
     echo "=== $(date -u +'%Y-%m-%d %H:%M:%S UTC') | mode=$MODE | done ==="
     exit 0
     ;;
