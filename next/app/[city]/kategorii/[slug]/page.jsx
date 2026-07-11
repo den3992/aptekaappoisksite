@@ -1,5 +1,5 @@
 import CategoryDetailClient from './CategoryDetailClient';
-import { fetchCategories } from '../../../../api/client';
+import { fetchCategories, searchMeds } from '../../../../api/client';
 import { categoryDetailJsonLd, categoryFaqJsonLd } from '../../../../lib/schemas';
 const G = { msk: 'Москвы', spb: 'Санкт-Петербурга', krd: 'Краснодара', nn: 'Нижнего Новгорода', ekb: 'Екатеринбурга', kzn: 'Казани', nsk: 'Новосибирска', sam: 'Самары', chel: 'Челябинска', ufa: 'Уфы', rnd: 'Ростова-на-Дону', vrn: 'Воронежа' };
 export async function generateMetadata({ params }) {
@@ -24,6 +24,13 @@ export default async function Page({ params }) {
     const all = await fetchCategories();
     cat = all.find(c => c.slug === slug);
   } catch (e) { /* ignore */ }
+  // Первая страница каталога — СЕРВЕРНО: (1) грид в SSR-HTML -> бот видит
+  // ссылки категория->препараты (перелинковка), (2) нет клиентской вставки
+  // грида -> CLS ~0 (был 0.47: SEO-блок сдвигался приехавшими карточками).
+  let initialData = null;
+  try {
+    initialData = await searchMeds({ category: slug, page: 1, pageSize: 24 });
+  } catch (e) { /* клиент дозагрузит сам */ }
   const graph = cat ? categoryDetailJsonLd(city, cat) : null;
   const faqGraph = cat ? categoryFaqJsonLd(city, cat) : null;
   return (
@@ -34,7 +41,7 @@ export default async function Page({ params }) {
       {faqGraph && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqGraph) }} />
       )}
-      <CategoryDetailClient initialCat={cat} />
+      <CategoryDetailClient initialCat={cat} initialData={initialData} />
     </>
   );
 }

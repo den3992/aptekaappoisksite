@@ -53,11 +53,12 @@ export default function RootLayout({ children }) {
           <MobileTabBar />
           <SearchOverlay />
         </CityProvider>
-        {/* Я.Метрика — strategy="afterInteractive" грузит счётчик после
-            hydration, не блокируя FCP/LCP. */}
+        {/* Я.Метрика — strategy="lazyOnload" грузит счётчик в idle после
+            полной загрузки: -90KB и ~700ms JS с критического пути (TBT).
+            Визиты Метрика фиксирует и при позднем старте. */}
         <Script
           id="yandex-metrika"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           dangerouslySetInnerHTML={{
             __html: `
               (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};

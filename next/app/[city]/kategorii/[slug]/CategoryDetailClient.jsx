@@ -1,6 +1,6 @@
 'use client';
 import { formatName, formatManufacturer } from "../../../../utils/text";
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -11,7 +11,7 @@ import { getCategoryStyle } from '../../../../lib/categoryStyles';
 import { categoryContent, CAT_TITLES } from '../../../../lib/categoryContent';
 const PAGE_SIZE = 24;
 
-export default function CategoryDetail({ initialCat = null }) {
+export default function CategoryDetail({ initialCat = null, initialData = null }) {
   const { slug, city: cityParam } = useParams();
   const { city: ctxCity, cities, setCity } = useCity();
   // SSR-фикс города: до гидрации берём из URL, после — из контекста
@@ -22,8 +22,11 @@ export default function CategoryDetail({ initialCat = null }) {
   const city = (!_hydrated && _urlCity) ? _urlCity : ctxCity;
   const [cat, setCat] = useState(initialCat);
   const [page, setPage] = useState(1);
-  const [data, setData] = useState({ items: [], total: 0 });
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(initialData || { items: [], total: 0 });
+  const [loading, setLoading] = useState(!initialData);
+  // Первая страница пришла из SSR (initialData) — первый клиентский фетч
+  // пропускаем, чтобы не перерисовывать грид (и не ловить CLS) зря.
+  const _ssrDataUsed = useRef(!!initialData);
 
   useEffect(() => {
     if (cityParam && cities) {
@@ -38,6 +41,7 @@ export default function CategoryDetail({ initialCat = null }) {
   }, [slug]);
 
   useEffect(() => {
+    if (_ssrDataUsed.current) { _ssrDataUsed.current = false; return; }
     setLoading(true);
     let cancelled = false;
     searchMeds({ category: slug, page, pageSize: PAGE_SIZE })
