@@ -49,7 +49,10 @@ echo "BEFORE: maksavit priced=$BEFORE_TOTAL"
 
 case "$MODE" in
   update)
-    cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_maksavit --update-only
+    # Только цены (--no-availability): с расширением на 9 городов update с фазой
+    # наличия шёл 9ч+ (02:30->11:42). Наличие обновляет отдельный availability-крон
+    # (15:00) и воскресный full — как у Здоровья.
+    cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_maksavit --update-only --no-availability
     ;;
   full)
     cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_maksavit --rematch
