@@ -40,6 +40,13 @@ ALL_CITIES = ["msk", "spb", "krd", "nn", "ekb", "kzn", "nsk", "sam", "chel", "uf
 REAL = ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit", "farmakopeika"]
 MATCH_OK = ["matched", "mnn_match", "needs_review"]
 DAILY_LIMIT = 470
+
+# Свежеусиленные города — вперёд очереди: они только что получили 2-ю сеть и
+# перешли noindex→index (экспансия 2026-06-30..07-07: Фармакопейка→nsk,
+# Максавит→kzn/vrn/ufa/rnd, Ригла→sam/chel), Яндекс их сильными ещё не видел.
+# msk/spb/krd/nn давно в индексе — их URL подождут в хвосте. Список пересмотреть
+# после следующей экспансии или опустошить, когда свежие города переварены.
+PRIORITY_CITIES = ["nsk", "kzn", "vrn", "ufa", "rnd", "sam", "chel"]
 TOKEN = os.environ.get("YANDEX_WEBMASTER_TOKEN", "")
 
 
@@ -96,7 +103,12 @@ async def build_queue(db) -> list[str]:
         for c in ALL_CITIES:  # msk/spb первыми
             if s in priced_by_city[c]:
                 urls.append(f"{SITE}/{c}/preparaty/{s}")
-    return urls
+    # Приоритетный блок: URL свежеусиленных городов — в голову очереди
+    # (внутри блоков исходный порядок по широте слага сохраняется).
+    pri = set(PRIORITY_CITIES)
+    head = [u for u in urls if u.split("/")[3] in pri]
+    tail = [u for u in urls if u.split("/")[3] not in pri]
+    return head + tail
 
 
 async def main(args):
