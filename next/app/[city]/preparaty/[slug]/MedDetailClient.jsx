@@ -626,6 +626,23 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
   // в видимой области карты ничего нет" — раньше показывался бесконечный
   // «Загрузка списка аптек…».
   const [gorzdravStoresLoaded, setGorzdravStoresLoaded] = useState(false);
+  // CWV: карта — самый дорогой блок (Leaflet + до ~2400 точек города, длинные
+  // задачи 6-11с загрузки = TBT). Монтируем её и грузим реестр аптек только
+  // когда пользователь доскроллил (сентинел-заглушка той же высоты -> CLS 0).
+  // Боту карта не видна и раньше (client-only) — SEO не меняется.
+  const [mapWanted, setMapWanted] = useState(false);
+  const mapSentinelRef = useRef(null);
+  useEffect(() => {
+    if (mapWanted) return;
+    const el = mapSentinelRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') { setMapWanted(true); return; }
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some(e => e.isIntersecting)) { setMapWanted(true); io.disconnect(); }
+    }, { rootMargin: '500px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [mapWanted]);
+  useEffect(() => { if (mapFullscreen) setMapWanted(true); }, [mapFullscreen]);
   // Динамический список аптек, видимых на карте + 15 ближайших к центру.
   // Обновляется при каждом moveend/zoomend (debounce внутри PriceMap).
   const [viewportList, setViewportList] = useState([]);
@@ -656,14 +673,6 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
     // При первом маунте с SSR-данными loading уже false, не перезатираем.
     if (!med) setLoading(true);
     setNotFound(false);
-    setGorzdravStoresLoaded(false);
-    // Горздрав-аптек 1937 штук — грузим параллельно, но НЕ блокируем рендер.
-    // Карта появится сразу же с партнёрскими маркерами, кружки Горздрав
-    // дорисуются как только данные приедут (~100-300мс).
-    fetchGorzdravStores(city.id)
-      .then(gz => { if (!cancelled) setGorzdravStores(gz); })
-      .catch(() => {})
-      .finally(() => { if (!cancelled) setGorzdravStoresLoaded(true); });
     Promise.all([fetchMed(slug, city.id), fetchAnalogs(slug, 8), fetchPharmacies(city.id)])
       .then(([m, a, ph]) => {
         if (cancelled) return;
@@ -680,6 +689,19 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [slug, city.id]);
+
+  // Реестр аптек города (до ~2400 точек) — только когда карта затребована
+  // (mapWanted): его загрузка+обработка порождала длинные задачи при старте.
+  useEffect(() => {
+    if (!mapWanted) return;
+    let cancelled = false;
+    setGorzdravStoresLoaded(false);
+    fetchGorzdravStores(city.id)
+      .then(gz => { if (!cancelled) setGorzdravStores(gz); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setGorzdravStoresLoaded(true); });
+    return () => { cancelled = true; };
+  }, [mapWanted, city.id]);
 
   // Unique pack list (computed once per med).
   const packs = useMemo(() => {
@@ -1297,7 +1319,16 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
 
           {/* Map: fills the entire fullscreen section (sheet overlays on top) */}
           <div className={mapFullscreen ? "absolute inset-0" : ""}>
-            <PriceMap
+            {!mapWanted && (
+              <div
+                ref={mapSentinelRef}
+                data-testid="map-placeholder"
+                className="w-full h-[360px] md:h-[460px] rounded-xl overflow-hidden border border-slate-100 bg-slate-50 flex items-center justify-center text-sm text-slate-400"
+              >
+                Карта аптек загрузится при прокрутке…
+              </div>
+            )}
+            {mapWanted && <PriceMap
               ref={priceMapRef}
               med={med}
               prices={prices}
@@ -1328,7 +1359,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
               fullscreen={mapFullscreen}
               onInteract={() => setSnapPoint(0.25)}
               onViewportChange={onMapViewportChange}
-            />
+            />}
           </div>
 
           {/* Bottom sheet with drag-handle and snap-points (vaul) */}
