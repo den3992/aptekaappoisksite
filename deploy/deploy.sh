@@ -97,7 +97,7 @@ docker compose exec backend python -m scripts.seed_pharmacy_tokens || true
 # 7. Cron: автообновление SSL и автобэкап Mongo
 # ────────────────────────────────────────────────────────────────
 log "Регистрируем cron-задачи (renew SSL + backup mongo)..."
-CRON_RENEW="0 4 * * * cd $(pwd) && docker compose run --rm certbot renew --quiet && docker compose exec edge nginx -s reload >/dev/null 2>&1"
+CRON_RENEW="0 4 * * * /home/ubuntu/aptekaa/deploy/renew_cert.sh >> /var/log/aptekaa/certbot-renew.log 2>&1"
 CRON_BACKUP="30 3 * * * cd $(pwd) && bash backup.sh >> /var/log/aptekaa-backup.log 2>&1"
 ( crontab -l 2>/dev/null | grep -v 'aptekaa-backup\|certbot renew' ; echo "$CRON_RENEW" ; echo "$CRON_BACKUP" ) | crontab -
 
