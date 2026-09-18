@@ -22,6 +22,27 @@ from .pharmacies_seed import CITIES, CATEGORIES, PHARMACIES
 
 CANONICAL_HOST = os.environ.get("CANONICAL_HOST", "aptekaa.ru")
 DEFAULT_CITY = "msk"
+SITEMAP_CHUNK_SIZE = 10000
+REAL_SOURCES = ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit", "farmakopeika"]
+MATCH_OK = ["matched", "mnn_match", "needs_review"]
+
+
+def _indexable_pairs_pipeline():
+    """Canonical city/slug pairs satisfying the shared >=2-network rule."""
+    return [
+        {"$match": {
+            "source": {"$in": REAL_SOURCES},
+            "price": {"$gt": 0},
+            "match_status": {"$in": MATCH_OK},
+        }},
+        {"$group": {"_id": {"city": "$city", "slug": "$slug"}, "nets": {"$addToSet": "$source"}}},
+        {"$match": {"$expr": {"$gte": [{"$size": "$nets"}, 2]}}},
+        {"$lookup": {
+            "from": "medications", "localField": "_id.slug", "foreignField": "slug", "as": "med",
+        }},
+        {"$unwind": "$med"},
+        {"$match": {"med.is_canonical": {"$ne": False}}},
+    ]
 
 def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
     router = APIRouter()
@@ -49,22 +70,19 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
     @router.get("/sitemap.xml")
     async def sitemap_index():
         host = f"https://{CANONICAL_HOST}"
-        now = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        # Каждый чанк не должен превышать 50k URL (лимит протокола sitemap).
-        # На каждый slug приходится len(CITIES) URL (по одному на город),
-        # поэтому делим лимит на число городов.
-        per_chunk_slugs = max(1, 50000 // max(1, len(CITIES)))
-        # Sitemap only lists canonical pages (duplicates are hidden via rel=canonical)
-        total = await db.medications.count_documents({"is_canonical": {"$ne": False}})
-        chunks = max(1, (total + per_chunk_slugs - 1) // per_chunk_slugs)
+        count_rows = await db.prices_real.aggregate(
+            _indexable_pairs_pipeline() + [{"$count": "total"}], allowDiskUse=True
+        ).to_list(1)
+        total = count_rows[0]["total"] if count_rows else 0
+        chunks = (total + SITEMAP_CHUNK_SIZE - 1) // SITEMAP_CHUNK_SIZE
         items = [
-            f"<sitemap><loc>{host}/sitemap_static.xml</loc><lastmod>{now}</lastmod></sitemap>",
-            f"<sitemap><loc>{host}/sitemap_pharmacies.xml</loc><lastmod>{now}</lastmod></sitemap>",
-            f"<sitemap><loc>{host}/sitemap_categories.xml</loc><lastmod>{now}</lastmod></sitemap>",
+            f"<sitemap><loc>{host}/sitemap_static.xml</loc></sitemap>",
+            f"<sitemap><loc>{host}/sitemap_pharmacies.xml</loc></sitemap>",
+            f"<sitemap><loc>{host}/sitemap_categories.xml</loc></sitemap>",
         ]
         for i in range(chunks):
             items.append(
-                f"<sitemap><loc>{host}/sitemap_meds_{i + 1}.xml</loc><lastmod>{now}</lastmod></sitemap>"
+                f"<sitemap><loc>{host}/sitemap_meds_{i + 1}.xml</loc></sitemap>"
             )
         body = (
             '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -77,24 +95,40 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
     @router.get("/sitemap_static.xml")
     async def sitemap_static():
         host = f"https://{CANONICAL_HOST}"
+        city_rows = await db.prices_real.aggregate(
+            _indexable_pairs_pipeline() + [{"$group": {"_id": "$_id.city"}}], allowDiskUse=True
+        ).to_list(None)
+        cities_with_catalog = {row["_id"] for row in city_rows}
         urls = []
         for c in CITIES:
-            for path in ("", "kategorii", "preparaty", "apteki",
-                         "dlya-aptek", "o-servise", "kontakty"):
+            paths = ["", "apteki"]
+            if c["slug"] in cities_with_catalog:
+                paths.extend(["kategorii", "preparaty"])
+            for path in paths:
                 u = f"{host}/{c['slug']}" if not path else f"{host}/{c['slug']}/{path}"
                 urls.append(u)
-        # Plus root → defaults to msk
-        urls.insert(0, f"{host}/")
-        return _urlset(urls, lastmod_today=True)
+        # Informational/legal pages exist only at the site root.  Do not put
+        # redirecting `/` or nonexistent city-prefixed copies in the sitemap.
+        for path in (
+            "dlya-aptek", "o-servise", "kontakty",
+            "politika-konfidencialnosti", "soglasie-na-obrabotku-pd",
+        ):
+            urls.append(f"{host}/{path}")
+        return _urlset(urls, lastmod_today=False)
 
     @router.get("/sitemap_categories.xml")
     async def sitemap_categories():
         host = f"https://{CANONICAL_HOST}"
-        urls = []
-        for c in CITIES:
-            for cat in CATEGORIES:
-                urls.append(f"{host}/{c['slug']}/kategorii/{cat['slug']}")
-        return _urlset(urls, lastmod_today=True)
+        rows = await db.prices_real.aggregate(
+            _indexable_pairs_pipeline() + [
+                {"$match": {"med.category": {"$nin": [None, "", "other"]}}},
+                {"$group": {"_id": {"city": "$_id.city", "category": "$med.category"}}},
+                {"$sort": {"_id.city": 1, "_id.category": 1}},
+            ],
+            allowDiskUse=True,
+        ).to_list(None)
+        urls = [f"{host}/{row['_id']['city']}/kategorii/{row['_id']['category']}" for row in rows]
+        return _urlset(urls, lastmod_today=False)
 
     @router.get("/sitemap_pharmacies.xml")
     async def sitemap_pharmacies():
@@ -102,65 +136,33 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
         urls = []
         for p in PHARMACIES:
             urls.append(f"{host}/{p['city']}/apteki/{p['id']}")
-        return _urlset(urls, lastmod_today=True)
+        return _urlset(urls, lastmod_today=False)
 
     @router.get("/sitemap_meds_{idx}.xml")
     async def sitemap_meds(idx: int):
         host = f"https://{CANONICAL_HOST}"
-        # len(CITIES) URL на slug; держим чанк ≤ 50k URL (лимит протокола).
-        per = max(1, 50000 // max(1, len(CITIES)))
-        skip = (idx - 1) * per
-        # Чанки за пределами числа канонических препаратов не существуют —
-        # отдаём 404, а не пустой 200 (иначе боты держат «мёртвые» sitemap).
-        total = await db.medications.count_documents({"is_canonical": {"$ne": False}})
-        if idx < 1 or skip >= total:
+        skip = (idx - 1) * SITEMAP_CHUNK_SIZE
+        if idx < 1:
             raise HTTPException(status_code=404, detail="sitemap chunk out of range")
-        # Дата последнего обновления цены по каждому slug — одним запросом.
-        # Яндекс по <lastmod> понимает свежесть и приоритет переобхода.
-        lastmod_map = {}
-        async for row in db.prices_real.aggregate([
-            {"$match": {"source": {"$in": ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit", "farmakopeika"]},
-                        "updated_at": {"$ne": None},
-                        "price": {"$gt": 0},
-                        "match_status": {"$in": ["matched", "mnn_match", "needs_review"]}}},
-            {"$group": {"_id": "$slug", "lm": {"$max": "$updated_at"}}},
-        ]):
-            sl, lm = row.get("_id"), row.get("lm")
-            if sl and lm:
-                try:
-                    lastmod_map[sl] = lm.strftime("%Y-%m-%d")
-                except Exception:
-                    pass
-        # Карта наличия по парам (город, slug) — в sitemap идут ТОЛЬКО реальные
-        # пары. Пустые гео-страницы Яндекс бракует как «малоценные», их не
-        # рекламируем (бюджет обхода — на ценные). Те же страницы → noindex.
-        from collections import defaultdict as _dd
-        priced_by_city = _dd(set)
-        async for row in db.prices_real.aggregate([
-            {"$match": {"source": {"$in": ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit", "farmakopeika"]},
-                        "price": {"$gt": 0},
-                        "match_status": {"$in": ["matched", "mnn_match", "needs_review"]}}},
-            {"$group": {"_id": {"c": "$city", "s": "$slug"}, "nets": {"$addToSet": "$source"}}},
-            {"$match": {"$expr": {"$gte": [{"$size": "$nets"}, 2]}}},
-        ]):
-            _id = row.get("_id") or {}
-            if _id.get("c") and _id.get("s"):
-                priced_by_city[_id["c"]].add(_id["s"])
-        cursor = db.medications.find(
-            {"is_canonical": {"$ne": False}},
-            {"_id": 0, "slug": 1, "image_url": 1},
-        ).sort("slug", 1).skip(skip).limit(per)
+        rows = await db.prices_real.aggregate(
+            _indexable_pairs_pipeline() + [
+                {"$sort": {"_id.city": 1, "_id.slug": 1}},
+                {"$skip": skip},
+                {"$limit": SITEMAP_CHUNK_SIZE},
+                {"$project": {"_id": 1, "image_url": "$med.image_url"}},
+            ],
+            allowDiskUse=True,
+        ).to_list(None)
+        if not rows:
+            raise HTTPException(status_code=404, detail="sitemap chunk out of range")
         urls = []
-        async for d in cursor:
-            slug = d.get("slug")
-            if not slug:
-                continue
-            lm = lastmod_map.get(slug)
-            img = d.get("image_url") or ""
+        for row in rows:
+            city, slug = row["_id"]["city"], row["_id"]["slug"]
+            img = row.get("image_url") or ""
             img_abs = f"{host}{quote(img, safe='/')}" if img.startswith("/") else (img or None)
-            for c in CITIES:
-                if slug in priced_by_city.get(c["slug"], ()):
-                    urls.append((f"{host}/{c['slug']}/preparaty/{slug}", lm, img_abs))
+            # lastmod intentionally omitted until parsers store a truthful
+            # content_changed_at instead of their every-run updated_at value.
+            urls.append((f"{host}/{city}/preparaty/{slug}", None, img_abs))
         return _urlset(urls)
 
     # ----- yandex-verification placeholder -----
@@ -208,4 +210,3 @@ def _urlset(urls, lastmod_today: bool = True) -> Response:
 # ===========================
 # Server-side render for bots
 # ===========================
-

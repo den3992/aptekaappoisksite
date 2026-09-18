@@ -3,6 +3,7 @@
 // чтобы вложенные роуты могли задать свой).
 import HomeClient from './HomeClient';
 import { homeJsonLd } from '../../lib/schemas';
+import { fetchCategories } from '../../api/client';
 
 export async function generateMetadata({ params }) {
   const { city } = await params;
@@ -14,13 +15,14 @@ export async function generateMetadata({ params }) {
 export default async function Page({ params }) {
   const { city } = await params;
   const graph = homeJsonLd(city);
+  const categories = await fetchCategories(city).catch(() => []);
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }}
       />
-      <HomeClient />
+      <HomeClient initialCategories={categories} />
     </>
   );
 }

@@ -19,12 +19,13 @@ const http = axios.create({
 
 // In-memory caches for static lookups (cities, categories) so we don't hit
 // the backend on every page navigation.
-let _categoriesCache = null;
+const _categoriesCache = new Map();
 
-export async function fetchCategories() {
-  if (_categoriesCache) return _categoriesCache;
-  const { data } = await http.get('/categories');
-  _categoriesCache = data;
+export async function fetchCategories(city) {
+  const key = city || '_all';
+  if (_categoriesCache.has(key)) return _categoriesCache.get(key);
+  const { data } = await http.get('/categories', city ? { params: { city } } : undefined);
+  _categoriesCache.set(key, data);
   return data;
 }
 
@@ -38,10 +39,11 @@ export async function fetchPharmacy(id, city) {
   return data;
 }
 
-export async function searchMeds({ q, category, rx, prefix, page = 1, pageSize = 24 } = {}) {
+export async function searchMeds({ q, category, city, rx, prefix, page = 1, pageSize = 24 } = {}) {
   const params = { page, page_size: pageSize };
   if (q) params.q = q;
   if (category) params.category = category;
+  if (city) params.city = city;
   if (rx !== undefined) params.rx = rx;
   if (prefix) params.prefix = prefix;
   const { data } = await http.get('/search', { params });

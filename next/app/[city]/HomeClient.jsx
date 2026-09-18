@@ -32,15 +32,18 @@ const CITY_GEN = {
   rnd: 'Ростова-на-Дону', vrn: 'Воронежа',
 };
 
-export default function Home() {
+export default function Home({ initialCategories = [] }) {
   const { city, cities, setCity } = useCity();
   const { city: cityParam } = useParams();
+  const routeCity = cityParam || city.id;
   // cityParam (из URL) доступен и при SSR — H1 сразу корректен для бота;
   // city из контекста на сервере ещё дефолтный (msk), поэтому он лишь фолбэк.
   const cityGen = CITY_GEN[cityParam] || CITY_GEN[city?.id] || 'Москвы';
   const [popularMeds, setPopularMeds] = useState([]);
   const [leadOpen, setLeadOpen] = useState(false);
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState(
+    initialCategories.filter(c => c.slug !== 'other' && c.count > 0)
+  );
   const router = useRouter();
 
   const [trustIdx, setTrustIdx] = useState(0);
@@ -63,6 +66,8 @@ export default function Home() {
         'sankt-peterburg': 'spb', spb: 'spb',
         krasnodar: 'krd', krd: 'krd',
         'nizhniy-novgorod': 'nn', nn: 'nn',
+        ekb: 'ekb', kzn: 'kzn', nsk: 'nsk', sam: 'sam', chel: 'chel',
+        ufa: 'ufa', rnd: 'rnd', vrn: 'vrn',
       };
       const targetId = slugToId[cityParam];
       if (targetId) {
@@ -86,17 +91,21 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetchCategories()
-      .then(arr => setCategories(arr.filter(c => c.slug !== 'other')))
-      .catch(() => setCategories([]));
-  }, []);
+    if (initialCategories.length) {
+      setCategories(initialCategories.filter(c => c.slug !== 'other' && c.count > 0));
+    } else {
+      fetchCategories(cityParam)
+        .then(arr => setCategories(arr.filter(c => c.slug !== 'other' && c.count > 0)))
+        .catch(() => setCategories([]));
+    }
+  }, [cityParam, initialCategories]);
 
   useEffect(() => {
     document.body.classList.add('home-bg');
     return () => document.body.classList.remove('home-bg');
   }, []);
 
-  if (cityParam && !['moskva', 'msk', 'spb', 'sankt-peterburg', 'krd', 'krasnodar', 'nn', 'nizhniy-novgorod'].includes(cityParam)) {
+  if (cityParam && !['moskva', 'msk', 'spb', 'sankt-peterburg', 'krd', 'krasnodar', 'nn', 'nizhniy-novgorod', 'ekb', 'kzn', 'nsk', 'sam', 'chel', 'ufa', 'rnd', 'vrn'].includes(cityParam)) {
     return <NotFound />;
   }
 
@@ -129,7 +138,7 @@ export default function Home() {
           <div className="hidden md:flex mt-10 items-center gap-2 flex-wrap justify-center text-xs text-slate-500">
             <span>Часто ищут:</span>
             {['Парацетамол','Нурофен','Арбидол','Витамин D3','Смекта','Зодак'].map(t => (
-              <button key={t} type="button" onClick={() => router.push(`/${city.id}/poisk?q=${encodeURIComponent(t)}`)} className="px-2.5 py-1 rounded-full bg-white/70 backdrop-blur border border-slate-200 hover:border-emerald-300 hover:text-emerald-700 transition">{t}</button>
+              <button key={t} type="button" onClick={() => router.push(`/${routeCity}/poisk?q=${encodeURIComponent(t)}`)} className="px-2.5 py-1 rounded-full bg-white/70 backdrop-blur border border-slate-200 hover:border-emerald-300 hover:text-emerald-700 transition">{t}</button>
             ))}
           </div>
         </section>
@@ -141,11 +150,11 @@ export default function Home() {
       <section className="hidden md:block max-w-7xl mx-auto px-4 pt-8 md:pt-12 pb-2">
         <div className="flex items-center justify-between gap-3 mb-5">
           <h2 className="text-xl md:text-2xl font-bold text-slate-900">Популярные препараты</h2>
-          <Link href={`/${city.id}/preparaty`} className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1 whitespace-nowrap shrink-0">Каталог А–Я <ArrowRight className="w-4 h-4" /></Link>
+          <Link href={`/${routeCity}/preparaty`} className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1 whitespace-nowrap shrink-0">Каталог А–Я <ArrowRight className="w-4 h-4" /></Link>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5" data-testid="popular-meds">
           {popularMeds.map(m => (
-            <Link key={m.slug} href={`/${city.id}/preparaty/${m.slug}`} className="group flex flex-col justify-between bg-white border border-slate-200 hover:border-emerald-400 hover:shadow-sm transition rounded-xl px-4 py-3.5 min-h-[72px]">
+            <Link key={m.slug} href={`/${routeCity}/preparaty/${m.slug}`} className="group flex flex-col justify-between bg-white border border-slate-200 hover:border-emerald-400 hover:shadow-sm transition rounded-xl px-4 py-3.5 min-h-[72px]">
               <span className="font-semibold text-slate-900 text-sm leading-tight line-clamp-2">{formatName(m.name)}</span>
               <span className="text-xs text-slate-500 mt-1 truncate">{[m.form?.toLowerCase(), m.dosage].filter(Boolean).join(', ')}</span>
             </Link>
@@ -160,13 +169,13 @@ export default function Home() {
             <h2 className="text-xl md:text-2xl font-bold text-slate-900">Категории препаратов</h2>
             <p className="text-slate-500 text-sm mt-1 hidden sm:block">Найдите препарат по своей задаче</p>
           </div>
-          <Link href={`/${city.id}/kategorii`} className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1 whitespace-nowrap shrink-0">Все категории <ArrowRight className="w-4 h-4" /></Link>
+          <Link href={`/${routeCity}/kategorii`} className="text-emerald-700 text-sm font-medium hover:underline inline-flex items-center gap-1 whitespace-nowrap shrink-0">Все категории <ArrowRight className="w-4 h-4" /></Link>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-2.5">
           {categories.slice(0, 8).map(c => {
             const style = getCategoryStyle(c.slug);
             return (
-              <Link key={c.slug} href={`/${city.id}/kategorii/${c.slug}`} className="cat-card flex flex-col items-start gap-2.5 bg-white border border-slate-200 hover:border-emerald-400 transition rounded-xl px-4 py-3.5 min-h-[96px]">
+              <Link key={c.slug} href={`/${routeCity}/kategorii/${c.slug}`} className="cat-card flex flex-col items-start gap-2.5 bg-white border border-slate-200 hover:border-emerald-400 transition rounded-xl px-4 py-3.5 min-h-[96px]">
                 <span className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: style.color, color: style.accent }}>
                   <CategoryIcon name={style.icon} className="w-4.5 h-4.5" />
                 </span>

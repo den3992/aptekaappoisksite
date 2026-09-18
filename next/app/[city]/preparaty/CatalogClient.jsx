@@ -1,6 +1,6 @@
 'use client';
 import { formatName, formatManufacturer } from "../../../utils/text";
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
@@ -10,15 +10,18 @@ import { searchMeds } from '../../../api/client';
 const LETTERS = ['А','Б','В','Г','Д','Е','Ж','З','И','К','Л','М','Н','О','П','Р','С','Т','У','Ф','Х','Ц','Ч','Ш','Щ','Э','Ю','Я'];
 const PAGE_SIZE = 48;
 
-export default function Catalog() {
+export default function Catalog({ initialData = null, initialPage = 1 }) {
   const { city, cities, setCity } = useCity();
   const { city: cityParam } = useParams();
+  const routeCity = cityParam || city.id;
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
   const [letter, setLetter] = useState('');
-  const [page, setPage] = useState(1);
-  const [data, setData] = useState({ items: [], total: 0 });
-  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(initialPage);
+  const [data, setData] = useState(initialData || { items: [], total: 0 });
+  const [loading, setLoading] = useState(!initialData);
+  const ssrDataUsed = useRef(!!initialData);
+  const filtersMounted = useRef(false);
 
   // Sync URL city → context
   useEffect(() => {
@@ -36,15 +39,35 @@ export default function Catalog() {
   }, [q]);
 
   // Reset to first page when filters change
-  useEffect(() => { setPage(1); }, [letter, debouncedQ]);
+  useEffect(() => {
+    if (!filtersMounted.current) {
+      filtersMounted.current = true;
+      return;
+    }
+    setPage(1);
+  }, [letter, debouncedQ]);
+
+  useEffect(() => {
+    if (!debouncedQ && !letter && initialData) {
+      setPage(initialPage);
+      setData(initialData);
+      setLoading(false);
+      ssrDataUsed.current = true;
+    }
+  }, [initialData, initialPage, debouncedQ, letter]);
 
   // Fetch data
   useEffect(() => {
+    if (ssrDataUsed.current && !debouncedQ && !letter && page === initialPage) {
+      ssrDataUsed.current = false;
+      return;
+    }
     setLoading(true);
     let cancelled = false;
     searchMeds({
       q: debouncedQ || undefined,
       prefix: letter || undefined,
+      city: routeCity,
       page,
       pageSize: PAGE_SIZE,
     }).then(res => {
@@ -52,14 +75,14 @@ export default function Catalog() {
     }).catch(() => { if (!cancelled) setData({ items: [], total: 0 }); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [debouncedQ, letter, page]);
+  }, [debouncedQ, letter, page, routeCity, initialPage]);
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil((data.total || 0) / PAGE_SIZE)), [data.total]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-5 md:py-8">
       <nav className="text-xs text-slate-500 mb-4">
-        <Link href={`/${city.id}`} className="hover:text-emerald-700">Главная</Link>
+        <Link href={`/${routeCity}`} className="hover:text-emerald-700">Главная</Link>
         <span className="mx-1.5">/</span><span>Каталог препаратов</span>
       </nav>
       <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-2 leading-tight">Каталог лекарств А–Я</h1>
@@ -88,7 +111,7 @@ export default function Catalog() {
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2" data-testid="catalog-list">
             {data.items.map(m => (
-              <Link key={m.slug} href={`/${city.id}/preparaty/${m.slug}`} className="block bg-white border border-slate-100 rounded-xl p-4 hover:border-emerald-300 transition">
+              <Link key={m.slug} href={`/${routeCity}/preparaty/${m.slug}`} className="block bg-white border border-slate-100 rounded-xl p-4 hover:border-emerald-300 transition">
                 {m.rx && (
                   <span className="inline-block text-[10px] font-semibold uppercase tracking-wide bg-rose-50 text-rose-700 px-2 py-0.5 rounded mb-1.5">
                     Отпускается по рецепту
@@ -103,15 +126,29 @@ export default function Catalog() {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 mt-8" data-testid="catalog-pager">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
-                className="px-3 h-11 rounded-lg border border-slate-200 disabled:opacity-40 hover:border-emerald-400 flex items-center gap-1 text-sm">
-                <ChevronLeft className="w-4 h-4" /> Назад
-              </button>
+              {!debouncedQ && !letter && page > 1 ? (
+                <Link href={`/${routeCity}/preparaty${page > 2 ? `?page=${page - 1}` : ''}`}
+                  className="px-3 h-11 rounded-lg border border-slate-200 hover:border-emerald-400 flex items-center gap-1 text-sm">
+                  <ChevronLeft className="w-4 h-4" /> Назад
+                </Link>
+              ) : (
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
+                  className="px-3 h-11 rounded-lg border border-slate-200 disabled:opacity-40 hover:border-emerald-400 flex items-center gap-1 text-sm">
+                  <ChevronLeft className="w-4 h-4" /> Назад
+                </button>
+              )}
               <span className="text-sm text-slate-600">Страница <strong>{page}</strong> из <strong>{totalPages.toLocaleString('ru')}</strong></span>
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
-                className="px-3 h-11 rounded-lg border border-slate-200 disabled:opacity-40 hover:border-emerald-400 flex items-center gap-1 text-sm">
-                Вперёд <ChevronRight className="w-4 h-4" />
-              </button>
+              {!debouncedQ && !letter && page < totalPages ? (
+                <Link href={`/${routeCity}/preparaty?page=${page + 1}`}
+                  className="px-3 h-11 rounded-lg border border-slate-200 hover:border-emerald-400 flex items-center gap-1 text-sm">
+                  Вперёд <ChevronRight className="w-4 h-4" />
+                </Link>
+              ) : (
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
+                  className="px-3 h-11 rounded-lg border border-slate-200 disabled:opacity-40 hover:border-emerald-400 flex items-center gap-1 text-sm">
+                  Вперёд <ChevronRight className="w-4 h-4" />
+                </button>
+              )}
             </div>
           )}
         </>

@@ -21,9 +21,7 @@ export async function generateMetadata({ params }) {
     // Индексируем гео-страницу ТОЛЬКО при реальном наличии в ЭТОМ городе.
     // Пустые (нет в наличии в данном городе) Яндекс всё равно бракует как
     // «малоценные» — noindex концентрирует бюджет обхода на ценных страницах.
-    const cityPrices = Array.isArray(med?.prices_by_city?.[city]) ? med.prices_by_city[city] : [];
-    const _nets = new Set(cityPrices.filter((p) => p && p.price > 0).map((p) => p.pharmacy_id));
-    if (_nets.size < 2) {
+    if (!med?.seo_indexable) {
       meta.robots = { index: false, follow: true };  // индексируем только страницы со сравнением (>=2 сетей)
     }
     return meta;
@@ -44,7 +42,7 @@ export default async function Page({ params }) {
   // categories отдаём в SSR-проп, чтобы название категории в лиде и хлебных
   // крошках совпало сервер↔клиент (иначе hydration mismatch, React #418, и
   // бот видит SSR без категорийной перелинковки). fetchCategories кэширован.
-  const categories = await fetchCategories().catch(() => []);
+  const categories = await fetchCategories(city).catch(() => []);
   const graph = medGraphJsonLd(city, med);
   return (
     <>

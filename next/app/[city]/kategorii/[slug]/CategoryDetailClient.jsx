@@ -11,7 +11,7 @@ import { getCategoryStyle } from '../../../../lib/categoryStyles';
 import { categoryContent, CAT_TITLES } from '../../../../lib/categoryContent';
 const PAGE_SIZE = 24;
 
-export default function CategoryDetail({ initialCat = null, initialData = null }) {
+export default function CategoryDetail({ initialCat = null, initialData = null, initialPage = 1 }) {
   const { slug, city: cityParam } = useParams();
   const { city: ctxCity, cities, setCity } = useCity();
   // SSR-фикс города: до гидрации берём из URL, после — из контекста
@@ -21,12 +21,21 @@ export default function CategoryDetail({ initialCat = null, initialData = null }
   const _urlCity = cityParam ? cities.find(c => c.id === cityParam) : null;
   const city = (!_hydrated && _urlCity) ? _urlCity : ctxCity;
   const [cat, setCat] = useState(initialCat);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(initialPage);
   const [data, setData] = useState(initialData || { items: [], total: 0 });
   const [loading, setLoading] = useState(!initialData);
   // Первая страница пришла из SSR (initialData) — первый клиентский фетч
   // пропускаем, чтобы не перерисовывать грид (и не ловить CLS) зря.
   const _ssrDataUsed = useRef(!!initialData);
+
+  useEffect(() => {
+    if (initialData) {
+      setPage(initialPage);
+      setData(initialData);
+      setLoading(false);
+      _ssrDataUsed.current = true;
+    }
+  }, [initialData, initialPage]);
 
   useEffect(() => {
     if (cityParam && cities) {
@@ -37,19 +46,19 @@ export default function CategoryDetail({ initialCat = null, initialData = null }
   }, [cityParam]);
 
   useEffect(() => {
-    fetchCategories().then((all) => setCat(all.find(c => c.slug === slug))).catch(() => {});
-  }, [slug]);
+    fetchCategories(cityParam).then((all) => setCat(all.find(c => c.slug === slug))).catch(() => {});
+  }, [slug, cityParam]);
 
   useEffect(() => {
     if (_ssrDataUsed.current) { _ssrDataUsed.current = false; return; }
     setLoading(true);
     let cancelled = false;
-    searchMeds({ category: slug, page, pageSize: PAGE_SIZE })
+    searchMeds({ category: slug, city: cityParam, page, pageSize: PAGE_SIZE })
       .then((res) => { if (!cancelled) setData(res); })
       .catch(() => { if (!cancelled) setData({ items: [], total: 0 }); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [slug, page]);
+  }, [slug, cityParam, page]);
 
   const totalPages = Math.max(1, Math.ceil(data.total / PAGE_SIZE));
 
@@ -122,15 +131,27 @@ export default function CategoryDetail({ initialCat = null, initialData = null }
 
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 mt-8">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
-                className="px-3 h-11 rounded-lg border border-slate-200 disabled:opacity-40 hover:border-emerald-400 flex items-center gap-1 text-sm">
-                <ChevronLeft className="w-4 h-4" /> Назад
-              </button>
+              {page > 1 ? (
+                <Link href={`/${city.id}/kategorii/${slug}${page > 2 ? `?page=${page - 1}` : ''}`}
+                  className="px-3 h-11 rounded-lg border border-slate-200 hover:border-emerald-400 flex items-center gap-1 text-sm">
+                  <ChevronLeft className="w-4 h-4" /> Назад
+                </Link>
+              ) : (
+                <button disabled className="px-3 h-11 rounded-lg border border-slate-200 opacity-40 flex items-center gap-1 text-sm">
+                  <ChevronLeft className="w-4 h-4" /> Назад
+                </button>
+              )}
               <span className="text-sm text-slate-600">Страница <strong>{page}</strong> из <strong>{totalPages}</strong></span>
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
-                className="px-3 h-11 rounded-lg border border-slate-200 disabled:opacity-40 hover:border-emerald-400 flex items-center gap-1 text-sm">
-                Вперёд <ChevronRight className="w-4 h-4" />
-              </button>
+              {page < totalPages ? (
+                <Link href={`/${city.id}/kategorii/${slug}?page=${page + 1}`}
+                  className="px-3 h-11 rounded-lg border border-slate-200 hover:border-emerald-400 flex items-center gap-1 text-sm">
+                  Вперёд <ChevronRight className="w-4 h-4" />
+                </Link>
+              ) : (
+                <button disabled className="px-3 h-11 rounded-lg border border-slate-200 opacity-40 flex items-center gap-1 text-sm">
+                  Вперёд <ChevronRight className="w-4 h-4" />
+                </button>
+              )}
             </div>
           )}
         </>

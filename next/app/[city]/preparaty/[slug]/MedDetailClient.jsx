@@ -656,7 +656,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
   // categories нужны для названия категории в лиде и хлебных крошках. Приходят
   // из SSR (initialCategories) → на сервере и клиенте одинаковы, без hydration
   // mismatch. Дозагружаем только если сервер их не передал (SPA-навигация).
-  useEffect(() => { if (!initialCategories.length) fetchCategories().then(setCategories).catch(() => {}); }, []);
+  useEffect(() => { if (!initialCategories.length) fetchCategories(cityParam).then(setCategories).catch(() => {}); }, [cityParam, initialCategories.length]);
 
   // Sync URL city → context
   useEffect(() => {

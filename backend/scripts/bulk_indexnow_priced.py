@@ -24,9 +24,13 @@ async def main():
         urls.append(f"https://{HOST}/{c}")
         for cat in cat_slugs:
             urls.append(f"https://{HOST}/{c}/kategorii/{cat}")
-        slugs = await db.prices_real.distinct(
-            "slug", {"city": c, "source": {"$in": SOURCES}, "price": {"$gt": 0}}
-        )
+        rows = db.prices_real.aggregate([
+            {"$match": {"city": c, "source": {"$in": SOURCES}, "price": {"$gt": 0},
+                        "match_status": {"$in": ["matched", "mnn_match", "needs_review"]}}},
+            {"$group": {"_id": "$slug", "nets": {"$addToSet": "$source"}}},
+            {"$match": {"$expr": {"$gte": [{"$size": "$nets"}, 2]}}},
+        ])
+        slugs = [row["_id"] async for row in rows]
         total_priced += len(slugs)
         for s in slugs:
             urls.append(f"https://{HOST}/{c}/preparaty/{s}")

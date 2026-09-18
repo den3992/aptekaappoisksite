@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 import math
 import base64
+import time
 from typing import Optional, List
 from datetime import datetime, timezone
 
@@ -91,6 +92,37 @@ def _search_form_priority(form: str) -> int:
 def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
     router = APIRouter()
 
+    # One definition of an indexable city/medicine pair.  The same rule is
+    # used by sitemap, metadata and IndexNow: a real positive price from at
+    # least two independent pharmacy networks in that city.
+    _real_sources = [
+        "gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo",
+        "zdorovie", "magnit", "farmakopeika",
+    ]
+    _match_statuses = ["matched", "mnn_match", "needs_review"]
+    _city_slug_cache = {}
+    _city_slug_cache_ttl = 300
+
+    async def _indexable_slugs(city: str) -> list[str]:
+        now = time.monotonic()
+        cached = _city_slug_cache.get(city)
+        if cached and now - cached[0] < _city_slug_cache_ttl:
+            return cached[1]
+        pipeline = [
+            {"$match": {
+                "city": city,
+                "source": {"$in": _real_sources},
+                "price": {"$gt": 0},
+                "match_status": {"$in": _match_statuses},
+            }},
+            {"$group": {"_id": "$slug", "nets": {"$addToSet": "$source"}}},
+            {"$match": {"$expr": {"$gte": [{"$size": "$nets"}, 2]}}},
+            {"$project": {"_id": 0, "slug": "$_id"}},
+        ]
+        slugs = [row["slug"] async for row in db.prices_real.aggregate(pipeline) if row.get("slug")]
+        _city_slug_cache[city] = (now, slugs)
+        return slugs
+
     # ----- Cities & categories -----
 
     @router.get("/cities")
@@ -98,10 +130,13 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         return CITIES
 
     @router.get("/categories")
-    async def list_categories():
+    async def list_categories(city: Optional[str] = Query(None)):
         # attach counts from medications collection (canonical-only for accurate UX numbers)
+        match = {"is_canonical": {"$ne": False}}
+        if city:
+            match["slug"] = {"$in": await _indexable_slugs(city)}
         agg = db.medications.aggregate([
-            {"$match": {"is_canonical": {"$ne": False}}},
+            {"$match": match},
             {"$group": {"_id": "$category", "count": {"$sum": 1}}},
         ])
         counts = {row["_id"]: row["count"] async for row in agg}
@@ -222,6 +257,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
     async def search_meds(
         q: Optional[str] = Query(None, description="Поисковый запрос"),
         category: Optional[str] = Query(None),
+        city: Optional[str] = Query(None, description="Только индексируемые препараты этого города"),
         rx: Optional[bool] = Query(None),
         prefix: Optional[str] = Query(None, description="Первая буква названия (А–Я / A–Z)"),
         page: int = Query(1, ge=1),
@@ -229,6 +265,8 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
     ):
         # Hide non-canonical duplicates in listings. Direct URL access still works.
         flt = {"is_canonical": {"$ne": False}}
+        if city:
+            flt["slug"] = {"$in": await _indexable_slugs(city)}
         sort = None
         if q and q.strip():
             term = q.strip()
@@ -340,6 +378,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         # упаковкам — фронт показывает их как сравнение цен по сетям. find
         # (а не find_one) — чтобы при переключении упаковки показать данные
         # именно для активной фасовки. pharmacy_id = имя источника.
+        seo_sources_by_city = {}
         for _src in ("gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit", "farmakopeika"):
             net_cursor = db.prices_real.find(
                 {
@@ -354,6 +393,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
             async for gz_entry in net_cursor:
                 _bm = gz_entry.get("store_bitmap")
                 _city = gz_entry.get("city") or "msk"  # legacy без city → msk
+                seo_sources_by_city.setdefault(_city, set()).add(_src)
                 real_prices.setdefault(_city, []).append({
                     "pharmacy_id": _src,
                     "price": gz_entry["price"],
@@ -365,6 +405,11 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
 
         med["prices_by_city"] = real_prices
         med["prices_source"] = "real"
+        if city:
+            # Shared SEO predicate used by sitemap, city-aware listings and
+            # IndexNow.  Local store rows must not masquerade as independent
+            # pharmacy networks here.
+            med["seo_indexable"] = len(seo_sources_by_city.get(city, set())) >= 2
 
         # Самая свежая updated_at среди цен сетей по препарату — для
         # отображения «Цены обновлены: …» (YMYL-сигнал свежести данных).
@@ -516,4 +561,3 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         return items[:limit]
 
     return router
-

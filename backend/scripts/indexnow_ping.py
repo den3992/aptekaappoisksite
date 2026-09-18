@@ -9,13 +9,43 @@ Usage:
 """
 import sys
 import json
+import os
 import urllib.request
+from pymongo import MongoClient
 
 HOST = "aptekaa.ru"
 KEY = "3c6a00678b80a261eee94accd64427c7"
 KEY_LOCATION = f"https://{HOST}/{KEY}.txt"
 ENDPOINT = "https://api.indexnow.org/indexnow"   # шлёт сразу всем партнёрам (Bing, Yandex, Seznam)
 BATCH = 10000   # лимит IndexNow на один запрос
+CITIES = ["msk", "spb", "krd", "nn", "ekb", "kzn", "nsk", "sam", "chel", "ufa", "rnd", "vrn"]
+SOURCES = ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit", "farmakopeika"]
+MATCH_OK = ["matched", "mnn_match", "needs_review"]
+
+
+def indexable_urls(slugs):
+    """Return only city/slug pairs that the live page marks indexable."""
+    mongo_url = os.environ.get("MONGO_URL")
+    if not mongo_url:
+        raise RuntimeError("MONGO_URL is required; refusing to submit unfiltered URLs")
+    db_name = os.environ.get("DB_NAME", "aptekaa")
+    db = MongoClient(mongo_url, serverSelectionTimeoutMS=10000)[db_name]
+    pipeline = [
+        {"$match": {
+            "slug": {"$in": slugs},
+            "city": {"$in": CITIES},
+            "source": {"$in": SOURCES},
+            "price": {"$gt": 0},
+            "match_status": {"$in": MATCH_OK},
+        }},
+        {"$group": {"_id": {"city": "$city", "slug": "$slug"}, "nets": {"$addToSet": "$source"}}},
+        {"$match": {"$expr": {"$gte": [{"$size": "$nets"}, 2]}}},
+    ]
+    pairs = db.prices_real.aggregate(pipeline, allowDiskUse=True)
+    return sorted(
+        f"https://{HOST}/{row['_id']['city']}/preparaty/{row['_id']['slug']}"
+        for row in pairs
+    )
 
 
 def submit(urls):
@@ -48,15 +78,14 @@ def main():
     if not slugs:
         print("0 changed slugs — nothing to submit")
         return
-    # Один и тот же slug индексируется отдельно для каждого города — у Яндекса
-    # разные региональные страницы. Пинаем все обслуживаемые города. (Если в
-    # каком-то городе у slug нет цены — страница noindex, Яндекс её просто
-    # пропустит, вреда нет.)
-    cities = ["msk", "spb", "krd", "nn", "ekb", "kzn", "nsk", "sam", "chel", "ufa", "rnd", "vrn"]
-    urls = []
-    for s in slugs:
-        for c in cities:
-            urls.append(f"https://{HOST}/{c}/preparaty/{s}")
+    # Sending every slug to every city caused Yandex to crawl thousands of
+    # pages that immediately answered with noindex.  Submit only the pairs
+    # that satisfy the exact same >=2-network rule as sitemap and metadata.
+    urls = indexable_urls(slugs)
+    print(f"IndexNow: {len(slugs)} changed slugs -> {len(urls)} indexable city URLs")
+    if not urls:
+        print("0 indexable URLs — nothing to submit")
+        return
     total = 0
     for i in range(0, len(urls), BATCH):
         chunk = urls[i:i + BATCH]
