@@ -246,6 +246,9 @@ def extract_pack(gz_name: str) -> str | None:
     """
     if not gz_name:
         return None
+    num = re.search(r"№\s*(\d+)\s*$", gz_name)
+    if num:
+        return f"{int(num.group(1))} шт"
     m = _PACK_RE.search(gz_name)
     if not m:
         return None

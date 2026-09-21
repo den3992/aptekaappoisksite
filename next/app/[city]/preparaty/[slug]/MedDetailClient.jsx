@@ -805,7 +805,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
     const all = [...((med.prices_by_city || {})[city.id] || [])];
     // Показываем только реально полученные строки. Цены для другой фасовки
     // скрываем; расчётных и масштабированных цен на сайте нет.
-    const REAL_SOURCES = ['gorzdrav', 'apteka366', 'rigla', 'maksavit', 'aptechestvo', 'zdorovie', 'magnit', 'farmakopeika', 'uteka', 'eapteka', 'zdravcity', 'asna', 'aptekamos'];
+    const REAL_SOURCES = ['gorzdrav', 'apteka366', 'rigla', 'maksavit', 'aptechestvo', 'zdorovie', 'magnit', 'farmakopeika', 'uteka', 'eapteka', 'zdravcity', 'asna', 'aptekamos', '009'];
     // price>0: 0 = сматчено, но цены/наличия нет — такую сеть не показываем
     // (иначе на упаковке с единственной 0-строкой она всплывала как «0 ₽ дешевле»).
     const networkAll = all.filter(p => REAL_SOURCES.includes(p.pharmacy_id) && p.price > 0);
@@ -1021,7 +1021,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
   
   // Сети без по-аптечных координат (Магнит/Аптечество/Здоровье) — нет адресов
   // отдельных точек; показываем как сеть, а не как «1 аптеку» с пустой картой.
-  const NET_NAMES_ALL = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека', farmakopeika: 'Фармакопейка', uteka: 'Ютека', eapteka: 'ЕАПТЕКА', zdravcity: 'Здравсити', asna: 'АСНА', aptekamos: 'АптекаМос' };
+  const NET_NAMES_ALL = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека', farmakopeika: 'Фармакопейка', uteka: 'Ютека', eapteka: 'ЕАПТЕКА', zdravcity: 'Здравсити', asna: 'АСНА', aptekamos: 'АптекаМос', '009': '009.рф' };
   const networkNames = [...new Set(prices.filter(p => NET_NAMES_ALL[p.pharmacy_id] && p.price > 0).map(p => NET_NAMES_ALL[p.pharmacy_id]))];
   const networkStr = networkNames.length <= 1 ? (networkNames[0] || '') : networkNames.slice(0, -1).join(', ') + ' и ' + networkNames.slice(-1);
   const networkWord = networkNames.length > 1 ? 'в сетях' : 'в сети';

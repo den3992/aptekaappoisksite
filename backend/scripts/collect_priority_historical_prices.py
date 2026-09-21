@@ -37,6 +37,7 @@ HEADERS = {
     "Accept-Language": "ru-RU,ru;q=0.9",
 }
 TRUSTED_DOMAINS = {
+    "009.xn--p1ai": "009",
     "uteka.ru": "uteka",
     "www.eapteka.ru": "eapteka",
     "eapteka.ru": "eapteka",
@@ -47,6 +48,13 @@ TRUSTED_DOMAINS = {
     "aptekamos.ru": "aptekamos",
     "www.aptekamos.ru": "aptekamos",
 }
+
+_TRANSLIT = str.maketrans({
+    "а":"a","б":"b","в":"v","г":"g","д":"d","е":"e","ё":"e","ж":"zh","з":"z",
+    "и":"i","й":"y","к":"k","л":"l","м":"m","н":"n","о":"o","п":"p","р":"r",
+    "с":"s","т":"t","у":"u","ф":"f","х":"kh","ц":"ts","ч":"ch","ш":"sh",
+    "щ":"shch","ъ":"","ы":"y","ь":"","э":"e","ю":"yu","я":"ya",
+})
 
 
 def norm(value: object) -> str:
@@ -123,11 +131,35 @@ def json_ld_product(page: str) -> Optional[dict]:
                     if price > 0:
                         prices.append(price)
                 if prices:
-                    brand = node.get("brand") or node.get("manufacturer") or ""
+                    brand = node.get("manufacturer") or node.get("brand") or ""
                     if isinstance(brand, dict):
                         brand = brand.get("name") or ""
                     return {"title": node.get("name") or "", "producer": brand, "price": min(prices)}
     return None
+
+
+def translit_key(value: object) -> str:
+    return re.sub(r"[^a-z0-9]+", "", str(value or "").casefold().translate(_TRANSLIT))
+
+
+def load_009_product_urls(session: requests.Session) -> list[str]:
+    urls = []
+    for index in range(4):
+        response = session.get(f"https://009.xn--p1ai/sitemap_{index}.xml", timeout=60)
+        response.raise_for_status()
+        urls.extend(re.findall(r"<loc>(https://009\.xn--p1ai/product/[^<]+)</loc>", response.text))
+    return urls
+
+
+def candidates_009(med: dict, urls: list[str]) -> list[str]:
+    key = translit_key(med.get("name"))
+    aliases = {key, key.replace("ts", "c"), key.replace("kh", "h")}
+    matches = []
+    for url in urls:
+        path_key = translit_key(urlparse(url).path.rsplit("/", 1)[-1])
+        if any(alias and alias in path_key for alias in aliases):
+            matches.append((len(path_key), url))
+    return [url for _, url in sorted(matches)[:20]]
 
 
 def decode_nuxt(page: str) -> list[dict]:
@@ -228,6 +260,8 @@ def main() -> None:
                         help="Write verified observations to a JSON file.")
     parser.add_argument("--import-json", default="",
                         help="Import previously verified observations instead of searching.")
+    parser.add_argument("--source-009", action="store_true",
+                        help="Discover exact product pages from the 009.rf sitemap instead of web search.")
     args = parser.parse_args()
 
     load_dotenv(ROOT / ".env")
@@ -282,6 +316,7 @@ def main() -> None:
         meds = list(cursor.limit(args.limit) if args.limit else cursor)
     session = requests.Session()
     session.headers.update(HEADERS)
+    product_urls_009 = load_009_product_urls(session) if args.source_009 else []
     found = 0
     now = datetime.now(timezone.utc)
     documents = []
@@ -290,27 +325,32 @@ def main() -> None:
         pack = ((med.get("variants") or [{}])[0]).get("pack_size") or ""
         query_text = " ".join(filter(None, [med.get("name"), med.get("dosage"), pack,
                                              med.get("manufacturer"), "цена Москва купить"] ))
-        response = None
-        last_error = None
-        for attempt in range(3):
-            try:
-                response = session.get(SEARCH_URL + quote(query_text), timeout=30)
-                response.raise_for_status()
-                break
-            except requests.RequestException as exc:
-                last_error = exc
-                response = None
-                if attempt < 2:
-                    time.sleep(15 * (attempt + 1))
-        if response is None:
-            print(f"ERROR {med['slug']}: search failed: {last_error}")
-            continue
+        if args.source_009:
+            result_rows = [{"url": url, "title": "", "text": ""}
+                           for url in candidates_009(med, product_urls_009)]
+        else:
+            response = None
+            last_error = None
+            for attempt in range(3):
+                try:
+                    response = session.get(SEARCH_URL + quote(query_text), timeout=30)
+                    response.raise_for_status()
+                    break
+                except requests.RequestException as exc:
+                    last_error = exc
+                    response = None
+                    if attempt < 2:
+                        time.sleep(15 * (attempt + 1))
+            if response is None:
+                print(f"ERROR {med['slug']}: search failed: {last_error}")
+                continue
+            result_rows = search_results(response.text)
 
         selected = None
-        for result in search_results(response.text):
+        for result in result_rows:
             host = urlparse(result["url"]).netloc.casefold()
             source = TRUSTED_DOMAINS.get(host)
-            if not source or norm(med.get("name")) not in norm(result.get("title")):
+            if not source or (not args.source_009 and norm(med.get("name")) not in norm(result.get("title"))):
                 continue
             try:
                 page_response = session.get(result["url"], timeout=30)

@@ -386,6 +386,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
             "gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo",
             "zdorovie", "magnit", "farmakopeika", "uteka", "eapteka",
             "zdravcity", "asna", "aptekamos",
+            "009",
         ):
             net_cursor = db.prices_real.find(
                 {

@@ -124,7 +124,7 @@ export function medMetadata(city, med) {
   const _arr = (med.prices_by_city && med.prices_by_city[city]) || [];
   // Реальные сети препарата в городе — для честного перечисления в мете
   // (city-точно: в krd/nn это не Горздрав/36,6, а свои сети).
-  const _NET_LABELS = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека', farmakopeika: 'Фармакопейка' };
+  const _NET_LABELS = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека', farmakopeika: 'Фармакопейка', '009': '009.рф' };
   const _confirmed = _arr.filter(isConfirmedOffer);
   const _historical = _arr.filter((offer) => !isConfirmedOffer(offer));
   const _historicalLatest = Object.values(_historical.reduce((acc, offer) => {
