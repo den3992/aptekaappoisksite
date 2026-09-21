@@ -1,4 +1,7 @@
-from scripts.parse_gorzdrav import curated_identity_verified, curated_pack_matches, dosage_matches
+from scripts.parse_gorzdrav import (
+    curated_identity_verified, curated_pack_matches, dosage_matches,
+    manufacturer_matches,
+)
 from scripts.parse_zdorovie import _parse_price
 
 
@@ -50,3 +53,9 @@ def test_curated_identity_requires_the_approved_manufacturer():
     assert curated_identity_verified(med, valid, "4 шт", "matched")
     assert not curated_identity_verified(med, wrong, "4 шт", "matched")
     assert not curated_identity_verified(med, {"name": valid["name"], "attributes": []}, "4 шт", "matched")
+
+
+def test_manufacturer_successor_aliases_are_accepted():
+    assert manufacturer_matches("Viatris", "Pfizer")
+    assert manufacturer_matches("EBEWE PHARMA", "Sandoz")
+    assert not manufacturer_matches("Viatris", "Teva")

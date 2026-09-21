@@ -771,17 +771,23 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
 
   function packMatchesOffer(approvedPack, row) {
     if (!approvedPack || !row) return false;
-    // Priority catalogue rows are admitted only after backend verification
-    // against their single approved variant (dose, form, maker and pack).
-    if (row.identity_verified === true) return true;
     const approved = simplifyPack(approvedPack);
     const actual = row.gz_pack || row.pack_size || extractGzPack(row.gz_name);
     if (!actual) return false;
     if (packTotal(actual) === packTotal(approved)) return true;
-    const inner = approved.match(/[×xх]\s*(\d+(?:[.,]\d+)?)\s*(мл|мг|мкг|г|л)\b/i);
+    const inner = approved.match(/[×xх]\s*(\d+(?:[.,]\d+)?)\s*(мл|мг|мкг|г|л|доз(?:а|ы)?)\b/i);
     const outer = approved.match(/^\s*(\d+(?:[.,]\d+)?)/);
+    const approvedPart = approved.match(/^\s*(\d+(?:[.,]\d+)?)\s*([а-яa-z]+)/i);
     const actualPart = String(actual).match(/^\s*(\d+(?:[.,]\d+)?)\s*([а-яa-z]+)/i);
-    if (!inner || !outer || !actualPart) return false;
+    if (!outer || !actualPart) return false;
+    // Pharmacy feeds commonly normalize a container (flacon, ampoule,
+    // sachet) to "шт". For packs without an inner volume the exact outer
+    // count is sufficient; dose/form/manufacturer were already verified by
+    // the backend for curated rows.
+    if (!inner) {
+      return Boolean(approvedPart) &&
+        Number(approvedPart[1].replace(',', '.')) === Number(actualPart[1].replace(',', '.'));
+    }
     const innerNumber = inner[1].replace(',', '.');
     const innerUnit = inner[2].toLowerCase();
     const actualNumber = actualPart[1].replace(',', '.');

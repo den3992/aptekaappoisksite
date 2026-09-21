@@ -48,6 +48,7 @@ from __future__ import annotations
 
 import os
 import re
+import html
 import sys
 import asyncio
 import argparse
@@ -237,6 +238,25 @@ def _normalize_item(raw: dict) -> dict:
     }
 
 
+async def fetch_rigla_manufacturer(client: httpx.AsyncClient, url_key: str) -> str:
+    """Read the manufacturer shown on the public product page."""
+    if not url_key:
+        return ""
+    base = GRAPHQL_URL.rsplit("/graphql", 1)[0]
+    try:
+        response = await client.get(f"{base}/product/{url_key}", timeout=30)
+        response.raise_for_status()
+    except Exception as exc:
+        log.warning(f"[rigla] manufacturer page failed for {url_key}: {exc}")
+        return ""
+    match = re.search(
+        r"Производитель:\s*</span>\s*<a[^>]*>([^<]+)</a>",
+        response.text,
+        flags=re.I,
+    )
+    return html.unescape(match.group(1)).strip() if match else ""
+
+
 async def search_rigla(client: httpx.AsyncClient, query: str) -> list[dict]:
     """POST GraphQL productsElastic, 3 попытки с backoff."""
     payload = {
@@ -362,6 +382,12 @@ async def process_medication(
         if price is None:
             continue
         price = int(price)
+        if med.get("curated_source") == "priority_medications_2026-09":
+            manufacturer = await fetch_rigla_manufacturer(client, item.get("url_key", ""))
+            if manufacturer:
+                item = {**item, "attributes": [
+                    {"code": "manufacturer", "value": manufacturer},
+                ]}
         identity_verified = curated_identity_verified(med, item, gz_pack, item_status)
 
         log.info(
@@ -388,6 +414,7 @@ async def process_medication(
                 "gz_ext_id": ext_id,
                 "gz_name": gz_name,
                 "gz_url_key": item.get("url_key", ""),
+                "source_url": f"{GRAPHQL_URL.rsplit('/graphql', 1)[0]}/product/{item.get('url_key', '')}",
                 "price": price,
                 "search_query": query,
                 "search_pass": search_pass,

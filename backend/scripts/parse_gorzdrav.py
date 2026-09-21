@@ -177,6 +177,13 @@ def manufacturer_matches(our_mfr: str, gz_mfr: str) -> bool:
     b_tokens = set(b.split())
     if a_tokens & b_tokens:
         return True
+    alias_groups = [
+        {"viatris", "pfizer", "mylan"},
+        {"ebewe", "ebewe pharma", "sandoz"},
+    ]
+    if any(any(alias in a for alias in group) and any(alias in b for alias in group)
+           for group in alias_groups):
+        return True
     # Иначе — нечёткое сравнение всей строки (ловит baier/bayer, pfaizer/pfizer)
     return SequenceMatcher(None, a, b).ratio() >= 0.72
 
