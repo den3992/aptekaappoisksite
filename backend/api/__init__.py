@@ -425,8 +425,11 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
                 _availability_confirmed = bool(
                     _availability_fresh and _price_fresh and (gz_entry.get("stores_count") or 0) > 0
                 )
+                _is_archive = bool(gz_entry.get("archive_observation"))
                 real_prices.setdefault(_city, []).append({
-                    "pharmacy_id": _src,
+                    # Historical rows are public without attribution; the
+                    # original source remains available only in MongoDB.
+                    "pharmacy_id": "historical" if _is_archive else _src,
                     "price": gz_entry["price"],
                     "qty": gz_entry.get("stores_count", 0),
                     "gz_name": gz_entry.get("gz_name"),
@@ -435,11 +438,11 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
                     "observed_at": gz_entry["updated_at"].isoformat() if hasattr(gz_entry.get("updated_at"), "isoformat") else gz_entry.get("updated_at"),
                     # Archive provenance remains in MongoDB for audit, but is
                     # intentionally not published on medicine pages/API.
-                    "source_url": None if gz_entry.get("archive_observation") else gz_entry.get("source_url"),
+                    "source_url": None if _is_archive else gz_entry.get("source_url"),
                     "availability_confirmed": _availability_confirmed,
                     "availability_observed_at": _availability_at.isoformat() if hasattr(_availability_at, "isoformat") else _availability_at,
                     "identity_verified": bool(gz_entry.get("identity_verified")),
-                    "archive_observation": bool(gz_entry.get("archive_observation")),
+                    "archive_observation": _is_archive,
                     "price_derived": bool(gz_entry.get("price_derived")),
                     "source_pack": gz_entry.get("source_pack"),
                     "source_price": gz_entry.get("source_price"),

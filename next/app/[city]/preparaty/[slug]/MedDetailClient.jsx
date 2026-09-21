@@ -806,7 +806,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
     // Показываем только проверенные строки для активной фасовки. Архивные
     // цены могут быть заранее пересчитаны на неё по количеству единиц; такой
     // пересчёт выполняется при импорте и помечается price_derived.
-    const REAL_SOURCES = ['gorzdrav', 'apteka366', 'rigla', 'maksavit', 'aptechestvo', 'zdorovie', 'magnit', 'farmakopeika', 'rigla_archive'];
+    const REAL_SOURCES = ['gorzdrav', 'apteka366', 'rigla', 'maksavit', 'aptechestvo', 'zdorovie', 'magnit', 'farmakopeika', 'historical'];
     // price>0: 0 = сматчено, но цены/наличия нет — такую сеть не показываем
     // (иначе на упаковке с единственной 0-строкой она всплывала как «0 ₽ дешевле»).
     const networkAll = all.filter(p => REAL_SOURCES.includes(p.pharmacy_id) && p.price > 0);
