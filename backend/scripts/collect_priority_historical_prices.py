@@ -132,6 +132,8 @@ def json_ld_product(page: str) -> Optional[dict]:
                         prices.append(price)
                 if prices:
                     brand = node.get("manufacturer") or node.get("brand") or ""
+                    if isinstance(brand, list):
+                        brand = brand[0] if brand else ""
                     if isinstance(brand, dict):
                         brand = brand.get("name") or ""
                     return {"title": node.get("name") or "", "producer": brand, "price": min(prices)}
