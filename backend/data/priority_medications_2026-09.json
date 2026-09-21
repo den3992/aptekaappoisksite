@@ -1,0 +1,630 @@
+[
+  {
+    "name": "Адельфан Плюс",
+    "mnn": "РЕЗЕРПИН+ДИГИДРАЛАЗИН+ГИДРОХЛОРОТИАЗИД",
+    "form": "ТАБЛЕТКИ",
+    "dosage": "0.1 мг+10 мг+10 мг",
+    "manufacturer": "SHARQ DARMON",
+    "manufacturer_country": "УЗБЕКИСТАН",
+    "pack_sizes": ["10 шт"],
+    "rx": true
+  },
+  {
+    "name": "Синактен Депо",
+    "mnn": "ТЕТРАКОЗАКТИД",
+    "form": "СУСПЕНЗИЯ ДЛЯ ВНУТРИМЫШЕЧНОГО ВВЕДЕНИЯ",
+    "dosage": "1 мг/мл",
+    "manufacturer": "NOVARTIS",
+    "manufacturer_country": "ШВЕЙЦАРИЯ",
+    "pack_sizes": ["1 ампула × 1 мл"],
+    "rx": true
+  },
+  {
+    "name": "Синактен",
+    "mnn": "ТЕТРАКОЗАКТИД",
+    "form": "РАСТВОР ДЛЯ ИНЪЕКЦИЙ И ИНФУЗИЙ",
+    "dosage": "0.25 мг/мл",
+    "manufacturer": "NOVARTIS",
+    "manufacturer_country": "ШВЕЙЦАРИЯ",
+    "pack_sizes": ["1 ампула × 1 мл", "5 ампул × 1 мл"],
+    "rx": true
+  },
+  {
+    "name": "Азатиоприн",
+    "mnn": "АЗАТИОПРИН",
+    "form": "ТАБЛЕТКИ",
+    "dosage": "50 мг",
+    "manufacturer": "EVA PHARMA",
+    "manufacturer_country": "ЕГИПЕТ",
+    "pack_sizes": ["30 шт"],
+    "rx": true,
+    "slug_suffix": "eva-pharma"
+  },
+  {
+    "name": "Имуран",
+    "mnn": "АЗАТИОПРИН",
+    "form": "ТАБЛЕТКИ",
+    "dosage": "50 мг",
+    "manufacturer": "ASPEN",
+    "manufacturer_country": "ИРЛАНДИЯ",
+    "pack_sizes": ["100 шт"],
+    "rx": true
+  },
+  {
+    "name": "Виагра",
+    "mnn": "СИЛДЕНАФИЛ",
+    "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+    "dosage": "25 мг",
+    "manufacturer": "VIATRIS",
+    "manufacturer_country": "США",
+    "pack_sizes": ["4 шт"],
+    "rx": true
+  },
+  {
+    "name": "Виагра",
+    "mnn": "СИЛДЕНАФИЛ",
+    "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+    "dosage": "50 мг",
+    "manufacturer": "VIATRIS",
+    "manufacturer_country": "США",
+    "pack_sizes": ["4 шт"],
+    "rx": true
+  },
+  {
+    "name": "Виагра",
+    "mnn": "СИЛДЕНАФИЛ",
+    "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+    "dosage": "100 мг",
+    "manufacturer": "VIATRIS",
+    "manufacturer_country": "США",
+    "pack_sizes": ["4 шт"],
+    "rx": true
+  },
+  {
+    "name": "Винкристин-Тева",
+    "mnn": "ВИНКРИСТИН",
+    "form": "РАСТВОР ДЛЯ ВНУТРИВЕННОГО ВВЕДЕНИЯ",
+    "dosage": "1 мг/мл",
+    "manufacturer": "TEVA",
+    "manufacturer_country": "НИДЕРЛАНДЫ",
+    "pack_sizes": ["1 флакон × 1 мл", "1 флакон × 2 мл"],
+    "rx": true
+  },
+  {
+    "name": "Депо-Пен",
+    "mnn": "БЕНЗАТИНА БЕНЗИЛПЕНИЦИЛЛИН",
+    "form": "ПОРОШОК ДЛЯ ПРИГОТОВЛЕНИЯ СУСПЕНЗИИ ДЛЯ ВНУТРИМЫШЕЧНОГО ВВЕДЕНИЯ",
+    "dosage": "1200000 МЕ",
+    "manufacturer": "MUP",
+    "manufacturer_country": "ЕГИПЕТ",
+    "pack_sizes": ["1 флакон"],
+    "rx": true
+  },
+  {
+    "name": "Гордокс",
+    "mnn": "АПРОТИНИН",
+    "form": "РАСТВОР ДЛЯ ВНУТРИВЕННОГО ВВЕДЕНИЯ",
+    "dosage": "10000 КИЕ/мл",
+    "manufacturer": "ГЕДЕОН РИХТЕР",
+    "manufacturer_country": "ВЕНГРИЯ",
+    "pack_sizes": ["5 ампул × 10 мл"],
+    "rx": true
+  },
+  {
+    "name": "Даунохал",
+    "mnn": "ДАУНОРУБИЦИН",
+    "form": "ЛИОФИЛИЗАТ ДЛЯ ПРИГОТОВЛЕНИЯ РАСТВОРА ДЛЯ ВНУТРИВЕННОГО ВВЕДЕНИЯ",
+    "dosage": "20 мг",
+    "manufacturer": "HALSTED PHARMA",
+    "manufacturer_country": "ИНДИЯ",
+    "pack_sizes": ["1 флакон"],
+    "rx": true
+  },
+  {
+    "name": "Ретарпен",
+    "mnn": "БЕНЗАТИНА БЕНЗИЛПЕНИЦИЛЛИН",
+    "form": "ПОРОШОК ДЛЯ ПРИГОТОВЛЕНИЯ СУСПЕНЗИИ ДЛЯ ВНУТРИМЫШЕЧНОГО ВВЕДЕНИЯ",
+    "dosage": "2400000 МЕ",
+    "manufacturer": "SANDOZ",
+    "manufacturer_country": "АВСТРИЯ",
+    "pack_sizes": ["1 флакон"],
+    "rx": true
+  },
+  {
+    "name": "Доксорубицин Эбеве",
+    "mnn": "ДОКСОРУБИЦИН",
+    "form": "КОНЦЕНТРАТ ДЛЯ ПРИГОТОВЛЕНИЯ РАСТВОРА ДЛЯ ИНФУЗИЙ",
+    "dosage": "2 мг/мл",
+    "manufacturer": "EBEWE PHARMA",
+    "manufacturer_country": "АВСТРИЯ",
+    "pack_sizes": ["1 флакон × 25 мл (50 мг)"],
+    "rx": true
+  },
+  {
+    "name": "Дуоцид",
+    "mnn": "СУЛТАМИЦИЛЛИН",
+    "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+    "dosage": "375 мг",
+    "manufacturer": "PFIZER",
+    "manufacturer_country": "ТУРЦИЯ",
+    "pack_sizes": ["20 шт"],
+    "rx": true
+  },
+  {
+    "name": "Изониазид",
+    "mnn": "ИЗОНИАЗИД",
+    "form": "ТАБЛЕТКИ",
+    "dosage": "100 мг",
+    "manufacturer": "ФАРМСИНТЕЗ",
+    "manufacturer_country": "РОССИЯ",
+    "pack_sizes": ["100 шт"],
+    "rx": true
+  },
+  {
+    "name": "Изониазид",
+    "mnn": "ИЗОНИАЗИД",
+    "form": "ТАБЛЕТКИ",
+    "dosage": "200 мг",
+    "manufacturer": "БОРЩАГОВСКИЙ ХФЗ",
+    "manufacturer_country": "УКРАИНА",
+    "pack_sizes": ["50 шт"],
+    "rx": true,
+    "slug_suffix": "borschagovskiy"
+  },
+  {
+    "name": "Кальцийспрей",
+    "mnn": "КАЛЬЦИТОНИН ЛОСОСЯ СИНТЕТИЧЕСКИЙ",
+    "form": "СПРЕЙ НАЗАЛЬНЫЙ",
+    "dosage": "200 МЕ/доза",
+    "manufacturer": "ZYDUS",
+    "manufacturer_country": "ИНДИЯ",
+    "pack_sizes": ["1 флакон × 60 доз"],
+    "rx": true
+  },
+  {
+    "name": "Исентресс",
+    "mnn": "РАЛТЕГРАВИР",
+    "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+    "dosage": "400 мг",
+    "manufacturer": "MSD",
+    "manufacturer_country": "США",
+    "pack_sizes": ["50 шт"],
+    "rx": true
+  },
+  {
+    "name": "Миакальцик",
+    "mnn": "КАЛЬЦИТОНИН ЛОСОСЯ СИНТЕТИЧЕСКИЙ",
+    "form": "СПРЕЙ НАЗАЛЬНЫЙ",
+    "dosage": "50 МЕ/доза",
+    "manufacturer": "NOVARTIS",
+    "manufacturer_country": "ШВЕЙЦАРИЯ",
+    "pack_sizes": ["1 флакон × 14 доз"],
+    "rx": true
+  },
+  {
+    "name": "Миакальцик",
+    "mnn": "КАЛЬЦИТОНИН ЛОСОСЯ СИНТЕТИЧЕСКИЙ",
+    "form": "СПРЕЙ НАЗАЛЬНЫЙ",
+    "dosage": "100 МЕ/доза",
+    "manufacturer": "NOVARTIS",
+    "manufacturer_country": "ШВЕЙЦАРИЯ",
+    "pack_sizes": ["1 флакон × 14 доз", "3 флакона × 14 доз"],
+    "rx": true
+  },
+  {
+    "name": "Миакальцик",
+    "mnn": "КАЛЬЦИТОНИН ЛОСОСЯ СИНТЕТИЧЕСКИЙ",
+    "form": "СПРЕЙ НАЗАЛЬНЫЙ",
+    "dosage": "200 МЕ/доза",
+    "manufacturer": "NOVARTIS",
+    "manufacturer_country": "ШВЕЙЦАРИЯ",
+    "pack_sizes": ["1 флакон × 14 доз"],
+    "rx": true
+  },
+  {
+    "name": "Миакальцик",
+    "mnn": "КАЛЬЦИТОНИН ЛОСОСЯ СИНТЕТИЧЕСКИЙ",
+    "form": "РАСТВОР ДЛЯ ИНЪЕКЦИЙ",
+    "dosage": "50 МЕ/мл",
+    "manufacturer": "NOVARTIS",
+    "manufacturer_country": "ШВЕЙЦАРИЯ",
+    "pack_sizes": ["5 ампул × 1 мл"],
+    "rx": true
+  },
+  {
+    "name": "Миакальцик",
+    "mnn": "КАЛЬЦИТОНИН ЛОСОСЯ СИНТЕТИЧЕСКИЙ",
+    "form": "РАСТВОР ДЛЯ ИНЪЕКЦИЙ",
+    "dosage": "100 МЕ/мл",
+    "manufacturer": "NOVARTIS",
+    "manufacturer_country": "ШВЕЙЦАРИЯ",
+    "pack_sizes": ["5 ампул × 1 мл"],
+    "rx": true
+  },
+  {
+    "name": "Карбоплатин-Тева",
+    "mnn": "КАРБОПЛАТИН",
+    "form": "КОНЦЕНТРАТ ДЛЯ ПРИГОТОВЛЕНИЯ РАСТВОРА ДЛЯ ИНФУЗИЙ",
+    "dosage": "10 мг/мл",
+    "manufacturer": "TEVA",
+    "manufacturer_country": "НИДЕРЛАНДЫ",
+    "pack_sizes": ["1 флакон × 45 мл (450 мг)"],
+    "rx": true
+  },
+  {
+    "name": "Карбоплатин Viatris",
+    "mnn": "КАРБОПЛАТИН",
+    "form": "КОНЦЕНТРАТ ДЛЯ ПРИГОТОВЛЕНИЯ РАСТВОРА ДЛЯ ИНФУЗИЙ",
+    "dosage": "10 мг/мл",
+    "manufacturer": "VIATRIS",
+    "manufacturer_country": "США",
+    "pack_sizes": ["1 флакон × 45 мл (450 мг)"],
+    "rx": true
+  },
+  {
+    "name": "Кардура",
+    "mnn": "ДОКСАЗОЗИН",
+    "form": "ТАБЛЕТКИ",
+    "dosage": "4 мг",
+    "manufacturer": "PFIZER",
+    "manufacturer_country": "США",
+    "pack_sizes": ["14 шт"],
+    "rx": true
+  },
+  {
+    "name": "Липиодол Ультра-Флюид",
+    "mnn": "ЭТИЛОВЫЕ ЭФИРЫ ЙОДИРОВАННЫХ ЖИРНЫХ КИСЛОТ МАКОВОГО МАСЛА",
+    "form": "РАСТВОР ДЛЯ ИНЪЕКЦИЙ",
+    "dosage": "480 мг йода/мл",
+    "manufacturer": "GUERBET",
+    "manufacturer_country": "ФРАНЦИЯ",
+    "pack_sizes": ["1 ампула × 10 мл"],
+    "rx": true
+  },
+  {
+    "name": "Метотрексат-Эбеве",
+    "mnn": "МЕТОТРЕКСАТ",
+    "form": "ТАБЛЕТКИ",
+    "dosage": "2.5 мг",
+    "manufacturer": "SANDOZ",
+    "manufacturer_country": "АВСТРИЯ",
+    "pack_sizes": ["100 шт"],
+    "rx": true
+  },
+  {
+    "name": "Митомицин",
+    "mnn": "МИТОМИЦИН",
+    "form": "ЛИОФИЛИЗАТ ДЛЯ ПРИГОТОВЛЕНИЯ РАСТВОРА ДЛЯ ИНЪЕКЦИЙ",
+    "dosage": "10 мг",
+    "manufacturer": "ZYDUS",
+    "manufacturer_country": "ИНДИЯ",
+    "pack_sizes": ["1 флакон"],
+    "rx": true,
+    "slug_suffix": "zydus"
+  },
+  {
+    "name": "Митомицин",
+    "mnn": "МИТОМИЦИН",
+    "form": "ЛИОФИЛИЗАТ ДЛЯ ПРИГОТОВЛЕНИЯ РАСТВОРА ДЛЯ ИНЪЕКЦИЙ",
+    "dosage": "40 мг",
+    "manufacturer": "ZYDUS",
+    "manufacturer_country": "ИНДИЯ",
+    "pack_sizes": ["1 флакон"],
+    "rx": true,
+    "slug_suffix": "zydus"
+  },
+  {
+    "name": "Мовипреп",
+    "mnn": "МАКРОГОЛ 3350+НАТРИЯ СУЛЬФАТ+НАТРИЯ ХЛОРИД+КАЛИЯ ХЛОРИД+АСКОРБИНОВАЯ КИСЛОТА+НАТРИЯ АСКОРБАТ",
+    "form": "ПОРОШОК ДЛЯ ПРИГОТОВЛЕНИЯ РАСТВОРА ДЛЯ ПРИЕМА ВНУТРЬ",
+    "dosage": null,
+    "manufacturer": "ACINO",
+    "manufacturer_country": "ШВЕЙЦАРИЯ",
+    "pack_sizes": ["4 саше (2 саше A + 2 саше B)"],
+    "rx": null
+  },
+  {
+    "name": "Мультак",
+    "mnn": "ДРОНЕДАРОН",
+    "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+    "dosage": "400 мг",
+    "manufacturer": "SANOFI",
+    "manufacturer_country": "ФРАНЦИЯ",
+    "pack_sizes": ["60 шт"],
+    "rx": true
+  },
+  {
+    "name": "Оксалиплатин Эбеве",
+    "mnn": "ОКСАЛИПЛАТИН",
+    "form": "КОНЦЕНТРАТ ДЛЯ ПРИГОТОВЛЕНИЯ РАСТВОРА ДЛЯ ИНФУЗИЙ",
+    "dosage": "5 мг/мл",
+    "manufacturer": "EBEWE PHARMA",
+    "manufacturer_country": "АВСТРИЯ",
+    "pack_sizes": ["1 флакон × 10 мл (50 мг)"],
+    "rx": true
+  },
+  {
+    "name": "Перитол",
+    "mnn": "ЦИПРОГЕПТАДИН",
+    "form": "ТАБЛЕТКИ",
+    "dosage": "4 мг",
+    "manufacturer": "EGIS",
+    "manufacturer_country": "ВЕНГРИЯ",
+    "pack_sizes": ["20 шт"],
+    "rx": true
+  },
+  {
+    "name": "Пиолизин",
+    "mnn": "ФИЛЬТРАТ КУЛЬТУРЫ ПИОЛИЗИНА+САЛИЦИЛОВАЯ КИСЛОТА+ЦИНКА ОКСИД",
+    "form": "МАЗЬ ДЛЯ НАРУЖНОГО ПРИМЕНЕНИЯ",
+    "dosage": null,
+    "manufacturer": "SERUMWERK",
+    "manufacturer_country": "ГЕРМАНИЯ",
+    "pack_sizes": ["1 туба × 30 г", "1 туба × 50 г", "1 туба × 100 г"],
+    "rx": null
+  },
+  {
+    "name": "Провера",
+    "mnn": "МЕДРОКСИПРОГЕСТЕРОН",
+    "form": "ТАБЛЕТКИ",
+    "dosage": "500 мг",
+    "manufacturer": "PFIZER",
+    "manufacturer_country": "США",
+    "pack_sizes": ["30 шт"],
+    "rx": true
+  },
+  {
+    "name": "Протефлазид",
+    "mnn": null,
+    "form": "КАПЛИ ДЛЯ ПРИЕМА ВНУТРЬ",
+    "dosage": null,
+    "manufacturer": "ЭКОФАРМ",
+    "manufacturer_country": "УКРАИНА",
+    "pack_sizes": ["1 флакон × 30 мл"],
+    "rx": null
+  },
+  {
+    "name": "Расилез",
+    "mnn": "АЛИСКИРЕН",
+    "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+    "dosage": "150 мг",
+    "manufacturer": "NODEN PHARMA",
+    "manufacturer_country": "ИРЛАНДИЯ",
+    "pack_sizes": ["98 шт"],
+    "rx": true
+  },
+  {
+    "name": "Рифампицин",
+    "mnn": "РИФАМПИЦИН",
+    "form": "КАПСУЛЫ",
+    "dosage": "300 мг",
+    "manufacturer": "ФАРМСИНТЕЗ",
+    "manufacturer_country": "РОССИЯ",
+    "pack_sizes": ["20 шт"],
+    "rx": true,
+    "slug_suffix": "farmsintez"
+  },
+  {
+    "name": "Рифампицин",
+    "mnn": "РИФАМПИЦИН",
+    "form": "КАПСУЛЫ",
+    "dosage": "300 мг",
+    "manufacturer": "ФАРМКОНЦЕПТ",
+    "manufacturer_country": "РОССИЯ",
+    "pack_sizes": ["20 шт"],
+    "rx": true,
+    "slug_suffix": "farmkoncept"
+  },
+  {
+    "name": "Рофилак",
+    "mnn": "ИММУНОГЛОБУЛИН ЧЕЛОВЕКА АНТИРЕЗУС RHO(D)",
+    "form": "РАСТВОР ДЛЯ ВНУТРИВЕННОГО И ВНУТРИМЫШЕЧНОГО ВВЕДЕНИЯ",
+    "dosage": "1500 МЕ/300 мкг",
+    "manufacturer": "CSL BEHRING",
+    "manufacturer_country": "ШВЕЙЦАРИЯ",
+    "pack_sizes": ["1 заполненный шприц × 2 мл"],
+    "rx": true
+  },
+  {
+    "name": "КамРОУ",
+    "mnn": "ИММУНОГЛОБУЛИН ЧЕЛОВЕКА АНТИРЕЗУС RHO(D)",
+    "form": "РАСТВОР ДЛЯ ВНУТРИМЫШЕЧНОГО ВВЕДЕНИЯ",
+    "dosage": "150 мкг/мл (750 МЕ/мл)",
+    "manufacturer": "KAMADA",
+    "manufacturer_country": "ИЗРАИЛЬ",
+    "pack_sizes": ["1 флакон × 0.85 мл", "1 флакон × 2 мл"],
+    "rx": true
+  },
+  {
+    "name": "Сероквель",
+    "mnn": "КВЕТИАПИН",
+    "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+    "dosage": "25 мг",
+    "manufacturer": "ASTRAZENECA",
+    "manufacturer_country": "ВЕЛИКОБРИТАНИЯ",
+    "pack_sizes": ["30 шт"],
+    "rx": true
+  },
+  {
+    "name": "Сероквель",
+    "mnn": "КВЕТИАПИН",
+    "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+    "dosage": "25 мг",
+    "manufacturer": "CHEPLAPHARM",
+    "manufacturer_country": "ГЕРМАНИЯ",
+    "pack_sizes": ["100 шт"],
+    "rx": true,
+    "slug_suffix": "cheplapharm"
+  },
+  {
+    "name": "Сероквель",
+    "mnn": "КВЕТИАПИН",
+    "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+    "dosage": "100 мг",
+    "manufacturer": "ASTRAZENECA",
+    "manufacturer_country": "ВЕЛИКОБРИТАНИЯ",
+    "pack_sizes": ["30 шт"],
+    "rx": true
+  },
+  {
+    "name": "Сероквель",
+    "mnn": "КВЕТИАПИН",
+    "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+    "dosage": "200 мг",
+    "manufacturer": "ASTRAZENECA",
+    "manufacturer_country": "ВЕЛИКОБРИТАНИЯ",
+    "pack_sizes": ["60 шт"],
+    "rx": true
+  },
+  {
+    "name": "Вентер",
+    "mnn": "СУКРАЛЬФАТ",
+    "form": "ТАБЛЕТКИ",
+    "dosage": "1 г",
+    "manufacturer": "KRKA",
+    "manufacturer_country": "СЛОВЕНИЯ",
+    "pack_sizes": ["50 шт"],
+    "rx": true
+  },
+  {
+    "name": "Соритрин",
+    "mnn": "АЦИТРЕТИН",
+    "form": "КАПСУЛЫ",
+    "dosage": "25 мг",
+    "manufacturer": "HEALING PHARMA",
+    "manufacturer_country": "ИНДИЯ",
+    "pack_sizes": ["10 шт"],
+    "rx": true
+  },
+  {
+    "name": "Сукрабест",
+    "mnn": "СУКРАЛЬФАТ",
+    "form": "ТАБЛЕТКИ",
+    "dosage": "1 г",
+    "manufacturer": "COMBUSTIN",
+    "manufacturer_country": "ЕГИПЕТ",
+    "pack_sizes": ["10 шт"],
+    "rx": true
+  },
+  {
+    "name": "Тамоксифен Гексал",
+    "mnn": "ТАМОКСИФЕН",
+    "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+    "dosage": "20 мг",
+    "manufacturer": "HEXAL",
+    "manufacturer_country": "ГЕРМАНИЯ",
+    "pack_sizes": ["100 шт"],
+    "rx": true
+  },
+  {
+    "name": "Унибластин",
+    "mnn": "ВИНБЛАСТИН",
+    "form": "РАСТВОР ДЛЯ ВНУТРИВЕННОГО ВВЕДЕНИЯ",
+    "dosage": "1 мг/мл",
+    "manufacturer": "UNITED BIOTECH",
+    "manufacturer_country": "ИНДИЯ",
+    "pack_sizes": ["1 флакон × 10 мл (10 мг)"],
+    "rx": true
+  },
+  {
+    "name": "Уромитексан",
+    "mnn": "МЕСНА",
+    "form": "РАСТВОР ДЛЯ ВНУТРИВЕННОГО ВВЕДЕНИЯ",
+    "dosage": "100 мг/мл",
+    "manufacturer": "BAXTER",
+    "manufacturer_country": "ГЕРМАНИЯ",
+    "pack_sizes": ["5 ампул × 4 мл (400 мг)"],
+    "rx": true
+  },
+  {
+    "name": "Урсомед",
+    "mnn": "УРСОДЕЗОКСИХОЛЕВАЯ КИСЛОТА",
+    "form": "СУСПЕНЗИЯ ДЛЯ ПРИЕМА ВНУТРЬ",
+    "dosage": "250 мг/5 мл",
+    "manufacturer": "WORLD MEDICINE",
+    "manufacturer_country": "ТУРЦИЯ",
+    "pack_sizes": ["1 флакон × 100 мл", "1 флакон × 250 мл"],
+    "rx": true
+  },
+  {
+    "name": "5-Фторурацил-Эбеве",
+    "mnn": "ФТОРУРАЦИЛ",
+    "form": "КОНЦЕНТРАТ ДЛЯ ПРИГОТОВЛЕНИЯ РАСТВОРА ДЛЯ ИНФУЗИЙ",
+    "dosage": "50 мг/мл",
+    "manufacturer": "EBEWE PHARMA",
+    "manufacturer_country": "АВСТРИЯ",
+    "pack_sizes": ["1 флакон × 20 мл (1000 мг)", "1 флакон × 100 мл (5000 мг)"],
+    "rx": true
+  },
+  {
+    "name": "Цернилтон",
+    "mnn": "ПЫЛЬЦА ТРАВ",
+    "form": "ТАБЛЕТКИ",
+    "dosage": "3 мг+60 мг",
+    "manufacturer": "GRAMINEX",
+    "manufacturer_country": "США",
+    "pack_sizes": ["100 шт", "200 шт"],
+    "rx": null
+  },
+  {
+    "name": "Цисплатин Эбеве",
+    "mnn": "ЦИСПЛАТИН",
+    "form": "КОНЦЕНТРАТ ДЛЯ ПРИГОТОВЛЕНИЯ РАСТВОРА ДЛЯ ИНФУЗИЙ",
+    "dosage": "0.5 мг/мл",
+    "manufacturer": "EBEWE PHARMA",
+    "manufacturer_country": "АВСТРИЯ",
+    "pack_sizes": ["1 флакон × 100 мл (50 мг)"],
+    "rx": true
+  },
+  {
+    "name": "Цисплатин-Тева",
+    "mnn": "ЦИСПЛАТИН",
+    "form": "КОНЦЕНТРАТ ДЛЯ ПРИГОТОВЛЕНИЯ РАСТВОРА ДЛЯ ИНФУЗИЙ",
+    "dosage": "0.5 мг/мл",
+    "manufacturer": "TEVA",
+    "manufacturer_country": "НИДЕРЛАНДЫ",
+    "pack_sizes": ["1 флакон × 100 мл (50 мг)"],
+    "rx": true
+  },
+  {
+    "name": "Эндоксан",
+    "mnn": "ЦИКЛОФОСФАМИД",
+    "form": "ПОРОШОК ДЛЯ ПРИГОТОВЛЕНИЯ РАСТВОРА ДЛЯ ВНУТРИВЕННОГО ВВЕДЕНИЯ",
+    "dosage": "1000 мг",
+    "manufacturer": "BAXTER",
+    "manufacturer_country": "ГЕРМАНИЯ",
+    "pack_sizes": ["1 флакон"],
+    "rx": true
+  },
+  {
+    "name": "Этамбутол",
+    "mnn": "ЭТАМБУТОЛ",
+    "form": "ТАБЛЕТКИ",
+    "dosage": "400 мг",
+    "manufacturer": "ФАРМСИНТЕЗ",
+    "manufacturer_country": "РОССИЯ",
+    "pack_sizes": ["100 шт"],
+    "rx": true
+  },
+  {
+    "name": "Этамбутол",
+    "mnn": "ЭТАМБУТОЛ",
+    "form": "ТАБЛЕТКИ",
+    "dosage": "400 мг",
+    "manufacturer": "БОРЩАГОВСКИЙ ХФЗ",
+    "manufacturer_country": "УКРАИНА",
+    "pack_sizes": ["50 шт"],
+    "rx": true,
+    "slug_suffix": "borschagovskiy"
+  },
+  {
+    "name": "Этопозид-Тева",
+    "mnn": "ЭТОПОЗИД",
+    "form": "КОНЦЕНТРАТ ДЛЯ ПРИГОТОВЛЕНИЯ РАСТВОРА ДЛЯ ИНФУЗИЙ",
+    "dosage": "20 мг/мл",
+    "manufacturer": "TEVA",
+    "manufacturer_country": "НИДЕРЛАНДЫ",
+    "pack_sizes": ["1 флакон × 5 мл (100 мг)"],
+    "rx": true
+  }
+]

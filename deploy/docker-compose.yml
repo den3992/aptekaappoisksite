@@ -1,6 +1,10 @@
 services:
   mongo:
     image: mongo:7.0
+    # The VM has 2.8 GiB RAM.  WiredTiger's automatic cache grew to ~2.4 GiB
+    # and the kernel OOM-killed mongod on 2026-09-20.  Keep enough headroom
+    # for Next.js, the API, nginx and Docker itself.
+    command: ["mongod", "--wiredTigerCacheSizeGB", "0.5"]
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
