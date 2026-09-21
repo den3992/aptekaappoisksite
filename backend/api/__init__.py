@@ -384,9 +384,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         # именно для активной фасовки. pharmacy_id = имя источника.
         for _src in (
             "gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo",
-            "zdorovie", "magnit", "farmakopeika", "uteka", "eapteka",
-            "zdravcity", "asna", "aptekamos",
-            "009",
+            "zdorovie", "magnit", "farmakopeika", "rigla_archive",
         ):
             net_cursor = db.prices_real.find(
                 {
@@ -399,7 +397,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
                 {"_id": 0, "price": 1, "stores_count": 1, "gz_name": 1,
                  "gz_pack": 1, "store_bitmap": 1, "city": 1, "updated_at": 1,
                  "source_url": 1, "identity_verified": 1, "price_parse_version": 1,
-                 "availability_observed_at": 1},
+                 "availability_observed_at": 1, "archive_observation": 1},
             )
             async for gz_entry in net_cursor:
                 if _src == "zdorovie" and gz_entry.get("price_parse_version") != 2:
@@ -437,6 +435,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
                     "availability_confirmed": _availability_confirmed,
                     "availability_observed_at": _availability_at.isoformat() if hasattr(_availability_at, "isoformat") else _availability_at,
                     "identity_verified": bool(gz_entry.get("identity_verified")),
+                    "archive_observation": bool(gz_entry.get("archive_observation")),
                 })
 
         med["prices_by_city"] = real_prices
