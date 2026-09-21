@@ -83,7 +83,7 @@ export function medFaqItems(city, med) {
         .at(-1);
       items.push({
         q: `Какая последняя зафиксированная цена ${nameDose} в ${loc}?`,
-        a: `Последняя зафиксированная цена — от ${low} ₽${observedDate(latest) ? ` по данным на ${observedDate(latest)}` : ''}. Это справочная историческая цена: текущее наличие и стоимость необходимо уточнить в аптеке.`,
+        a: `Последняя зафиксированная цена — ${low} ₽${observedDate(latest) ? ` по данным на ${observedDate(latest)}` : ''}. Это справочная историческая цена: текущее наличие и стоимость необходимо уточнить в аптеке.`,
       });
     } else {
       items.push({
@@ -163,7 +163,7 @@ export function medMetadata(city, med) {
     : _hasPrice
       ? 'актуальная цена и подтвержденное наличие'
       : _hasHistoricalPrice
-        ? `последняя зафиксированная цена от ${Math.min(..._historicalPrices)} ₽; текущее наличие уточняйте`
+        ? `последняя зафиксированная цена ${Math.min(..._historicalPrices)} ₽; текущее наличие уточняйте`
       : 'проверка наличия и аналоги';
   const makeDescription = (facts) => (
     `${nameDose}${facts ? ` — ${facts}` : ''}. ` +

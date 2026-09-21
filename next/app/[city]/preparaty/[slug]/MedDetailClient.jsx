@@ -803,8 +803,9 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
   const priceRows = useMemo(() => {
     if (!med) return [];
     const all = [...((med.prices_by_city || {})[city.id] || [])];
-    // Показываем только реально полученные строки. Цены для другой фасовки
-    // скрываем; расчётных и масштабированных цен на сайте нет.
+    // Показываем только проверенные строки для активной фасовки. Архивные
+    // цены могут быть заранее пересчитаны на неё по количеству единиц; такой
+    // пересчёт выполняется при импорте и помечается price_derived.
     const REAL_SOURCES = ['gorzdrav', 'apteka366', 'rigla', 'maksavit', 'aptechestvo', 'zdorovie', 'magnit', 'farmakopeika', 'rigla_archive'];
     // price>0: 0 = сматчено, но цены/наличия нет — такую сеть не показываем
     // (иначе на упаковке с единственной 0-строкой она всплывала как «0 ₽ дешевле»).
@@ -1009,6 +1010,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
     }).format(date);
   };
   const lastObservedDate = formatObservedDate(lastObservedAt);
+  const lastPriceIsDerived = lastPriceRows.some(row => row.price_derived === true);
   // Число аптек = popcount store_bitmap по каждой сети (как на карте: маркер
   // ставится на каждый взведённый бит). Так заголовок «в N аптеках» совпадает
   // с числом точек на карте. Откат: Горздрав → qty (= число аптек), прочие → 1,
@@ -1101,7 +1103,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
                       ? <>Сравните цены в аптечных сетях {netStr} в {city.inLoc}: {priceStr} — и проверьте наличие в ближайших аптеках на карте.</>
                       : <>Цена в {city.inLoc}: {priceStr}. Проверьте наличие в ближайших аптеках на карте.</>)
                   : lastPrice != null
-                  ? <>Последняя зафиксированная цена в {city.inLoc} — от&nbsp;{lastPrice}&nbsp;₽{lastObservedDate ? <> на {lastObservedDate}</> : null}. Текущую стоимость и наличие уточняйте в аптеке.</>
+                  ? <>Последняя зафиксированная цена в {city.inLoc} — {lastPrice}&nbsp;₽{lastObservedDate ? <> на {lastObservedDate}</> : null}{lastPriceIsDerived ? <> в пересчёте на выбранную упаковку</> : null}. Текущую стоимость и наличие уточняйте в аптеке.</>
                   : <>Посмотрите аналоги и проверьте наличие в аптеках на карте.</>}
               </p>
             );
@@ -1166,10 +1168,11 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
             <div className="mt-6 bg-amber-50/60 border border-amber-200 rounded-xl p-5" data-testid="historical-price">
               <div className="text-xs font-medium text-amber-900">Последняя зафиксированная цена в {city.inLoc}</div>
               <div className="text-3xl font-extrabold text-slate-900 whitespace-nowrap">
-                от&nbsp;{lastPrice}&nbsp;₽
+                {lastPrice}&nbsp;₽
               </div>
               <div className="text-sm text-slate-600 mt-1">
                 {lastObservedDate ? <>Данные на {lastObservedDate}. </> : null}
+                {lastPriceIsDerived ? <>Цена пересчитана на выбранную упаковку. </> : null}
                 Сейчас наличие не подтверждено; стоимость и возможность заказа уточняйте в аптеке.
               </div>
             </div>
@@ -1256,23 +1259,17 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
             </div>
           )}
 
-          {prices.length === 0 && historicalByNetwork.length > 0 && (
+          {prices.length === 0 && lastPrice != null && (
             <div id="poslednyaya-tsena" className="mt-4 bg-white border border-amber-200 rounded-xl p-4 scroll-mt-32" data-testid="historical-price-sources">
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
-                Последние цены в других аптеках{activePack ? ` · ${activePack}` : ''}
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                Последняя зафиксированная цена{activePack ? ` · ${activePack}` : ''}
               </div>
-              <div className="divide-y divide-slate-100">
-                {historicalByNetwork.map((row, index) => (
-                  <div key={`${row.pharmacy_id || 'source'}-${index}`} className="flex items-start justify-between gap-3 py-2">
-                    <div>
-                      <div className="text-sm font-medium text-slate-800">{NET_NAMES_ALL[row.pharmacy_id] || row.pharmacy_id || 'Аптечная сеть'}</div>
-                      <div className="text-[11px] text-slate-500">
-                        {formatObservedDate(row.observed_at) ? `зафиксировано ${formatObservedDate(row.observed_at)}` : 'дата фиксации не указана'}
-                      </div>
-                    </div>
-                    <div className="text-base font-bold text-slate-800 whitespace-nowrap">{row.price}&nbsp;₽</div>
-                  </div>
-                ))}
+              <div className="flex items-end justify-between gap-3 mt-2">
+                <div className="text-[11px] text-slate-500">
+                  {lastObservedDate ? `зафиксировано ${lastObservedDate}` : 'дата фиксации не указана'}
+                  {lastPriceIsDerived ? <><br />в пересчёте на выбранную упаковку</> : null}
+                </div>
+                <div className="text-xl font-bold text-slate-900 whitespace-nowrap">{lastPrice}&nbsp;₽</div>
               </div>
               <p className="text-[11px] text-slate-500 mt-2">Это справочные исторические данные, а не действующее предложение. Наличие и текущую цену уточняйте в аптеке.</p>
             </div>

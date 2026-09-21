@@ -2,6 +2,9 @@
 
 Only first-party pharmacy pages are allowed here.  Each record is checked
 against the curated medication identity and one of its approved pack sizes.
+When only the unit count differs, the source price may be scaled linearly to
+the approved pack size; the original price and both counts remain stored for
+an internal audit trail.
 The imported rows are historical and can never make a page SEO-indexable or
 claim current pharmacy availability.
 
@@ -66,6 +69,66 @@ RECORDS = [
         "source_manufacturer": "Pfizer",
         "source_url": "https://www.rigla.ru/product/viagra-tab-po-plen-50mg-no4-2614",
     },
+    {
+        "slug": "uromiteksan-100-mg-ml-rastvor-dlya-vnutrivennogo-vvedeniya",
+        "price": 578,
+        "source_price": 1734,
+        "source_units": 15,
+        "target_units": 5,
+        "source_pack": "15 ампул × 4 мл (400 мг)",
+        "gz_name": "Уромитексан ампулы 400 мг/4 мл №15",
+        "gz_pack": "5 ампул × 4 мл (400 мг)",
+        "source_manufacturer": "Baxter AG",
+        "source_url": "https://www.rigla.ru/product/uromiteksan-amp-400mg-4ml-no15dlya-statsionarov-3032684",
+    },
+    {
+        "slug": "viagra-25-mg-tabletki-pokrytye-obolochkoy",
+        "price": 11392,
+        "source_price": 2848,
+        "source_units": 1,
+        "target_units": 4,
+        "source_pack": "1 таблетка",
+        "gz_name": "Виагра таблетки покрытые оболочкой 25 мг №1",
+        "gz_pack": "4 шт",
+        "source_manufacturer": "Pfizer",
+        "source_url": "https://www.rigla.ru/product/viagra-tab-po-plen-25mg-no1-397",
+    },
+    {
+        "slug": "serokvel-25-mg-tabletki-pokrytye-obolochkoy",
+        "price": 515,
+        "source_price": 1030,
+        "source_units": 60,
+        "target_units": 30,
+        "source_pack": "60 таблеток",
+        "gz_name": "Сероквель таблетки покрытые оболочкой 25 мг №60",
+        "gz_pack": "30 шт",
+        "source_manufacturer": "AstraZeneca",
+        "source_url": "https://www.rigla.ru/product/serokvel-tabpo-25mg-no60-4083",
+    },
+    {
+        "slug": "serokvel-100-mg-tabletki-pokrytye-obolochkoy",
+        "price": 608,
+        "source_price": 1216,
+        "source_units": 60,
+        "target_units": 30,
+        "source_pack": "60 таблеток",
+        "gz_name": "Сероквель таблетки покрытые оболочкой 100 мг №60",
+        "gz_pack": "30 шт",
+        "source_manufacturer": "AstraZeneca",
+        "source_url": "https://www.rigla.ru/product/serokvel-tabpo-100mg-no60-3405",
+    },
+    {
+        "slug": "kardura-4-mg-tabletki",
+        "price": 162,
+        "source_price": 348,
+        "source_units": 30,
+        "target_units": 14,
+        "source_pack": "30 таблеток",
+        "gz_name": "Кардура таблетки 4 мг №30",
+        "gz_pack": "14 шт",
+        "source_manufacturer": "Pfizer / Viatris",
+        "source_url": "https://www.rigla.ru/product/kardura-tab-4mg-no30-2551",
+    },
 ]
 
 
@@ -99,6 +162,14 @@ def validate_record(med: dict, record: dict) -> None:
         raise ValueError(f"{record['slug']}: pack mismatch")
     if not isinstance(record.get("price"), (int, float)) or record["price"] <= 0:
         raise ValueError(f"{record['slug']}: invalid price")
+    scaling_fields = ("source_price", "source_units", "target_units")
+    has_scaling = any(field in record for field in scaling_fields)
+    if has_scaling:
+        if not all(isinstance(record.get(field), (int, float)) and record[field] > 0 for field in scaling_fields):
+            raise ValueError(f"{record['slug']}: incomplete scaling inputs")
+        expected_price = round(record["source_price"] * record["target_units"] / record["source_units"])
+        if record["price"] != expected_price:
+            raise ValueError(f"{record['slug']}: scaled price must be {expected_price}")
     if not record["source_url"].startswith("https://www.rigla.ru/product/"):
         raise ValueError(f"{record['slug']}: non-network source")
 
@@ -130,6 +201,7 @@ def main() -> None:
             "match_status": "matched",
             "identity_verified": True,
             "archive_observation": True,
+            "price_derived": all(field in record for field in ("source_price", "source_units", "target_units")),
             "updated_at": observed_at,
         }
         print(f"OK {record['slug']} {record['gz_pack']}: {record['price']} RUB")
