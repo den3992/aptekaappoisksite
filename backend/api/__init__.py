@@ -405,6 +405,10 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
 
         med["prices_by_city"] = real_prices
         med["prices_source"] = "real"
+        med["seo_indexable_by_city"] = {
+            city_id: len(sources) >= 2
+            for city_id, sources in seo_sources_by_city.items()
+        }
         if city:
             # Shared SEO predicate used by sitemap, city-aware listings and
             # IndexNow.  Local store rows must not masquerade as independent

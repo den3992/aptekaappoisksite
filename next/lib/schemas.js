@@ -73,7 +73,7 @@ export function medFaqItems(city, med) {
   if (med.mnn) {
     items.push({
       q: `Какие аналоги у ${name}?`,
-      a: `Аналоги ${name} по действующему веществу (${med.mnn.toLowerCase()}) перечислены в разделе «Аналоги по МНН» на этой странице — с ценами и наличием в ${loc}.`,
+      a: `Раздел «Аналоги по МНН» показывает препараты с тем же действующим веществом (${med.mnn.toLowerCase()}) и сопоставимой лекарственной формой, если они есть в каталоге. Цену и наличие проверяйте на странице конкретного аналога.`,
     });
   }
   if (med.rx === true) {
@@ -91,47 +91,49 @@ export function medMetadata(city, med) {
   // Кол-во аптечных сетей с ценой в городе → условная формулировка:
   // «сравните цены» честно показываем только когда сетей >=2.
   const _arr = (med.prices_by_city && med.prices_by_city[city]) || [];
-  const _nets = new Set(_arr.map((o) => o && o.pharmacy_id).filter(Boolean));
-  const _multi = _nets.size >= 2;
   // Реальные сети препарата в городе — для честного перечисления в мете
   // (city-точно: в krd/nn это не Горздрав/36,6, а свои сети).
   const _NET_LABELS = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека', farmakopeika: 'Фармакопейка' };
+  const _nets = new Set(_arr.map((o) => o && o.pharmacy_id).filter((id) => _NET_LABELS[id]));
+  const _multi = _nets.size >= 2;
   const _netNames = [..._nets].map((id) => _NET_LABELS[id]).filter(Boolean);
-  const _netStr = _netNames.length <= 3
-    ? _netNames.slice(0, -1).join(', ') + ' и ' + _netNames.slice(-1)
-    : _netNames.slice(0, 2).join(', ') + ' и других';
+  const _netStr = _netNames.length <= 1
+    ? (_netNames[0] || '')
+    : _netNames.length <= 3
+      ? `${_netNames.slice(0, -1).join(', ')} и ${_netNames.at(-1)}`
+      : `${_netNames.slice(0, 2).join(', ')} и других`;
   const _hasPrice = _arr.length > 0;
+  const _hasConfirmedAvailability = _arr.some((offer) => Number(offer?.qty) > 0 || Boolean(offer?.store_bitmap));
   const name = formatName(med.name);
   const manufacturer = formatManufacturer(med.manufacturer);
+  const titleQualifier = med.seo?.title_qualifier
+    ? ` ${formatManufacturer(med.seo.title_qualifier)}`
+    : '';
   const packs = [...new Set((med.variants || []).map((v) => v && v.pack_size).filter(Boolean))];
   const packText = packs.slice(0, 2).join(', ');
-  const parts = [name];
-  if (med.dosage) parts.push(med.dosage);
-  parts.push(
-    _multi
-      ? `купить в ${cnLoc(city)} — сравните цены в аптеках | АптекаА`
-      : _hasPrice
-        ? `купить в ${cnLoc(city)} — цена и наличие в аптеках | АптекаА`
-        : `в ${cnLoc(city)} — аналоги и наличие в аптеках | АптекаА`,
-  );
-  const title = parts.join(' ');
-  const _ingr =
-    (med.mnn ? ` (${med.mnn.toLowerCase()})` : '') +
-    (med.form ? `, ${med.form.toLowerCase()}` : '') +
-    (med.dosage ? `, ${med.dosage}` : '');
-  const _lead = _multi
-    ? `Сравните цены на ${name}${_ingr} в сетях ${_netStr}`
+  const nameDose = [name, med.dosage].filter(Boolean).join(' ');
+  const title = _multi
+    ? `${nameDose}${titleQualifier} — сравнить цены в ${cnLoc(city)} | АптекаА`
     : _hasPrice
-      ? `Узнайте цену и наличие ${name}${_ingr}`
-      : `${name}${_ingr}: аналоги и наличие`;
-  const productFacts = [manufacturer ? `производитель ${manufacturer}` : '', packText ? `упаковка ${packText}` : ''].filter(Boolean).join(', ');
-  const description = (
-    `${_lead} в аптеках ${cnGen(city)}. ` +
-    `${productFacts ? `${productFacts}. ` : ''}` +
-    `Инструкция, форма выпуска, аналоги и подтвержденное наличие. ` +
-    (med.rx ? 'Рецептурный препарат. ' : '') +
-    'АптекаА не показывает неподтвержденные цены.'
-  ).slice(0, 300);
+      ? `${nameDose}${titleQualifier}${_hasConfirmedAvailability ? ' купить' : ''} в ${cnLoc(city)} — актуальная цена | АптекаА`
+      : `${nameDose}${titleQualifier} — проверка наличия и аналоги в ${cnLoc(city)} | АптекаА`;
+  const availability = _multi
+    ? `сравнение цен в сетях ${_netStr}`
+    : _hasPrice
+      ? (_hasConfirmedAvailability ? 'актуальная цена и подтвержденное наличие' : 'актуальная цена; наличие уточняйте в аптеке или сети')
+      : 'проверка наличия и аналоги';
+  const makeDescription = (facts) => (
+    `${nameDose}${facts ? ` — ${facts}` : ''}. ` +
+    `${availability.charAt(0).toUpperCase() + availability.slice(1)} в ${cnLoc(city)}. ` +
+    'Форма выпуска и справочные сведения. Только подтвержденные предложения аптек.'
+  );
+  let productFacts = [manufacturer, packText ? `упаковки ${packText}` : ''].filter(Boolean).join(', ');
+  let description = makeDescription(productFacts);
+  if (description.length > 190 && packText) {
+    productFacts = manufacturer;
+    description = makeDescription(productFacts);
+  }
+  if (description.length > 190) description = makeDescription('');
   const canonical = `${HOST}/${city}/preparaty/${med.canonical_slug || med.slug}`;
   const image = med.image_url ? `${HOST}${med.image_url}` : undefined;
   return {
@@ -161,7 +163,7 @@ export function medGraphJsonLd(city, med) {
     nonProprietaryName: med.mnn ? titleCase(med.mnn) : undefined,
     activeIngredient: med.mnn ? titleCase(med.mnn) : undefined,
     dosageForm: med.form ? med.form.toLowerCase() : undefined,
-    prescriptionStatus: med.rx ? 'PrescriptionOnly' : 'OTC',
+    prescriptionStatus: med.rx === true ? 'PrescriptionOnly' : med.rx === false ? 'OTC' : undefined,
     image,
     url: canonical,
     manufacturer: med.manufacturer ? { '@type': 'Organization', name: med.manufacturer } : undefined,
@@ -173,7 +175,8 @@ export function medGraphJsonLd(city, med) {
     '@type': 'Product',
     '@id': `${canonical}#product`,
     name: [name, med.dosage].filter(Boolean).join(' '),
-    brand: med.manufacturer ? { '@type': 'Brand', name: med.manufacturer } : undefined,
+    brand: { '@type': 'Brand', name },
+    manufacturer: med.manufacturer ? { '@type': 'Organization', name: med.manufacturer } : undefined,
     description: drug.name,
     image,
     url: canonical,
@@ -194,7 +197,6 @@ export function medGraphJsonLd(city, med) {
       lowPrice: Math.min(..._offerPrices),
       highPrice: Math.max(..._offerPrices),
       offerCount: _offerPrices.length,
-      availability: 'https://schema.org/InStock',
     };
   }
 
@@ -245,12 +247,6 @@ export function medGraphJsonLd(city, med) {
     mainContentOfPage: { '@id': `${canonical}#drug` },
     isPartOf: { '@type': 'WebSite', name: 'АптекаА', url: HOST },
   };
-  if (med.prices_updated_at) {
-    try {
-      medweb.lastReviewed = new Date(med.prices_updated_at).toISOString().slice(0, 10);
-    } catch (e) { /* ignore */ }
-  }
-
   const breadcrumbs = {
     '@type': 'BreadcrumbList',
     itemListElement: [

@@ -16,15 +16,15 @@ from pathlib import Path
 from dotenv import load_dotenv
 from pymongo import MongoClient
 
-from scripts.import_priority_medications import SOURCE, curated_key
+from scripts.import_priority_medications import SOURCE, curated_key, target_group
 
 
 ROOT = Path(__file__).resolve().parents[1]
 MEDICATIONS = ROOT / "data" / "priority_medications_2026-09.json"
 MONOGRAPHS = ROOT / "data" / "priority_medication_monographs_2026-09.json"
-CONTENT_VERSION = "priority-seo-moscow-2026-09-v1"
+CONTENT_VERSION = "priority-seo-moscow-2026-09-v2"
 GRLS_SOURCE = {
-    "title": "Государственный реестр лекарственных средств Минздрава России",
+    "title": "ГРЛС Минздрава России: поиск официальной инструкции конкретной упаковки",
     "url": "https://grls.rosminzdrav.ru/",
 }
 
@@ -55,7 +55,7 @@ def pack_phrase(pack_sizes: list[str]) -> str:
     return ", ".join(pack_sizes[:-1]) + " и " + pack_sizes[-1]
 
 
-def build_payload(item: dict, monograph: dict) -> tuple[dict, dict]:
+def build_payload(item: dict, monograph: dict, *, title_qualifier: str | None = None) -> tuple[dict, dict]:
     name = item["name"]
     dose = item.get("dosage")
     form = lower_first(item["form"])
@@ -67,9 +67,10 @@ def build_payload(item: dict, monograph: dict) -> tuple[dict, dict]:
         f"{name_dose} — {monograph['overview']}. "
         f"Лекарственная форма: {form}; производитель — {manufacturer}; "
         f"варианты упаковки в каталоге: {packs}. "
-        "Наличие в аптеках Москвы показывается только по подтвержденным данным аптечных сетей."
+        "Наличие и цены показываются только по подтвержденным данным аптечных сетей выбранного города."
     )
     sources = [GRLS_SOURCE, *(monograph.get("sources") or [])]
+    details_are_source_backed = monograph.get("details_source") == "product-specific"
     # Keep source order stable and avoid duplicate URLs.
     deduped_sources = []
     seen_urls = set()
@@ -81,16 +82,16 @@ def build_payload(item: dict, monograph: dict) -> tuple[dict, dict]:
 
     enrichment = {
         "summary": summary,
-        "indications": monograph["indications"],
-        "contraindications": monograph["contraindications"],
-        "how_to_take": monograph["administration"],
+        "indications": monograph["indications"] if details_are_source_backed else [],
+        "contraindications": monograph["contraindications"] if details_are_source_backed else [],
+        "how_to_take": monograph["administration"] if details_are_source_backed else None,
+        "medical_details_status": "source-backed" if details_are_source_backed else "catalog-summary-only",
         "disclaimer": (
             "Справочная информация не заменяет официальную инструкцию и консультацию врача. "
             "Имеются противопоказания; для рецептурных и госпитальных препаратов требуется назначение специалиста."
         ),
         "sources": deduped_sources,
-        "reviewed_at": "2026-09-21",
-        "review_status": "editorial-review-official-source-policy",
+        "updated_at": "2026-09-21",
         "content_version": CONTENT_VERSION,
     }
     seo = {
@@ -111,6 +112,8 @@ def build_payload(item: dict, monograph: dict) -> tuple[dict, dict]:
         },
         "content_version": CONTENT_VERSION,
     }
+    if title_qualifier:
+        seo["title_qualifier"] = title_qualifier
     return enrichment, seo
 
 
@@ -118,10 +121,13 @@ def validate_payload(enrichment: dict) -> list[str]:
     errors = []
     if len(enrichment["summary"]) < 180:
         errors.append("summary is too short")
-    if not (1 <= len(enrichment["indications"]) <= 6):
-        errors.append("indications must contain 1-6 items")
-    if not (1 <= len(enrichment["contraindications"]) <= 7):
-        errors.append("contraindications must contain 1-7 items")
+    details_are_source_backed = enrichment.get("medical_details_status") == "source-backed"
+    if details_are_source_backed and not (1 <= len(enrichment["indications"]) <= 6):
+        errors.append("source-backed indications must contain 1-6 items")
+    if details_are_source_backed and not (1 <= len(enrichment["contraindications"]) <= 7):
+        errors.append("source-backed contraindications must contain 1-7 items")
+    if not details_are_source_backed and (enrichment["indications"] or enrichment["contraindications"] or enrichment["how_to_take"]):
+        errors.append("unverified medical details must not be published")
     if not enrichment.get("sources"):
         errors.append("sources are missing")
     text = json.dumps(enrichment, ensure_ascii=False).lower()
@@ -149,13 +155,22 @@ def main() -> None:
 
     plan = []
     errors = []
+    group_counts = {}
+    for item in items:
+        group = target_group(item)
+        group_counts[group] = group_counts.get(group, 0) + 1
     for item in items:
         key = curated_key(item)
         doc = db.medications.find_one({"curated_source": SOURCE, "curated_key": key})
         if not doc:
             errors.append(f"Medication is missing: {item['name']} {item.get('dosage')}")
             continue
-        enrichment, seo = build_payload(item, monographs[profile_key(item)])
+        qualifier = item["manufacturer"] if group_counts[target_group(item)] > 1 else None
+        enrichment, seo = build_payload(
+            item,
+            monographs[profile_key(item)],
+            title_qualifier=qualifier,
+        )
         for error in validate_payload(enrichment):
             errors.append(f"{doc['slug']}: {error}")
         plan.append((doc, enrichment, seo))

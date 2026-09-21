@@ -58,9 +58,19 @@ function simplifyPack(s) {
     .replace(/\bусл\.?\s*ед\b/gi, 'усл.ед.')
     .replace(/\s+/g, ' ')
     .trim();
+  // "5 ампул × 1 мл" — retain both the container count and its volume.
+  // This is different from "5 × 1 шт", where multiplying is useful.
+  const countedContainer = txt.match(/^(\d+)\s+(ампул\S*|флакон\S*|шприц\S*|картридж\S*|туб\S*)\s*[xх×]\s*(\d+(?:[\.,]\d+)?)\s*(мл|мг|мкг|г|л)\b/i);
+  if (countedContainer) {
+    return `${countedContainer[1]} ${countedContainer[2].toLowerCase()} × ${countedContainer[3].replace(',', '.')} ${countedContainer[4].toLowerCase()}`;
+  }
+  // Sachet kits often include a parenthetical composition; the total sachet
+  // count is the stable, readable pack label used by the selector.
+  const sachets = txt.match(/^(\d+)\s+саше\b/i);
+  if (sachets) return `${sachets[1]} саше`;
   // N x <CONTAINER> по M [unit]  →  'N × M <unit>' style.
   // Covers ампулы, флаконы, шприцы, банки, блистеры, упаковки, стрипы, картриджи, тубы.
-  let amp = txt.match(/^(\\d+|НЕ УКАЗАНО)\\s*[xх×]\\s*(АМПУЛ\S*|ФЛАКОН\S*|ШПРИЦ\S*|БАНК\S*|БЛИСТЕР\S*|УПАКОВК\S*|СТРИП\S*|КАРТРИДЖ\S*|ТУБ\S*)[^\\d]*\\s*по\\s*(\\d+(?:[\\.,]\\d+)?)\\s*(?:тысяч.?\\s*)?(\\S+)?/i);
+  let amp = txt.match(/^(\d+|НЕ УКАЗАНО)\s*[xх×]\s*(АМПУЛ\S*|ФЛАКОН\S*|ШПРИЦ\S*|БАНК\S*|БЛИСТЕР\S*|УПАКОВК\S*|СТРИП\S*|КАРТРИДЖ\S*|ТУБ\S*)[^\d]*\s*по\s*(\d+(?:[\.,]\d+)?)\s*(?:тысяч.?\s*)?(\S+)?/i);
   if (amp) {
     const n = amp[1] === 'НЕ УКАЗАНО' ? '1' : amp[1];
     let m = amp[3].replace(',', '.');
@@ -75,7 +85,7 @@ function simplifyPack(s) {
   }
   // Lone 'CONTAINER по M [unit]' (no leading count) — treat as 1 × M
   else {
-    let solo = txt.match(/^(АМПУЛ\S*|ФЛАКОН\S*|ШПРИЦ\S*|БАНК\S*|БЛИСТЕР\S*|УПАКОВК\S*|СТРИП\S*|КАРТРИДЖ\S*|ТУБ\S*)[^\\d]*\\s*по\\s*(\\d+(?:[\\.,]\\d+)?)\\s*(\\S+)?/i);
+    let solo = txt.match(/^(АМПУЛ\S*|ФЛАКОН\S*|ШПРИЦ\S*|БАНК\S*|БЛИСТЕР\S*|УПАКОВК\S*|СТРИП\S*|КАРТРИДЖ\S*|ТУБ\S*)[^\d]*\s*по\s*(\d+(?:[\.,]\d+)?)\s*(\S+)?/i);
     if (solo) {
       let m = solo[2].replace(',', '.');
       if (m.endsWith('.000')) m = m.slice(0, -4);
@@ -972,11 +982,6 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
     </div>
   );
 
-  // noAvailability: считаем по СЫРЫМ данным prices_by_city (по всем упаковкам),
-  // не по фильтрованному prices. Используется, чтобы решить, показывать ли блок
-  // аналогов на мобильной версии (показываем только если препарата вообще нет).
-  const noAvailability = !((med?.prices_by_city?.[city.id] || []).length);
-
   const minPrice = prices.length ? Math.min(...prices.map(p => p.price)) : null;
   const maxPrice = prices.length ? Math.max(...prices.map(p => p.price)) : null;
   // Число аптек = popcount store_bitmap по каждой сети (как на карте: маркер
@@ -1043,11 +1048,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 leading-tight" data-testid="med-h1">
             {formatName(med.name)}
             {med.dosage && <span className="text-slate-800">, {med.dosage}</span>}
-            {(() => {
-              if (!med.variants || med.variants.length === 0) return null;
-              const uniq = sortPacks([...new Set(med.variants.map(v => simplifyPack(v.pack_size)).filter(Boolean))]);
-              return uniq.length === 1 ? <span className="text-slate-700">, {uniq[0]}</span> : null;
-            })()}
+            {med.seo?.title_qualifier && <span className="text-slate-700">, {formatManufacturer(med.seo.title_qualifier)}</span>}
           </h1>
           <p className="text-slate-600 mt-0.5">{formLower}</p>
 
@@ -1552,7 +1553,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
             <div className="grid md:grid-cols-2 gap-6">
               {med.enrichment.indications?.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-emerald-800 uppercase tracking-wide mb-2">Основные показания по инструкции</h3>
+                  <h3 className="text-sm font-semibold text-emerald-800 uppercase tracking-wide mb-2">Основные области применения</h3>
                   <ul className="space-y-1.5 text-sm text-slate-700">
                     {med.enrichment.indications.map((t, i) => (
                       <li key={i} className="flex gap-2"><span className="text-emerald-500 shrink-0">•</span><span>{t}</span></li>
@@ -1562,7 +1563,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
               )}
               {med.enrichment.contraindications?.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-rose-800 uppercase tracking-wide mb-2">Ключевые противопоказания</h3>
+                  <h3 className="text-sm font-semibold text-rose-800 uppercase tracking-wide mb-2">Противопоказания и важные ограничения</h3>
                   <ul className="space-y-1.5 text-sm text-slate-700">
                     {med.enrichment.contraindications.map((t, i) => (
                       <li key={i} className="flex gap-2"><span className="text-rose-500 shrink-0">•</span><span>{t}</span></li>
@@ -1571,6 +1572,11 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
                 </div>
               )}
             </div>
+            {med.enrichment.medical_details_status === 'catalog-summary-only' && (
+              <p className="mt-6 rounded-lg bg-slate-50 px-4 py-3 text-xs leading-relaxed text-slate-600">
+                Подробные медицинские сведения не публикуются, пока к карточке не привязана инструкция именно этой упаковки. Сверяйте показания, противопоказания и способ применения по листку-вкладышу препарата.
+              </p>
+            )}
             {med.enrichment.how_to_take && (
               <div className="mt-6 pt-6 border-t border-slate-100">
                 <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-2">Способ применения</h3>
@@ -1582,7 +1588,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
             )}
             {med.enrichment.sources?.length > 0 && (
               <div className="mt-6 border-t border-slate-100 pt-5" data-testid="med-sources">
-                <h3 className="text-sm font-semibold text-slate-900">Источники и проверка информации</h3>
+                <h3 className="text-sm font-semibold text-slate-900">Источники информации</h3>
                 <ul className="mt-2 space-y-1.5 text-sm text-slate-600">
                   {med.enrichment.sources.map((source, i) => (
                     <li key={`${source.url}-${i}`}>
@@ -1590,7 +1596,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
                     </li>
                   ))}
                 </ul>
-                {med.enrichment.reviewed_at && <p className="mt-2 text-xs text-slate-400">Информация проверена: {med.enrichment.reviewed_at.split('-').reverse().join('.')}.</p>}
+                {med.enrichment.updated_at && <p className="mt-2 text-xs text-slate-400">Материал обновлён: {med.enrichment.updated_at.split('-').reverse().join('.')}.</p>}
               </div>
             )}
           </div>
@@ -1599,7 +1605,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
 
       {/* Analogs (strict: same MNN + same form group) */}
       {med.mnn && (
-        <section id="analogi" className={"mb-8 md:mb-12 scroll-mt-40 md:scroll-mt-32 " + (noAvailability ? "" : "hidden md:block")} data-testid="analogs-section">
+        <section id="analogi" className="mb-8 md:mb-12 scroll-mt-40 md:scroll-mt-32" data-testid="analogs-section">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center"><Tag className="w-5 h-5" /></div>
             <h2 className="text-xl md:text-2xl font-bold text-slate-900 leading-tight">Аналоги по МНН: {titleCase(med.mnn)}</h2>
@@ -1669,11 +1675,11 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
       {/* Перелинковка между городами — SEO discovery + внутренний PageRank.
           Один и тот же препарат есть во всех городах (slug общий, отличаются
           цены/наличие). Помогает ботам обойти гео-варианты и юзеру сменить город. */}
-      {med && cities && cities.filter(c => c.id !== city.id && med.prices_by_city?.[c.id]?.length > 0).length > 0 && (
+      {med && cities && cities.filter(c => c.id !== city.id && med.seo_indexable_by_city?.[c.id]).length > 0 && (
         <section className="mb-8 md:mb-12" data-testid="other-cities-section">
           <h2 className="text-lg md:text-xl font-bold text-slate-900 mb-3">{formatName(med.name)} в других городах</h2>
           <div className="flex flex-wrap gap-2">
-            {cities.filter(c => c.id !== city.id && med.prices_by_city?.[c.id]?.length > 0).map(c => (
+            {cities.filter(c => c.id !== city.id && med.seo_indexable_by_city?.[c.id]).map(c => (
               <Link
                 key={c.id}
                 href={`/${c.id}/preparaty/${slug}`}
