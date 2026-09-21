@@ -2,7 +2,7 @@
 // (render_medication_for_bot / render_pharmacy_for_bot).
 
 import { categoryContent } from './categoryContent';
-import { formatName } from '../utils/text';
+import { formatName, formatManufacturer } from '../utils/text';
 
 const HOST = 'https://aptekaa.ru';
 
@@ -25,10 +25,27 @@ export function medFaqItems(city, med) {
   const loc = cnLoc(city);
   const gen = cnGen(city);
   const name = formatName(med.name);
+  const nameDose = [name, med.dosage].filter(Boolean).join(' ');
   const arr = (med.prices_by_city && med.prices_by_city[city]) || [];
   const prices = arr.map((o) => o && o.price).filter((p) => typeof p === 'number');
   const nets = new Set(arr.map((o) => o && o.pharmacy_id).filter(Boolean));
   const items = [];
+  if (med.mnn) {
+    items.push({
+      q: `Какое действующее вещество у ${nameDose}?`,
+      a: `Действующее вещество (МНН) — ${titleCase(med.mnn)}. Форма выпуска: ${(med.form || '').toLowerCase()}${med.dosage ? `, дозировка ${med.dosage}` : ''}.`,
+    });
+  }
+  const packs = [...new Set((med.variants || []).map((v) => v && v.pack_size).filter(Boolean))];
+  if (med.manufacturer || packs.length) {
+    const details = [];
+    if (med.manufacturer) details.push(`производитель — ${formatManufacturer(med.manufacturer)}`);
+    if (packs.length) details.push(`варианты упаковки: ${packs.join(', ')}`);
+    items.push({
+      q: `Кто производит ${nameDose} и в какой упаковке он выпускается?`,
+      a: `${nameDose}: ${details.join('; ')}. Перед покупкой сверяйте дозировку, форму выпуска, производителя и маркировку на конкретной упаковке.`,
+    });
+  }
   if (prices.length) {
     const low = Math.min(...prices);
     const high = Math.max(...prices);
@@ -36,6 +53,12 @@ export function medFaqItems(city, med) {
     items.push({
       q: `Сколько стоит ${name} в ${loc}?`,
       a: `Цена ${name} в аптеках ${gen} — ${priceStr}. Актуальные цены и наличие в конкретных аптеках показаны на карте на этой странице.`,
+    });
+  }
+  if (!prices.length) {
+    items.push({
+      q: `Где проверить цену и наличие ${nameDose} в ${loc}?`,
+      a: `На этой странице АптекаА показывает только подтвержденные предложения подключенных аптечных сетей ${gen}. Если цены сейчас нет, предложение еще не получено; неподтвержденные наличие и стоимость мы не публикуем.`,
     });
   }
   const netNames = [];
@@ -53,12 +76,13 @@ export function medFaqItems(city, med) {
       a: `Аналоги ${name} по действующему веществу (${med.mnn.toLowerCase()}) перечислены в разделе «Аналоги по МНН» на этой странице — с ценами и наличием в ${loc}.`,
     });
   }
-  items.push({
-    q: `${name} отпускается по рецепту?`,
-    a: med.rx
-      ? `Да, ${name} отпускается по рецепту врача.`
-      : `Нет, ${name} отпускается без рецепта.`,
-  });
+  if (med.rx === true) {
+    items.push({ q: `${nameDose} отпускается по рецепту?`, a: `Да, ${nameDose} относится к рецептурным препаратам. Для госпитальных форм применение возможно только медицинским персоналом.` });
+  } else if (med.rx === false) {
+    items.push({ q: `${nameDose} отпускается по рецепту?`, a: `${nameDose} отпускается без рецепта, если иное не указано в инструкции конкретной упаковки. Перед применением проконсультируйтесь со специалистом.` });
+  } else {
+    items.push({ q: `${nameDose} отпускается по рецепту?`, a: `Режим отпуска необходимо уточнить по официальной инструкции и маркировке конкретной упаковки ${nameDose}.` });
+  }
   return items;
 }
 
@@ -78,6 +102,9 @@ export function medMetadata(city, med) {
     : _netNames.slice(0, 2).join(', ') + ' и других';
   const _hasPrice = _arr.length > 0;
   const name = formatName(med.name);
+  const manufacturer = formatManufacturer(med.manufacturer);
+  const packs = [...new Set((med.variants || []).map((v) => v && v.pack_size).filter(Boolean))];
+  const packText = packs.slice(0, 2).join(', ');
   const parts = [name];
   if (med.dosage) parts.push(med.dosage);
   parts.push(
@@ -97,10 +124,13 @@ export function medMetadata(city, med) {
     : _hasPrice
       ? `Узнайте цену и наличие ${name}${_ingr}`
       : `${name}${_ingr}: аналоги и наличие`;
+  const productFacts = [manufacturer ? `производитель ${manufacturer}` : '', packText ? `упаковка ${packText}` : ''].filter(Boolean).join(', ');
   const description = (
-    `${_lead} в аптеках ${cnGen(city)}. Аналоги, наличие, адреса на карте. ` +
-    (med.rx ? 'Отпускается по рецепту. ' : '') +
-    'Бесплатный поиск.'
+    `${_lead} в аптеках ${cnGen(city)}. ` +
+    `${productFacts ? `${productFacts}. ` : ''}` +
+    `Инструкция, форма выпуска, аналоги и подтвержденное наличие. ` +
+    (med.rx ? 'Рецептурный препарат. ' : '') +
+    'АптекаА не показывает неподтвержденные цены.'
   ).slice(0, 300);
   const canonical = `${HOST}/${city}/preparaty/${med.canonical_slug || med.slug}`;
   const image = med.image_url ? `${HOST}${med.image_url}` : undefined;

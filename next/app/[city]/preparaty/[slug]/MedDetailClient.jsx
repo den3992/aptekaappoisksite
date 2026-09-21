@@ -1016,7 +1016,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
         <ChevronRight className="w-3 h-3" /><span className="text-slate-700">{formatName(med.name)}</span>
       </nav>
 
-      <div className="grid lg:grid-cols-[380px_1fr] gap-6 md:gap-8 mb-8 md:mb-10">
+      <div id="harakteristiki" className="grid lg:grid-cols-[380px_1fr] gap-6 md:gap-8 mb-8 md:mb-10 scroll-mt-32">
         <div className="bg-white border border-slate-100 rounded-2xl p-3 md:p-6">
           <div className="aspect-square mx-auto md:mx-0 max-w-[240px] md:max-w-none rounded-xl bg-slate-50 overflow-hidden flex items-center justify-center">
             {med.image_url ? (
@@ -1042,13 +1042,13 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
           </div>
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 leading-tight" data-testid="med-h1">
             {formatName(med.name)}
+            {med.dosage && <span className="text-slate-800">, {med.dosage}</span>}
             {(() => {
               if (!med.variants || med.variants.length === 0) return null;
               const uniq = sortPacks([...new Set(med.variants.map(v => simplifyPack(v.pack_size)).filter(Boolean))]);
               return uniq.length === 1 ? <span className="text-slate-700">, {uniq[0]}</span> : null;
             })()}
           </h1>
-          {med.dosage && <p className="text-slate-700 font-medium mt-1">{med.dosage}</p>}
           <p className="text-slate-600 mt-0.5">{formLower}</p>
 
           {/* Лид-абзац (SEO): keyword + город + условное «сравните» по числу
@@ -1261,6 +1261,17 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
         </div>
       </div>
 
+      <nav aria-label="Содержание страницы" className="mb-8 rounded-xl border border-slate-200 bg-white p-4" data-testid="med-toc">
+        <div className="text-sm font-semibold text-slate-900 mb-2">На странице</div>
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+          <a href="#harakteristiki" className="text-emerald-700 hover:underline">Характеристики</a>
+          {prices.length > 0 && <a href="#nalichie" className="text-emerald-700 hover:underline">Цены и наличие в {city.inLoc}</a>}
+          {med.enrichment && <a href="#o-preparate" className="text-emerald-700 hover:underline">О препарате</a>}
+          {med.mnn && <a href="#analogi" className="text-emerald-700 hover:underline">Аналоги</a>}
+          <a href="#voprosy" className="text-emerald-700 hover:underline">Вопросы и ответы</a>
+        </div>
+      </nav>
+
       {/* Map — только когда есть аптеки с координатами. Сети без адресов точек
           (Магнит и пр.) карту не показывают — вместо неё карточка сети выше. */}
       {totalPharmacyCount > 0 && (
@@ -1428,7 +1439,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
 
       {/* Аптеки, видимые на карте — динамически обновляется при движении карты */}
       {prices.length > 0 && (
-        <section className="mb-8 md:mb-12">
+        <section id="nalichie" className="mb-8 md:mb-12 scroll-mt-32">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1 mb-3 md:mb-4">
             <div className="flex flex-col">
               <h2 className="text-xl md:text-2xl font-bold text-slate-900">Цены в аптеках</h2>
@@ -1491,9 +1502,9 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
         </section>
       )}
 
-      {/* LLM-enriched description (top-200 popular meds) */}
+      {/* Reviewed reference content: indications, precautions and sources. */}
       {med.enrichment && (
-        <section className="mb-8 md:mb-12" data-testid="enrichment-section">
+        <section id="o-preparate" className="mb-8 md:mb-12 scroll-mt-32" data-testid="enrichment-section">
           <div className="bg-white border border-slate-100 rounded-2xl p-5 md:p-8">
             <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-3">О препарате</h2>
             {/* SEO #1: городской абзац — уникальный локальный текст в самом
@@ -1529,10 +1540,19 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
             {med.enrichment.summary && (
               <p className="text-slate-700 leading-relaxed mb-6">{med.enrichment.summary}</p>
             )}
+            <div className="mb-6 overflow-hidden rounded-xl border border-slate-200" data-testid="med-facts-table">
+              <h3 className="bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900">Форма выпуска и характеристики</h3>
+              <dl className="grid sm:grid-cols-2 text-sm">
+                {med.mnn && <div className="border-t border-slate-100 px-4 py-3"><dt className="text-slate-500">Действующее вещество</dt><dd className="mt-0.5 font-medium text-slate-900">{titleCase(med.mnn)}</dd></div>}
+                {med.dosage && <div className="border-t border-slate-100 px-4 py-3"><dt className="text-slate-500">Дозировка</dt><dd className="mt-0.5 font-medium text-slate-900">{med.dosage}</dd></div>}
+                {med.form && <div className="border-t border-slate-100 px-4 py-3"><dt className="text-slate-500">Лекарственная форма</dt><dd className="mt-0.5 font-medium text-slate-900">{formatName(med.form)}</dd></div>}
+                {med.manufacturer && <div className="border-t border-slate-100 px-4 py-3"><dt className="text-slate-500">Производитель</dt><dd className="mt-0.5 font-medium text-slate-900">{formatManufacturer(med.manufacturer)}</dd></div>}
+              </dl>
+            </div>
             <div className="grid md:grid-cols-2 gap-6">
               {med.enrichment.indications?.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-emerald-800 uppercase tracking-wide mb-2">Показания</h3>
+                  <h3 className="text-sm font-semibold text-emerald-800 uppercase tracking-wide mb-2">Основные показания по инструкции</h3>
                   <ul className="space-y-1.5 text-sm text-slate-700">
                     {med.enrichment.indications.map((t, i) => (
                       <li key={i} className="flex gap-2"><span className="text-emerald-500 shrink-0">•</span><span>{t}</span></li>
@@ -1542,7 +1562,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
               )}
               {med.enrichment.contraindications?.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-rose-800 uppercase tracking-wide mb-2">Противопоказания</h3>
+                  <h3 className="text-sm font-semibold text-rose-800 uppercase tracking-wide mb-2">Ключевые противопоказания</h3>
                   <ul className="space-y-1.5 text-sm text-slate-700">
                     {med.enrichment.contraindications.map((t, i) => (
                       <li key={i} className="flex gap-2"><span className="text-rose-500 shrink-0">•</span><span>{t}</span></li>
@@ -1557,13 +1577,29 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
                 <p className="text-sm text-slate-700 leading-relaxed">{med.enrichment.how_to_take}</p>
               </div>
             )}
+            {med.enrichment.disclaimer && (
+              <p className="mt-5 rounded-lg bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-900">{med.enrichment.disclaimer}</p>
+            )}
+            {med.enrichment.sources?.length > 0 && (
+              <div className="mt-6 border-t border-slate-100 pt-5" data-testid="med-sources">
+                <h3 className="text-sm font-semibold text-slate-900">Источники и проверка информации</h3>
+                <ul className="mt-2 space-y-1.5 text-sm text-slate-600">
+                  {med.enrichment.sources.map((source, i) => (
+                    <li key={`${source.url}-${i}`}>
+                      <a href={source.url} target="_blank" rel="noopener noreferrer" className="text-emerald-700 hover:underline">{source.title}</a>
+                    </li>
+                  ))}
+                </ul>
+                {med.enrichment.reviewed_at && <p className="mt-2 text-xs text-slate-400">Информация проверена: {med.enrichment.reviewed_at.split('-').reverse().join('.')}.</p>}
+              </div>
+            )}
           </div>
         </section>
       )}
 
       {/* Analogs (strict: same MNN + same form group) */}
       {med.mnn && (
-        <section className={"mb-8 md:mb-12 scroll-mt-40 md:scroll-mt-32 " + (noAvailability ? "" : "hidden md:block")} data-testid="analogs-section">
+        <section id="analogi" className={"mb-8 md:mb-12 scroll-mt-40 md:scroll-mt-32 " + (noAvailability ? "" : "hidden md:block")} data-testid="analogs-section">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center"><Tag className="w-5 h-5" /></div>
             <h2 className="text-xl md:text-2xl font-bold text-slate-900 leading-tight">Аналоги по МНН: {titleCase(med.mnn)}</h2>
@@ -1606,7 +1642,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
         const faq = medFaqItems(cityParam || city.id, med);
         if (!faq.length) return null;
         return (
-          <section className="mb-8 md:mb-12" data-testid="faq-section">
+          <section id="voprosy" className="mb-8 md:mb-12 scroll-mt-32" data-testid="faq-section">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center"><Pill className="w-5 h-5" /></div>
               <h2 className="text-xl md:text-2xl font-bold text-slate-900 leading-tight">Частые вопросы</h2>
