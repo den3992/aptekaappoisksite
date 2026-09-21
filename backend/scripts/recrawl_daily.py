@@ -32,13 +32,12 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from motor.motor_asyncio import AsyncIOMotorClient
 from scripts.parse_gorzdrav import MONGO_URL, DB_NAME, log
+from api.price_indexing import indexable_pairs_pipeline
 
 API = "https://api.webmaster.yandex.net/v4"
 HOST_NAME = "aptekaa.ru"
 SITE = "https://aptekaa.ru"
 ALL_CITIES = ["msk", "spb", "krd", "nn", "ekb", "kzn", "nsk", "sam", "chel", "ufa", "rnd", "vrn"]
-REAL = ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit", "farmakopeika"]
-MATCH_OK = ["matched", "mnn_match", "needs_review"]
 DAILY_LIMIT = 470
 
 # Свежеусиленные города — вперёд очереди: они только что получили 2-ю сеть и
@@ -79,12 +78,8 @@ async def build_queue(db) -> list[str]:
     priced_by_city = {}
     for c in ALL_CITIES:
         s2 = set()
-        async for row in db.prices_real.aggregate([
-            {"$match": {"city": c, "price": {"$gt": 0}, "source": {"$in": REAL}, "match_status": {"$in": MATCH_OK}}},
-            {"$group": {"_id": "$slug", "nets": {"$addToSet": "$source"}}},
-            {"$match": {"$expr": {"$gte": [{"$size": "$nets"}, 2]}}},
-        ]):
-            s2.add(row["_id"])
+        async for row in db.prices_real.aggregate(indexable_pairs_pipeline(city=c)):
+            s2.add(row["_id"]["slug"])
         priced_by_city[c] = s2
     pop_cities = Counter()
     for c in ALL_CITIES:
@@ -92,11 +87,8 @@ async def build_queue(db) -> list[str]:
             pop_cities[s] += 1
     # тай-брейк: число сетей с ценой в msk (прокси спроса по самому ценному городу)
     msk_nets = {}
-    async for row in db.prices_real.aggregate([
-        {"$match": {"city": "msk", "price": {"$gt": 0}, "source": {"$in": REAL}}},
-        {"$group": {"_id": "$slug", "nets": {"$addToSet": "$source"}}},
-    ]):
-        msk_nets[row["_id"]] = len(row.get("nets", []))
+    async for row in db.prices_real.aggregate(indexable_pairs_pipeline(city="msk")):
+        msk_nets[row["_id"]["slug"]] = len(row.get("nets", []))
     ordered = sorted(pop_cities.keys(), key=lambda s: (-pop_cities[s], -msk_nets.get(s, 0), s))
     urls = []
     for s in ordered:

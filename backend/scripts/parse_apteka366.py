@@ -47,7 +47,7 @@ from scripts.parse_gorzdrav import (
     MONGO_URL, DB_NAME, REGIONS, POPULAR_MNN,
     SEARCH_SIZE, REQUEST_DELAY, CONCURRENCY,
     AVAIL_BATCH, AVAIL_DELAY, _popcount,
-    match_product, match_products, extract_pack,
+    match_product, match_products, extract_pack, curated_identity_verified,
     log,
 )
 
@@ -191,6 +191,7 @@ async def process_medication(
                 break
         if price is None:
             continue
+        identity_verified = curated_identity_verified(med, item, gz_pack, item_status)
 
         log.info(
             f"  [{item_status:12s}] pack={gz_pack:<10} | {price} руб | {gz_name[:50]}"
@@ -218,6 +219,7 @@ async def process_medication(
                 "price": price,
                 "search_query": query,
                 "search_pass": search_pass,
+                "identity_verified": identity_verified,
                 "updated_at": datetime.now(timezone.utc),
             }},
             upsert=True,
@@ -326,7 +328,8 @@ async def refresh_availability_366(client, db, ext_ids, city):
         for eid, ba in masks.items():
             res = await db.prices_real.update_many(
                 {"source": SOURCE, "city": city, "gz_ext_id": eid},
-                {"$set": {"store_bitmap": Binary(bytes(ba)), "stores_count": _popcount(ba)}},
+                {"$set": {"store_bitmap": Binary(bytes(ba)), "stores_count": _popcount(ba),
+                          "availability_observed_at": datetime.now(timezone.utc)}},
             )
             updated += res.modified_count
         log.info(f"[366] Availability: батч {i // AVAIL_BATCH + 1}/{total_batches}")
@@ -363,6 +366,8 @@ async def main(args: argparse.Namespace) -> None:
                 await refresh_availability_366(client, db, ext_ids, city)
             continue
         query: dict = {"is_canonical": True}
+        if args.curated_source:
+            query["curated_source"] = args.curated_source
         if args.slug:
             query["slug"] = args.slug
         if args.popular:
@@ -392,6 +397,7 @@ async def main(args: argparse.Namespace) -> None:
 
         cursor = db.medications.find(query, {
             "name": 1, "dosage": 1, "form": 1, "manufacturer": 1, "slug": 1, "mnn": 1,
+            "variants": 1, "curated_source": 1,
         })
         if args.limit:
             cursor = cursor.limit(args.limit)
@@ -443,6 +449,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--slug", type=str, default="")
+    parser.add_argument("--curated-source", type=str, default="")
     parser.add_argument("--popular", action="store_true")
     parser.add_argument("--from-gorzdrav", action="store_true",
                         help="Только препараты с уже существующим матчем Горздрава "

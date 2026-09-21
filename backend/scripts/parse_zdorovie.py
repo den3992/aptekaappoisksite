@@ -57,6 +57,7 @@ from scripts.parse_gorzdrav import (
     MONGO_URL, DB_NAME, POPULAR_MNN,
     REQUEST_DELAY,
     match_product, match_products, extract_pack,
+    curated_identity_verified,
     log,
 )
 from bson.binary import Binary
@@ -104,6 +105,7 @@ def zdr_extract_pack(title: str, slug: str) -> str | None:
 
 
 def _parse_price(block: str) -> int | None:
+    block = html.unescape(block)
     m = _PRICE_RE.search(block)
     if not m:
         return None
@@ -279,6 +281,7 @@ async def process_medication(db, med: dict, index: dict, rematch: bool,
             continue
         seen_packs.add(gz_pack)
         price = int(price)
+        identity_verified = curated_identity_verified(med, item, gz_pack, item_status)
 
         log.info(f"  [krd/{item_status:12s}] pack={gz_pack:<10} | {price} руб | {gz_name[:50]}")
 
@@ -302,6 +305,8 @@ async def process_medication(db, med: dict, index: dict, rematch: bool,
                 "gz_name": gz_name,
                 "gz_url_key": item.get("url_key", ""),
                 "price": price,
+                "price_parse_version": 2,
+                "identity_verified": identity_verified,
                 "updated_at": datetime.now(timezone.utc),
             }},
             upsert=True,
@@ -384,6 +389,12 @@ async def refresh_availability_zdorovie(db, client, slug_filter=None, limit=0) -
             return
         phs = _parse_pharmacies(page)
         if not phs:
+            await db.prices_real.update_one(
+                {"medication_id": rec["medication_id"], "source": SOURCE,
+                 "city": CITY, "gz_pack": rec["gz_pack"]},
+                {"$set": {"store_bitmap": Binary(b""), "stores_count": 0,
+                          "availability_observed_at": datetime.now(timezone.utc)}},
+            )
             stats["empty"] += 1
             return
         idxs = []
@@ -406,7 +417,8 @@ async def refresh_availability_zdorovie(db, client, slug_filter=None, limit=0) -
             bm[ix // 8] |= (1 << (ix % 8))
         await db.prices_real.update_one(
             {"medication_id": rec["medication_id"], "source": SOURCE, "city": CITY, "gz_pack": rec["gz_pack"]},
-            {"$set": {"store_bitmap": Binary(bytes(bm)), "stores_count": len(idxs)}},
+            {"$set": {"store_bitmap": Binary(bytes(bm)), "stores_count": len(idxs),
+                      "availability_observed_at": datetime.now(timezone.utc)}},
         )
         stats["ok"] += 1
         await asyncio.sleep(REQUEST_DELAY)
@@ -435,6 +447,8 @@ async def main(args: argparse.Namespace) -> None:
     log.info(f"[zdorovie] индекс: {len(index)} ключевых слов")
 
     query: dict = {"is_canonical": True}
+    if args.curated_source:
+        query["curated_source"] = args.curated_source
     if args.slug:
         query["slug"] = args.slug
     if args.popular:
@@ -459,6 +473,7 @@ async def main(args: argparse.Namespace) -> None:
 
     cursor = db.medications.find(query, {
         "name": 1, "dosage": 1, "form": 1, "manufacturer": 1, "slug": 1, "mnn": 1,
+        "variants": 1, "curated_source": 1,
     })
     if args.limit:
         cursor = cursor.limit(args.limit)
@@ -501,6 +516,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--slug", type=str, default="")
+    parser.add_argument("--curated-source", type=str, default="",
+                        help="Обработать только карточки из указанной курируемой подборки.")
     parser.add_argument("--popular", action="store_true")
     parser.add_argument("--from-maksavit", action="store_true",
                         help="Только препараты с уже существующей ценой Максавита в Краснодаре.")

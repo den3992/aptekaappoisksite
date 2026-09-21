@@ -14,4 +14,9 @@ exec 9>"$LOCK" || exit 1
 if ! flock -n 9; then echo "WARN: previous recrawl running, skip"; exit 0; fi
 cd /home/ubuntu/aptekaa/deploy
 docker compose exec -T backend python -m scripts.recrawl_daily --limit 470
+
+# Daily full diff catches current→noindex transitions caused solely by the
+# 48-hour price/availability TTL, even when a parser did not change the price.
+docker compose exec -T backend python -m scripts.indexnow_ping --full-snapshot || \
+  echo "IndexNow full snapshot failed (non-fatal)"
 echo "=== $(date -u +'%Y-%m-%d %H:%M:%S UTC') | recrawl done ==="

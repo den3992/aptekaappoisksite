@@ -25,6 +25,7 @@ from .pharmacies_seed import (
     find_pharmacy_by_id,
     find_pharmacy,
 )
+from .price_indexing import REAL_SOURCES, MATCH_OK, availability_cutoff, indexable_pairs_pipeline
 
 
 # ---------- Helpers for analogs filtering ----------
@@ -95,11 +96,8 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
     # One definition of an indexable city/medicine pair.  The same rule is
     # used by sitemap, metadata and IndexNow: a real positive price from at
     # least two independent pharmacy networks in that city.
-    _real_sources = [
-        "gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo",
-        "zdorovie", "magnit", "farmakopeika",
-    ]
-    _match_statuses = ["matched", "mnn_match", "needs_review"]
+    _real_sources = REAL_SOURCES
+    _match_statuses = MATCH_OK
     _city_slug_cache = {}
     _city_slug_cache_ttl = 300
 
@@ -108,16 +106,8 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         cached = _city_slug_cache.get(city)
         if cached and now - cached[0] < _city_slug_cache_ttl:
             return cached[1]
-        pipeline = [
-            {"$match": {
-                "city": city,
-                "source": {"$in": _real_sources},
-                "price": {"$gt": 0},
-                "match_status": {"$in": _match_statuses},
-            }},
-            {"$group": {"_id": "$slug", "nets": {"$addToSet": "$source"}}},
-            {"$match": {"$expr": {"$gte": [{"$size": "$nets"}, 2]}}},
-            {"$project": {"_id": 0, "slug": "$_id"}},
+        pipeline = indexable_pairs_pipeline(city=city) + [
+            {"$project": {"_id": 0, "slug": "$_id.slug"}},
         ]
         slugs = [row["slug"] async for row in db.prices_real.aggregate(pipeline) if row.get("slug")]
         _city_slug_cache[city] = (now, slugs)
@@ -357,9 +347,12 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
             return med
 
         real_prices = {"msk": [], "spb": []}
+        is_curated_priority = med.get("curated_source") == "priority_medications_2026-09"
+        current_cutoff = availability_cutoff()
         cursor = db.prices.find(
             {"slug": slug},
-            {"_id": 0, "pharmacy_id": 1, "price": 1, "qty": 1, "expiry_date": 1, "uploaded_at": 1},
+            {"_id": 0, "pharmacy_id": 1, "price": 1, "qty": 1, "expiry_date": 1,
+             "uploaded_at": 1, "pack_size": 1},
         )
         async for p in cursor:
             ph = find_pharmacy_by_id(p["pharmacy_id"])
@@ -367,66 +360,105 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
                 continue
             if not (isinstance(p.get("price"), (int, float)) and p["price"] > 0):
                 continue  # цена 0/None = нет реальной цены → не показываем и не индексируем
+            uploaded_at = p.get("uploaded_at")
+            uploaded_compare = (
+                uploaded_at.replace(tzinfo=timezone.utc)
+                if hasattr(uploaded_at, "tzinfo") and uploaded_at.tzinfo is None
+                else uploaded_at
+            )
             real_prices.setdefault(ph["city"], []).append({
                 "pharmacy_id": p["pharmacy_id"],
                 "price": p["price"],
                 "qty": p.get("qty", 0),
                 "expiry_date": p.get("expiry_date"),
+                "pack_size": p.get("pack_size"),
+                "observed_at": uploaded_at.isoformat() if hasattr(uploaded_at, "isoformat") else uploaded_at,
+                "availability_confirmed": bool(
+                    (p.get("qty") or 0) > 0 and uploaded_compare and uploaded_compare >= current_cutoff
+                ),
             })
 
         # Добавляем цены аптечных сетей (Горздрав + Аптека 36,6) по ВСЕМ
         # упаковкам — фронт показывает их как сравнение цен по сетям. find
         # (а не find_one) — чтобы при переключении упаковки показать данные
         # именно для активной фасовки. pharmacy_id = имя источника.
-        seo_sources_by_city = {}
-        for _src in ("gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit", "farmakopeika"):
+        for _src in (
+            "gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo",
+            "zdorovie", "magnit", "farmakopeika", "uteka", "eapteka",
+            "zdravcity", "asna", "aptekamos",
+        ):
             net_cursor = db.prices_real.find(
                 {
                     "slug": slug,
                     "source": _src,
-                    "match_status": {"$in": ["matched", "mnn_match", "needs_review"]},
+                    "match_status": {"$in": ["matched"] if is_curated_priority else _match_statuses},
                     "price": {"$gt": 0},
+                    **({"identity_verified": True} if is_curated_priority else {}),
                 },
                 {"_id": 0, "price": 1, "stores_count": 1, "gz_name": 1,
-                 "gz_pack": 1, "store_bitmap": 1, "city": 1},
+                 "gz_pack": 1, "store_bitmap": 1, "city": 1, "updated_at": 1,
+                 "source_url": 1, "identity_verified": 1, "price_parse_version": 1,
+                 "availability_observed_at": 1},
             )
             async for gz_entry in net_cursor:
+                if _src == "zdorovie" and gz_entry.get("price_parse_version") != 2:
+                    continue
                 _bm = gz_entry.get("store_bitmap")
                 _city = gz_entry.get("city") or "msk"  # legacy без city → msk
-                seo_sources_by_city.setdefault(_city, set()).add(_src)
+                _availability_at = gz_entry.get("availability_observed_at")
+                _price_at = gz_entry.get("updated_at")
+                _availability_compare = (
+                    _availability_at.replace(tzinfo=timezone.utc)
+                    if hasattr(_availability_at, "tzinfo") and _availability_at.tzinfo is None
+                    else _availability_at
+                )
+                _availability_fresh = bool(
+                    _availability_compare and _availability_compare >= current_cutoff
+                )
+                _price_compare = (
+                    _price_at.replace(tzinfo=timezone.utc)
+                    if hasattr(_price_at, "tzinfo") and _price_at.tzinfo is None
+                    else _price_at
+                )
+                _price_fresh = bool(_price_compare and _price_compare >= current_cutoff)
+                _availability_confirmed = bool(
+                    _availability_fresh and _price_fresh and (gz_entry.get("stores_count") or 0) > 0
+                )
                 real_prices.setdefault(_city, []).append({
                     "pharmacy_id": _src,
                     "price": gz_entry["price"],
                     "qty": gz_entry.get("stores_count", 0),
                     "gz_name": gz_entry.get("gz_name"),
                     "gz_pack": gz_entry.get("gz_pack"),
-                    "store_bitmap": base64.b64encode(_bm).decode() if _bm else None,
+                    "store_bitmap": base64.b64encode(_bm).decode() if _availability_confirmed and _bm and any(_bm) else None,
+                    "observed_at": gz_entry["updated_at"].isoformat() if hasattr(gz_entry.get("updated_at"), "isoformat") else gz_entry.get("updated_at"),
+                    "source_url": gz_entry.get("source_url"),
+                    "availability_confirmed": _availability_confirmed,
+                    "availability_observed_at": _availability_at.isoformat() if hasattr(_availability_at, "isoformat") else _availability_at,
+                    "identity_verified": bool(gz_entry.get("identity_verified")),
                 })
 
         med["prices_by_city"] = real_prices
         med["prices_source"] = "real"
+        indexable_rows = [
+            row async for row in db.prices_real.aggregate(indexable_pairs_pipeline(slugs=[slug]))
+        ]
+        indexable_cities = {row["_id"]["city"] for row in indexable_rows}
+        med["prices_updated_at_by_city"] = {
+            city_id: max(
+                (row.get("observed_at") for row in rows if row.get("observed_at") and row.get("availability_confirmed")),
+                default=None,
+            )
+            for city_id, rows in real_prices.items()
+        }
         med["seo_indexable_by_city"] = {
-            city_id: len(sources) >= 2
-            for city_id, sources in seo_sources_by_city.items()
+            city_id: True for city_id in indexable_cities
         }
         if city:
             # Shared SEO predicate used by sitemap, city-aware listings and
             # IndexNow.  Local store rows must not masquerade as independent
             # pharmacy networks here.
-            med["seo_indexable"] = len(seo_sources_by_city.get(city, set())) >= 2
-
-        # Самая свежая updated_at среди цен сетей по препарату — для
-        # отображения «Цены обновлены: …» (YMYL-сигнал свежести данных).
-        # Любой источник (для городов без Горздрава — krd/nn — берём Максавит).
-        latest = await db.prices_real.find_one(
-            {"slug": slug,
-             "source": {"$in": ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit", "farmakopeika"]},
-             "price": {"$gt": 0}, "updated_at": {"$ne": None}},
-            sort=[("updated_at", -1)],
-            projection={"_id": 0, "updated_at": 1},
-        )
-        if latest and latest.get("updated_at"):
-            med["prices_updated_at"] = latest["updated_at"].isoformat()
+            med["seo_indexable"] = city in indexable_cities
 
         # Отзывы (UGC): агрегат + первая страница для SSR/schema. Блок и звёзды
         # в выдаче показываются ТОЛЬКО при count>=1 (иначе фронт ничего не рисует
@@ -483,7 +515,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
                 for e in city_entries:
                     pr = e.get("price")
                     pr = pr if (isinstance(pr, (int, float)) and pr > 0) else None
-                    if pr is not None:
+                    if pr is not None and e.get("availability_confirmed"):
                         price_list.append(pr)
                     bm_b64 = e.get("store_bitmap")
                     brand = e.get("pharmacy_id")

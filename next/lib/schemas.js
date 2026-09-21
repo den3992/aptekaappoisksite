@@ -11,6 +11,15 @@ const CN_LOC = { msk: 'Москве', spb: 'Санкт-Петербурге', kr
 const CN_NOM = { msk: 'Москва', spb: 'Санкт-Петербург', krd: 'Краснодар', nn: 'Нижний Новгород', ekb: 'Екатеринбург', kzn: 'Казань', nsk: 'Новосибирск', sam: 'Самара', chel: 'Челябинск', ufa: 'Уфа', rnd: 'Ростов-на-Дону', vrn: 'Воронеж' };
 const cnGen = (city) => CN_GEN[city] || CN_GEN.msk;
 const cnLoc = (city) => CN_LOC[city] || CN_LOC.msk;
+const isConfirmedOffer = (offer) => offer?.availability_confirmed === true;
+const observedDate = (value) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('ru-RU', {
+    day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Moscow',
+  }).format(date);
+};
 
 function titleCase(s) {
   if (!s) return '';
@@ -27,8 +36,16 @@ export function medFaqItems(city, med) {
   const name = formatName(med.name);
   const nameDose = [name, med.dosage].filter(Boolean).join(' ');
   const arr = (med.prices_by_city && med.prices_by_city[city]) || [];
-  const prices = arr.map((o) => o && o.price).filter((p) => typeof p === 'number');
-  const nets = new Set(arr.map((o) => o && o.pharmacy_id).filter(Boolean));
+  const confirmed = arr.filter(isConfirmedOffer);
+  const historical = arr.filter((offer) => !isConfirmedOffer(offer));
+  const historicalLatest = Object.values(historical.reduce((acc, offer) => {
+    const key = offer?.pharmacy_id || 'source';
+    if (!acc[key] || String(offer?.observed_at || '') > String(acc[key]?.observed_at || '')) acc[key] = offer;
+    return acc;
+  }, {}));
+  const prices = confirmed.map((o) => o && o.price).filter((p) => typeof p === 'number');
+  const historicalPrices = historicalLatest.map((o) => o && o.price).filter((p) => typeof p === 'number');
+  const nets = new Set(confirmed.map((o) => o && o.pharmacy_id).filter(Boolean));
   const items = [];
   if (med.mnn) {
     items.push({
@@ -56,10 +73,24 @@ export function medFaqItems(city, med) {
     });
   }
   if (!prices.length) {
-    items.push({
-      q: `Где проверить цену и наличие ${nameDose} в ${loc}?`,
-      a: `На этой странице АптекаА показывает только подтвержденные предложения подключенных аптечных сетей ${gen}. Если цены сейчас нет, предложение еще не получено; неподтвержденные наличие и стоимость мы не публикуем.`,
-    });
+    if (historicalPrices.length) {
+      const low = Math.min(...historicalPrices);
+      const latest = historicalLatest
+        .filter((offer) => offer?.price === low)
+        .map((offer) => offer?.observed_at)
+        .filter(Boolean)
+        .sort()
+        .at(-1);
+      items.push({
+        q: `Какая последняя зафиксированная цена ${nameDose} в ${loc}?`,
+        a: `Последняя зафиксированная цена — от ${low} ₽${observedDate(latest) ? ` по данным на ${observedDate(latest)}` : ''}. Это справочная историческая цена: текущее наличие и стоимость необходимо уточнить в аптеке.`,
+      });
+    } else {
+      items.push({
+        q: `Где проверить цену и наличие ${nameDose} в ${loc}?`,
+        a: `На этой странице АптекаА показывает только проверенные данные аптечных сетей ${gen}. Если цены нет, актуальное предложение еще не получено; неподтвержденные наличие и стоимость мы не публикуем.`,
+      });
+    }
   }
   const netNames = [];
   if (nets.has('gorzdrav')) netNames.push('Горздрав');
@@ -94,7 +125,14 @@ export function medMetadata(city, med) {
   // Реальные сети препарата в городе — для честного перечисления в мете
   // (city-точно: в krd/nn это не Горздрав/36,6, а свои сети).
   const _NET_LABELS = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека', farmakopeika: 'Фармакопейка' };
-  const _nets = new Set(_arr.map((o) => o && o.pharmacy_id).filter((id) => _NET_LABELS[id]));
+  const _confirmed = _arr.filter(isConfirmedOffer);
+  const _historical = _arr.filter((offer) => !isConfirmedOffer(offer));
+  const _historicalLatest = Object.values(_historical.reduce((acc, offer) => {
+    const key = offer?.pharmacy_id || 'source';
+    if (!acc[key] || String(offer?.observed_at || '') > String(acc[key]?.observed_at || '')) acc[key] = offer;
+    return acc;
+  }, {}));
+  const _nets = new Set(_confirmed.map((o) => o && o.pharmacy_id).filter((id) => _NET_LABELS[id]));
   const _multi = _nets.size >= 2;
   const _netNames = [..._nets].map((id) => _NET_LABELS[id]).filter(Boolean);
   const _netStr = _netNames.length <= 1
@@ -102,8 +140,9 @@ export function medMetadata(city, med) {
     : _netNames.length <= 3
       ? `${_netNames.slice(0, -1).join(', ')} и ${_netNames.at(-1)}`
       : `${_netNames.slice(0, 2).join(', ')} и других`;
-  const _hasPrice = _arr.length > 0;
-  const _hasConfirmedAvailability = _arr.some((offer) => Number(offer?.qty) > 0 || Boolean(offer?.store_bitmap));
+  const _hasPrice = _confirmed.some((offer) => typeof offer?.price === 'number');
+  const _historicalPrices = _historicalLatest.map((offer) => offer?.price).filter((price) => typeof price === 'number');
+  const _hasHistoricalPrice = _historicalPrices.length > 0;
   const name = formatName(med.name);
   const manufacturer = formatManufacturer(med.manufacturer);
   const titleQualifier = med.seo?.title_qualifier
@@ -115,12 +154,16 @@ export function medMetadata(city, med) {
   const title = _multi
     ? `${nameDose}${titleQualifier} — сравнить цены в ${cnLoc(city)} | АптекаА`
     : _hasPrice
-      ? `${nameDose}${titleQualifier}${_hasConfirmedAvailability ? ' купить' : ''} в ${cnLoc(city)} — актуальная цена | АптекаА`
+      ? `${nameDose}${titleQualifier} купить в ${cnLoc(city)} — цена и наличие | АптекаА`
+      : _hasHistoricalPrice
+        ? `${nameDose}${titleQualifier} в ${cnLoc(city)} — последняя цена | АптекаА`
       : `${nameDose}${titleQualifier} — проверка наличия и аналоги в ${cnLoc(city)} | АптекаА`;
   const availability = _multi
     ? `сравнение цен в сетях ${_netStr}`
     : _hasPrice
-      ? (_hasConfirmedAvailability ? 'актуальная цена и подтвержденное наличие' : 'актуальная цена; наличие уточняйте в аптеке или сети')
+      ? 'актуальная цена и подтвержденное наличие'
+      : _hasHistoricalPrice
+        ? `последняя зафиксированная цена от ${Math.min(..._historicalPrices)} ₽; текущее наличие уточняйте`
       : 'проверка наличия и аналоги';
   const makeDescription = (facts) => (
     `${nameDose}${facts ? ` — ${facts}` : ''}. ` +
@@ -188,6 +231,7 @@ export function medGraphJsonLd(city, med) {
   // AggregateOffer — ценовой rich-сниппет в Яндексе. Цены из всех сетей города
   // (Горздрав + Аптека 36,6), по всем упаковкам.
   const _offerPrices = ((med.prices_by_city && med.prices_by_city[city]) || [])
+    .filter(isConfirmedOffer)
     .map((o) => o && o.price)
     .filter((p) => typeof p === 'number');
   if (_offerPrices.length) {

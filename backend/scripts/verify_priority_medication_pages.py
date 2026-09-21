@@ -22,6 +22,7 @@ from pymongo import MongoClient
 
 from scripts.apply_priority_medication_seo import CONTENT_VERSION, MEDICATIONS, ROOT
 from scripts.import_priority_medications import SOURCE, curated_key
+from api.price_indexing import indexable_pairs_pipeline
 
 
 class PageParser(HTMLParser):
@@ -105,19 +106,11 @@ def main() -> None:
         )
 
     seo_sources: dict[str, set[str]] = {}
-    price_cursor = db.prices_real.find(
-        {
-            "slug": {"$in": [doc["slug"] for doc in docs]},
-            "source": {"$in": ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit", "farmakopeika"]},
-            "match_status": {"$in": ["matched", "mnn_match", "needs_review"]},
-            "price": {"$gt": 0},
-        },
-        {"_id": 0, "slug": 1, "source": 1, "city": 1},
+    price_cursor = db.prices_real.aggregate(
+        indexable_pairs_pipeline(city=args.city, slugs=[doc["slug"] for doc in docs])
     )
-    for offer in price_cursor:
-        offer_city = offer.get("city") or "msk"
-        if offer_city == args.city:
-            seo_sources.setdefault(offer["slug"], set()).add(offer["source"])
+    for row in price_cursor:
+        seo_sources[row["_id"]["slug"]] = set(row.get("nets") or [])
 
     rows: list[tuple[str, PageParser]] = []
     robots = Counter()

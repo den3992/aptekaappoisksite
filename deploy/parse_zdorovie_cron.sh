@@ -9,8 +9,7 @@
 #   parse_zdorovie_cron.sh update   # рефреш цен уже сматченных
 #   parse_zdorovie_cron.sh full     # перематч набора Максавит-krd (еженед.)
 #
-# Здоровье — Этап 1 (только цена, без карты наличия), поэтому режима
-# availability нет. ВНИМАНИЕ: у сайта нет товарного поиска, поэтому парсер
+# ВНИМАНИЕ: у сайта нет товарного поиска, поэтому парсер
 # В ЛЮБОМ режиме сначала КРАУЛИТ весь каталог (~200-300 запросов, минуты),
 # затем матчит — это нормально.
 
@@ -49,7 +48,7 @@ echo "BEFORE: zdorovie priced=$BEFORE_TOTAL"
 
 case "$MODE" in
   update)
-    cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_zdorovie --update-only --no-availability
+    cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_zdorovie --update-only
     ;;
   full)
     cd "$DEPLOY" && docker compose exec -T backend python -m scripts.parse_zdorovie --from-maksavit --rematch

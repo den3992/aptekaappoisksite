@@ -19,31 +19,11 @@ from fastapi.responses import PlainTextResponse, HTMLResponse
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from .pharmacies_seed import CITIES, CATEGORIES, PHARMACIES
+from .price_indexing import indexable_pairs_pipeline
 
 CANONICAL_HOST = os.environ.get("CANONICAL_HOST", "aptekaa.ru")
 DEFAULT_CITY = "msk"
 SITEMAP_CHUNK_SIZE = 10000
-REAL_SOURCES = ["gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo", "zdorovie", "magnit", "farmakopeika"]
-MATCH_OK = ["matched", "mnn_match", "needs_review"]
-
-
-def _indexable_pairs_pipeline():
-    """Canonical city/slug pairs satisfying the shared >=2-network rule."""
-    return [
-        {"$match": {
-            "source": {"$in": REAL_SOURCES},
-            "price": {"$gt": 0},
-            "match_status": {"$in": MATCH_OK},
-        }},
-        {"$group": {"_id": {"city": "$city", "slug": "$slug"}, "nets": {"$addToSet": "$source"}}},
-        {"$match": {"$expr": {"$gte": [{"$size": "$nets"}, 2]}}},
-        {"$lookup": {
-            "from": "medications", "localField": "_id.slug", "foreignField": "slug", "as": "med",
-        }},
-        {"$unwind": "$med"},
-        {"$match": {"med.is_canonical": {"$ne": False}}},
-    ]
-
 def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
     router = APIRouter()
 
@@ -71,7 +51,7 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
     async def sitemap_index():
         host = f"https://{CANONICAL_HOST}"
         count_rows = await db.prices_real.aggregate(
-            _indexable_pairs_pipeline() + [{"$count": "total"}], allowDiskUse=True
+            indexable_pairs_pipeline() + [{"$count": "total"}], allowDiskUse=True
         ).to_list(1)
         total = count_rows[0]["total"] if count_rows else 0
         chunks = (total + SITEMAP_CHUNK_SIZE - 1) // SITEMAP_CHUNK_SIZE
@@ -96,7 +76,7 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
     async def sitemap_static():
         host = f"https://{CANONICAL_HOST}"
         city_rows = await db.prices_real.aggregate(
-            _indexable_pairs_pipeline() + [{"$group": {"_id": "$_id.city"}}], allowDiskUse=True
+            indexable_pairs_pipeline() + [{"$group": {"_id": "$_id.city"}}], allowDiskUse=True
         ).to_list(None)
         cities_with_catalog = {row["_id"] for row in city_rows}
         urls = []
@@ -120,7 +100,7 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
     async def sitemap_categories():
         host = f"https://{CANONICAL_HOST}"
         rows = await db.prices_real.aggregate(
-            _indexable_pairs_pipeline() + [
+            indexable_pairs_pipeline() + [
                 {"$match": {"med.category": {"$nin": [None, "", "other"]}}},
                 {"$group": {"_id": {"city": "$_id.city", "category": "$med.category"}}},
                 {"$sort": {"_id.city": 1, "_id.category": 1}},
@@ -145,7 +125,7 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
         if idx < 1:
             raise HTTPException(status_code=404, detail="sitemap chunk out of range")
         rows = await db.prices_real.aggregate(
-            _indexable_pairs_pipeline() + [
+            indexable_pairs_pipeline() + [
                 {"$sort": {"_id.city": 1, "_id.slug": 1}},
                 {"$skip": skip},
                 {"$limit": SITEMAP_CHUNK_SIZE},

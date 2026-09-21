@@ -58,7 +58,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from scripts.parse_gorzdrav import (
     MONGO_URL, DB_NAME, POPULAR_MNN,
     REQUEST_DELAY, CONCURRENCY, _popcount,
-    match_product, match_products, extract_pack,
+    match_product, match_products, extract_pack, curated_identity_verified,
     log,
 )
 from bson.binary import Binary
@@ -325,6 +325,7 @@ async def process_medication(
         if price is None:
             continue
         price = int(price)
+        identity_verified = curated_identity_verified(med, item, gz_pack, item_status)
 
         log.info(f"  [{city}/{item_status:12s}] pack={gz_pack:<10} | {price} руб | {gz_name[:48]}")
 
@@ -350,6 +351,7 @@ async def process_medication(
                 "price": price,
                 "search_query": query,
                 "search_pass": search_pass,
+                "identity_verified": identity_verified,
                 "updated_at": datetime.now(timezone.utc),
             }},
             upsert=True,
@@ -493,7 +495,8 @@ async def refresh_availability_maksavit(
             ba[idx >> 3] |= 1 << (idx & 7)
         await db.prices_real.update_many(
             {"source": SOURCE, "city": city, "gz_ext_id": urlid},
-            {"$set": {"store_bitmap": Binary(bytes(ba)), "stores_count": _popcount(ba)}},
+            {"$set": {"store_bitmap": Binary(bytes(ba)), "stores_count": _popcount(ba),
+                      "availability_observed_at": datetime.now(timezone.utc)}},
         )
         done[0] += 1
         if done[0] % 200 == 0:
@@ -549,6 +552,8 @@ async def main(args: argparse.Namespace) -> None:
         meds = []
     else:
         query: dict = {"is_canonical": True}
+        if args.curated_source:
+            query["curated_source"] = args.curated_source
         if args.slug:
             query["slug"] = args.slug
         if args.popular:
@@ -571,6 +576,7 @@ async def main(args: argparse.Namespace) -> None:
             args.rematch = True
         cursor = db.medications.find(query, {
             "name": 1, "dosage": 1, "form": 1, "manufacturer": 1, "slug": 1, "mnn": 1,
+            "variants": 1, "curated_source": 1,
         })
         if args.limit:
             cursor = cursor.limit(args.limit)
@@ -608,6 +614,7 @@ if __name__ == "__main__":
     parser.add_argument("--from-magnit", dest="from_magnit", action="store_true",
                         help="Только препараты с ценой Магнита в целевых городах (будущие сильные страницы).")
     parser.add_argument("--slug", type=str, default="")
+    parser.add_argument("--curated-source", type=str, default="")
     parser.add_argument("--popular", action="store_true")
     parser.add_argument("--update-only", action="store_true",
                         help="Только препараты с уже существующим матчем Максавит.")

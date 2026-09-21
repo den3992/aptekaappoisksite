@@ -721,12 +721,10 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
 
   // Упаковки, для которых у Горздрав есть реальные данные — приоритет дефолта.
   const inStockPacks = useMemo(() => {
-    const arr = (med?.prices_by_city?.[city.id] || [])
-      .filter(p => p.store_bitmap)
-      .map(p => p.gz_pack)
-      .filter(Boolean);
-    return new Set(arr);
-  }, [med, city.id]);
+    const rows = (med?.prices_by_city?.[city.id] || [])
+      .filter(p => p.availability_confirmed === true && p.store_bitmap);
+    return new Set(packs.filter(pack => rows.some(row => packMatchesOffer(pack, row))));
+  }, [med, city.id, packs]);
 
   // Default = первая упаковка с реальными ценами Горздрав, иначе packs[0].
   // Это нужно, чтобы при открытии страницы пользователь сразу видел данные,
@@ -764,75 +762,67 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
     return s;
   }
 
-  // Deterministic 32-bit hash of a string.
-  function hashStr(s) {
-    let h = 0;
-    for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
-    return Math.abs(h);
+  function extractGzPack(name) {
+    if (!name) return null;
+    const m = String(name).match(/(\d+(?:[\.,]\d+)?)\s*(шт|мл|мг|мкг|г|л)\b[^\d]*$/i);
+    if (!m) return null;
+    return `${m[1].replace(',', '.')} ${m[2].toLowerCase()}`;
   }
 
-  const prices = useMemo(() => {
+  function packMatchesOffer(approvedPack, row) {
+    if (!approvedPack || !row) return false;
+    // Priority catalogue rows are admitted only after backend verification
+    // against their single approved variant (dose, form, maker and pack).
+    if (row.identity_verified === true) return true;
+    const approved = simplifyPack(approvedPack);
+    const actual = row.gz_pack || row.pack_size || extractGzPack(row.gz_name);
+    if (!actual) return false;
+    if (packTotal(actual) === packTotal(approved)) return true;
+    const inner = approved.match(/[×xх]\s*(\d+(?:[.,]\d+)?)\s*(мл|мг|мкг|г|л)\b/i);
+    const outer = approved.match(/^\s*(\d+(?:[.,]\d+)?)/);
+    const actualPart = String(actual).match(/^\s*(\d+(?:[.,]\d+)?)\s*([а-яa-z]+)/i);
+    if (!inner || !outer || !actualPart) return false;
+    const innerNumber = inner[1].replace(',', '.');
+    const innerUnit = inner[2].toLowerCase();
+    const actualNumber = actualPart[1].replace(',', '.');
+    const actualUnit = actualPart[2].toLowerCase();
+    const title = String(row.gz_name || row.pack_size || '').toLowerCase().replace(',', '.');
+    const escapedNumber = innerNumber.replace('.', '\\.');
+    const titleHasInner = new RegExp(`(^|[^\\d.])${escapedNumber}(?![\\d.])\\s*${innerUnit}`).test(title);
+    const outerMatches = Number(outer[1].replace(',', '.')) === Number(actualNumber);
+    const innerMatches = Number(innerNumber) === Number(actualNumber) && innerUnit === actualUnit;
+    return titleHasInner && (outerMatches || innerMatches);
+  }
+
+  const priceRows = useMemo(() => {
     if (!med) return [];
     const all = [...((med.prices_by_city || {})[city.id] || [])];
-    // Извлекаем фасовку из имени Горздрав ("... 28 шт" / "... 50 мл")
-    // и сравниваем с активной фасовкой. Горздрав хранит каждую упаковку
-    // как отдельную позицию, и у нас в БД маппится только ОДНА из них на slug,
-    // поэтому при переключении фасовки нужно скрывать запись, если она
-    // относится к другой упаковке.
-    const extractGzPack = (name) => {
-      if (!name) return null;
-      const m = String(name).match(/(\d+(?:[\.,]\d+)?)\s*(шт|мл|мг|мкг|г|л)[^\d]*$/i);
-      if (!m) return null;
-      const qty = m[1].replace(',', '.');
-      return qty + ' ' + m[2].toLowerCase();
-    };
-    // Реальные сети с настоящими ценами (Горздрав + Аптека 36,6). Их цены
-    // НЕ синтезируются (в отличие от legacy-партнёров в list ниже) и
-    // фильтруются по активной упаковке через gz_pack.
-    const REAL_SOURCES = ['gorzdrav', 'apteka366', 'rigla', 'maksavit', 'aptechestvo', 'zdorovie', 'magnit', 'farmakopeika'];
+    // Показываем только реально полученные строки. Цены для другой фасовки
+    // скрываем; расчётных и масштабированных цен на сайте нет.
+    const REAL_SOURCES = ['gorzdrav', 'apteka366', 'rigla', 'maksavit', 'aptechestvo', 'zdorovie', 'magnit', 'farmakopeika', 'uteka', 'eapteka', 'zdravcity', 'asna', 'aptekamos'];
     // price>0: 0 = сматчено, но цены/наличия нет — такую сеть не показываем
     // (иначе на упаковке с единственной 0-строкой она всплывала как «0 ₽ дешевле»).
     const networkAll = all.filter(p => REAL_SOURCES.includes(p.pharmacy_id) && p.price > 0);
-    const activeTotal = packTotal(activePack);
-    const networks = packs.length >= 2 && activePack
-      ? networkAll.filter(p => {
-          const gzPack = p.gz_pack || extractGzPack(p.gz_name);
-          if (!gzPack) return true;
-          return packTotal(gzPack) === activeTotal;
-        })
+    const networks = activePack
+      ? networkAll.filter(p => packMatchesOffer(activePack, p))
       : networkAll;
-    const list = all.filter(p => !REAL_SOURCES.includes(p.pharmacy_id));
-
-    let result;
-    if (packs.length >= 2 && activePack && list.length > 0) {
-      const baseQty = packQty(packs[0]) || 1;
-      const activeQty = packQty(activePack) || baseQty;
-      const ratio = activeQty / baseQty;
-      const packSeed = hashStr(med.slug + '|' + activePack);
-      const priceFactor = Math.pow(ratio, 0.78);
-      const packIdx = packs.indexOf(activePack);
-      const ofMax = packs.length - 1 || 1;
-      const stockCount = Math.max(3, Math.round(12 - (packIdx / ofMax) * 6));
-
-      const scaled = list.map((p, i) => {
-        const j = ((packSeed + i * 2654435761) >>> 0) % 1000;
-        const jitter = 0.92 + (j / 1000) * 0.16;
-        const newPrice = Math.max(5, Math.round((p.price * priceFactor * jitter) / 5) * 5);
-        const newQty = ((packSeed >>> 1) + i * 16807) % 30 + 1;
-        return { ...p, price: newPrice, qty: newQty };
-      });
-
-      result = scaled
-        .map((p, i) => ({ p, h: ((packSeed ^ hashStr(p.pharmacy_id)) >>> 0) }))
-        .sort((a, b) => a.h - b.h)
-        .slice(0, stockCount)
-        .map(x => x.p);
-    } else {
-      result = list;
-    }
-
-    return [...result, ...networks].sort((a, b) => a.price - b.price);
+    const directAll = all.filter(p => !REAL_SOURCES.includes(p.pharmacy_id) && p.price > 0);
+    // Загруженные аптекой строки без указанной фасовки нельзя безопасно
+    // размножать по нескольким вариантам одной карточки.
+    const direct = activePack && packs.length > 1
+      ? directAll.filter(p => packMatchesOffer(activePack, p))
+      : directAll;
+    return [...direct, ...networks].sort((a, b) => a.price - b.price);
   }, [med, city.id, packs, activePack]);
+
+  const prices = useMemo(
+    () => priceRows.filter(p => p.availability_confirmed === true),
+    [priceRows],
+  );
+  const historicalPrices = useMemo(
+    () => priceRows.filter(p => p.availability_confirmed !== true),
+    [priceRows],
+  );
 
   // Гаверсин-расстояние в км между двумя точками.
   const haversine = (lat1, lng1, lat2, lng2) => {
@@ -982,8 +972,37 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
     </div>
   );
 
+  const historicalByNetwork = Object.values(historicalPrices.reduce((acc, row) => {
+    const key = row.pharmacy_id || 'source';
+    const previous = acc[key];
+    if (!previous || String(row.observed_at || '') > String(previous.observed_at || '')) acc[key] = row;
+    return acc;
+  }, {})).sort((a, b) => a.price - b.price);
   const minPrice = prices.length ? Math.min(...prices.map(p => p.price)) : null;
   const maxPrice = prices.length ? Math.max(...prices.map(p => p.price)) : null;
+  const lastPrice = historicalByNetwork.length ? Math.min(...historicalByNetwork.map(p => p.price)) : null;
+  const lastPriceRows = lastPrice == null
+    ? []
+    : historicalByNetwork.filter(p => p.price === lastPrice);
+  const lastObservedAt = lastPriceRows
+    .map(p => p.observed_at)
+    .filter(Boolean)
+    .sort()
+    .at(-1) || null;
+  const currentObservedAt = prices
+    .map(p => p.observed_at)
+    .filter(Boolean)
+    .sort()
+    .at(-1) || null;
+  const formatObservedDate = (value) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return new Intl.DateTimeFormat('ru-RU', {
+      day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Moscow',
+    }).format(date);
+  };
+  const lastObservedDate = formatObservedDate(lastObservedAt);
   // Число аптек = popcount store_bitmap по каждой сети (как на карте: маркер
   // ставится на каждый взведённый бит). Так заголовок «в N аптеках» совпадает
   // с числом точек на карте. Откат: Горздрав → qty (= число аптек), прочие → 1,
@@ -996,7 +1015,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
   
   // Сети без по-аптечных координат (Магнит/Аптечество/Здоровье) — нет адресов
   // отдельных точек; показываем как сеть, а не как «1 аптеку» с пустой картой.
-  const NET_NAMES_ALL = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека', farmakopeika: 'Фармакопейка' };
+  const NET_NAMES_ALL = { gorzdrav: 'Горздрав', apteka366: 'Аптека 36,6', rigla: 'Ригла', maksavit: 'Максавит', aptechestvo: 'Аптечество', zdorovie: 'Здоровье', magnit: 'Магнит Аптека', farmakopeika: 'Фармакопейка', uteka: 'Ютека', eapteka: 'ЕАПТЕКА', zdravcity: 'Здравсити', asna: 'АСНА', aptekamos: 'АптекаМос' };
   const networkNames = [...new Set(prices.filter(p => NET_NAMES_ALL[p.pharmacy_id] && p.price > 0).map(p => NET_NAMES_ALL[p.pharmacy_id]))];
   const networkStr = networkNames.length <= 1 ? (networkNames[0] || '') : networkNames.slice(0, -1).join(', ') + ' и ' + networkNames.slice(-1);
   const networkWord = networkNames.length > 1 ? 'в сетях' : 'в сети';
@@ -1075,6 +1094,8 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
                   ? (multi
                       ? <>Сравните цены в аптечных сетях {netStr} в {city.inLoc}: {priceStr} — и проверьте наличие в ближайших аптеках на карте.</>
                       : <>Цена в {city.inLoc}: {priceStr}. Проверьте наличие в ближайших аптеках на карте.</>)
+                  : lastPrice != null
+                  ? <>Последняя зафиксированная цена в {city.inLoc} — от&nbsp;{lastPrice}&nbsp;₽{lastObservedDate ? <> на {lastObservedDate}</> : null}. Текущую стоимость и наличие уточняйте в аптеке.</>
                   : <>Посмотрите аналоги и проверьте наличие в аптеках на карте.</>}
               </p>
             );
@@ -1131,6 +1152,19 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
                 ) : (
                   totalPharmacyCount > 0 ? <>в&nbsp;{totalPharmacyCount}&nbsp;аптеках</> : (networkStr ? <>{networkWord} {networkStr}</> : null)
                 )}
+              </div>
+            </div>
+          )}
+
+          {minPrice === null && lastPrice !== null && (
+            <div className="mt-6 bg-amber-50/60 border border-amber-200 rounded-xl p-5" data-testid="historical-price">
+              <div className="text-xs font-medium text-amber-900">Последняя зафиксированная цена в {city.inLoc}</div>
+              <div className="text-3xl font-extrabold text-slate-900 whitespace-nowrap">
+                от&nbsp;{lastPrice}&nbsp;₽
+              </div>
+              <div className="text-sm text-slate-600 mt-1">
+                {lastObservedDate ? <>Данные на {lastObservedDate}. </> : null}
+                Сейчас наличие не подтверждено; стоимость и возможность заказа уточняйте в аптеке.
               </div>
             </div>
           )}
@@ -1216,6 +1250,28 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
             </div>
           )}
 
+          {prices.length === 0 && historicalByNetwork.length > 0 && (
+            <div id="poslednyaya-tsena" className="mt-4 bg-white border border-amber-200 rounded-xl p-4 scroll-mt-32" data-testid="historical-price-sources">
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                Последние цены в других аптеках{activePack ? ` · ${activePack}` : ''}
+              </div>
+              <div className="divide-y divide-slate-100">
+                {historicalByNetwork.map((row, index) => (
+                  <div key={`${row.pharmacy_id || 'source'}-${index}`} className="flex items-start justify-between gap-3 py-2">
+                    <div>
+                      <div className="text-sm font-medium text-slate-800">{NET_NAMES_ALL[row.pharmacy_id] || row.pharmacy_id || 'Аптечная сеть'}</div>
+                      <div className="text-[11px] text-slate-500">
+                        {formatObservedDate(row.observed_at) ? `зафиксировано ${formatObservedDate(row.observed_at)}` : 'дата фиксации не указана'}
+                      </div>
+                    </div>
+                    <div className="text-base font-bold text-slate-800 whitespace-nowrap">{row.price}&nbsp;₽</div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[11px] text-slate-500 mt-2">Это справочные исторические данные, а не действующее предложение. Наличие и текущую цену уточняйте в аптеке.</p>
+            </div>
+          )}
+
           {prices.length === 0 && (
             <div className="mt-5 bg-amber-50/50 border border-amber-200 rounded-xl p-4" data-testid="out-of-stock-section">
               <div className="flex items-start gap-3">
@@ -1267,6 +1323,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
         <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
           <a href="#harakteristiki" className="text-emerald-700 hover:underline">Характеристики</a>
           {prices.length > 0 && <a href="#nalichie" className="text-emerald-700 hover:underline">Цены и наличие в {city.inLoc}</a>}
+          {prices.length === 0 && historicalPrices.length > 0 && <a href="#poslednyaya-tsena" className="text-emerald-700 hover:underline">Последняя зафиксированная цена</a>}
           {med.enrichment && <a href="#o-preparate" className="text-emerald-700 hover:underline">О препарате</a>}
           {med.mnn && <a href="#analogi" className="text-emerald-700 hover:underline">Аналоги</a>}
           <a href="#voprosy" className="text-emerald-700 hover:underline">Вопросы и ответы</a>
@@ -1444,10 +1501,10 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1 mb-3 md:mb-4">
             <div className="flex flex-col">
               <h2 className="text-xl md:text-2xl font-bold text-slate-900">Цены в аптеках</h2>
-              {med.prices_updated_at && (
+              {currentObservedAt && (
                 <div className="text-[11px] md:text-xs text-slate-400 mt-0.5">
                   Цены обновлены: {(() => {
-                    const d = new Date(med.prices_updated_at);
+                    const d = new Date(currentObservedAt);
                     const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
                     return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`;
                   })()}

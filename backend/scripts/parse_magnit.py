@@ -231,6 +231,7 @@ async def _save_row(db, med_id, slug, city, pack, gid, name, status, price, qty,
             "gz_pack": pack, "match_status": status, "gz_ext_id": gid, "gz_name": name,
             "gz_url_key": f"/product/{gid}", "price": price, "stores_count": qty,
             "is_missing": missing, "updated_at": datetime.now(timezone.utc),
+            "availability_observed_at": datetime.now(timezone.utc),
         }}, upsert=True)
 
 

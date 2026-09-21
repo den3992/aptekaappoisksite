@@ -22,6 +22,7 @@ import asyncio
 import argparse
 import logging
 import re
+from collections import Counter
 from datetime import datetime, timezone
 from difflib import SequenceMatcher
 from pathlib import Path
@@ -42,7 +43,7 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-MONGO_URL = os.environ["MONGO_URL"]
+MONGO_URL = os.environ.get("MONGO_URL", "")
 DB_NAME = os.environ.get("DB_NAME", "aptekaa")
 
 GZ_BASE = "https://gorzdrav.org"
@@ -195,15 +196,21 @@ def name_score(our_name: str, gz_name: str) -> float:
 def dosage_matches(our_dosage: str, gz_name: str) -> bool:
     if not our_dosage:
         return True
-    d = re.sub(r"(\d)(мг|мкг|г|%|мл|ме|ед)", r"\1 \2", our_dosage.lower())
-    d = re.sub(r"\s+", " ", d).strip()
-    gz_lower = gz_name.lower()
-    first_part = re.split(r"[+/]", d)[0].strip()
-    number = re.search(r"[\d\.,]+", first_part)
-    unit = re.search(r"[а-яё%]+", first_part)
-    if number and unit:
-        return number.group() in gz_lower and unit.group() in gz_lower
-    return first_part in gz_lower
+    pairs = re.findall(
+        r"(\d+(?:[.,]\d+)?)\s*(мг|мкг|г|%|мл|ме|ед)",
+        our_dosage.lower(),
+    )
+    if not pairs:
+        return normalize(our_dosage) in normalize(gz_name)
+    expected = Counter((number.replace(",", "."), unit) for number, unit in pairs)
+    actual = Counter(
+        (number.replace(",", "."), unit)
+        for number, unit in re.findall(
+            r"(?<![\d.])(\d+(?:[.,]\d+)?)(?![\d.])\s*(мг|мкг|г|%|мл|ме|ед)",
+            gz_name.lower(),
+        )
+    )
+    return all(actual[pair] >= count for pair, count in expected.items())
 
 
 def form_matches(our_form: str, gz_name: str) -> bool:
@@ -239,6 +246,65 @@ def extract_pack(gz_name: str) -> str | None:
     if "." in qty:
         qty = qty.rstrip("0").rstrip(".")
     return f"{qty} {m.group(2).lower()}"
+
+
+def curated_pack_matches(med: dict, gz_name: str, gz_pack: str) -> bool:
+    """Match a network row to one of the exact user-approved pack variants."""
+    actual = extract_pack(gz_pack) or gz_pack
+    actual_match = re.match(r"^\s*(\d+(?:[.,]\d+)?)\s*([а-яa-z]+)", str(actual), re.I)
+    if not actual_match:
+        return False
+    actual_count = float(actual_match.group(1).replace(",", "."))
+    actual_unit = actual_match.group(2).lower()
+    title = gz_name.lower().replace(",", ".")
+    for variant in med.get("variants") or []:
+        label = str(variant.get("pack_size") or "")
+        count_match = re.match(r"^\s*(\d+(?:[.,]\d+)?)", label)
+        if not count_match:
+            continue
+        outer_count = float(count_match.group(1).replace(",", "."))
+        volume = re.search(r"[×xх]\s*(\d+(?:[.,]\d+)?)\s*(мл|г|мг|мкг)", label, re.I)
+        inner_matches_actual = False
+        if volume:
+            inner_count = float(volume.group(1).replace(",", "."))
+            inner_unit = volume.group(2).lower()
+            inner_matches_actual = inner_count == actual_count and inner_unit == actual_unit
+        if outer_count != actual_count and not inner_matches_actual:
+            continue
+        if volume:
+            number = volume.group(1).replace(",", ".")
+            unit = volume.group(2).lower()
+            if not re.search(rf"(?<![\d.]){re.escape(number)}(?![\d.])\s*{unit}", title):
+                continue
+        return True
+    return False
+
+
+def curated_identity_verified(med: dict, item: dict, gz_pack: str, status: str) -> bool:
+    if med.get("curated_source") != "priority_medications_2026-09":
+        return False
+    gz_manufacturer = ""
+    for attr in item.get("attributes", []):
+        if attr.get("code") == "manufacturer":
+            gz_manufacturer = attr.get("value", "")
+            break
+    # A generic/MNN-named card cannot be tied to the approved manufacturer
+    # when the source omits manufacturer data.
+    compact_name = re.sub(r"[^a-zа-я0-9]+", "", normalize(med.get("name", "")))
+    compact_mnn = re.sub(r"[^a-zа-я0-9]+", "", normalize(med.get("mnn", "")))
+    expected_manufacturer = med.get("manufacturer", "")
+    if expected_manufacturer and not gz_manufacturer:
+        return False
+    if not gz_manufacturer and compact_name and compact_name == compact_mnn:
+        return False
+    return bool(
+        status == "matched"
+        and name_score(med.get("name", ""), item.get("name", "")) >= NAME_THRESHOLD
+        and dosage_matches(med.get("dosage", ""), item.get("name", ""))
+        and form_matches(med.get("form", ""), item.get("name", ""))
+        and manufacturer_matches(expected_manufacturer, gz_manufacturer)
+        and curated_pack_matches(med, item.get("name", ""), gz_pack)
+    )
 
 
 def match_products(
@@ -422,10 +488,12 @@ async def refresh_availability(
                     ba[byte_i] |= 1 << bit
 
         for eid, ba in masks.items():
+            observed_at = datetime.now(timezone.utc)
             res = await db.prices_real.update_many(
                 {"source": "gorzdrav", "city": city, "gz_ext_id": eid},
                 {"$set": {"store_bitmap": Binary(bytes(ba)),
-                          "stores_count": _popcount(ba)}},
+                          "stores_count": _popcount(ba),
+                          "availability_observed_at": observed_at}},
             )
             updated += res.modified_count
         log.info(
@@ -552,6 +620,12 @@ async def process_medication(
                 break
         if price is None:
             continue
+        gz_manufacturer = ""
+        for attr in item.get("attributes", []):
+            if attr.get("code") == "manufacturer":
+                gz_manufacturer = attr.get("value", "")
+                break
+        identity_verified = curated_identity_verified(med, item, gz_pack, item_status)
 
         # Наличие по аптекам (store_bitmap / stores_count) заполняется
         # позже батчем в refresh_availability — здесь только фиксируем ext_id.
@@ -578,9 +652,11 @@ async def process_medication(
                 "match_status": item_status,
                 "gz_ext_id": ext_id,
                 "gz_name": gz_name,
+                "gz_manufacturer": gz_manufacturer,
                 "price": price,
                 "search_query": query,
                 "search_pass": search_pass,
+                "identity_verified": identity_verified,
                 "updated_at": datetime.now(timezone.utc),
             }},
             upsert=True,
@@ -640,6 +716,8 @@ async def main(args: argparse.Namespace) -> None:
     for region, city in regions_to_run:
         log.info(f"=== Регион {region} → city={city} ===")
         query: dict = {"is_canonical": True}
+        if args.curated_source:
+            query["curated_source"] = args.curated_source
         if args.slug:
             query["slug"] = args.slug
         if args.popular:
@@ -657,6 +735,7 @@ async def main(args: argparse.Namespace) -> None:
 
         cursor = db.medications.find(query, {
             "name": 1, "dosage": 1, "form": 1, "manufacturer": 1, "slug": 1, "mnn": 1,
+            "variants": 1, "curated_source": 1,
         })
         if args.limit:
             cursor = cursor.limit(args.limit)
@@ -709,6 +788,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--slug", type=str, default="")
+    parser.add_argument("--curated-source", type=str, default="",
+                        help="Обработать только карточки из указанной курируемой подборки.")
     parser.add_argument("--popular", action="store_true")
     parser.add_argument("--rematch", action="store_true")
     parser.add_argument("--update-only", action="store_true",
