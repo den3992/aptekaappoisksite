@@ -233,7 +233,13 @@ def page_observation(url: str, page: str) -> Optional[dict]:
                     "price": float(price),
                     "source_date": product.get("lastDate"),
                 }
-    return json_ld_product(page)
+    observation = json_ld_product(page)
+    if observation and not observation.get("producer"):
+        visible = strip_tags(page)
+        match = re.search(r"Производитель:\s*([^.;]{2,80})", visible, flags=re.I)
+        if match:
+            observation["producer"] = match.group(1).strip()
+    return observation
 
 
 def exact_match(med: dict, observation: dict, pack: str) -> bool:
