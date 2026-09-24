@@ -397,9 +397,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
                 {"_id": 0, "price": 1, "stores_count": 1, "gz_name": 1,
                  "gz_pack": 1, "store_bitmap": 1, "city": 1, "updated_at": 1,
                  "source_url": 1, "identity_verified": 1, "price_parse_version": 1,
-                 "availability_observed_at": 1, "archive_observation": 1,
-                 "price_derived": 1, "source_pack": 1, "source_price": 1,
-                 "source_units": 1, "target_units": 1},
+                 "availability_observed_at": 1, "archive_observation": 1},
             )
             async for gz_entry in net_cursor:
                 if _src == "zdorovie" and gz_entry.get("price_parse_version") != 2:
@@ -443,11 +441,6 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
                     "availability_observed_at": _availability_at.isoformat() if hasattr(_availability_at, "isoformat") else _availability_at,
                     "identity_verified": bool(gz_entry.get("identity_verified")),
                     "archive_observation": _is_archive,
-                    "price_derived": bool(gz_entry.get("price_derived")),
-                    "source_pack": gz_entry.get("source_pack"),
-                    "source_price": gz_entry.get("source_price"),
-                    "source_units": gz_entry.get("source_units"),
-                    "target_units": gz_entry.get("target_units"),
                 })
 
         med["prices_by_city"] = real_prices

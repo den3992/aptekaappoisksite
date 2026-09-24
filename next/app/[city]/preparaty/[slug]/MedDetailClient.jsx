@@ -1010,7 +1010,6 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
     }).format(date);
   };
   const lastObservedDate = formatObservedDate(lastObservedAt);
-  const lastPriceIsDerived = lastPriceRows.some(row => row.price_derived === true);
   // Число аптек = popcount store_bitmap по каждой сети (как на карте: маркер
   // ставится на каждый взведённый бит). Так заголовок «в N аптеках» совпадает
   // с числом точек на карте. Откат: Горздрав → qty (= число аптек), прочие → 1,
@@ -1103,7 +1102,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
                       ? <>Сравните цены в аптечных сетях {netStr} в {city.inLoc}: {priceStr} — и проверьте наличие в ближайших аптеках на карте.</>
                       : <>Цена в {city.inLoc}: {priceStr}. Проверьте наличие в ближайших аптеках на карте.</>)
                   : lastPrice != null
-                  ? <>Последняя зафиксированная цена в {city.inLoc} — {lastPrice}&nbsp;₽{lastObservedDate ? <> на {lastObservedDate}</> : null}{lastPriceIsDerived ? <> в пересчёте на выбранную упаковку</> : null}. Текущую стоимость и наличие уточняйте в аптеке.</>
+                  ? <>Последняя зафиксированная цена в {city.inLoc} — {lastPrice}&nbsp;₽{lastObservedDate ? <> на {lastObservedDate}</> : null}. Текущую стоимость и наличие уточняйте в аптеке.</>
                   : <>Посмотрите аналоги и проверьте наличие в аптеках на карте.</>}
               </p>
             );
@@ -1172,7 +1171,6 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
               </div>
               <div className="text-sm text-slate-600 mt-1">
                 {lastObservedDate ? <>Данные на {lastObservedDate}. </> : null}
-                {lastPriceIsDerived ? <>Цена пересчитана на выбранную упаковку. </> : null}
                 Сейчас наличие не подтверждено; стоимость и возможность заказа уточняйте в аптеке.
               </div>
             </div>
@@ -1267,7 +1265,6 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
               <div className="flex items-end justify-between gap-3 mt-2">
                 <div className="text-[11px] text-slate-500">
                   {lastObservedDate ? `зафиксировано ${lastObservedDate}` : 'дата фиксации не указана'}
-                  {lastPriceIsDerived ? <><br />в пересчёте на выбранную упаковку</> : null}
                 </div>
                 <div className="text-xl font-bold text-slate-900 whitespace-nowrap">{lastPrice}&nbsp;₽</div>
               </div>
