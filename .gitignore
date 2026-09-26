@@ -124,4 +124,8 @@ credentials.json
 *.key
 .credentials
 deploy/.indexnow_key
-next/public/img
+# Runtime uploads (for example review photos) stay local, while curated
+# medication catalogue photos are versioned with their manifest entries.
+next/public/img/*
+!next/public/img/medications/
+!next/public/img/medications/**

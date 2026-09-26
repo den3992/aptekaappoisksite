@@ -155,7 +155,10 @@ def verify_import(db, items: list[dict], api_base: str, site_base: str | None) -
             errors.append(f"{item['name']} {item.get('dosage')}: found {len(docs)} documents")
             continue
         doc = docs[0]
-        for field in ("name", "mnn", "form", "dosage", "manufacturer", "manufacturer_country", "rx"):
+        for field in (
+            "name", "mnn", "form", "dosage", "manufacturer",
+            "manufacturer_country", "image_url", "rx",
+        ):
             if doc.get(field) != item.get(field):
                 errors.append(
                     f"{doc['slug']}: {field}={doc.get(field)!r}, expected {item.get(field)!r}"
@@ -269,6 +272,7 @@ def main() -> None:
             "dosage": item.get("dosage"),
             "manufacturer": item.get("manufacturer"),
             "manufacturer_country": item.get("manufacturer_country"),
+            "image_url": item.get("image_url"),
             "category": (existing or {}).get("category") or detect_category(item.get("mnn")),
             "rx": item.get("rx"),
             "variants": variants,
