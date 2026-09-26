@@ -41,16 +41,6 @@
     "slug_suffix": "eva-pharma"
   },
   {
-    "name": "Имуран",
-    "mnn": "АЗАТИОПРИН",
-    "form": "ТАБЛЕТКИ",
-    "dosage": "50 мг",
-    "manufacturer": "ASPEN",
-    "manufacturer_country": "ИРЛАНДИЯ",
-    "pack_sizes": ["100 шт"],
-    "rx": true
-  },
-  {
     "name": "Виагра",
     "mnn": "СИЛДЕНАФИЛ",
     "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
@@ -111,12 +101,32 @@
     "rx": true
   },
   {
-    "name": "Даунохал",
+    "name": "Даунорубицин-ЛЭНС",
     "mnn": "ДАУНОРУБИЦИН",
     "form": "ЛИОФИЛИЗАТ ДЛЯ ПРИГОТОВЛЕНИЯ РАСТВОРА ДЛЯ ВНУТРИВЕННОГО ВВЕДЕНИЯ",
     "dosage": "20 мг",
-    "manufacturer": "HALSTED PHARMA",
-    "manufacturer_country": "ИНДИЯ",
+    "manufacturer": "ВЕРОФАРМ",
+    "manufacturer_country": "РОССИЯ",
+    "pack_sizes": ["1 флакон"],
+    "rx": true
+  },
+  {
+    "name": "Рубомицин",
+    "mnn": "ДАУНОРУБИЦИН",
+    "form": "ЛИОФИЛИЗАТ ДЛЯ ПРИГОТОВЛЕНИЯ РАСТВОРА ДЛЯ ВНУТРИВЕННОГО ВВЕДЕНИЯ",
+    "dosage": "20 мг",
+    "manufacturer": "ОМУТНИНСКАЯ НАУЧНАЯ ОПЫТНО-ПРОМЫШЛЕННАЯ БАЗА",
+    "manufacturer_country": "РОССИЯ",
+    "pack_sizes": ["1 флакон"],
+    "rx": true
+  },
+  {
+    "name": "Рубомицин",
+    "mnn": "ДАУНОРУБИЦИН",
+    "form": "ЛИОФИЛИЗАТ ДЛЯ ПРИГОТОВЛЕНИЯ РАСТВОРА ДЛЯ ВНУТРИВЕННОГО ВВЕДЕНИЯ",
+    "dosage": "40 мг",
+    "manufacturer": "ОМУТНИНСКАЯ НАУЧНАЯ ОПЫТНО-ПРОМЫШЛЕННАЯ БАЗА",
+    "manufacturer_country": "РОССИЯ",
     "pack_sizes": ["1 флакон"],
     "rx": true
   },
@@ -170,16 +180,6 @@
     "pack_sizes": ["50 шт"],
     "rx": true,
     "slug_suffix": "borschagovskiy"
-  },
-  {
-    "name": "Кальцийспрей",
-    "mnn": "КАЛЬЦИТОНИН ЛОСОСЯ СИНТЕТИЧЕСКИЙ",
-    "form": "СПРЕЙ НАЗАЛЬНЫЙ",
-    "dosage": "200 МЕ/доза",
-    "manufacturer": "ZYDUS",
-    "manufacturer_country": "ИНДИЯ",
-    "pack_sizes": ["1 флакон × 60 доз"],
-    "rx": true
   },
   {
     "name": "Исентресс",
@@ -487,23 +487,23 @@
     "rx": true
   },
   {
-    "name": "Соритрин",
+    "name": "Неотигазон",
     "mnn": "АЦИТРЕТИН",
     "form": "КАПСУЛЫ",
-    "dosage": "25 мг",
-    "manufacturer": "HEALING PHARMA",
-    "manufacturer_country": "ИНДИЯ",
-    "pack_sizes": ["10 шт"],
+    "dosage": "10 мг",
+    "manufacturer": "ACTAVIS",
+    "manufacturer_country": "ИСЛАНДИЯ",
+    "pack_sizes": ["30 шт"],
     "rx": true
   },
   {
-    "name": "Сукрабест",
-    "mnn": "СУКРАЛЬФАТ",
-    "form": "ТАБЛЕТКИ",
-    "dosage": "1 г",
-    "manufacturer": "COMBUSTIN",
-    "manufacturer_country": "ЕГИПЕТ",
-    "pack_sizes": ["10 шт"],
+    "name": "Неотигазон",
+    "mnn": "АЦИТРЕТИН",
+    "form": "КАПСУЛЫ",
+    "dosage": "25 мг",
+    "manufacturer": "ACTAVIS",
+    "manufacturer_country": "ИСЛАНДИЯ",
+    "pack_sizes": ["30 шт"],
     "rx": true
   },
   {
@@ -517,13 +517,13 @@
     "rx": true
   },
   {
-    "name": "Унибластин",
+    "name": "Винбластин-ЛЭНС",
     "mnn": "ВИНБЛАСТИН",
-    "form": "РАСТВОР ДЛЯ ВНУТРИВЕННОГО ВВЕДЕНИЯ",
-    "dosage": "1 мг/мл",
-    "manufacturer": "UNITED BIOTECH",
-    "manufacturer_country": "ИНДИЯ",
-    "pack_sizes": ["1 флакон × 10 мл (10 мг)"],
+    "form": "ЛИОФИЛИЗАТ ДЛЯ ПРИГОТОВЛЕНИЯ РАСТВОРА ДЛЯ ВНУТРИВЕННОГО ВВЕДЕНИЯ",
+    "dosage": "5 мг",
+    "manufacturer": "ВЕРОФАРМ",
+    "manufacturer_country": "РОССИЯ",
+    "pack_sizes": ["1 флакон"],
     "rx": true
   },
   {
@@ -537,13 +537,13 @@
     "rx": true
   },
   {
-    "name": "Урсомед",
+    "name": "Урсофальк",
     "mnn": "УРСОДЕЗОКСИХОЛЕВАЯ КИСЛОТА",
     "form": "СУСПЕНЗИЯ ДЛЯ ПРИЕМА ВНУТРЬ",
     "dosage": "250 мг/5 мл",
-    "manufacturer": "WORLD MEDICINE",
-    "manufacturer_country": "ТУРЦИЯ",
-    "pack_sizes": ["1 флакон × 100 мл", "1 флакон × 250 мл"],
+    "manufacturer": "DR. FALK PHARMA",
+    "manufacturer_country": "ГЕРМАНИЯ",
+    "pack_sizes": ["1 флакон × 250 мл"],
     "rx": true
   },
   {

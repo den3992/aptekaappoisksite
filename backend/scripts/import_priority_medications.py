@@ -197,6 +197,11 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
     parser.add_argument("--apply", action="store_true")
+    parser.add_argument(
+        "--prune",
+        action="store_true",
+        help="delete cards from this curated source that are absent from the manifest",
+    )
     parser.add_argument("--verify", action="store_true")
     parser.add_argument("--api-base", default="http://127.0.0.1:8001")
     parser.add_argument("--site-base")
@@ -221,6 +226,10 @@ def main() -> None:
     batch_id = f"{SOURCE}-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{uuid.uuid4().hex[:8]}"
     used_slugs: set[str] = set()
     plan = []
+    stale_docs = list(db.medications.find({
+        "curated_source": SOURCE,
+        "curated_key": {"$nin": keys},
+    }))
 
     for item in items:
         key = curated_key(item)
@@ -299,6 +308,9 @@ def main() -> None:
 
     print(f"Batch: {batch_id}")
     print(f"Cards: {len(plan)} (updates={sum(p['action'] == 'update' for p in plan)}, inserts={sum(p['action'] == 'insert' for p in plan)})")
+    print(f"Stale cards: {len(stale_docs)}")
+    for doc in stale_docs:
+        print(f"PRUNE  {doc.get('slug')} | {doc.get('name')} | {doc.get('dosage') or '—'}")
     for row in plan:
         print(
             f"{row['action'].upper():6} {row['reason']:13} {row['slug']} | "
@@ -315,6 +327,8 @@ def main() -> None:
     if not args.apply:
         print("PREVIEW ONLY: re-run with --apply to write changes")
         return
+    if stale_docs and not args.prune:
+        raise SystemExit("Stale curated cards found; re-run with --apply --prune after reviewing the list")
 
     now = datetime.now(timezone.utc)
     for row in plan:
@@ -337,7 +351,30 @@ def main() -> None:
                 upsert=True,
             )
 
-    print(f"APPLIED: {len(plan)} cards; backup batch={batch_id}")
+    for doc in stale_docs:
+        slug = doc["slug"]
+        db.curated_import_backups.insert_one({
+            "batch_id": batch_id,
+            "source": SOURCE,
+            "slug": slug,
+            "action": "prune",
+            "backed_up_at": now,
+            "document": doc,
+        })
+        identity_filters = [
+            {"slug": slug},
+            {"medication_id": doc["_id"]},
+            {"medication_id": str(doc["_id"])},
+        ]
+        db.prices.delete_many({"$or": identity_filters})
+        db.prices_real.delete_many({"$or": identity_filters})
+        db.reviews.delete_many({"slug": slug})
+        db.indexnow_state.delete_many({"slug": slug})
+        db.mnn_index.update_many({}, {"$pull": {"slugs": slug}})
+        db.medications.delete_one({"_id": doc["_id"]})
+    db.mnn_index.delete_many({"slugs": {"$size": 0}})
+
+    print(f"APPLIED: {len(plan)} cards; pruned={len(stale_docs)}; backup batch={batch_id}")
 
 
 if __name__ == "__main__":
