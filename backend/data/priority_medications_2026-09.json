@@ -34,11 +34,11 @@
     "mnn": "АЗАТИОПРИН",
     "form": "ТАБЛЕТКИ",
     "dosage": "50 мг",
-    "manufacturer": "EVA PHARMA",
-    "manufacturer_country": "ЕГИПЕТ",
-    "pack_sizes": ["30 шт"],
+    "manufacturer": "TILLOMED",
+    "manufacturer_country": "ВЕЛИКОБРИТАНИЯ",
+    "pack_sizes": ["28 шт"],
     "rx": true,
-    "slug_suffix": "eva-pharma"
+    "slug_suffix": "tillomed"
   },
   {
     "name": "Виагра",
