@@ -306,6 +306,15 @@ def main() -> None:
             "backup": existing,
         })
 
+    # A card can be re-matched by name/dose/form when its approved
+    # manufacturer changes. Do not prune that same document after updating it.
+    matched_existing_ids = {
+        row["existing_id"] for row in plan if row["existing_id"] is not None
+    }
+    stale_docs = [
+        doc for doc in stale_docs if doc["_id"] not in matched_existing_ids
+    ]
+
     print(f"Batch: {batch_id}")
     print(f"Cards: {len(plan)} (updates={sum(p['action'] == 'update' for p in plan)}, inserts={sum(p['action'] == 'insert' for p in plan)})")
     print(f"Stale cards: {len(stale_docs)}")
