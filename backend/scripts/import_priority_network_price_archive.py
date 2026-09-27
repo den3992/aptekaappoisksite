@@ -183,6 +183,28 @@ RECORDS = [
         "source_url": "https://www.rigla.ru/product/tsisplatin-teva-r-r-dlya-in-05mgml-100ml-36424",
         "observed_at": "2026-09-28T00:00:00+03:00",
     },
+    {
+        "slug": "tamoksifen-geksal-20-mg-tabletki-pokrytye-obolochkoy",
+        "price": 640,
+        "source_price": 192,
+        "source_units": 30,
+        "target_units": 100,
+        "source_pack": "30 таблеток",
+        "gz_name": "Тамоксифен Гексал таблетки покрытые оболочкой 20 мг №100",
+        "gz_pack": "100 шт",
+        "source_manufacturer": "Hexal",
+        "source_url": "https://www.rigla.ru/product/tamoksifen-tabpo-20mg-no30-28227",
+        "observed_at": "2026-09-28T00:00:00+03:00",
+    },
+    {
+        "slug": "kamrou-150-mkg-ml-750-me-ml-rastvor-dlya-vnutrimyshechnogo-vvedeniya",
+        "price": 1787,
+        "gz_name": "КамРОУ раствор для внутримышечного введения 750 МЕ/мл 2 мл №1",
+        "gz_pack": "1 флакон × 2 мл",
+        "source_manufacturer": "Kamada Ltd",
+        "source_url": "https://www.rigla.ru/product/immunoglobulin-chelovecheskiy-antirezus-kamrou-r-r-dvm-vved-750meml-2ml-no1-73766",
+        "observed_at": "2026-09-28T00:00:00+03:00",
+    },
 ]
 
 
