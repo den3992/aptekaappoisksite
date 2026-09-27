@@ -10,7 +10,8 @@
 минимизации риска утечки ПД (152-ФЗ): нет хранилища — нечего утекать.
 
 Требуется согласие на обработку ПД (consent=true), иначе 400.
-SMTP берётся из окружения (тот же, что у email_imap_worker: smtp.mail.ru:465).
+Для отправки используются отдельные переменные LEAD_SMTP_*. Это позволяет
+оставить корпоративную почту и обработчик прайсов на прежнем провайдере.
 """
 from __future__ import annotations
 
@@ -121,21 +122,39 @@ class SearchRequestIn(BaseModel):
 
 
 def _send_email(subject: str, body: str) -> None:
-    smtp_host = os.environ.get("SMTP_HOST")
-    smtp_port = int(os.environ.get("SMTP_PORT", "465"))
-    smtp_user = os.environ.get("SMTP_USER")
-    smtp_pass = os.environ.get("SMTP_PASSWORD")
-    if not (smtp_host and smtp_user and smtp_pass):
-        raise RuntimeError("SMTP not configured")
+    smtp_host = os.environ.get("LEAD_SMTP_HOST") or os.environ.get("SMTP_HOST")
+    smtp_port = int(os.environ.get("LEAD_SMTP_PORT") or os.environ.get("SMTP_PORT", "465"))
+    smtp_user = os.environ.get("LEAD_SMTP_USER") or os.environ.get("SMTP_USER")
+    smtp_pass = os.environ.get("LEAD_SMTP_PASSWORD") or os.environ.get("SMTP_PASSWORD")
+    smtp_security = os.environ.get("LEAD_SMTP_SECURITY", "ssl").strip().lower()
+    from_email = os.environ.get("LEAD_FROM_EMAIL") or smtp_user
+
+    if not (smtp_host and smtp_user and smtp_pass and from_email):
+        raise RuntimeError("Lead SMTP is not configured")
+    if smtp_security not in {"ssl", "starttls"}:
+        raise RuntimeError("LEAD_SMTP_SECURITY must be 'ssl' or 'starttls'")
+
     msg = EmailMessage()
     msg["Subject"] = subject
-    msg["From"] = smtp_user
+    msg["From"] = from_email
     msg["To"] = LEAD_EMAIL
     msg.set_content(body, charset="utf-8")
     ctx = ssl.create_default_context()
-    with smtplib.SMTP_SSL(smtp_host, smtp_port, context=ctx, timeout=30) as s:
-        s.login(smtp_user, smtp_pass)
-        s.send_message(msg)
+
+    if smtp_security == "starttls":
+        # Unisender Go принимает только шифрованное TLS-соединение, но не
+        # implicit SSL. Сначала открываем SMTP-соединение, затем включаем TLS.
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=30) as s:
+            s.ehlo()
+            s.starttls(context=ctx)
+            s.ehlo()
+            s.login(smtp_user, smtp_pass)
+            s.send_message(msg)
+    else:
+        # Обратная совместимость с прежним smtp.mail.ru:465.
+        with smtplib.SMTP_SSL(smtp_host, smtp_port, context=ctx, timeout=30) as s:
+            s.login(smtp_user, smtp_pass)
+            s.send_message(msg)
 
 
 def make_lead_router() -> APIRouter:
