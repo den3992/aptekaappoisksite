@@ -129,6 +129,42 @@ RECORDS = [
         "source_manufacturer": "Pfizer / Viatris",
         "source_url": "https://www.rigla.ru/product/kardura-tab-4mg-no30-2551",
     },
+    {
+        "slug": "viagra-100-mg-tabletki-pokrytye-obolochkoy",
+        "price": 7180,
+        "gz_name": "Виагра таблетки покрытые оболочкой 100 мг №4",
+        "gz_pack": "4 шт",
+        "source_manufacturer": "Pfizer",
+        "source_url": "https://www.rigla.ru/product/viagra-tab-po-plen-100mg-no4-2613",
+        "observed_at": "2026-09-28T00:00:00+03:00",
+    },
+    {
+        "slug": "venter-1-g-tabletki",
+        "price": 444,
+        "gz_name": "Вентер таблетки 1 г №50",
+        "gz_pack": "50 шт",
+        "source_manufacturer": "KRKA",
+        "source_url": "https://www.rigla.ru/product/venter-tab-1g-no50-379",
+        "observed_at": "2026-09-28T00:00:00+03:00",
+    },
+    {
+        "slug": "ursofalk-250-mg-5-ml-suspenziya-dlya-priema-vnutr",
+        "price": 1254,
+        "gz_name": "Урсофальк суспензия 250 мг/5 мл, 250 мл",
+        "gz_pack": "1 флакон × 250 мл",
+        "source_manufacturer": "Dr. Falk Pharma",
+        "source_url": "https://www.rigla.ru/product/ursofalk-susp-250ml-4462301",
+        "observed_at": "2026-09-28T00:00:00+03:00",
+    },
+    {
+        "slug": "gordoks-10000-kie-ml-rastvor-dlya-vnutrivennogo-vvedeniya",
+        "price": 1143,
+        "gz_name": "Гордокс раствор для внутривенного введения 10000 КИЕ/мл 10 мл №5",
+        "gz_pack": "5 ампул × 10 мл",
+        "source_manufacturer": "Gedeon Richter",
+        "source_url": "https://www.rigla.ru/product/gordoks-r-r-dvv-vved-10000-kiyeml-10ml-no5-109842",
+        "observed_at": "2026-09-28T00:00:00+03:00",
+    },
 ]
 
 
@@ -142,6 +178,7 @@ MANUFACTURER_EQUIVALENTS = (
     {"novartis", "novartispharma"},
     {"graminex", "graminexllc"},
     {"baxter", "baxterag"},
+    {"гедеонрихтер", "gedeonrichter"},
 )
 
 
@@ -181,7 +218,6 @@ def main() -> None:
 
     load_dotenv(ROOT / ".env")
     db = MongoClient(os.environ["MONGO_URL"])[os.environ.get("DB_NAME", "aptekaa")]
-    observed_at = datetime.fromisoformat("2026-09-21T00:00:00+03:00")
     imported = 0
 
     for record in RECORDS:
@@ -192,8 +228,11 @@ def main() -> None:
         if not med:
             raise ValueError(f"{record['slug']}: curated medication not found")
         validate_record(med, record)
+        observed_at = datetime.fromisoformat(
+            record.get("observed_at", "2026-09-21T00:00:00+03:00")
+        )
         document = {
-            **record,
+            **{key: value for key, value in record.items() if key != "observed_at"},
             "medication_id": str(med["_id"]),
             "source": "rigla_archive",
             "city": "msk",
