@@ -205,6 +205,24 @@ RECORDS = [
         "source_url": "https://www.rigla.ru/product/immunoglobulin-chelovecheskiy-antirezus-kamrou-r-r-dvm-vved-750meml-2ml-no1-73766",
         "observed_at": "2026-09-28T00:00:00+03:00",
     },
+    {
+        "slug": "karboplatin-teva-10-mg-ml-koncentrat-dlya-prigotovleniya-rastvora-dlya-infuziy",
+        "price": 2504,
+        "gz_name": "Карбоплатин-Тева концентрат для раствора для инфузий 10 мг/мл 45 мл №1",
+        "gz_pack": "1 флакон × 45 мл (450 мг)",
+        "source_manufacturer": "Teva Pharmaceutical",
+        "source_url": "https://www.rigla.ru/product/karboplatin-kontsdr-ra-dinf-450mg-45ml-no1-46660",
+        "observed_at": "2026-09-28T00:00:00+03:00",
+    },
+    {
+        "slug": "vinkristin-teva-1-mg-ml-rastvor-dlya-vnutrivennogo-vvedeniya",
+        "price": 836,
+        "gz_name": "Винкристин-Тева раствор для внутривенного введения 1 мг/мл 2 мл №1",
+        "gz_pack": "1 флакон × 2 мл",
+        "source_manufacturer": "ФАРМАХЕМИ Б. В.",
+        "source_url": "https://www.rigla.ru/product/vinkristin-teva-r-r-dlya-vv-vved-1mgml-fl-2ml-no1-116323",
+        "observed_at": "2026-09-28T00:00:00+03:00",
+    },
 ]
 
 
@@ -215,6 +233,7 @@ def norm(value: object) -> str:
 
 MANUFACTURER_EQUIVALENTS = (
     {"viatris", "pfizer"},
+    {"teva", "tevapharmaceutical", "фармахемибв"},
     {"novartis", "novartispharma"},
     {"graminex", "graminexllc"},
     {"baxter", "baxterag"},
