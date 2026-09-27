@@ -167,7 +167,7 @@ RECORDS = [
     },
     {
         "slug": "etopozid-teva-20-mg-ml-koncentrat-dlya-prigotovleniya-rastvora-dlya-infuziy",
-        "price": 619,
+        "price": 687,
         "gz_name": "Этопозид-Тева концентрат для раствора для инфузий 20 мг/мл 5 мл №1",
         "gz_pack": "1 флакон × 5 мл (100 мг)",
         "source_manufacturer": "Teva Pharmaceutical",
@@ -176,15 +176,11 @@ RECORDS = [
     },
     {
         "slug": "cisplatin-teva-0-5-mg-ml-koncentrat-dlya-prigotovleniya-rastvora-dlya-infuziy",
-        "price": 904,
-        "source_price": 452,
-        "source_units": 50,
-        "target_units": 100,
-        "source_pack": "1 флакон × 50 мл (25 мг)",
+        "price": 1394,
         "gz_name": "Цисплатин-Тева раствор для инъекций 0.5 мг/мл 100 мл",
         "gz_pack": "1 флакон × 100 мл (50 мг)",
         "source_manufacturer": "Teva Pharmaceutical",
-        "source_url": "https://www.rigla.ru/product/tsisplatin-teva-r-r-dlya-in-05mgml-50ml-104029",
+        "source_url": "https://www.rigla.ru/product/tsisplatin-teva-r-r-dlya-in-05mgml-100ml-36424",
         "observed_at": "2026-09-28T00:00:00+03:00",
     },
 ]
