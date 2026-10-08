@@ -200,16 +200,6 @@
     "name": "Миакальцик",
     "mnn": "КАЛЬЦИТОНИН ЛОСОСЯ СИНТЕТИЧЕСКИЙ",
     "form": "СПРЕЙ НАЗАЛЬНЫЙ",
-    "dosage": "50 МЕ/доза",
-    "manufacturer": "NOVARTIS",
-    "manufacturer_country": "ШВЕЙЦАРИЯ",
-    "pack_sizes": ["1 флакон × 14 доз"],
-    "rx": true
-  },
-  {
-    "name": "Миакальцик",
-    "mnn": "КАЛЬЦИТОНИН ЛОСОСЯ СИНТЕТИЧЕСКИЙ",
-    "form": "СПРЕЙ НАЗАЛЬНЫЙ",
     "dosage": "100 МЕ/доза",
     "manufacturer": "NOVARTIS",
     "manufacturer_country": "ШВЕЙЦАРИЯ",
@@ -224,16 +214,6 @@
     "manufacturer": "NOVARTIS",
     "manufacturer_country": "ФРАНЦИЯ",
     "pack_sizes": ["1 флакон × 14 доз"],
-    "rx": true
-  },
-  {
-    "name": "Миакальцик",
-    "mnn": "КАЛЬЦИТОНИН ЛОСОСЯ СИНТЕТИЧЕСКИЙ",
-    "form": "РАСТВОР ДЛЯ ИНЪЕКЦИЙ",
-    "dosage": "50 МЕ/мл",
-    "manufacturer": "NOVARTIS",
-    "manufacturer_country": "ШВЕЙЦАРИЯ",
-    "pack_sizes": ["5 ампул × 1 мл"],
     "rx": true
   },
   {

@@ -97,8 +97,8 @@ def main() -> None:
 
     errors: list[str] = []
     actual_keys = {doc.get("curated_key") for doc in docs}
-    if len(items) != 62:
-        errors.append(f"manifest count changed: expected 62, got {len(items)}")
+    if len(items) != 60:
+        errors.append(f"manifest count changed: expected 60, got {len(items)}")
     if len(docs) != len(items) or actual_keys != expected_keys:
         errors.append(
             f"database/manifest mismatch: db={len(docs)} manifest={len(items)} "
