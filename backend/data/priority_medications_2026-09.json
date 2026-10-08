@@ -4,8 +4,8 @@
     "mnn": "РЕЗЕРПИН+ДИГИДРАЛАЗИН+ГИДРОХЛОРОТИАЗИД",
     "form": "ТАБЛЕТКИ",
     "dosage": "0.1 мг+10 мг+10 мг",
-    "manufacturer": "SHARQ DARMON",
-    "manufacturer_country": "УЗБЕКИСТАН",
+    "manufacturer": "SHREECHEM PHARMACEUTICALS",
+    "manufacturer_country": "ИНДИЯ",
     "image_url": "/img/medications/adelfan-plus.jpg",
     "pack_sizes": ["10 шт"],
     "rx": true
@@ -35,11 +35,10 @@
     "mnn": "АЗАТИОПРИН",
     "form": "ТАБЛЕТКИ",
     "dosage": "50 мг",
-    "manufacturer": "TILLOMED",
-    "manufacturer_country": "ВЕЛИКОБРИТАНИЯ",
-    "pack_sizes": ["28 шт"],
-    "rx": true,
-    "slug_suffix": "tillomed"
+    "manufacturer": "МОСХИМФАРМПРЕПАРАТЫ ИМ. Н. А. СЕМАШКО",
+    "manufacturer_country": "РОССИЯ",
+    "pack_sizes": ["50 шт"],
+    "rx": true
   },
   {
     "name": "Виагра",
@@ -47,7 +46,7 @@
     "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
     "dosage": "25 мг",
     "manufacturer": "VIATRIS",
-    "manufacturer_country": "США",
+    "manufacturer_country": "ФРАНЦИЯ",
     "pack_sizes": ["4 шт"],
     "rx": true
   },
@@ -57,7 +56,7 @@
     "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
     "dosage": "50 мг",
     "manufacturer": "VIATRIS",
-    "manufacturer_country": "США",
+    "manufacturer_country": "ФРАНЦИЯ",
     "pack_sizes": ["4 шт"],
     "rx": true
   },
@@ -67,7 +66,7 @@
     "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
     "dosage": "100 мг",
     "manufacturer": "VIATRIS",
-    "manufacturer_country": "США",
+    "manufacturer_country": "ФРАНЦИЯ",
     "pack_sizes": ["4 шт"],
     "rx": true
   },
@@ -169,7 +168,7 @@
     "mnn": "ИЗОНИАЗИД",
     "form": "ТАБЛЕТКИ",
     "dosage": "100 мг",
-    "manufacturer": "ФАРМСИНТЕЗ",
+    "manufacturer": "ФАРМАСИНТЕЗ",
     "manufacturer_country": "РОССИЯ",
     "image_url": "/img/medications/isoniazid-100mg-100.jpg",
     "pack_sizes": ["100 шт"],
@@ -193,8 +192,8 @@
     "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
     "dosage": "400 мг",
     "manufacturer": "MSD",
-    "manufacturer_country": "США",
-    "pack_sizes": ["50 шт"],
+    "manufacturer_country": "ИРЛАНДИЯ",
+    "pack_sizes": ["60 шт"],
     "rx": true
   },
   {
@@ -223,7 +222,7 @@
     "form": "СПРЕЙ НАЗАЛЬНЫЙ",
     "dosage": "200 МЕ/доза",
     "manufacturer": "NOVARTIS",
-    "manufacturer_country": "ШВЕЙЦАРИЯ",
+    "manufacturer_country": "ФРАНЦИЯ",
     "pack_sizes": ["1 флакон × 14 доз"],
     "rx": true
   },
@@ -264,7 +263,7 @@
     "form": "КОНЦЕНТРАТ ДЛЯ ПРИГОТОВЛЕНИЯ РАСТВОРА ДЛЯ ИНФУЗИЙ",
     "dosage": "10 мг/мл",
     "manufacturer": "VIATRIS",
-    "manufacturer_country": "США",
+    "manufacturer_country": "ГРЕЦИЯ",
     "pack_sizes": ["1 флакон × 45 мл (450 мг)"],
     "rx": true
   },
@@ -274,7 +273,7 @@
     "form": "ТАБЛЕТКИ",
     "dosage": "4 мг",
     "manufacturer": "PFIZER",
-    "manufacturer_country": "США",
+    "manufacturer_country": "ЕГИПЕТ",
     "image_url": "/img/medications/cardura-4mg-14.jpg",
     "pack_sizes": ["14 шт"],
     "rx": true
@@ -385,7 +384,7 @@
     "form": "ТАБЛЕТКИ",
     "dosage": "500 мг",
     "manufacturer": "PFIZER",
-    "manufacturer_country": "США",
+    "manufacturer_country": "ИТАЛИЯ",
     "image_url": "/img/medications/provera-500mg-30.jpg",
     "pack_sizes": ["30 шт"],
     "rx": true
@@ -417,7 +416,7 @@
     "mnn": "РИФАМПИЦИН",
     "form": "КАПСУЛЫ",
     "dosage": "300 мг",
-    "manufacturer": "ФАРМСИНТЕЗ",
+    "manufacturer": "ФАРМАСИНТЕЗ",
     "manufacturer_country": "РОССИЯ",
     "pack_sizes": ["20 шт"],
     "rx": true,
@@ -628,7 +627,7 @@
     "mnn": "ЭТАМБУТОЛ",
     "form": "ТАБЛЕТКИ",
     "dosage": "400 мг",
-    "manufacturer": "ФАРМСИНТЕЗ",
+    "manufacturer": "ФАРМАСИНТЕЗ",
     "manufacturer_country": "РОССИЯ",
     "image_url": "/img/medications/ethambutol-pharmasyntez-400mg-100.jpg",
     "pack_sizes": ["100 шт"],

@@ -8,7 +8,7 @@ class NetworkPriceArchiveTests(unittest.TestCase):
         self.record = dict(next(r for r in RECORDS if r.get("source") == "redapteka_archive"))
         self.med = {
             "name": "Этамбутол",
-            "manufacturer": "ФАРМСИНТЕЗ",
+            "manufacturer": "ФАРМАСИНТЕЗ",
             "variants": [{"pack_size": "100 шт"}],
         }
 
@@ -16,6 +16,7 @@ class NetworkPriceArchiveTests(unittest.TestCase):
         validate_record(self.med, self.record)
 
     def test_manufacturer_difference_is_not_silently_equated(self):
+        self.med["manufacturer"] = "ФАРМСИНТЕЗ"
         self.record.pop("reference_approved_at")
         with self.assertRaisesRegex(ValueError, "manufacturer mismatch"):
             validate_record(self.med, self.record)
@@ -29,6 +30,16 @@ class NetworkPriceArchiveTests(unittest.TestCase):
         self.record["gz_pack"] = "50 шт"
         with self.assertRaisesRegex(ValueError, "pack mismatch"):
             validate_record(self.med, self.record)
+
+    def test_isentress_matches_real_sixty_tablet_pack(self):
+        record = next(r for r in RECORDS if r.get("approved_target_name") == "Исентресс")
+        med = {"name": "Исентресс", "manufacturer": "MSD", "variants": [{"pack_size": "60 шт"}]}
+        validate_record(med, record)
+        self.assertEqual(record["price"], record["source_price"])
+        self.assertEqual(record["target_units"], 60)
+        med["variants"] = [{"pack_size": "50 шт"}]
+        with self.assertRaisesRegex(ValueError, "pack mismatch"):
+            validate_record(med, record)
 
     def test_other_hosts_and_mislabelled_sources_are_rejected(self):
         for url in ("https://redapteka.ru.evil.test/catalog/test", "https://redapteka.ru@evil.test/catalog/test"):
