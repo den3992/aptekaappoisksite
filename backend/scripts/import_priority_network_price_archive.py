@@ -18,6 +18,7 @@ import re
 import unicodedata
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from dotenv import load_dotenv
 from pymongo import MongoClient
@@ -26,9 +27,35 @@ from pymongo import MongoClient
 ROOT = Path(__file__).resolve().parents[1]
 CURATED_SOURCE = "priority_medications_2026-09"
 
-# Verified on the first-party Moscow pages on 21 September 2026.  These pages
-# explicitly label the value as "Последняя цена продажи" and "Нет в наличии".
+# First-party Moscow observations. Explicit dates override the original
+# September batch date. Values are reference prices, never stock guarantees.
 RECORDS = [
+    {
+        "slug": "etambutol-400-mg-tabletki",
+        "price": 549,
+        "gz_name": "Этамбутол 400 мг 100 шт. таблетки",
+        "gz_pack": "100 шт",
+        "source": "redapteka_archive",
+        "source_manufacturer": "Фармасинтез",
+        "source_url": "https://redapteka.ru/catalog/lekarstva/antibiotiki/protivotuberkuleznye/etambutol_400_mg_100_sht_tabletki/",
+        "approved_target_name": "Этамбутол",
+        "approved_target_manufacturer": "ФАРМСИНТЕЗ",
+        "reference_approved_at": "2026-10-08",
+        "observed_at": "2026-10-08T00:00:00+03:00",
+    },
+    {
+        "slug": "rifampicin-300-mg-kapsuly",
+        "price": 256,
+        "gz_name": "Рифампицин 300 мг 20 шт. капсулы",
+        "gz_pack": "20 шт",
+        "source": "redapteka_archive",
+        "source_manufacturer": "Фармасинтез",
+        "source_url": "https://redapteka.ru/catalog/lekarstva/antibiotiki/protivotuberkuleznye/rifampitsin_300_mg_20_sht_kapsuly_pri_tuberkuleze/",
+        "approved_target_name": "Рифампицин",
+        "approved_target_manufacturer": "ФАРМСИНТЕЗ",
+        "reference_approved_at": "2026-10-08",
+        "observed_at": "2026-10-08T00:00:00+03:00",
+    },
     {
         "slug": "miakalcik-100-me-ml-rastvor-dlya-inekciy",
         "price": 1159,
@@ -380,7 +407,14 @@ def validate_record(med: dict, record: dict) -> None:
         expected_price = round(record["source_price"] * record["target_units"] / record["source_units"])
         if record["price"] != expected_price:
             raise ValueError(f"{record['slug']}: scaled price must be {expected_price}")
-    if not record["source_url"].startswith("https://www.rigla.ru/product/"):
+    source = record.get("source", "rigla_archive")
+    allowed_sources = {
+        "rigla_archive": ("www.rigla.ru", "/product/"),
+        "redapteka_archive": ("redapteka.ru", "/catalog/"),
+    }
+    url = urlsplit(record["source_url"])
+    allowed = allowed_sources.get(source)
+    if not allowed or url.scheme != "https" or url.netloc != allowed[0] or not url.path.startswith(allowed[1]):
         raise ValueError(f"{record['slug']}: non-network source")
 
 
@@ -407,7 +441,7 @@ def main() -> None:
         document = {
             **{key: value for key, value in record.items() if key != "observed_at"},
             "medication_id": str(med["_id"]),
-            "source": "rigla_archive",
+            "source": record.get("source", "rigla_archive"),
             "city": "msk",
             "stores_count": 0,
             "match_status": "matched",
@@ -425,7 +459,7 @@ def main() -> None:
             db.prices_real.update_one(
                 {
                     "slug": record["slug"],
-                    "source": "rigla_archive",
+                    "source": document["source"],
                     "city": "msk",
                     "gz_pack": record["gz_pack"],
                 },

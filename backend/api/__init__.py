@@ -384,7 +384,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         # именно для активной фасовки. pharmacy_id = имя источника.
         for _src in (
             "gorzdrav", "apteka366", "rigla", "maksavit", "aptechestvo",
-            "zdorovie", "magnit", "farmakopeika", "rigla_archive",
+            "zdorovie", "magnit", "farmakopeika", "rigla_archive", "redapteka_archive",
         ):
             net_cursor = db.prices_real.find(
                 {
@@ -394,7 +394,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
                     "price": {"$gt": 0},
                     **({"$or": [
                         {"identity_verified": True},
-                        {"source": "rigla_archive", "archive_observation": True,
+                        {"source": {"$in": ["rigla_archive", "redapteka_archive"]}, "archive_observation": True,
                          "user_approved_reference": True},
                     ]} if is_curated_priority else {}),
                 },
