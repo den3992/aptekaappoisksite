@@ -223,6 +223,110 @@ RECORDS = [
         "source_url": "https://www.rigla.ru/product/vinkristin-teva-r-r-dlya-vv-vved-1mgml-fl-2ml-no1-116323",
         "observed_at": "2026-09-28T00:00:00+03:00",
     },
+    {
+        "slug": "oksaliplatin-ebeve-5-mg-ml-koncentrat-dlya-prigotovleniya-rastvora-dlya-infuziy",
+        "price": 2065,
+        "gz_name": "Оксалиплатин Эбеве концентрат 5 мг/мл 10 мл №1",
+        "gz_pack": "1 флакон × 10 мл (50 мг)",
+        "source_manufacturer": "ФАРЕВА Унтерах ГмбХ",
+        "source_url": "https://www.rigla.ru/product/oksaliplatin-ebeve-konts-dlya-prigot-r-ra-dlya-inf-5mgml-fl-10ml-no1-114964",
+        "approved_target_name": "Оксалиплатин Эбеве",
+        "approved_target_manufacturer": "EBEWE PHARMA",
+        "reference_approved_at": "2026-10-08",
+        "observed_at": "2026-10-08T00:00:00+03:00",
+    },
+    {
+        "slug": "neotigazon-10-mg-kapsuly",
+        "price": 1783,
+        "gz_name": "Неотигазон капсулы 10 мг №30",
+        "gz_pack": "30 шт",
+        "source_manufacturer": "Roche (рецепт.)",
+        "source_url": "https://www.rigla.ru/product/neotigazon-kaps-10mg-no30-3032500",
+        "approved_target_name": "Неотигазон",
+        "approved_target_manufacturer": "ACTAVIS",
+        "reference_approved_at": "2026-10-08",
+        "observed_at": "2026-10-08T00:00:00+03:00",
+    },
+    {
+        "slug": "neotigazon-25-mg-kapsuly",
+        "price": 3634,
+        "gz_name": "Неотигазон капсулы 25 мг №30",
+        "gz_pack": "30 шт",
+        "source_manufacturer": "Roche (рецепт.)",
+        "source_url": "https://www.rigla.ru/product/neotigazon-kaps-25mg-no30-4454100",
+        "approved_target_name": "Неотигазон",
+        "approved_target_manufacturer": "ACTAVIS",
+        "reference_approved_at": "2026-10-08",
+        "observed_at": "2026-10-08T00:00:00+03:00",
+    },
+    {
+        "slug": "moviprep-poroshok-dlya-prigotovleniya-rastvora-dlya-priema-vnutr",
+        "price": 1249,
+        "gz_name": "Мовипреп порошок саше А №2 + Б №2",
+        "gz_pack": "4 саше (2 саше A + 2 саше B)",
+        "source_manufacturer": "Норджин Лимитед",
+        "source_url": "https://www.rigla.ru/product/moviprep-por-dlya-r-ra-dlya-priyema-vnutr-sashe-a-111896g-no2b-10600g-no2-102079",
+        "approved_target_name": "Мовипреп",
+        "approved_target_manufacturer": "ACINO",
+        "reference_approved_at": "2026-10-08",
+        "observed_at": "2026-10-08T00:00:00+03:00",
+    },
+    {
+        "slug": "rasilez-150-mg-tabletki-pokrytye-obolochkoy",
+        "price": 13363,
+        "source_price": 3818,
+        "source_units": 28,
+        "target_units": 98,
+        "source_pack": "28 таблеток",
+        "gz_name": "Расилез таблетки покрытые оболочкой 150 мг №28",
+        "gz_pack": "98 шт",
+        "source_manufacturer": "Novartis Pharma",
+        "source_url": "https://www.rigla.ru/product/rasilez-tabpo-150mg-no28-31957",
+        "approved_target_name": "Расилез",
+        "approved_target_manufacturer": "NODEN PHARMA",
+        "reference_approved_at": "2026-10-08",
+        "observed_at": "2026-10-08T00:00:00+03:00",
+    },
+    {
+        "slug": "isentress-400-mg-tabletki-pokrytye-obolochkoy",
+        "price": 16050,
+        "source_price": 19260,
+        "source_units": 60,
+        "target_units": 50,
+        "source_pack": "60 таблеток",
+        "gz_name": "Исентресс таблетки покрытые пленочной оболочкой 400 мг №60",
+        "gz_pack": "50 шт",
+        "source_manufacturer": "Р-Фарм АО",
+        "source_url": "https://www.rigla.ru/product/isentress-tabpo-plen-400mg-no60-109078",
+        "approved_target_name": "Исентресс",
+        "approved_target_manufacturer": "MSD",
+        "reference_approved_at": "2026-10-08",
+        "observed_at": "2026-10-08T00:00:00+03:00",
+    },
+    {
+        "slug": "5-ftoruracil-ebeve-50-mg-ml-koncentrat-dlya-prigotovleniya-rastvora-dlya-infuziy",
+        "price": 270,
+        "gz_name": "5-Фторурацил-Эбеве концентрат 1 г/20 мл №1",
+        "gz_pack": "1 флакон × 20 мл (1000 мг)",
+        "source_manufacturer": "Ever Neuro Pharma",
+        "source_url": "https://www.rigla.ru/product/5-ftoruratsil-ebeve-konts-dlya-r-ra-dlya-inf-1g20ml-no1-4455315",
+        "approved_target_name": "5-Фторурацил-Эбеве",
+        "approved_target_manufacturer": "EBEWE PHARMA",
+        "reference_approved_at": "2026-10-08",
+        "observed_at": "2026-10-08T00:00:00+03:00",
+    },
+    {
+        "slug": "doksorubicin-ebeve-2-mg-ml-koncentrat-dlya-prigotovleniya-rastvora-dlya-infuziy",
+        "price": 1267,
+        "gz_name": "Доксорубицин концентрат 50 мг/25 мл №1",
+        "gz_pack": "1 флакон × 25 мл (50 мг)",
+        "source_manufacturer": "Ever Neuro Pharma",
+        "source_url": "https://www.rigla.ru/product/doksorubitsin-konts-dlya-r-ra-dlya-inf-50mg-25ml-3032763",
+        "approved_target_name": "Доксорубицин Эбеве",
+        "approved_target_manufacturer": "EBEWE PHARMA",
+        "reference_approved_at": "2026-10-08",
+        "observed_at": "2026-10-08T00:00:00+03:00",
+    },
 ]
 
 
@@ -248,10 +352,20 @@ def manufacturer_matches(expected: str, actual: str) -> bool:
     return any(left in group and right in group for group in MANUFACTURER_EQUIVALENTS)
 
 
+def approved_reference(med: dict, record: dict) -> bool:
+    # Explicit approval of this specific target, not manufacturer equivalence.
+    return bool(
+        record.get("reference_approved_at")
+        and norm(med.get("name")) == norm(record.get("approved_target_name"))
+        and norm(med.get("manufacturer")) == norm(record.get("approved_target_manufacturer"))
+    )
+
+
 def validate_record(med: dict, record: dict) -> None:
-    if norm(med.get("name")) not in norm(record["gz_name"]):
+    approved = approved_reference(med, record)
+    if norm(med.get("name")) not in norm(record["gz_name"]) and not approved:
         raise ValueError(f"{record['slug']}: trade name mismatch")
-    if not manufacturer_matches(med.get("manufacturer", ""), record["source_manufacturer"]):
+    if not manufacturer_matches(med.get("manufacturer", ""), record["source_manufacturer"]) and not approved:
         raise ValueError(f"{record['slug']}: manufacturer mismatch")
     approved_packs = {norm(item.get("pack_size")) for item in med.get("variants") or []}
     if norm(record["gz_pack"]) not in approved_packs:
@@ -297,7 +411,11 @@ def main() -> None:
             "city": "msk",
             "stores_count": 0,
             "match_status": "matched",
-            "identity_verified": True,
+            "identity_verified": bool(
+                norm(med.get("name")) in norm(record["gz_name"])
+                and manufacturer_matches(med.get("manufacturer", ""), record["source_manufacturer"])
+            ),
+            "user_approved_reference": approved_reference(med, record),
             "archive_observation": True,
             "price_derived": all(field in record for field in ("source_price", "source_units", "target_units")),
             "updated_at": observed_at,

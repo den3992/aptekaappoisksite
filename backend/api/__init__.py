@@ -392,7 +392,11 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
                     "source": _src,
                     "match_status": {"$in": ["matched"] if is_curated_priority else _match_statuses},
                     "price": {"$gt": 0},
-                    **({"identity_verified": True} if is_curated_priority else {}),
+                    **({"$or": [
+                        {"identity_verified": True},
+                        {"source": "rigla_archive", "archive_observation": True,
+                         "user_approved_reference": True},
+                    ]} if is_curated_priority else {}),
                 },
                 {"_id": 0, "price": 1, "stores_count": 1, "gz_name": 1,
                  "gz_pack": 1, "store_bitmap": 1, "city": 1, "updated_at": 1,
