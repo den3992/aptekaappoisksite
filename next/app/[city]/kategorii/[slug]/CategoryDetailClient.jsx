@@ -46,8 +46,9 @@ export default function CategoryDetail({ initialCat = null, initialData = null, 
   }, [cityParam]);
 
   useEffect(() => {
+    if (initialCat) { setCat(initialCat); return; }
     fetchCategories(cityParam).then((all) => setCat(all.find(c => c.slug === slug))).catch(() => {});
-  }, [slug, cityParam]);
+  }, [slug, cityParam, initialCat]);
 
   useEffect(() => {
     if (_ssrDataUsed.current) { _ssrDataUsed.current = false; return; }
@@ -84,7 +85,7 @@ export default function CategoryDetail({ initialCat = null, initialData = null, 
         </div>
         <div>
           <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 leading-tight">{cat.title}</h1>
-          <p className="text-slate-500 text-xs md:text-sm mt-0.5 md:mt-1">{(data.total || cat.count || 0).toLocaleString('ru')} препаратов в категории</p>
+          <p className="text-slate-500 text-xs md:text-sm mt-0.5 md:mt-1">{(data.total ?? cat.count ?? 0).toLocaleString('ru')} препаратов в категории</p>
         </div>
       </div>
 
@@ -100,7 +101,7 @@ export default function CategoryDetail({ initialCat = null, initialData = null, 
         };
         const g = GEN[city.id] || GEN.msk;
         const nets = NETS[city.id] || NETS.msk;
-        const cnt = (data.total || cat.count || 0).toLocaleString('ru');
+        const cnt = (data.total ?? cat.count ?? 0).toLocaleString('ru');
         return (
           <p className="text-slate-600 text-sm md:text-base leading-relaxed max-w-3xl mb-6 md:mb-8" data-testid="category-lead">
             {cat.title} в аптеках {g}: {cnt} препаратов — цены и наличие. Сравнивайте цены аптечных сетей {nets} и проверяйте наличие в ближайших аптеках на карте. Поиск бесплатный, без регистрации.

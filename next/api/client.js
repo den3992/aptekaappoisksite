@@ -1,6 +1,7 @@
 // Centralized API client with helpers backed by FastAPI catalog endpoints.
 // Replaces the static `mock.js` data source.
 import axios from 'axios';
+import { timedCache } from '../lib/timedCache';
 
 // Изоморфный base URL:
 // — на сервере (Server Components, Node-рантайм Next.js) идём напрямую
@@ -17,16 +18,15 @@ const http = axios.create({
   timeout: 20000,
 });
 
-// In-memory caches for static lookups (cities, categories) so we don't hit
-// the backend on every page navigation.
-const _categoriesCache = new Map();
-
-export async function fetchCategories(city) {
-  const key = city || '_all';
-  if (_categoriesCache.has(key)) return _categoriesCache.get(key);
+// Counts change with price imports. In particular, a legitimate temporary zero
+// must not leave category metadata at noindex until the next Next.js restart.
+const loadCategories = timedCache(async city => {
   const { data } = await http.get('/categories', city ? { params: { city } } : undefined);
-  _categoriesCache.set(key, data);
   return data;
+}, 60_000);
+
+export function fetchCategories(city) {
+  return loadCategories(city || '');
 }
 
 export async function fetchPharmacies(city = 'msk') {
