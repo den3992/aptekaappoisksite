@@ -9,7 +9,6 @@ from __future__ import annotations
 import re
 import math
 import base64
-import time
 from typing import Optional, List
 from datetime import datetime, timezone
 
@@ -26,6 +25,7 @@ from .pharmacies_seed import (
     find_pharmacy,
 )
 from .price_indexing import REAL_SOURCES, MATCH_OK, availability_cutoff, indexable_pairs_pipeline
+from .async_cache import AsyncTTLValue
 
 
 # ---------- Helpers for analogs filtering ----------
@@ -99,19 +99,23 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
     _real_sources = REAL_SOURCES
     _match_statuses = MATCH_OK
     _city_slug_cache = {}
-    _city_slug_cache_ttl = 300
 
-    async def _indexable_slugs(city: str) -> list[str]:
-        now = time.monotonic()
-        cached = _city_slug_cache.get(city)
-        if cached and now - cached[0] < _city_slug_cache_ttl:
-            return cached[1]
+    async def _load_indexable_slugs(city: str) -> list[str]:
         pipeline = indexable_pairs_pipeline(city=city) + [
             {"$project": {"_id": 0, "slug": "$_id.slug"}},
         ]
-        slugs = [row["slug"] async for row in db.prices_real.aggregate(pipeline) if row.get("slug")]
-        _city_slug_cache[city] = (now, slugs)
-        return slugs
+        return [
+            row["slug"] async for row in db.prices_real.aggregate(pipeline, maxTimeMS=60000)
+            if row.get("slug")
+        ]
+
+    async def _indexable_slugs(city: str) -> list[str]:
+        if city not in _city_slug_cache:
+            _city_slug_cache[city] = AsyncTTLValue(
+                lambda: _load_indexable_slugs(city), ttl=300, load_timeout=65,
+                name=f"indexable slugs for {city}",
+            )
+        return await _city_slug_cache[city].get()
 
     # ----- Cities & categories -----
 

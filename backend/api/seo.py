@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import os
 import html
-from typing import Optional, List, Tuple
+from dataclasses import dataclass
 from urllib.parse import quote
 from datetime import datetime, timezone
 
@@ -20,12 +20,60 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from .pharmacies_seed import CITIES, CATEGORIES, PHARMACIES
 from .price_indexing import indexable_pairs_pipeline
+from .async_cache import AsyncTTLValue
 
 CANONICAL_HOST = os.environ.get("CANONICAL_HOST", "aptekaa.ru")
 DEFAULT_CITY = "msk"
 SITEMAP_CHUNK_SIZE = 10000
+
+
+@dataclass(frozen=True)
+class _SitemapRow:
+    city: str
+    slug: str
+    category: str | None
+    image_url: str | None
+
+
+@dataclass(frozen=True)
+class _SitemapSnapshot:
+    rows: tuple[_SitemapRow, ...]
+    cities: frozenset[str]
+    categories: tuple[tuple[str, str], ...]
+
+
 def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
     router = APIRouter()
+
+    async def load_snapshot() -> _SitemapSnapshot:
+        # Keep the shared price/availability predicate unchanged. One compact
+        # result provides the count, cities, categories and all medicine chunks.
+        docs = await db.prices_real.aggregate(
+            indexable_pairs_pipeline() + [
+                {"$sort": {"_id.city": 1, "_id.slug": 1}},
+                {"$project": {
+                    "_id": 0, "city": "$_id.city", "slug": "$_id.slug",
+                    "category": "$med.category", "image_url": "$med.image_url",
+                }},
+            ], allowDiskUse=True, maxTimeMS=60000,
+        ).to_list(None)
+        rows = tuple(
+            _SitemapRow(row["city"], row["slug"], row.get("category"), row.get("image_url"))
+            for row in docs
+        )
+        return _SitemapSnapshot(
+            rows=rows,
+            cities=frozenset(row.city for row in rows),
+            categories=tuple(sorted({
+                (row.city, row.category) for row in rows
+                if row.category not in (None, "", "other")
+            })),
+        )
+
+    snapshot_cache = AsyncTTLValue(
+        load_snapshot, ttl=300, stale_if_error=60, stale_while_revalidate=True,
+        retry_delay=5, load_timeout=65, name="sitemap",
+    )
 
     # ----- robots.txt -----
     @router.get("/robots.txt", response_class=PlainTextResponse)
@@ -50,10 +98,8 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
     @router.get("/sitemap.xml")
     async def sitemap_index():
         host = f"https://{CANONICAL_HOST}"
-        count_rows = await db.prices_real.aggregate(
-            indexable_pairs_pipeline() + [{"$count": "total"}], allowDiskUse=True
-        ).to_list(1)
-        total = count_rows[0]["total"] if count_rows else 0
+        snapshot = await snapshot_cache.get()
+        total = len(snapshot.rows)
         chunks = (total + SITEMAP_CHUNK_SIZE - 1) // SITEMAP_CHUNK_SIZE
         items = [
             f"<sitemap><loc>{host}/sitemap_static.xml</loc></sitemap>",
@@ -75,14 +121,11 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
     @router.get("/sitemap_static.xml")
     async def sitemap_static():
         host = f"https://{CANONICAL_HOST}"
-        city_rows = await db.prices_real.aggregate(
-            indexable_pairs_pipeline() + [{"$group": {"_id": "$_id.city"}}], allowDiskUse=True
-        ).to_list(None)
-        cities_with_catalog = {row["_id"] for row in city_rows}
+        snapshot = await snapshot_cache.get()
         urls = []
         for c in CITIES:
             paths = ["", "apteki"]
-            if c["slug"] in cities_with_catalog:
+            if c["slug"] in snapshot.cities:
                 paths.extend(["kategorii", "preparaty"])
             for path in paths:
                 u = f"{host}/{c['slug']}" if not path else f"{host}/{c['slug']}/{path}"
@@ -99,15 +142,8 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
     @router.get("/sitemap_categories.xml")
     async def sitemap_categories():
         host = f"https://{CANONICAL_HOST}"
-        rows = await db.prices_real.aggregate(
-            indexable_pairs_pipeline() + [
-                {"$match": {"med.category": {"$nin": [None, "", "other"]}}},
-                {"$group": {"_id": {"city": "$_id.city", "category": "$med.category"}}},
-                {"$sort": {"_id.city": 1, "_id.category": 1}},
-            ],
-            allowDiskUse=True,
-        ).to_list(None)
-        urls = [f"{host}/{row['_id']['city']}/kategorii/{row['_id']['category']}" for row in rows]
+        snapshot = await snapshot_cache.get()
+        urls = [f"{host}/{city}/kategorii/{category}" for city, category in snapshot.categories]
         return _urlset(urls, lastmod_today=False)
 
     @router.get("/sitemap_pharmacies.xml")
@@ -124,21 +160,14 @@ def make_seo_router(db: AsyncIOMotorDatabase) -> APIRouter:
         skip = (idx - 1) * SITEMAP_CHUNK_SIZE
         if idx < 1:
             raise HTTPException(status_code=404, detail="sitemap chunk out of range")
-        rows = await db.prices_real.aggregate(
-            indexable_pairs_pipeline() + [
-                {"$sort": {"_id.city": 1, "_id.slug": 1}},
-                {"$skip": skip},
-                {"$limit": SITEMAP_CHUNK_SIZE},
-                {"$project": {"_id": 1, "image_url": "$med.image_url"}},
-            ],
-            allowDiskUse=True,
-        ).to_list(None)
+        snapshot = await snapshot_cache.get()
+        rows = snapshot.rows[skip:skip + SITEMAP_CHUNK_SIZE]
         if not rows:
             raise HTTPException(status_code=404, detail="sitemap chunk out of range")
         urls = []
         for row in rows:
-            city, slug = row["_id"]["city"], row["_id"]["slug"]
-            img = row.get("image_url") or ""
+            city, slug = row.city, row.slug
+            img = row.image_url or ""
             img_abs = f"{host}{quote(img, safe='/')}" if img.startswith("/") else (img or None)
             # lastmod intentionally omitted until parsers store a truthful
             # content_changed_at instead of their every-run updated_at value.
