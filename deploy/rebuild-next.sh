@@ -58,9 +58,15 @@ ROUTES=(
 OK=0
 FAIL=0
 for r in "${ROUTES[@]}"; do
+  # Public SEO files are proxied by edge to FastAPI. Next's city router
+  # correctly returns 404 for these paths, so probe their actual upstream.
+  case "$r" in
+    /robots.txt|/sitemap.xml) WARM_URL="http://backend:8001/api/seo${r}"; WARM_TIMEOUT=70 ;;
+    *) WARM_URL="http://${NEXT_IP}:3000${r}"; WARM_TIMEOUT=30 ;;
+  esac
   CODE=$(sudo docker run --rm --network deploy_internal curlimages/curl:latest \
-    -s -o /dev/null -w '%{http_code} %{time_total}' --max-time 30 \
-    "http://${NEXT_IP}:3000${r}" 2>/dev/null || echo "000 0")
+    -s -o /dev/null -w '%{http_code} %{time_total}' --max-time "$WARM_TIMEOUT" \
+    "$WARM_URL" 2>/dev/null || echo "000 0")
   HTTP=$(echo "$CODE" | awk '{print $1}')
   TIME=$(echo "$CODE" | awk '{printf "%.2f", $2}')
   if [[ "$HTTP" =~ ^(200|307|308)$ ]]; then
