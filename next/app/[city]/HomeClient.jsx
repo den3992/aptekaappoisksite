@@ -6,7 +6,7 @@ import NotFound from '../../components/NotFound';
 import { ShieldCheck, ArrowRight, Pill, Building2, Sparkles, Map, Search } from 'lucide-react';
 import { useCity } from '../../context/CityContext';
 import CategoryIcon from '../../components/CategoryIcon';
-import { suggestMeds, fetchCategories } from '../../api/client';
+import { searchMeds, fetchCategories } from '../../api/client';
 import { formatName } from '../../utils/text';
 import { getCategoryStyle } from '../../lib/categoryStyles';
 import PartnersMarquee from '../../components/PartnersMarquee';
@@ -32,14 +32,14 @@ const CITY_GEN = {
   rnd: 'Ростова-на-Дону', vrn: 'Воронежа',
 };
 
-export default function Home({ initialCategories = [] }) {
+export default function Home({ initialCategories = [], initialPopularMeds = null }) {
   const { city, cities, setCity } = useCity();
   const { city: cityParam } = useParams();
   const routeCity = cityParam || city.id;
   // cityParam (из URL) доступен и при SSR — H1 сразу корректен для бота;
   // city из контекста на сервере ещё дефолтный (msk), поэтому он лишь фолбэк.
   const cityGen = CITY_GEN[cityParam] || CITY_GEN[city?.id] || 'Москвы';
-  const [popularMeds, setPopularMeds] = useState([]);
+  const [popularMeds, setPopularMeds] = useState(initialPopularMeds || []);
   const [leadOpen, setLeadOpen] = useState(false);
   const [categories, setCategories] = useState(
     initialCategories.filter(c => c.slug !== 'other' && c.count > 0)
@@ -79,16 +79,18 @@ export default function Home({ initialCategories = [] }) {
   }, [cityParam, cities]);
 
   useEffect(() => {
+    if (initialPopularMeds) { setPopularMeds(initialPopularMeds); return; }
     let cancelled = false;
     Promise.all(
       POPULAR_QUERIES.map(query =>
-        suggestMeds(query).then(arr => arr && arr[0]).catch(() => null)
+        searchMeds({ q: query, city: routeCity, pageSize: 1 })
+          .then(result => result.items[0]).catch(() => null)
       )
     ).then(arr => {
       if (!cancelled) setPopularMeds(arr.filter(Boolean));
     });
     return () => { cancelled = true; };
-  }, []);
+  }, [initialPopularMeds, routeCity]);
 
   useEffect(() => {
     if (initialCategories.length) {

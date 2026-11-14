@@ -1,5 +1,6 @@
 'use client';
 import { createContext, useContext, useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 const CITIES = [
   { id: 'msk', name: 'Москва', inLoc: 'Москве', center: [55.751244, 37.618423], zoom: 11 },
   { id: 'spb', name: 'Санкт-Петербург', inLoc: 'Санкт-Петербурге', center: [59.9342802, 30.3350986], zoom: 11 },
@@ -18,10 +19,18 @@ const CITIES = [
 const CityContext = createContext(null);
 
 export const CityProvider = ({ children }) => {
-  const [city, setCity] = useState(() => {
-    const saved = typeof window !== 'undefined' ? window.localStorage.getItem('city') : null;
-    return saved ? CITIES.find(c => c.id === saved) || CITIES[0] : CITIES[0];
-  });
+  const params = useParams();
+  const routeCity = CITIES.find(c => c.id === params?.city);
+  const [savedCity, setCity] = useState(CITIES[0]);
+  // Regional URLs define the city already during SSR, including the shared
+  // header/footer. A stored preference only applies to non-regional pages.
+  const city = routeCity || savedCity;
+
+  useEffect(() => {
+    if (routeCity) return;
+    const saved = window.localStorage.getItem('city');
+    if (saved) setCity(CITIES.find(c => c.id === saved) || CITIES[0]);
+  }, [routeCity]);
 
   useEffect(() => {
     if (city) window.localStorage.setItem('city', city.id);

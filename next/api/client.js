@@ -39,14 +39,14 @@ export async function fetchPharmacy(id, city) {
   return data;
 }
 
-export async function searchMeds({ q, category, city, rx, prefix, page = 1, pageSize = 24 } = {}) {
+export async function searchMeds({ q, category, city, rx, prefix, page = 1, pageSize = 24, signal } = {}) {
   const params = { page, page_size: pageSize };
   if (q) params.q = q;
   if (category) params.category = category;
   if (city) params.city = city;
   if (rx !== undefined) params.rx = rx;
   if (prefix) params.prefix = prefix;
-  const { data } = await http.get('/search', { params });
+  const { data } = await http.get('/search', { params, signal });
   return data;
 }
 

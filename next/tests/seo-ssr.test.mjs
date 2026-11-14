@@ -20,6 +20,7 @@ before(async () => {
     response.setHeader('Content-Type', 'application/json');
     const city = url.searchParams.get('city');
     if (city === 'ufa') { response.writeHead(503); response.end('{"detail":"temporary failure"}'); return; }
+    if (city === 'rnd' && url.searchParams.has('q')) { response.writeHead(503); response.end('{}'); return; }
     const empty = city === 'ekb';
     if (url.pathname === '/api/categories') {
       response.end(JSON.stringify([
@@ -104,4 +105,24 @@ test('API failure is an HTTP error, not a successful zero catalogue', async () =
 
 test('unknown category is a real 404', async () => {
   assert.equal((await page('/msk/kategorii/not-a-category')).status, 404);
+});
+
+test('regional header, footer and popular links are correct before JavaScript', async () => {
+  const {status,html} = await page('/spb');
+  assert.equal(status, 200);
+  const header = html.match(/<header\b[\s\S]*?<\/header>/)?.[0];
+  const footer = html.match(/<footer\b[\s\S]*?<\/footer>/)?.[0];
+  assert.ok(header && footer);
+  assert.match(header, /href="\/spb\/kategorii"/);
+  assert.doesNotMatch(header, /href="\/msk\//);
+  assert.match(footer, /href="\/spb\/preparaty"/);
+  assert.doesNotMatch(footer, /href="\/msk\//);
+  assert.match(html, /href="\/spb\/preparaty\/nurofen-test"/);
+  assert.match(html, /href="\/spb\/kategorii\/ot-prostudy"/);
+});
+
+test('failure of optional popular lookups does not fail the homepage', async () => {
+  const {status,html} = await page('/rnd');
+  assert.equal(status, 200);
+  assert.match(html, /href="\/rnd\/kategorii\/obezbolivayuschie"/);
 });

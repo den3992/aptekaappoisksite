@@ -3,7 +3,8 @@
 // чтобы вложенные роуты могли задать свой).
 import HomeClient from './HomeClient';
 import { homeJsonLd } from '../../lib/schemas';
-import { fetchCategories } from '../../api/client';
+import { getCategories, getPopularMeds } from '../../lib/catalogData';
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }) {
   const { city } = await params;
@@ -15,14 +16,19 @@ export async function generateMetadata({ params }) {
 export default async function Page({ params }) {
   const { city } = await params;
   const graph = homeJsonLd(city);
-  const categories = await fetchCategories(city).catch(() => []);
+  const [categories, popularMeds] = await Promise.all([
+    getCategories(city),
+    // Popular links are optional; a failed lookup can still retry in the
+    // browser without turning a category outage into a false empty catalogue.
+    getPopularMeds(city).catch(() => null),
+  ]);
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }}
       />
-      <HomeClient initialCategories={categories} />
+      <HomeClient initialCategories={categories} initialPopularMeds={popularMeds} />
     </>
   );
 }

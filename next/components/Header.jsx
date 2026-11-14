@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useParams, usePathname, useRouter } from 'next/navigation';
 import { Search, MapPin, ChevronDown, Pill, Mic } from 'lucide-react';
 import { useCity } from '../context/CityContext';
 import { suggestMeds } from "../api/client";
@@ -24,7 +24,22 @@ export default function Header({ hideOnDesktop = false } = {}) {
   const [suggestions, setSuggestions] = useState([]);
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+  const params = useParams();
   const wrapRef = useRef(null);
+
+  const chooseCity = selected => {
+    setCity(selected);
+    if (params?.city && selected.id !== params.city) {
+      const target = pathname.includes('/apteki/')
+        ? `/${selected.id}/apteki`
+        : pathname.replace(/^\/[^/]+/, `/${selected.id}`);
+      const query = new URLSearchParams(window.location.search);
+      query.delete('page');
+      const queryString = query.toString();
+      router.push(target + (queryString ? `?${queryString}` : ''));
+    }
+  };
 
   // Debounced suggestions
   useEffect(() => {
@@ -102,7 +117,7 @@ export default function Header({ hideOnDesktop = false } = {}) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-48">
             {cities.map(c => (
-              <DropdownMenuItem key={c.id} onClick={() => setCity(c)} className="cursor-pointer">
+              <DropdownMenuItem key={c.id} onClick={() => chooseCity(c)} className="cursor-pointer">
                 <MapPin className="w-4 h-4 mr-2" /> {c.name}
               </DropdownMenuItem>
             ))}
