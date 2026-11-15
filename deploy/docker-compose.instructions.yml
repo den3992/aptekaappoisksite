@@ -5,7 +5,7 @@ services:
     extends:
       file: docker-compose.yml
       service: backend
-    image: deploy-backend:instructions-68f11780248004051611c8eb67de4c18b2b83a8c
+    image: deploy-backend:instructions-a4d719e9150a1067b6e4d8a071a90a92f9cdc497
     pull_policy: never
     profiles: [instructions]
     command: [uvicorn, server:app, --host, 0.0.0.0, --port, "8001", --workers, "1"]
