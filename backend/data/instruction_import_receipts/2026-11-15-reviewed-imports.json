@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-11-15T07:54:16.540078+00:00",
+  "verified_at": "2026-11-15T08:17:23.345694+00:00",
   "verified_live_database": true,
   "public_deployment_pending": false,
   "validation_revision": "69e17464fb1c8f0ba10c7a992cdce6e156fec306",
@@ -9,15 +9,15 @@
   },
   "coverage": {
     "verified_documents": 71,
-    "verified_original_documents": 201,
+    "verified_original_documents": 206,
     "cards_with_instructions": 87,
-    "cards_with_original_pdf": 241,
-    "cards_with_either_format": 319,
+    "cards_with_original_pdf": 246,
+    "cards_with_either_format": 324,
     "fully_covered_cards": 14,
     "covered_variants": 729,
-    "original_covered_variants": 524,
-    "combined_covered_variants": 1205,
-    "combined_fully_covered_cards": 144
+    "original_covered_variants": 534,
+    "combined_covered_variants": 1215,
+    "combined_fully_covered_cards": 145
   },
   "batches": [
     {
@@ -4913,8 +4913,118 @@
         }
       ],
       "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T075150Z-a660ee62"
+    },
+    {
+      "batch_id": "instructions-20261115T081604Z-1a437286",
+      "plan_hash": "acb5d4be55848641f2a42022cb94d45706b63b7eddea572dec05ea52bba83b2f",
+      "content_format": "official_original_pdf",
+      "added_documents": 5,
+      "added_bindings": 5,
+      "documents": [
+        {
+          "id": "eaeu-pdf-64cc85e6fb44f12340fd15b0-cb2740026eba856f-7f54f95d19d8",
+          "title": "Брусники листья — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(003607)-(РГ-RU)"
+          ],
+          "original_sha256": "cb2740026eba856f4e54bddd61029b9aac79218653f01b643ba09722bead07a5",
+          "content_format": "official_original_pdf",
+          "page_count": 3,
+          "original_bytes": 235013,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/64cc85e6fb44f12340fd15b0",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "64cc85e6fb44f12340fd15b0",
+            "uploaded_file_path": "772dc273-b341-4c1f-b57c-10dbd632da05/7ae256d4-4db1-448f-b16e-2d2157533586/file_10880573177388151.pdf",
+            "metadata_sha256": "ff5ce0f964583d3321defda73fe16b7d0adfc366ded0f1fae91986661b288f40"
+          }
+        },
+        {
+          "id": "eaeu-pdf-699d716430dcf88c4b8568e2-a69d61cfaefa6aeb-f3a5be736053",
+          "title": "МЕЛЬДОНИЙ ВЕЛФАРМ — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(001591)-(РГ-RU)"
+          ],
+          "original_sha256": "a69d61cfaefa6aeb33d4df62409a34924bfeae6e7126e9e614ffed6a038761c5",
+          "content_format": "official_original_pdf",
+          "page_count": 5,
+          "original_bytes": 273616,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/699d716430dcf88c4b8568e2",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "699d716430dcf88c4b8568e2",
+            "uploaded_file_path": "70a90133-bd90-4a49-b0a1-b9fc37b6c503/94ee86f2-d52e-4ab3-a7a3-6a64d623310d/file_4043373645579535.pdf",
+            "metadata_sha256": "fe286739156fa0523d2da761f202c507378627f24eb2f49dc7d8d91e35b8c68b"
+          }
+        },
+        {
+          "id": "eaeu-pdf-66f573d230dcf8b865f55b98-d7332bff1f899435-9bcc9e3a69bb",
+          "title": "Глицерин — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(008068)-(РГ-RU)"
+          ],
+          "original_sha256": "d7332bff1f899435e42d5b1f846652f307992353e6f86a29de3b8354e4b6d191",
+          "content_format": "official_original_pdf",
+          "page_count": 5,
+          "original_bytes": 243679,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/66f573d230dcf8b865f55b98",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "66f573d230dcf8b865f55b98",
+            "uploaded_file_path": "993aa4b4-e8dd-453a-bf29-3206f8cd843b/5aec351d-f5d7-41f4-8795-b90ebd1477e7/file_21839424950106125.pdf",
+            "metadata_sha256": "507571d3a422fe74c7a5974f752cf404ba123f07be7a3de84b80ef68773e06fd"
+          }
+        },
+        {
+          "id": "eaeu-pdf-6686806c30dcf88d7dd869f3-0231f019efbe1879-3ec312d10bda",
+          "title": "Танацехол® — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(007246)-(РГ-RU)"
+          ],
+          "original_sha256": "0231f019efbe1879dba8c005de886b1ecf5de2f70f017020fcd14ba2370d099f",
+          "content_format": "official_original_pdf",
+          "page_count": 5,
+          "original_bytes": 355926,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/6686806c30dcf88d7dd869f3",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "6686806c30dcf88d7dd869f3",
+            "uploaded_file_path": "602583ac-af1d-4f30-bc27-52d5279e5862/4016ad74-09ad-4b5c-bebf-e803e56671c8/file_15442430098079668.pdf",
+            "metadata_sha256": "84431d681e4b15aec9a81947306b3d05a65475481f6b58a8301bc455b8eb13cd"
+          }
+        },
+        {
+          "id": "eaeu-pdf-687f6e4830dcf8d00942db1a-98b5fd11df96c5e7-2969538dbca6",
+          "title": "Глицерин — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(008511)-(РГ-RU)"
+          ],
+          "original_sha256": "98b5fd11df96c5e7a8b57bb5060a996d259c1112d2c887f7fa3784706124bd17",
+          "content_format": "official_original_pdf",
+          "page_count": 4,
+          "original_bytes": 191491,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/687f6e4830dcf8d00942db1a",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "687f6e4830dcf8d00942db1a",
+            "uploaded_file_path": "0c79143e-2fdc-4b4d-9ba5-1d1abb94636c/0261dafd-8bf0-4e08-bd2e-03260e222d91/file_14771894370036631.pdf",
+            "metadata_sha256": "7929b881d1178147c5e1baf6aa2c41d73a81e924361abb02c1d89bddf903c2f9"
+          }
+        }
+      ],
+      "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T081604Z-1a437286"
     }
   ],
-  "scope_note": "These gains are confirmed in the live database and public server HTML/PDF routes. Full inline text and whole PDF originals remain separate formats. No instruction coverage is claimed for remaining unverified variants.",
-  "public_release_receipt": "2026-11-15-incremental-canon-renewal-release.json"
+  "scope_note": "Coverage is confirmed in the live database and public card HTML/PDF routes. Whole PDF originals and verified inline text are counted separately. Remaining unverified variants have no claimed instruction coverage.",
+  "public_release_receipt": "2026-11-15-incremental-eaeu5-release.json"
 }
