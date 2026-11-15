@@ -23,6 +23,7 @@ import time
 from api.instruction_original_evidence import PAIRED_ENTITY_MODE, derive_identity_evidence, validate_identity_evidence
 from api.instruction_original_structured_dose import PROOF_MODE as STRUCTURED_DOSE_MODE
 from api.instruction_original_concentration import PROOF_MODE as CONCENTRATION_DOSE_MODE
+from api import instruction_original_pdf_literal_dose as pdf_dose
 from api.instruction_original_ozon_prefix import PROOF_MODE as OZON_PREFIX_MODE
 from api.eaeu_variant_form_evidence import (
     MODE as VARIANT_FILM_MODE, GENERIC_FORM, FILM_FORM,
@@ -177,6 +178,11 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
     grls = rows[0]
     binary = check_original_pdf(folder / 'original.pdf', selected, (proof.get('download') or {}).get('sha256'))
     profile = _document_type(binary, selected)
+    caption_page=None
+    if dosage_proof_mode==pdf_dose.PROOF_MODE:
+        if manufacturer_proof_mode not in (None,PAIRED_ENTITY_MODE) or variant_form_proof_mode is not None:
+            raise OriginalPreparationError('literal caption mode only supports strict form and literal/paired maker')
+        caption_page=pdf_dose.first_page(folder/'original.pdf',binary)
     source_names = snapshot.get('manufacturers') or []
     if not source_names:
         raise OriginalPreparationError('explicit finished-product manufacturer is absent')
@@ -213,7 +219,9 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
             try:
                 derive_identity_evidence(snapshot, registration, [scope], names, grls,
                                          manufacturer_proof_mode=manufacturer_proof_mode,
-                                         dosage_proof_mode=dosage_proof_mode)
+                                         dosage_proof_mode=dosage_proof_mode,
+                                         pdf_literal_dose_proof=(pdf_dose.build_proof(snapshot,registration,[scope],binary,caption_page)
+                                             if dosage_proof_mode==pdf_dose.PROOF_MODE else None))
                 proven_names = names
                 break
             except ValueError as error:
@@ -240,8 +248,10 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
                                    source_normalization_generation=proof.get('source_normalization_generation'))
     if dosage_proof_mode is not None:
         fingerprint_payload['dosage_proof_mode'] = dosage_proof_mode
-    if dosage_proof_mode == CONCENTRATION_DOSE_MODE:
+    if dosage_proof_mode in (CONCENTRATION_DOSE_MODE,pdf_dose.PROOF_MODE):
         fingerprint_payload['source_normalization_generation'] = proof.get('source_normalization_generation')
+    if dosage_proof_mode==pdf_dose.PROOF_MODE:
+        fingerprint_payload['pdf_literal_dose_proof_sha256']=canonical_hash(pdf_dose.build_proof(snapshot,registration,scopes,binary,caption_page))
     version_fingerprint = canonical_hash(fingerprint_payload)
     checkpoint_path = folder / 'official-original-verification.json'
     checkpoint = json.loads(checkpoint_path.read_text()) if checkpoint_path.exists() else {'versions': {}}
@@ -262,11 +272,13 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
         'inline_text_verified': False, 'ocr_text_published': False,
         'preparation_version_fingerprint': version_fingerprint,
     }
-    if manufacturer_proof_mode is not None or dosage_proof_mode == CONCENTRATION_DOSE_MODE:
+    if manufacturer_proof_mode is not None or dosage_proof_mode in (CONCENTRATION_DOSE_MODE,pdf_dose.PROOF_MODE):
         evidence['source_normalization_generation'] = proof.get('source_normalization_generation')
     evidence.update(derive_identity_evidence(snapshot, registration, scopes, manufacturers, grls,
                                              manufacturer_proof_mode=manufacturer_proof_mode,
-                                             dosage_proof_mode=dosage_proof_mode))
+                                             dosage_proof_mode=dosage_proof_mode,
+                                             pdf_literal_dose_proof=(pdf_dose.build_proof(snapshot,registration,scopes,binary,caption_page)
+                                                if dosage_proof_mode==pdf_dose.PROOF_MODE else None)))
     document = {
         'id': 'eaeu-pdf-' + oid + '-' + sha[:16] + '-' + version_fingerprint[:12],
         'title': registration['trade_name'] + ' — официальный оригинал инструкции',
@@ -331,6 +343,27 @@ def _check_variant_form_mode(mode, manufacturer_mode, dosage_mode):
         raise OriginalPreparationError('EAEU film labels require the existing solid-dose and literal/paired maker profiles')
 
 
+def reject_caption_conflicts(outputs,previews,catalog_by_ru):
+    """Do not select the first eligible different PDF for one exact variant."""
+    byslug={med['slug']:med for meds in catalog_by_ru.values() for med in meds}
+    bykey=defaultdict(set);keys_by_doc={}
+    for wrapper in outputs:
+        doc=wrapper['document'];keys=set()
+        for preview in (p for p in previews if p['document_id']==doc['id']):
+            for match in preview['matches']:
+                med=byslug[match['slug']]
+                for binding in match_original_to_medication(doc,med)['bindings']:
+                    key=(med['slug'],binding['gtin'],_ru(binding['ru_number']))
+                    keys.add(key);bykey[key].add(doc['original_sha256'])
+        keys_by_doc[doc['id']]=keys
+    conflicts={key for key,shas in bykey.items() if len(shas)>1}
+    held={docid for docid,keys in keys_by_doc.items() if keys.intersection(conflicts)}
+    rejected=[{'document_id':docid,'reason':'multiple eligible literal-caption PDF SHAs cover the same exact variant',
+               'status':'draft_needs_review'} for docid in sorted(held)]
+    return ([w for w in outputs if w['document']['id'] not in held],
+            [p for p in previews if p['document_id'] not in held],rejected)
+
+
 def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_path, *,
                    registry_index_path, registry_validation_path, max_candidates=None,
                    manufacturer_proof_mode=None, dosage_proof_mode=None, variant_form_proof_mode=None,
@@ -346,11 +379,11 @@ def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_
         raise OriginalPreparationError('raw lineage is only supported by the explicit original-catalog mode')
     if manufacturer_proof_mode not in {None, PAIRED_ENTITY_MODE, OZON_PREFIX_MODE}:
         raise OriginalPreparationError('unsupported manufacturer proof mode')
-    if dosage_proof_mode not in (None, STRUCTURED_DOSE_MODE, CONCENTRATION_DOSE_MODE):
+    if dosage_proof_mode not in (None, STRUCTURED_DOSE_MODE, CONCENTRATION_DOSE_MODE,pdf_dose.PROOF_MODE):
         raise OriginalPreparationError('unsupported dosage proof mode')
     registry_by_ru, registry_proof, source_snapshots = _registry_index(
         registry_index_path, registry_validation_path,
-        retain_snapshots=(manufacturer_proof_mode is not None or dosage_proof_mode == CONCENTRATION_DOSE_MODE
+        retain_snapshots=(manufacturer_proof_mode is not None or dosage_proof_mode in (CONCENTRATION_DOSE_MODE,pdf_dose.PROOF_MODE)
                           or variant_form_proof_mode is not None))
     catalog_by_ru = defaultdict(list)
     for value in _read_jsonl(catalog_path):
@@ -384,7 +417,7 @@ def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_
                 # as an additive overlay or replace its provenance here.
                 if snapshot!=source_snapshots[snapshot['record_id']]:
                     raise OriginalPreparationError('original-catalog mode requires an explicit exact current source generation')
-            elif (manufacturer_proof_mode is not None or dosage_proof_mode == CONCENTRATION_DOSE_MODE
+            elif (manufacturer_proof_mode is not None or dosage_proof_mode in (CONCENTRATION_DOSE_MODE,pdf_dose.PROOF_MODE)
                     or variant_form_proof_mode is not None):
                 current_snapshot = source_snapshots[snapshot['record_id']]
                 legacy_snapshot = {key: value for key, value in current_snapshot.items()
@@ -417,6 +450,11 @@ def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_
             counts['rejected_or_needs_review'] += 1
             rejections.append({'candidate_key': path.parent.name, 'reason': str(error),
                                'error_class': type(error).__name__, 'status': 'draft_needs_review'})
+    if dosage_proof_mode==pdf_dose.PROOF_MODE:
+        outputs,previews,conflict_rejections=reject_caption_conflicts(outputs,previews,catalog_by_ru)
+        rejections.extend(conflict_rejections)
+        counts['caption_version_conflict_documents']=len(conflict_rejections)
+        counts['verified_original_documents']=len(outputs)
     for path, records in [(Path(output_path), outputs), (Path(rejection_path), rejections)]:
         path.parent.mkdir(parents=True, exist_ok=True)
         temporary = path.with_suffix(path.suffix + '.tmp')
@@ -442,8 +480,8 @@ def main(argv=None):
     parser.add_argument('--registry-validation', required=True, help='Complete metadata count/hash validation proof')
     parser.add_argument('--manufacturer-proof-mode', choices=[PAIRED_ENTITY_MODE, OZON_PREFIX_MODE], default=None,
                         help='Explicitly enable primary same-stage25 long/brief entity pairs; legacy is unchanged')
-    parser.add_argument('--dosage-proof-mode', choices=[STRUCTURED_DOSE_MODE, CONCENTRATION_DOSE_MODE], default=None,
-                        help='Explicit single-active solid or direct O25/kind04 concentration proof; no unit conversions')
+    parser.add_argument('--dosage-proof-mode', choices=[STRUCTURED_DOSE_MODE, CONCENTRATION_DOSE_MODE,pdf_dose.PROOF_MODE], default=None,
+                        help='Explicit solid, direct O25 concentration, or exact physical patient-caption dose; no conversions')
     parser.add_argument('--variant-form-proof-mode', choices=[VARIANT_FILM_MODE,mdlp.MODE], default=None,
                         help='Opt-in per-GTIN complete literal film-form label; source scopes remain precise')
     parser.add_argument('--raw-catalog-lineage')

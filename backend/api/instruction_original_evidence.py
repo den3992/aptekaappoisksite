@@ -16,6 +16,7 @@ import unicodedata
 from .medication_instructions import _identity, _ru
 from .instruction_original_structured_dose import PROOF_MODE as STRUCTURED_DOSE_MODE, prove_structured_solid_dose
 from .instruction_original_concentration import PROOF_MODE as CONCENTRATION_DOSE_MODE, prove_structured_mg_per_ml_dose
+from . import instruction_original_pdf_literal_dose as pdf_dose
 
 PAIRED_ENTITY_MODE = 'eaeu_paired_entity_v1'
 
@@ -144,19 +145,23 @@ def _active_tuples(snapshot, form):
 
 
 def derive_identity_evidence(snapshot, registration, scopes, manufacturers, grls_row, *,
-                             manufacturer_proof_mode=None, dosage_proof_mode=None):
+                             manufacturer_proof_mode=None, dosage_proof_mode=None, pdf_literal_dose_proof=None):
     """Return literal, reproducible proof fields or raise on any uncertainty.
 
     This does not verify PDF approval, completeness, version or binary integrity;
     callers must independently verify those facts before publishing an original.
     """
     from .instruction_original_ozon_prefix import PROOF_MODE as OZON_PREFIX_MODE, derive_ozon_prefix_evidence
+    if dosage_proof_mode==pdf_dose.PROOF_MODE and manufacturer_proof_mode not in (None,PAIRED_ENTITY_MODE):
+        raise ValueError('literal PDF caption mode only supports literal/paired manufacturer evidence')
+    if dosage_proof_mode!=pdf_dose.PROOF_MODE and pdf_literal_dose_proof is not None:
+        raise ValueError('literal PDF proof requires its explicit dosage mode')
     if manufacturer_proof_mode == OZON_PREFIX_MODE:
         return derive_ozon_prefix_evidence(snapshot, registration, scopes, manufacturers,
                                          grls_row, dosage_proof_mode=dosage_proof_mode)
     if manufacturer_proof_mode not in {None, PAIRED_ENTITY_MODE}:
         raise ValueError('unsupported manufacturer proof mode')
-    if dosage_proof_mode not in (None, STRUCTURED_DOSE_MODE, CONCENTRATION_DOSE_MODE):
+    if dosage_proof_mode not in (None, STRUCTURED_DOSE_MODE, CONCENTRATION_DOSE_MODE, pdf_dose.PROOF_MODE):
         raise ValueError('unsupported dosage proof mode')
     pairs = _paired_entities(snapshot) if manufacturer_proof_mode == PAIRED_ENTITY_MODE else []
     _check_grls(grls_row, registration)
@@ -219,7 +224,10 @@ def derive_identity_evidence(snapshot, registration, scopes, manufacturers, grls
         if not matches:
             raise ValueError('scope form/dosage is absent from literal GRLS release forms')
         active_text, structured_strength, structured_concentration = None, None, None
-        if dosage_proof_mode == CONCENTRATION_DOSE_MODE:
+        caption=None
+        if dosage_proof_mode==pdf_dose.PROOF_MODE:
+            caption=pdf_dose.scope_caption(pdf_literal_dose_proof,snapshot,registration,scope)
+        elif dosage_proof_mode == CONCENTRATION_DOSE_MODE:
             # Always validate every same-form package in this explicit mode,
             # even when one literal substanceText already matches the dose.
             # Otherwise a good first package could hide an incompatible one.
@@ -239,6 +247,11 @@ def derive_identity_evidence(snapshot, registration, scopes, manufacturers, grls
                        'grls_release_form': sorted(matches)[0],
                        'source_form': snapshot['form'],
                        'source_active_substance_text': active_text}
+        if caption is not None:
+            scope_proof['source_pdf_literal_caption']=caption
+            scope_proof['source_package_dosages_sha256']=_hash(snapshot.get('package_dosages') or [])
+            scope_proof['source_literal_single_active_texts']=sorted(set(_active_strengths(snapshot,form)))
+            scope_proof['catalog_dose_is_literal_single_active_source_text']=any(_identity(v)==_identity(dosage) for v in _active_strengths(snapshot,form))
         if structured_strength is not None:
             scope_proof['source_structured_strength'] = structured_strength
         if structured_concentration is not None:
@@ -252,6 +265,8 @@ def derive_identity_evidence(snapshot, registration, scopes, manufacturers, grls
         result['manufacturer_proof_mode'] = manufacturer_proof_mode
     if dosage_proof_mode is not None:
         result['dosage_proof_mode'] = dosage_proof_mode
+    if dosage_proof_mode==pdf_dose.PROOF_MODE:
+        result['pdf_literal_dose_proof']=pdf_literal_dose_proof
     return result
 
 
@@ -261,7 +276,10 @@ def validate_identity_evidence(document, snapshot, registration, scopes, manufac
     expected = derive_identity_evidence(snapshot, registration, scopes, manufacturers,
                                         evidence.get('current_grls_registration'),
                                         manufacturer_proof_mode=evidence.get('manufacturer_proof_mode'),
-                                        dosage_proof_mode=evidence.get('dosage_proof_mode'))
+                                        dosage_proof_mode=evidence.get('dosage_proof_mode'),
+                                        pdf_literal_dose_proof=evidence.get('pdf_literal_dose_proof'))
+    if evidence.get('dosage_proof_mode')==pdf_dose.PROOF_MODE:
+        pdf_dose.validate_document_proof(document,snapshot,registration,scopes,evidence.get('pdf_literal_dose_proof'))
     for field, value in expected.items():
         if evidence.get(field) != value:
             raise ValueError('invalid or incomplete original identity proof: ' + field)

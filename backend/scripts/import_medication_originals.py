@@ -24,6 +24,10 @@ class OriginalCollections:
 
 
 def validate_archive(document, path: Path):
+    from api import instruction_original_pdf_literal_dose as pdf_dose
+    if document.get('evidence',{}).get('dosage_proof_mode')==pdf_dose.PROOF_MODE:
+        # Literal physical replay is independent of the structural PDF cache.
+        pdf_dose.validate_archive(document,path)
     if document.get('source', {}).get('kind') == 'official_manufacturer':
         from api.manufacturer_original_pdfs import validate_manufacturer_archive
         # Never skip the HTML guard via the PDF parser cache: apply must prove
