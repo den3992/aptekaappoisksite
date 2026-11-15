@@ -31,6 +31,14 @@ class Opener:
 
 
 class RenewalTests(unittest.TestCase):
+    def test_observed_binnopharm_download_anchors_remain_unverified_source_candidates(self):
+        provider = Provider('binnopharm', 'https://binnopharmgroup.ru', ('binnopharmgroup.ru',),
+                            '/catalog/', ('/upload/',), ('синтез',))
+        html = '<h1>Тестовый препарат</h1><a href="/upload/medicine.pdf" download="">Тестовый препарат</a><a href="/upload/privacy.pdf">Политика</a><a href="https://other.test/medicine.pdf" download>Тестовый препарат</a>'
+        parsed = parse_product_html(html, 'https://binnopharmgroup.ru/catalog/fixture/', provider)
+        self.assertEqual(parsed['pdf_links'], [{'url': 'https://binnopharmgroup.ru/upload/medicine.pdf', 'label': 'Тестовый препарат'}])
+        self.assertNotIn('verification', parsed)
+
     def test_observed_akrikhin_product_uses_document_title_without_h1(self):
         provider = Provider('akrikhin', 'https://akrikhin.ru', ('akrikhin.ru',),
                             '/catalog/', ('/upload/',), ('акрихин',))

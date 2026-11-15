@@ -191,6 +191,7 @@ class ProductParser(HTMLParser):
             self.div_document_context.append(product_tab)
         if tag == 'a':
             self.link = {'href': values.get('href', ''), 'text': [values.get('title', ''), values.get('aria-label', '')],
+                         'explicit_download': 'download' in values,
                          'vertex_document_tab': bool(self.div_document_context and self.div_document_context[-1] == '2'),
                          'vertex_research_tab': bool(self.div_document_context and self.div_document_context[-1] == '5')}
 
@@ -222,7 +223,8 @@ def parse_product_html(html, url, provider=RENEWAL):
     for link in parser.links:
         if provider.key == 'vertex' and link['vertex_research_tab']:
             continue
-        if not (provider.key == 'vertex' and link['vertex_document_tab']) and not re.search(r'инструкц|instruk|лист[ао]к[\s-]*вкладыш|информаци[яю]\s+для\s+(?:пациент|работник)|общ[а-я]+\s+характеристик|охлп', link['text'] + ' ' + link['href'], re.I):
+        explicit_product_attachment = provider.key == 'binnopharm' and link['explicit_download']
+        if not explicit_product_attachment and not (provider.key == 'vertex' and link['vertex_document_tab']) and not re.search(r'инструкц|instruk|лист[ао]к[\s-]*вкладыш|информаци[яю]\s+для\s+(?:пациент|работник)|общ[а-я]+\s+характеристик|охлп', link['text'] + ' ' + link['href'], re.I):
             continue
         try:
             target = public_url(link['href'], url, provider)
