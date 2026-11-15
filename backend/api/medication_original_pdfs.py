@@ -202,7 +202,7 @@ def match_original_to_medication(document, med, *, variant_form_evidence=None):
         return result
     form_keys = set()
     if variant_form_evidence is not None:
-        from .canon_variant_form_evidence import eligible_variant_keys
+        from .eaeu_variant_form_evidence import eligible_variant_keys
         try:
             form_keys = eligible_variant_keys(doc, med, variant_form_evidence)
         except (ValueError, KeyError, TypeError, AttributeError):
@@ -267,7 +267,7 @@ class MedicationOriginalService:
                 allowed = {_variant_key(v): v for v in strict_match['bindings']}
                 proof = row.get('variant_form_evidence')
                 if proof is not None:
-                    from .canon_variant_form_evidence import evidence_digest, form_binding_id
+                    from .eaeu_variant_form_evidence import evidence_digest, form_binding_id
                     try:
                         if (row.get('variant_form_evidence_sha256') != evidence_digest(proof)
                                 or row.get('binding_id') != form_binding_id(doc['id'], med['slug'], fingerprint,

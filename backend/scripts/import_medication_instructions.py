@@ -49,7 +49,7 @@ def file_sha256(path: Path) -> str:
 
 def binding_id(document_id, medicine_slug, fingerprint, bindings, *, variant_form_evidence=None) -> str:
     if variant_form_evidence is not None:
-        from api.canon_variant_form_evidence import form_binding_id
+        from api.eaeu_variant_form_evidence import form_binding_id
         return form_binding_id(document_id, medicine_slug, fingerprint, bindings, variant_form_evidence)
     return _digest({
         "document_id": document_id, "medicine_slug": medicine_slug,
@@ -167,7 +167,7 @@ def build_plan(records, medications, *, existing_bindings=(), existing_state_che
                 archive_validator(document, Path(original_file))
             entry = {"document": document, "original_file": original_file, "archive_verified": bool(original_file)}
             if 'variant_form_evidence' in record:
-                from api.canon_variant_form_evidence import validate_evidence_shape, MAX_VARIANTS
+                from api.eaeu_variant_form_evidence import validate_evidence_shape, MAX_VARIANTS
                 proofs = record['variant_form_evidence']
                 if not allow_variant_form_evidence or not isinstance(proofs, list) or not 1 <= len(proofs) <= MAX_VARIANTS:
                     raise ImportConflict('explicit original-only variant-form evidence list is required')
@@ -207,7 +207,7 @@ def build_plan(records, medications, *, existing_bindings=(), existing_state_che
             proof = binding_proofs.get(med['slug'])
             try:
                 if proof is not None:
-                    from api.canon_variant_form_evidence import eligible_variant_keys
+                    from api.eaeu_variant_form_evidence import eligible_variant_keys
                     eligible_variant_keys(document, med, proof)
                     reviewed_slugs.add(med['slug'])
                     match = matcher(document, med, variant_form_evidence=proof)
@@ -215,7 +215,7 @@ def build_plan(records, medications, *, existing_bindings=(), existing_state_che
                         raise ImportConflict('reviewed variant-form evidence did not match its source identity')
                 else:
                     match = matcher(document, med)
-            except (ValueError, TypeError, KeyError) as error:
+            except (ValueError, TypeError, KeyError, AttributeError) as error:
                 failure = str(error) if isinstance(error, ValueError) else type(error).__name__
                 break
             if not match["matched"]:
@@ -226,7 +226,7 @@ def build_plan(records, medications, *, existing_bindings=(), existing_state_che
                 "variant_bindings": match["bindings"], "status": "verified", "active": True,
             }
             if proof is not None:
-                from api.canon_variant_form_evidence import evidence_digest
+                from api.eaeu_variant_form_evidence import evidence_digest
                 row['variant_form_evidence'] = proof
                 row['variant_form_evidence_sha256'] = evidence_digest(proof)
             row["binding_id"] = binding_id(document_id, med["slug"], match["identity_fingerprint"], match["bindings"],
@@ -322,12 +322,12 @@ def _read_medication(db, slug):
 def _verify_live_binding(row, document, med, *, matcher=match_document_to_medication):
     proof = row.get('variant_form_evidence')
     if proof is not None:
-        from api.canon_variant_form_evidence import eligible_variant_keys, evidence_digest
+        from api.eaeu_variant_form_evidence import eligible_variant_keys, evidence_digest
         try:
             eligible_variant_keys(document, med, proof)
             if row.get('variant_form_evidence_sha256') != evidence_digest(proof):
                 raise ValueError('optional binding evidence digest differs')
-        except (ValueError, TypeError, KeyError):
+        except (ValueError, TypeError, KeyError, AttributeError):
             raise ImportConflict('reviewed variant-form label/source identity changed') from None
         matched = matcher(document, med, variant_form_evidence=proof)
     else:

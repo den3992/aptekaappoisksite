@@ -24,6 +24,10 @@ from api.instruction_original_evidence import PAIRED_ENTITY_MODE, derive_identit
 from api.instruction_original_structured_dose import PROOF_MODE as STRUCTURED_DOSE_MODE
 from api.instruction_original_concentration import PROOF_MODE as CONCENTRATION_DOSE_MODE
 from api.instruction_original_ozon_prefix import PROOF_MODE as OZON_PREFIX_MODE
+from api.eaeu_variant_form_evidence import (
+    MODE as VARIANT_FILM_MODE, GENERIC_FORM, FILM_FORM,
+    build_evidence as build_variant_form_evidence, reviewed_variant_facts,
+)
 from api.medication_instructions import _identity, _ru
 from api.medication_original_pdfs import (
     MAX_PAGES, MAX_PDF_BYTES, canonical_hash, match_original_to_medication,
@@ -141,8 +145,9 @@ def _document_type(binary, attachment):
 
 
 def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
-                      manufacturer_proof_mode=None, dosage_proof_mode=None):
+                      manufacturer_proof_mode=None, dosage_proof_mode=None, variant_form_proof_mode=None):
     """Build a wrapper after the caller's full-registry uniqueness preflight."""
+    _check_variant_form_mode(variant_form_proof_mode, manufacturer_proof_mode, dosage_proof_mode)
     folder = Path(folder)
     candidate = proof.get('candidate') or {}
     snapshot, selected = candidate.get('source') or {}, candidate.get('document') or {}
@@ -180,6 +185,18 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
         if not any(_ru(v.get('ru_number') or med.get('ru_number')) == ru_key for v in med.get('variants') or []):
             continue
         scope = {'ru_number': registration_number, 'form': med.get('form'), 'dosage': med.get('dosage')}
+        if variant_form_proof_mode == VARIANT_FILM_MODE:
+            # Source scope is precise; do not mutate the medication to make the
+            # existing strict matcher appear to accept its generic form.
+            scope['form'] = snapshot.get('form')
+            try:
+                if (_identity(scope['form']) != FILM_FORM
+                        or _identity(med.get('form')) != GENERIC_FORM):
+                    raise ValueError('EAEU film profile requires the observed precise/generic form pair')
+                reviewed_variant_facts(med, registration['trade_name'], scope)
+            except (ValueError, TypeError, KeyError, AttributeError) as error:
+                rejected_targets.append({'slug': med['slug'], 'reason': str(error)})
+                continue
         proven_names = None
         last_reason = 'no proven literal manufacturer identity'
         for source_name in source_names:
@@ -263,9 +280,14 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
     }
     validate_identity_evidence(document, snapshot, registration, scopes, manufacturers)
     document = validate_original_document(document)
-    matches = []
+    matches, binding_proofs = [], []
     for med in eligible_meds:
-        match = match_original_to_medication(document, med)
+        binding_proof = None
+        if variant_form_proof_mode == VARIANT_FILM_MODE:
+            scope = next(s for s in scopes if _identity(s['dosage']) == _identity(med.get('dosage')))
+            binding_proof = build_variant_form_evidence(document, med, scope)
+            binding_proofs.append(binding_proof)
+        match = match_original_to_medication(document, med, variant_form_evidence=binding_proof)
         if not match['matched']:
             raise OriginalPreparationError('validated source tuple did not bind its exact catalog variant')
         matches.append({'slug': med['slug'], 'covered_variants': match['covered_variants'],
@@ -275,22 +297,35 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
         temporary = checkpoint_path.with_suffix('.json.tmp')
         temporary.write_text(json.dumps(checkpoint, ensure_ascii=False, indent=2))
         temporary.replace(checkpoint_path)
-    return {'document': document, 'original_file': str((folder / 'original.pdf').resolve())}, {
+    wrapper = {'document': document, 'original_file': str((folder / 'original.pdf').resolve())}
+    if binding_proofs:
+        wrapper['variant_form_evidence'] = binding_proofs
+    return wrapper, {
         'candidate_key': candidate.get('candidate_key'), 'document_id': document['id'],
         'original_sha256': sha, 'page_count': binary['page_count'], 'matches': matches,
         'rejected_targets': rejected_targets}
 
 
+def _check_variant_form_mode(mode, manufacturer_mode, dosage_mode):
+    if mode not in (None, VARIANT_FILM_MODE):
+        raise OriginalPreparationError('unsupported variant-form proof mode')
+    if mode is not None and (manufacturer_mode not in (None, PAIRED_ENTITY_MODE)
+                             or dosage_mode != STRUCTURED_DOSE_MODE):
+        raise OriginalPreparationError('EAEU film labels require the existing solid-dose and literal/paired maker profiles')
+
+
 def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_path, *,
                    registry_index_path, registry_validation_path, max_candidates=None,
-                   manufacturer_proof_mode=None, dosage_proof_mode=None):
+                   manufacturer_proof_mode=None, dosage_proof_mode=None, variant_form_proof_mode=None):
+    _check_variant_form_mode(variant_form_proof_mode, manufacturer_proof_mode, dosage_proof_mode)
     if manufacturer_proof_mode not in {None, PAIRED_ENTITY_MODE, OZON_PREFIX_MODE}:
         raise OriginalPreparationError('unsupported manufacturer proof mode')
     if dosage_proof_mode not in (None, STRUCTURED_DOSE_MODE, CONCENTRATION_DOSE_MODE):
         raise OriginalPreparationError('unsupported dosage proof mode')
     registry_by_ru, registry_proof, source_snapshots = _registry_index(
         registry_index_path, registry_validation_path,
-        retain_snapshots=manufacturer_proof_mode is not None or dosage_proof_mode == CONCENTRATION_DOSE_MODE)
+        retain_snapshots=(manufacturer_proof_mode is not None or dosage_proof_mode == CONCENTRATION_DOSE_MODE
+                          or variant_form_proof_mode is not None))
     catalog_by_ru = defaultdict(list)
     for value in _read_jsonl(catalog_path):
         med = value.get('medication', value)
@@ -317,7 +352,8 @@ def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_
                 raise OriginalPreparationError('current RU has absent/ambiguous records in full registry index')
             if current_records[0] != {key: snapshot.get(key) for key in ['record_id', 'metadata_sha256']}:
                 raise OriginalPreparationError('candidate source differs from the current full registry index')
-            if manufacturer_proof_mode is not None or dosage_proof_mode == CONCENTRATION_DOSE_MODE:
+            if (manufacturer_proof_mode is not None or dosage_proof_mode == CONCENTRATION_DOSE_MODE
+                    or variant_form_proof_mode is not None):
                 current_snapshot = source_snapshots[snapshot['record_id']]
                 legacy_snapshot = {key: value for key, value in current_snapshot.items()
                                    if key != 'manufacturer_entities'}
@@ -335,7 +371,8 @@ def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_
                     'added_fact_fields': ['manufacturer_entities']}
             wrapper, preview = prepare_candidate(proof, path.parent, catalog_by_ru[ru], grls_by_ru[ru],
                                                   manufacturer_proof_mode=manufacturer_proof_mode,
-                                                  dosage_proof_mode=dosage_proof_mode)
+                                                  dosage_proof_mode=dosage_proof_mode,
+                                                  variant_form_proof_mode=variant_form_proof_mode)
             if wrapper['document']['id'] in seen_ids:
                 counts['duplicate_document'] += 1
                 continue
@@ -352,12 +389,15 @@ def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_
         temporary = path.with_suffix(path.suffix + '.tmp')
         temporary.write_text(''.join(json.dumps(value, ensure_ascii=False) + '\n' for value in records))
         temporary.replace(path)
-    return {'counts': dict(counts), 'covered_cards': len({m['slug'] for p in previews for m in p['matches']}),
+    report = {'counts': dict(counts), 'covered_cards': len({m['slug'] for p in previews for m in p['matches']}),
             'covered_variants': sum(m['covered_variants'] for p in previews for m in p['matches']),
             'network_requests': 0, 'database_writes': 0, 'previews': previews,
             'output_path': str(output_path), 'rejection_path': str(rejection_path),
             'full_registry_uniqueness': registry_proof,
             'manufacturer_proof_mode': manufacturer_proof_mode, 'dosage_proof_mode': dosage_proof_mode}
+    if variant_form_proof_mode is not None:
+        report['variant_form_proof_mode'] = variant_form_proof_mode
+    return report
 
 
 def main(argv=None):
@@ -371,6 +411,8 @@ def main(argv=None):
                         help='Explicitly enable primary same-stage25 long/brief entity pairs; legacy is unchanged')
     parser.add_argument('--dosage-proof-mode', choices=[STRUCTURED_DOSE_MODE, CONCENTRATION_DOSE_MODE], default=None,
                         help='Explicit single-active solid or direct O25/kind04 concentration proof; no unit conversions')
+    parser.add_argument('--variant-form-proof-mode', choices=[VARIANT_FILM_MODE], default=None,
+                        help='Opt-in per-GTIN complete literal film-form label; source scopes remain precise')
     parser.add_argument('--output', required=True)
     parser.add_argument('--rejections', required=True)
     parser.add_argument('--report', required=True)
@@ -383,7 +425,8 @@ def main(argv=None):
                             registry_validation_path=args.registry_validation,
                             max_candidates=args.max_candidates,
                             manufacturer_proof_mode=args.manufacturer_proof_mode,
-                            dosage_proof_mode=args.dosage_proof_mode)
+                            dosage_proof_mode=args.dosage_proof_mode,
+                            variant_form_proof_mode=args.variant_form_proof_mode)
     Path(args.report).write_text(json.dumps(report, ensure_ascii=False, indent=2))
     print(json.dumps({key: value for key, value in report.items() if key != 'previews'}, ensure_ascii=False))
 

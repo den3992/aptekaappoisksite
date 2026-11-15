@@ -1,0 +1,3131 @@
+{
+  "notice": "Retained real catalog label/identity facts; tests build explicitly synthetic EAEU source fixtures. No publication wrapper or medical text.",
+  "scopes": [
+    {
+      "candidate_key": "014fa5fce06868709182213a",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "200 мг",
+      "ru_number": "ЛП-№(001536)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04605077018826",
+          "ru_number": "ЛП-№(001536)-(РГ-RU)"
+        },
+        {
+          "gtin": "04605077018871",
+          "ru_number": "ЛП-№(001536)-(РГ-RU)"
+        },
+        {
+          "gtin": "04605077018819",
+          "ru_number": "ЛП-№(001536)-(РГ-RU)"
+        },
+        {
+          "gtin": "04605077019083",
+          "ru_number": "ЛП-№(001536)-(РГ-RU)"
+        },
+        {
+          "gtin": "04605077019090",
+          "ru_number": "ЛП-№(001536)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Ибупрофен",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "200 мг",
+        "manufacturer": "АО АЛИУМ",
+        "ru_number": "ЛП-№(001536)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04605077018826",
+            "esklp_code": "21.20.10.221-000010-1-00071-2000001219114",
+            "ru_number": "ЛП-№(001536)-(РГ-RU)",
+            "ru_date": "12.12.2022",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "ИБУПРОФЕН таблетки, покрытые пленочной оболочкой, 200 мг"
+          },
+          {
+            "gtin": "04605077018871",
+            "esklp_code": "21.20.10.221-000010-1-00071-2000001219106",
+            "ru_number": "ЛП-№(001536)-(РГ-RU)",
+            "ru_date": "12.12.2022",
+            "pack_size": "10 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "ИБУПРОФЕН таблетки, покрытые пленочной оболочкой, 200 мг"
+          },
+          {
+            "gtin": "04605077018819",
+            "esklp_code": "21.20.10.221-000010-1-00071-2000001219111",
+            "ru_number": "ЛП-№(001536)-(РГ-RU)",
+            "ru_date": "12.12.2022",
+            "pack_size": "2 × 10 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "ИБУПРОФЕН таблетки, покрытые пленочной оболочкой, 200 мг"
+          },
+          {
+            "gtin": "04605077019083",
+            "esklp_code": "21.20.10.221-000010-1-00071-2000001219111",
+            "ru_number": "ЛП-№(001536)-(РГ-RU)",
+            "ru_date": "12.12.2022",
+            "pack_size": "2 × 10 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Ибупрофен таблетки, покрытые пленочной оболочкой, 200 мг"
+          },
+          {
+            "gtin": "04605077019090",
+            "esklp_code": "21.20.10.221-000010-1-00071-2000001219114",
+            "ru_number": "ЛП-№(001536)-(РГ-RU)",
+            "ru_date": "12.12.2022",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Ибупрофен таблетки, покрытые пленочной оболочкой, 200 мг"
+          }
+        ],
+        "slug": "ibuprofen-200-mg-tabletki-pokrytye-obolochkoy-12",
+        "canonical_slug": "ibuprofen-200-mg-tabletki-pokrytye-obolochkoy-12",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "014fa5fce06868709182213a",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "400 мг",
+      "ru_number": "ЛП-№(001536)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04605077018864",
+          "ru_number": "ЛП-№(001536)-(РГ-RU)"
+        },
+        {
+          "gtin": "04605077018888",
+          "ru_number": "ЛП-№(001536)-(РГ-RU)"
+        },
+        {
+          "gtin": "04605077018833",
+          "ru_number": "ЛП-№(001536)-(РГ-RU)"
+        },
+        {
+          "gtin": "04605077019106",
+          "ru_number": "ЛП-№(001536)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Ибупрофен",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "400 мг",
+        "manufacturer": "АО АЛИУМ",
+        "ru_number": "ЛП-№(001536)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04605077018864",
+            "esklp_code": "21.20.10.221-000010-1-00225-2000001218842",
+            "ru_number": "ЛП-№(001536)-(РГ-RU)",
+            "ru_date": "12.12.2022",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "ИБУПРОФЕН таблетки, покрытые пленочной оболочкой, 400 мг"
+          },
+          {
+            "gtin": "04605077018888",
+            "esklp_code": "21.20.10.221-000010-1-00225-2000001219118",
+            "ru_number": "ЛП-№(001536)-(РГ-RU)",
+            "ru_date": "12.12.2022",
+            "pack_size": "10 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "ИБУПРОФЕН таблетки, покрытые пленочной оболочкой, 400 мг"
+          },
+          {
+            "gtin": "04605077018833",
+            "esklp_code": "21.20.10.221-000010-1-00225-2000001218839",
+            "ru_number": "ЛП-№(001536)-(РГ-RU)",
+            "ru_date": "12.12.2022",
+            "pack_size": "2 × 10 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "ИБУПРОФЕН таблетки, покрытые пленочной оболочкой, 400 мг"
+          },
+          {
+            "gtin": "04605077019106",
+            "esklp_code": "21.20.10.221-000010-1-00225-2000001218839",
+            "ru_number": "ЛП-№(001536)-(РГ-RU)",
+            "ru_date": "12.12.2022",
+            "pack_size": "2 × 10 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Ибупрофен таблетки, покрытые пленочной оболочкой, 400 мг"
+          },
+          {
+            "gtin": "04605077021239",
+            "esklp_code": "21.20.10.221-000010-1-00225-2000001218839",
+            "ru_number": "ЛП-№(001536)-(РГ-RU)",
+            "ru_date": "12.12.2022",
+            "pack_size": "2 × 10 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "ИБУПРОФЕН таблетки, покрытые пленочной оболочкой, 400 мг (ГармониФарм)"
+          }
+        ],
+        "slug": "ibuprofen-400-mg-tabletki-pokrytye-obolochkoy-7",
+        "canonical_slug": "ibuprofen-400-mg-tabletki-pokrytye-obolochkoy-7",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "05e10a33282a2ea7327d1f6c",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "5 мг",
+      "ru_number": "ЛП-№(012553)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04630106836119",
+          "ru_number": "ЛП-№(012553)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Акситиниб-АМЕДАРТ",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "5 мг",
+        "manufacturer": "ООО АМЕДАРТ",
+        "ru_number": "ЛП-№(012553)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04630106836119",
+            "esklp_code": "21.20.10.211-000087-1-00121-2000001534003",
+            "ru_number": "ЛП-№(012553)-(РГ-RU)",
+            "ru_date": "24.11.2025",
+            "pack_size": "56 шт",
+            "primary_pack_desc": "БАНКА по 56 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Акситиниб-АМЕДАРТ, таблетки, покрытые пленочной оболочкой, 5 мг"
+          }
+        ],
+        "slug": "aksitinib-amedart-5-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "aksitinib-amedart-5-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "22885a383fb4b9efd9f4f4f3",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "2 мг",
+      "ru_number": "ЛП-№(010936)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04660185040626",
+          "ru_number": "ЛП-№(010936)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "ДляЖенс проги",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "2 мг",
+        "manufacturer": "ООО ФАРМАСИНТЕЗ-ТЮМЕНЬ",
+        "ru_number": "ЛП-№(010936)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04660185040626",
+            "esklp_code": "21.20.10.173-000025-1-00118-2000001504870",
+            "ru_number": "ЛП-№(010936)-(РГ-RU)",
+            "ru_date": "15.07.2025",
+            "pack_size": "21 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 21 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "ДляЖенс® проги, таблетки, покрытые пленочной оболочкой, 2 мг"
+          }
+        ],
+        "slug": "dlyazhens-progi-2-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "dlyazhens-progi-2-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "3198abddd61f091b515cfbdf",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "80 мг",
+      "ru_number": "ЛП-№(010590)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04620305921174",
+          "ru_number": "ЛП-№(010590)-(РГ-RU)"
+        },
+        {
+          "gtin": "04620305921181",
+          "ru_number": "ЛП-№(010590)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Верапамил",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "80 мг",
+        "manufacturer": "АО АВВА РУС",
+        "ru_number": "ЛС-002664",
+        "variants": [
+          {
+            "gtin": "04607003665326",
+            "esklp_code": "21.20.10.147-000003-1-00039-2000001616563",
+            "ru_number": "ЛС-002664",
+            "ru_date": "29.02.2012",
+            "pack_size": "2 × 10 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Верапамил таблетки, покрытые оболочкой, 80 мг"
+          },
+          {
+            "gtin": "04680020232641",
+            "esklp_code": "21.20.10.147-000003-1-00039-2000001710369",
+            "ru_number": "ЛС-002664",
+            "ru_date": "29.02.2012",
+            "pack_size": "2 × 10 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Верапамил, таблетки, покрытые пленочной оболочкой, 80 мг"
+          },
+          {
+            "gtin": "04620305921174",
+            "esklp_code": "21.20.10.147-000003-1-00039-2000001506158",
+            "ru_number": "ЛП-№(010590)-(РГ-RU)",
+            "ru_date": "18.06.2025",
+            "pack_size": "2 × 10 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Верапамил, таблетки, покрытые пленочной оболочкой, 80 мг"
+          },
+          {
+            "gtin": "04607003665340",
+            "esklp_code": "21.20.10.147-000003-1-00039-2000001851306",
+            "ru_number": "ЛС-002664",
+            "ru_date": "29.02.2012",
+            "pack_size": "5 × 10 шт",
+            "primary_pack_desc": "5 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "5",
+            "label_name": "Верапамил таблетки, покрытые оболочкой, 80 мг"
+          },
+          {
+            "gtin": "04680020232658",
+            "esklp_code": "21.20.10.147-000003-1-00039-2000001839688",
+            "ru_number": "ЛС-002664",
+            "ru_date": "29.02.2012",
+            "pack_size": "5 × 10 шт",
+            "primary_pack_desc": "5 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "5",
+            "label_name": "Верапамил, таблетки, покрытые пленочной оболочкой, 80 мг"
+          },
+          {
+            "gtin": "04620305921181",
+            "esklp_code": "21.20.10.147-000003-1-00039-2000001506156",
+            "ru_number": "ЛП-№(010590)-(РГ-RU)",
+            "ru_date": "18.06.2025",
+            "pack_size": "5 × 10 шт",
+            "primary_pack_desc": "5 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "5",
+            "label_name": "Верапамил, таблетки, покрытые пленочной оболочкой, 80 мг"
+          }
+        ],
+        "slug": "verapamil-80-mg-tabletki-pokrytye-obolochkoy-4",
+        "canonical_slug": "verapamil-80-mg-tabletki-pokrytye-obolochkoy-4",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "32e6c73999984a513948e485",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "50 мг",
+      "ru_number": "ЛП-№(011825)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "05310001287498",
+          "ru_number": "ЛП-№(011825)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Лосмерид",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "50 мг",
+        "manufacturer": "ДЖЕНЕФАРМ С.А.",
+        "ru_number": "ЛП-№(011825)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "05310001287498",
+            "esklp_code": "21.20.10.233-000013-1-00052-2000001523079",
+            "ru_number": "ЛП-№(011825)-(РГ-RU)",
+            "ru_date": "24.09.2025",
+            "pack_size": "14 шт",
+            "primary_pack_desc": "БЛИСТЕР по 14 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Лосмерид, таблетки, покрытые пленочной оболочкой, 50 мг"
+          }
+        ],
+        "slug": "losmerid-50-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "losmerid-50-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "32e6c73999984a513948e485",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "100 мг",
+      "ru_number": "ЛП-№(011825)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "05310001287481",
+          "ru_number": "ЛП-№(011825)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Лосмерид",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "100 мг",
+        "manufacturer": "ДЖЕНЕФАРМ С.А.",
+        "ru_number": "ЛП-№(011825)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "05310001287481",
+            "esklp_code": "21.20.10.233-000013-1-00066-2000001523076",
+            "ru_number": "ЛП-№(011825)-(РГ-RU)",
+            "ru_date": "24.09.2025",
+            "pack_size": "14 шт",
+            "primary_pack_desc": "БЛИСТЕР по 14 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Лосмерид, таблетки, покрытые пленочной оболочкой, 100 мг"
+          }
+        ],
+        "slug": "losmerid-100-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "losmerid-100-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "32e6c73999984a513948e485",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "150 мг",
+      "ru_number": "ЛП-№(011825)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "05310001287535",
+          "ru_number": "ЛП-№(011825)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Лосмерид",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "150 мг",
+        "manufacturer": "ДЖЕНЕФАРМ С.А.",
+        "ru_number": "ЛП-№(011825)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "05310001287535",
+            "esklp_code": "21.20.10.233-000013-1-00077-2000001523077",
+            "ru_number": "ЛП-№(011825)-(РГ-RU)",
+            "ru_date": "24.09.2025",
+            "pack_size": "4 × 14 шт",
+            "primary_pack_desc": "4 x БЛИСТЕР по 14 шт",
+            "primary_in_consumer_qty": "4",
+            "label_name": "Лосмерид, таблетки, покрытые пленочной оболочкой, 150 мг"
+          }
+        ],
+        "slug": "losmerid-150-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "losmerid-150-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "32e6c73999984a513948e485",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "200 мг",
+      "ru_number": "ЛП-№(011825)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "05310001287542",
+          "ru_number": "ЛП-№(011825)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Лосмерид",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "200 мг",
+        "manufacturer": "ДЖЕНЕФАРМ С.А.",
+        "ru_number": "ЛП-№(011825)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "05310001287542",
+            "esklp_code": "21.20.10.233-000013-1-00064-2000001523078",
+            "ru_number": "ЛП-№(011825)-(РГ-RU)",
+            "ru_date": "24.09.2025",
+            "pack_size": "4 × 14 шт",
+            "primary_pack_desc": "4 x БЛИСТЕР по 14 шт",
+            "primary_in_consumer_qty": "4",
+            "label_name": "Лосмерид, таблетки, покрытые пленочной оболочкой, 200 мг"
+          }
+        ],
+        "slug": "losmerid-200-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "losmerid-200-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "34869ad9fae01af2dc54a38e",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "50 мг",
+      "ru_number": "ЛП-№(008323)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04690655032745",
+          "ru_number": "ЛП-№(008323)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Флувоксамин-СЗ",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "50 мг",
+        "manufacturer": "НАО СЕВЕРНАЯ ЗВЕЗДА",
+        "ru_number": "ЛП-№(008323)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04690655032745",
+            "esklp_code": "21.20.10.236-000044-1-00133-2000001444522",
+            "ru_number": "ЛП-№(008323)-(РГ-RU)",
+            "ru_date": "27.12.2024",
+            "pack_size": "2 × 10 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Флувоксамин-СЗ таблетки, покрытые пленочной оболочкой, 50 мг"
+          }
+        ],
+        "slug": "fluvoksamin-sz-50-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "fluvoksamin-sz-50-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "34869ad9fae01af2dc54a38e",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "100 мг",
+      "ru_number": "ЛП-№(008323)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04690655029943",
+          "ru_number": "ЛП-№(008323)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Флувоксамин-СЗ",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "100 мг",
+        "manufacturer": "НАО СЕВЕРНАЯ ЗВЕЗДА",
+        "ru_number": "ЛП-№(008323)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04690655029943",
+            "esklp_code": "21.20.10.236-000044-1-00060-2000001444519",
+            "ru_number": "ЛП-№(008323)-(РГ-RU)",
+            "ru_date": "27.12.2024",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Флувоксамин-СЗ таблетки, покрытые пленочной оболочкой, 100 мг"
+          }
+        ],
+        "slug": "fluvoksamin-sz-100-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "fluvoksamin-sz-100-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "384e5da1af01d957340a3b2c",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "75 мг",
+      "ru_number": "ЛП-№(010943)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04610011972775",
+          "ru_number": "ЛП-№(010943)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Плагрил",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "75 мг",
+        "manufacturer": "ООО МАКИЗ-ФАРМА",
+        "ru_number": "ЛП-№(010943)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04610011972775",
+            "esklp_code": "21.20.10.131-000001-1-00020-2000001510508",
+            "ru_number": "ЛП-№(010943)-(РГ-RU)",
+            "ru_date": "15.07.2025",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Плагрил®, таблетки, покрытые пленочной оболочкой, 75 мг"
+          }
+        ],
+        "slug": "plagril-75-mg-tabletki-pokrytye-obolochkoy-2",
+        "canonical_slug": "plagril-75-mg-tabletki-pokrytye-obolochkoy-2",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "3f7af25e3d05db61b4fdcdb3",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "600 мг",
+      "ru_number": "ЛП-№(006029)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04607024949443",
+          "ru_number": "ЛП-№(006029)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Окскарбазепин",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "600 мг",
+        "manufacturer": "АО ОХФК",
+        "ru_number": "ЛП-№(006029)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04607024949443",
+            "esklp_code": "21.20.10.233-000012-1-00031-2000001403664",
+            "ru_number": "ЛП-№(006029)-(РГ-RU)",
+            "ru_date": "27.06.2024",
+            "pack_size": "5 × 10 шт",
+            "primary_pack_desc": "5 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "5",
+            "label_name": "Окскарбазепин, таблетки, покрытые пленочной оболочкой, 600 мг"
+          }
+        ],
+        "slug": "okskarbazepin-600-mg-tabletki-pokrytye-obolochkoy-3",
+        "canonical_slug": "okskarbazepin-600-mg-tabletki-pokrytye-obolochkoy-3",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "3f7af25e3d05db61b4fdcdb3",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "150 мг",
+      "ru_number": "ЛП-№(006029)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04607024949436",
+          "ru_number": "ЛП-№(006029)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Окскарбазепин",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "150 мг",
+        "manufacturer": "АО ОХФК",
+        "ru_number": "ЛП-№(006029)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04607024949436",
+            "esklp_code": "21.20.10.233-000012-1-00056-2000001403654",
+            "ru_number": "ЛП-№(006029)-(РГ-RU)",
+            "ru_date": "27.06.2024",
+            "pack_size": "5 × 10 шт",
+            "primary_pack_desc": "5 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "5",
+            "label_name": "Окскарбазепин, таблетки, покрытые пленочной оболочкой, 150 мг"
+          }
+        ],
+        "slug": "okskarbazepin-150-mg-tabletki-pokrytye-obolochkoy-3",
+        "canonical_slug": "okskarbazepin-150-mg-tabletki-pokrytye-obolochkoy-3",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "4265d71a2bb22d53a39a5a5a",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "400 мг",
+      "ru_number": "ЛП-№(000864)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04605077018055",
+          "ru_number": "ЛП-№(000864)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "АЛБЕНДАЗОЛ-АЛИУМ",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "400 мг",
+        "manufacturer": "АО АЛИУМ",
+        "ru_number": "ЛП-№(000864)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04605077018055",
+            "esklp_code": "21.20.10.242-000002-1-00018-2000001174135",
+            "ru_number": "ЛП-№(000864)-(РГ-RU)",
+            "ru_date": "03.06.2022",
+            "pack_size": "5 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 5 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "АЛБЕНДАЗОЛ-АЛИУМ таблетки, покрытые пленочной оболочкой, 400 мг"
+          },
+          {
+            "gtin": "04605077018048",
+            "esklp_code": "21.20.10.242-000002-1-00018-2000001174139",
+            "ru_number": "ЛП-№(000864)-(РГ-RU)",
+            "ru_date": "03.06.2022",
+            "pack_size": "3 × 1 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 1 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "AЛБЕНДАЗОЛ-АЛИУМ таблетки, покрытые пленочной оболочкой, 400 мг"
+          },
+          {
+            "gtin": "04605077017539",
+            "esklp_code": "21.20.10.242-000002-1-00018-2000001174142",
+            "ru_number": "ЛП-№(000864)-(РГ-RU)",
+            "ru_date": "03.06.2022",
+            "pack_size": "1 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 1 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "AЛБЕНДАЗОЛ-АЛИУМ таблетки, покрытые пленочной оболочкой, 400 мг"
+          }
+        ],
+        "slug": "albendazol-alium-400-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "albendazol-alium-400-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "47782c3e8c7110f5fd0c1db2",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "80 мг",
+      "ru_number": "ЛП-№(000611)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04605077011902",
+          "ru_number": "ЛП-№(000611)-(РГ-RU)"
+        },
+        {
+          "gtin": "04605077018499",
+          "ru_number": "ЛП-№(000611)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Азурикс",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "80 мг",
+        "manufacturer": "АО АЛИУМ",
+        "ru_number": "ЛП-№(000611)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04605077011902",
+            "esklp_code": "21.20.10.226-000001-1-00006-2000001147876",
+            "ru_number": "ЛП-№(000611)-(РГ-RU)",
+            "ru_date": "03.03.2022",
+            "pack_size": "2 × 15 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 15 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "азурикс® таблетки, покрытые пленочной оболочкой, 80 мг"
+          },
+          {
+            "gtin": "04605077018499",
+            "esklp_code": "21.20.10.226-000001-1-00006-2000001147875",
+            "ru_number": "ЛП-№(000611)-(РГ-RU)",
+            "ru_date": "03.03.2022",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "азурикс® таблетки, покрытые пленочной оболочкой, 80 мг"
+          }
+        ],
+        "slug": "azuriks-80-mg-tabletki-pokrytye-obolochkoy-2",
+        "canonical_slug": "azuriks-80-mg-tabletki-pokrytye-obolochkoy-2",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "47782c3e8c7110f5fd0c1db2",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "120 мг",
+      "ru_number": "ЛП-№(000611)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04605077011926",
+          "ru_number": "ЛП-№(000611)-(РГ-RU)"
+        },
+        {
+          "gtin": "04605077018505",
+          "ru_number": "ЛП-№(000611)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Азурикс",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "120 мг",
+        "manufacturer": "АО АЛИУМ",
+        "ru_number": "ЛП-№(000611)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04605077011926",
+            "esklp_code": "21.20.10.226-000001-1-00003-2000001148186",
+            "ru_number": "ЛП-№(000611)-(РГ-RU)",
+            "ru_date": "03.03.2022",
+            "pack_size": "2 × 15 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 15 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "азурикс® таблетки, покрытые пленочной оболочкой, 120 мг"
+          },
+          {
+            "gtin": "04605077018505",
+            "esklp_code": "21.20.10.226-000001-1-00003-2000001148185",
+            "ru_number": "ЛП-№(000611)-(РГ-RU)",
+            "ru_date": "03.03.2022",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "азурикс® таблетки, покрытые пленочной оболочкой, 120 мг"
+          }
+        ],
+        "slug": "azuriks-120-mg-tabletki-pokrytye-obolochkoy-2",
+        "canonical_slug": "azuriks-120-mg-tabletki-pokrytye-obolochkoy-2",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "4967878d84c6f005455736ea",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "600 мг",
+      "ru_number": "ЛП-№(003851)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04660007706747",
+          "ru_number": "ЛП-№(003851)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "ЛИМФОДИАВЕНА",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "600 мг",
+        "manufacturer": "ООО ИЗВАРИНО ФАРМА",
+        "ru_number": "ЛП-№(003851)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04660007706747",
+            "esklp_code": "21.20.10.145-000022-1-00058-2000001373501",
+            "ru_number": "ЛП-№(003851)-(РГ-RU)",
+            "ru_date": "05.12.2023",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Лимфодиавена таблетки, покрытые пленочной оболочкой 600 мг"
+          }
+        ],
+        "slug": "limfodiavena-600-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "limfodiavena-600-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "5fc97ffcdda63329b7d0f2a7",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "5 мг",
+      "ru_number": "ЛП-№(010427)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04602565039769",
+          "ru_number": "ЛП-№(010427)-(РГ-RU)"
+        },
+        {
+          "gtin": "04602565039806",
+          "ru_number": "ЛП-№(010427)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Бисопролол-АКОС",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "5 мг",
+        "manufacturer": "ПАО СИНТЕЗ",
+        "ru_number": "ЛП-№(010427)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04602565039769",
+            "esklp_code": "21.20.10.146-000001-1-00035-2000001533139",
+            "ru_number": "ЛП-№(010427)-(РГ-RU)",
+            "ru_date": "04.06.2025",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Бисопролол-АКОС таблетки, покрытые пленочной оболочкой 5 мг"
+          },
+          {
+            "gtin": "04602565039806",
+            "esklp_code": "21.20.10.146-000001-1-00035-2000001533138",
+            "ru_number": "ЛП-№(010427)-(РГ-RU)",
+            "ru_date": "04.06.2025",
+            "pack_size": "5 × 10 шт",
+            "primary_pack_desc": "5 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "5",
+            "label_name": "Бисопролол-АКОС таблетки, покрытые пленочной оболочкой 5 мг"
+          }
+        ],
+        "slug": "bisoprolol-akos-5-mg-tabletki-pokrytye-obolochkoy-2",
+        "canonical_slug": "bisoprolol-akos-5-mg-tabletki-pokrytye-obolochkoy-2",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "5fc97ffcdda63329b7d0f2a7",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "10 мг",
+      "ru_number": "ЛП-№(010427)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04602565039776",
+          "ru_number": "ЛП-№(010427)-(РГ-RU)"
+        },
+        {
+          "gtin": "04602565039813",
+          "ru_number": "ЛП-№(010427)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Бисопролол-АКОС",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "10 мг",
+        "manufacturer": "ПАО СИНТЕЗ",
+        "ru_number": "ЛП-№(010427)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04602565039776",
+            "esklp_code": "21.20.10.146-000001-1-00100-2000001533141",
+            "ru_number": "ЛП-№(010427)-(РГ-RU)",
+            "ru_date": "04.06.2025",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Бисопролол-АКОС таблетки, покрытые пленочной оболочкой 10 мг"
+          },
+          {
+            "gtin": "04602565039813",
+            "esklp_code": "21.20.10.146-000001-1-00100-2000001533140",
+            "ru_number": "ЛП-№(010427)-(РГ-RU)",
+            "ru_date": "04.06.2025",
+            "pack_size": "5 × 10 шт",
+            "primary_pack_desc": "5 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "5",
+            "label_name": "Бисопролол-АКОС таблетки, покрытые пленочной оболочкой 10 мг"
+          }
+        ],
+        "slug": "bisoprolol-akos-10-mg-tabletki-pokrytye-obolochkoy-2",
+        "canonical_slug": "bisoprolol-akos-10-mg-tabletki-pokrytye-obolochkoy-2",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "746d035f5293a96ba308677e",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "50 мг",
+      "ru_number": "ЛП-№(002924)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04606486048992",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049005",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049012",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049029",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049036",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049043",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049050",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049067",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049074",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049081",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049098",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049104",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049111",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049128",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049135",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049265",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Сертралин Канон",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "50 мг",
+        "manufacturer": "ЗАО КАНОНФАРМА ПРОДАКШН",
+        "ru_number": "ЛП-№(002924)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04606486048992",
+            "esklp_code": "21.20.10.236-000020-1-00175-2000001279896",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "7 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 7 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 50 мг"
+          },
+          {
+            "gtin": "04606486049005",
+            "esklp_code": "21.20.10.236-000020-1-00175-2000001279899",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "2 × 7 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 7 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 50 мг"
+          },
+          {
+            "gtin": "04606486049012",
+            "esklp_code": "21.20.10.236-000020-1-00175-2000001279902",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "4 × 7 шт",
+            "primary_pack_desc": "4 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 7 шт",
+            "primary_in_consumer_qty": "4",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 50 мг"
+          },
+          {
+            "gtin": "04606486049029",
+            "esklp_code": "21.20.10.236-000020-1-00175-2000001279900",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "14 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 14 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 50 мг"
+          },
+          {
+            "gtin": "04606486049036",
+            "esklp_code": "21.20.10.236-000020-1-00175-2000001279903",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "2 × 14 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 14 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 50 мг"
+          },
+          {
+            "gtin": "04606486049043",
+            "esklp_code": "21.20.10.236-000020-1-00175-2000001279908",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "4 × 14 шт",
+            "primary_pack_desc": "4 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 14 шт",
+            "primary_in_consumer_qty": "4",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 50 мг"
+          },
+          {
+            "gtin": "04606486049050",
+            "esklp_code": "21.20.10.236-000020-1-00175-2000001279898",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "10 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 50 мг"
+          },
+          {
+            "gtin": "04606486049067",
+            "esklp_code": "21.20.10.236-000020-1-00175-2000001279901",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "2 × 10 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 50 мг"
+          },
+          {
+            "gtin": "04606486049074",
+            "esklp_code": "21.20.10.236-000020-1-00175-2000001279904",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 50 мг"
+          },
+          {
+            "gtin": "04606486049081",
+            "esklp_code": "21.20.10.236-000020-1-00175-2000001279907",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "30 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 30 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 50 мг"
+          },
+          {
+            "gtin": "04606486049098",
+            "esklp_code": "21.20.10.236-000020-1-00175-2000001279909",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "2 × 30 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 30 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 50 мг"
+          },
+          {
+            "gtin": "04606486049104",
+            "esklp_code": "21.20.10.236-000020-1-00175-2000001279906",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "30 шт",
+            "primary_pack_desc": "БАНКА по 30 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 50 мг"
+          },
+          {
+            "gtin": "04606486049111",
+            "esklp_code": "21.20.10.236-000020-1-00175-2000001279910",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "60 шт",
+            "primary_pack_desc": "БАНКА по 60 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 50 мг"
+          },
+          {
+            "gtin": "04606486049128",
+            "esklp_code": "21.20.10.236-000020-1-00175-2000001279912",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "90 шт",
+            "primary_pack_desc": "БАНКА по 90 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 50 мг"
+          },
+          {
+            "gtin": "04606486049135",
+            "esklp_code": "21.20.10.236-000020-1-00175-2000001279914",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "120 шт",
+            "primary_pack_desc": "БАНКА по 120 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 50 мг"
+          },
+          {
+            "gtin": "04606486049265",
+            "esklp_code": "21.20.10.236-000020-1-00175-2000001279911",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "3 × 30 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 30 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 50 мг"
+          }
+        ],
+        "slug": "sertralin-kanon-50-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "sertralin-kanon-50-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "746d035f5293a96ba308677e",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "100 мг",
+      "ru_number": "ЛП-№(002924)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04606486049142",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049159",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049166",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049173",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049180",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049197",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049203",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049210",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049227",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049234",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049241",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049258",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486049272",
+          "ru_number": "ЛП-№(002924)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Сертралин Канон",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "100 мг",
+        "manufacturer": "ЗАО КАНОНФАРМА ПРОДАКШН",
+        "ru_number": "ЛП-№(002924)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04606486049142",
+            "esklp_code": "21.20.10.236-000020-1-00222-2000001279881",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "7 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 7 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 100 мг"
+          },
+          {
+            "gtin": "04606486049159",
+            "esklp_code": "21.20.10.236-000020-1-00222-2000001279883",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "2 × 7 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 7 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 100 мг"
+          },
+          {
+            "gtin": "04606486049166",
+            "esklp_code": "21.20.10.236-000020-1-00222-2000001279886",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "4 × 7 шт",
+            "primary_pack_desc": "4 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 7 шт",
+            "primary_in_consumer_qty": "4",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 100 мг"
+          },
+          {
+            "gtin": "04606486049173",
+            "esklp_code": "21.20.10.236-000020-1-00222-2000001279884",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "14 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 14 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 100 мг"
+          },
+          {
+            "gtin": "04606486049180",
+            "esklp_code": "21.20.10.236-000020-1-00222-2000001279887",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "2 × 14 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 14 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 100 мг"
+          },
+          {
+            "gtin": "04606486049197",
+            "esklp_code": "21.20.10.236-000020-1-00222-2000001279891",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "4 × 14 шт",
+            "primary_pack_desc": "4 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 14 шт",
+            "primary_in_consumer_qty": "4",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 100 мг"
+          },
+          {
+            "gtin": "04606486049203",
+            "esklp_code": "21.20.10.236-000020-1-00222-2000001279882",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "10 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 100 мг"
+          },
+          {
+            "gtin": "04606486049210",
+            "esklp_code": "21.20.10.236-000020-1-00222-2000001279885",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "2 × 10 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 100 мг"
+          },
+          {
+            "gtin": "04606486049227",
+            "esklp_code": "21.20.10.236-000020-1-00222-2000001279889",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 100 мг"
+          },
+          {
+            "gtin": "04606486049234",
+            "esklp_code": "21.20.10.236-000020-1-00222-2000001279892",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "60 шт",
+            "primary_pack_desc": "БАНКА по 60 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 100 мг"
+          },
+          {
+            "gtin": "04606486049241",
+            "esklp_code": "21.20.10.236-000020-1-00222-2000001279894",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "90 шт",
+            "primary_pack_desc": "БАНКА по 90 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 100 мг"
+          },
+          {
+            "gtin": "04606486049258",
+            "esklp_code": "21.20.10.236-000020-1-00222-2000001279895",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "120 шт",
+            "primary_pack_desc": "БАНКА по 120 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 100 мг"
+          },
+          {
+            "gtin": "04606486049272",
+            "esklp_code": "21.20.10.236-000020-1-00222-2000001279890",
+            "ru_number": "ЛП-№(002924)-(РГ-RU)",
+            "ru_date": "02.08.2023",
+            "pack_size": "30 шт",
+            "primary_pack_desc": "БАНКА по 30 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Сертралин Канон, таблетки, покрытые пленочной оболочкой, 100 мг"
+          }
+        ],
+        "slug": "sertralin-kanon-100-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "sertralin-kanon-100-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "7b430aef04a84ceafff60fb4",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "500 мг",
+      "ru_number": "ЛП-№(003491)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04630028540781",
+          "ru_number": "ЛП-№(003491)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Капецитабин",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "500 мг",
+        "manufacturer": "ООО НАНОФАРМА ДЕВЕЛОПМЕНТ",
+        "ru_number": "ЛП-005656",
+        "variants": [
+          {
+            "gtin": "04630028540491",
+            "esklp_code": "21.20.10.211-000010-1-00153-2000001817958",
+            "ru_number": "ЛП-005656",
+            "ru_date": "15.07.2019",
+            "pack_size": "12 × 10 шт",
+            "primary_pack_desc": "12 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "12",
+            "label_name": "Капецитабин, таблетки, покрытые пленочной оболочкой, 500 мг"
+          },
+          {
+            "gtin": "04630028540781",
+            "esklp_code": "21.20.10.211-000010-1-00153-2000001318354",
+            "ru_number": "ЛП-№(003491)-(РГ-RU)",
+            "ru_date": "25.10.2023",
+            "pack_size": "12 × 10 шт",
+            "primary_pack_desc": "12 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "12",
+            "label_name": "Капецитабин, таблетки, покрытые пленочной оболочкой, 500 мг"
+          },
+          {
+            "gtin": "04630028540880",
+            "esklp_code": "21.20.10.211-000010-1-00153-2000001318352",
+            "ru_number": "ЛП-№(003491)-(РГ-RU)",
+            "ru_date": "25.10.2023",
+            "pack_size": "6 × 10 шт",
+            "primary_pack_desc": "6 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "6",
+            "label_name": "Капецитабин, таблетки, покрытые пленочной оболочкой, 500 мг №60"
+          }
+        ],
+        "slug": "kapecitabin-500-mg-tabletki-pokrytye-obolochkoy-7",
+        "canonical_slug": "kapecitabin-500-mg-tabletki-pokrytye-obolochkoy-7",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "87192eba398e69511ba289e9",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "10 мг",
+      "ru_number": "ЛП-№(008277)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04610383703762",
+          "ru_number": "ЛП-№(008277)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Нифедипин",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "10 мг",
+        "manufacturer": "ООО ОЗОН ФАРМ",
+        "ru_number": "ЛСР-001945/09",
+        "variants": [
+          {
+            "gtin": "04630015110034",
+            "esklp_code": "21.20.10.147-000002-1-00087-2000001715910",
+            "ru_number": "ЛСР-001945/09",
+            "ru_date": "16.03.2009",
+            "pack_size": "50 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 50 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "таблетки покрытые пленочной оболочкой «нифедипин» 10 мг"
+          },
+          {
+            "gtin": "04630015112205",
+            "esklp_code": "21.20.10.147-000002-1-00087-2000001715910",
+            "ru_number": "ЛСР-001945/09",
+            "ru_date": "16.03.2009",
+            "pack_size": "50 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 50 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Нифедипин таблетки, покрытые пленочной оболочкой 10 м"
+          },
+          {
+            "gtin": "04630015114926",
+            "esklp_code": "21.20.10.147-000002-1-00087-2000001444945",
+            "ru_number": "ЛП-№(008277)-(РГ-RU)",
+            "ru_date": "25.12.2024",
+            "pack_size": "50 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 50 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Нифедипин таблетки, покрытые пленочной оболочкой 10 мг ЛП-№(008277)-(РГ-RU)"
+          },
+          {
+            "gtin": "04607027762636",
+            "esklp_code": "21.20.10.147-000002-1-00087-2000000624241",
+            "ru_number": "ЛСР-001945/09",
+            "ru_date": "16.03.2009",
+            "pack_size": "50 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 50 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "таблетки, покрытые пленочной оболочкой \"нифедипин\" 10 мг"
+          },
+          {
+            "gtin": "04610383703762",
+            "esklp_code": "21.20.10.147-000002-1-00087-2000001444464",
+            "ru_number": "ЛП-№(008277)-(РГ-RU)",
+            "ru_date": "25.12.2024",
+            "pack_size": "50 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 50 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Нифедипин таблетки, покрытые пленочной оболочкой 10 мг"
+          }
+        ],
+        "slug": "nifedipin-10-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "nifedipin-10-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "94b5736b84003fd68a57dec8",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "60 мг",
+      "ru_number": "ЛП-№(002187)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04605077020409",
+          "ru_number": "ЛП-№(002187)-(РГ-RU)"
+        },
+        {
+          "gtin": "04605077020416",
+          "ru_number": "ЛП-№(002187)-(РГ-RU)"
+        },
+        {
+          "gtin": "04605077021000",
+          "ru_number": "ЛП-№(002187)-(РГ-RU)"
+        },
+        {
+          "gtin": "04605077021017",
+          "ru_number": "ЛП-№(002187)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Тикагрелор",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "60 мг",
+        "manufacturer": "АО АЛИУМ",
+        "ru_number": "ЛП-№(002187)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04605077020409",
+            "esklp_code": "21.20.10.131-000002-1-00032-2000001327540",
+            "ru_number": "ЛП-№(002187)-(РГ-RU)",
+            "ru_date": "18.04.2023",
+            "pack_size": "2 × 28 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 28 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "ТИКАГРЕЛОР таблетки, покрытые пленочной оболочкой, 60 мг"
+          },
+          {
+            "gtin": "04605077020416",
+            "esklp_code": "21.20.10.131-000002-1-00032-2000001327539",
+            "ru_number": "ЛП-№(002187)-(РГ-RU)",
+            "ru_date": "18.04.2023",
+            "pack_size": "6 × 28 шт",
+            "primary_pack_desc": "6 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 28 шт",
+            "primary_in_consumer_qty": "6",
+            "label_name": "ТИКАГРЕЛОР таблетки, покрытые пленочной оболочкой, 60 мг"
+          },
+          {
+            "gtin": "04605077021000",
+            "esklp_code": "21.20.10.131-000002-1-00032-2000001239848",
+            "ru_number": "ЛП-№(002187)-(РГ-RU)",
+            "ru_date": "18.04.2023",
+            "pack_size": "4 × 14 шт",
+            "primary_pack_desc": "4 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 14 шт",
+            "primary_in_consumer_qty": "4",
+            "label_name": "ТИКАГРЕЛОР таблетки, покрытые пленочной оболочкой, 60 мг"
+          },
+          {
+            "gtin": "04605077021017",
+            "esklp_code": "21.20.10.131-000002-1-00032-2000001239846",
+            "ru_number": "ЛП-№(002187)-(РГ-RU)",
+            "ru_date": "18.04.2023",
+            "pack_size": "12 × 14 шт",
+            "primary_pack_desc": "12 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 14 шт",
+            "primary_in_consumer_qty": "12",
+            "label_name": "ТИКАГРЕЛОР таблетки, покрытые пленочной оболочкой, 60 мг"
+          }
+        ],
+        "slug": "tikagrelor-60-mg-tabletki-pokrytye-obolochkoy-3",
+        "canonical_slug": "tikagrelor-60-mg-tabletki-pokrytye-obolochkoy-3",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "94b5736b84003fd68a57dec8",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "90 мг",
+      "ru_number": "ЛП-№(002187)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04605077020423",
+          "ru_number": "ЛП-№(002187)-(РГ-RU)"
+        },
+        {
+          "gtin": "04605077020430",
+          "ru_number": "ЛП-№(002187)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Тикагрелор",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "90 мг",
+        "manufacturer": "АО АЛИУМ",
+        "ru_number": "ЛП-№(002187)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04605077020423",
+            "esklp_code": "21.20.10.131-000002-1-00008-2000001327538",
+            "ru_number": "ЛП-№(002187)-(РГ-RU)",
+            "ru_date": "18.04.2023",
+            "pack_size": "2 × 28 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 28 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "ТИКАГРЕЛОР таблетки, покрытые пленочной оболочкой, 90 мг"
+          },
+          {
+            "gtin": "04605077020430",
+            "esklp_code": "21.20.10.131-000002-1-00008-2000001327537",
+            "ru_number": "ЛП-№(002187)-(РГ-RU)",
+            "ru_date": "18.04.2023",
+            "pack_size": "6 × 28 шт",
+            "primary_pack_desc": "6 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 28 шт",
+            "primary_in_consumer_qty": "6",
+            "label_name": "ТИКАГРЕЛОР таблетки, покрытые пленочной оболочкой, 90 мг"
+          }
+        ],
+        "slug": "tikagrelor-90-mg-tabletki-pokrytye-obolochkoy-2",
+        "canonical_slug": "tikagrelor-90-mg-tabletki-pokrytye-obolochkoy-2",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "9a262a9f14a3da9de45e6c99",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "400 мг",
+      "ru_number": "ЛП-№(010163)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04602509066448",
+          "ru_number": "ЛП-№(010163)-(РГ-RU)"
+        },
+        {
+          "gtin": "04602509066455",
+          "ru_number": "ЛП-№(010163)-(РГ-RU)"
+        },
+        {
+          "gtin": "04602509067889",
+          "ru_number": "ЛП-№(010163)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "РАЙТБУФЕН",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "400 мг",
+        "manufacturer": "АО БИОХИМИК",
+        "ru_number": "ЛП-№(010163)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04602509066448",
+            "esklp_code": "21.20.10.221-000076-1-00003-2000001528889",
+            "ru_number": "ЛП-№(010163)-(РГ-RU)",
+            "ru_date": "15.05.2025",
+            "pack_size": "10 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "РАЙТБУФЕН таблетки, покрытые пленочной оболочкой 400 мг"
+          },
+          {
+            "gtin": "04602509066455",
+            "esklp_code": "21.20.10.221-000076-1-00003-2000001492596",
+            "ru_number": "ЛП-№(010163)-(РГ-RU)",
+            "ru_date": "15.05.2025",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "РАЙТБУФЕН таблетки, покрытые пленочной оболочкой 400 мг"
+          },
+          {
+            "gtin": "04602509067889",
+            "esklp_code": "21.20.10.221-000076-1-00003-2000001528888",
+            "ru_number": "ЛП-№(010163)-(РГ-RU)",
+            "ru_date": "15.05.2025",
+            "pack_size": "2 × 10 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "РАЙТБУФЕН таблетки, покрытые пленочной оболочкой 400 мг"
+          }
+        ],
+        "slug": "raytbufen-400-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "raytbufen-400-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "a2abbb595fc08ce27d018165",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "10 мг",
+      "ru_number": "ЛП-№(012225)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04630015114940",
+          "ru_number": "ЛП-№(012225)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Аторвастатин Альфактив",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "10 мг",
+        "manufacturer": "ООО ОЗОН ФАРМ",
+        "ru_number": "ЛП-№(012225)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04630015114940",
+            "esklp_code": "21.20.10.149-000001-1-00043-2000001530870",
+            "ru_number": "ЛП-№(012225)-(РГ-RU)",
+            "ru_date": "24.10.2025",
+            "pack_size": "30 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 30 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Аторвастатин Альфактив таблетки, покрытые пленочной оболочкой 10 мг"
+          }
+        ],
+        "slug": "atorvastatin-alfaktiv-10-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "atorvastatin-alfaktiv-10-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "a2abbb595fc08ce27d018165",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "20 мг",
+      "ru_number": "ЛП-№(012225)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04630015114971",
+          "ru_number": "ЛП-№(012225)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Аторвастатин Альфактив",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "20 мг",
+        "manufacturer": "ООО ОЗОН ФАРМ",
+        "ru_number": "ЛП-№(012225)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04630015114971",
+            "esklp_code": "21.20.10.149-000001-1-00092-2000001530748",
+            "ru_number": "ЛП-№(012225)-(РГ-RU)",
+            "ru_date": "24.10.2025",
+            "pack_size": "30 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 30 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Аторвастатин Альфактив таблетки, покрытые пленочной оболочкой 20 мг"
+          }
+        ],
+        "slug": "atorvastatin-alfaktiv-20-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "atorvastatin-alfaktiv-20-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "a2abbb595fc08ce27d018165",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "40 мг",
+      "ru_number": "ЛП-№(012225)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04630015114988",
+          "ru_number": "ЛП-№(012225)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Аторвастатин Альфактив",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "40 мг",
+        "manufacturer": "ООО ОЗОН ФАРМ",
+        "ru_number": "ЛП-№(012225)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04630015114988",
+            "esklp_code": "21.20.10.149-000001-1-00057-2000001530720",
+            "ru_number": "ЛП-№(012225)-(РГ-RU)",
+            "ru_date": "24.10.2025",
+            "pack_size": "30 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 30 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Аторвастатин Альфактив таблетки, покрытые пленочной оболочкой 40 мг"
+          }
+        ],
+        "slug": "atorvastatin-alfaktiv-40-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "atorvastatin-alfaktiv-40-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "a2abbb595fc08ce27d018165",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "80 мг",
+      "ru_number": "ЛП-№(012225)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04630015115671",
+          "ru_number": "ЛП-№(012225)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Аторвастатин Альфактив",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "80 мг",
+        "manufacturer": "ООО ОЗОН ФАРМ",
+        "ru_number": "ЛП-№(012225)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04630015115671",
+            "esklp_code": "21.20.10.149-000001-1-00017-2000001531243",
+            "ru_number": "ЛП-№(012225)-(РГ-RU)",
+            "ru_date": "24.10.2025",
+            "pack_size": "2 × 15 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 15 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Аторвастатин Альфактив таблетки, покрытые пленочной оболочкой 80 мг"
+          }
+        ],
+        "slug": "atorvastatin-alfaktiv-80-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "atorvastatin-alfaktiv-80-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "a9091000eaf4542ff7c32a95",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "500 мг",
+      "ru_number": "ЛП-№(007581)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04620305920177",
+          "ru_number": "ЛП-№(007581)-(РГ-RU)"
+        },
+        {
+          "gtin": "04620305920184",
+          "ru_number": "ЛП-№(007581)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Урсогепатол",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "500 мг",
+        "manufacturer": "АО АВВА РУС",
+        "ru_number": "ЛП-№(007581)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04620305920177",
+            "esklp_code": "21.20.10.114-000004-1-00009-2000001416569",
+            "ru_number": "ЛП-№(007581)-(РГ-RU)",
+            "ru_date": "08.11.2024",
+            "pack_size": "5 × 10 шт",
+            "primary_pack_desc": "5 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "5",
+            "label_name": "Урсогепатол, таблетки, покрытые пленочной оболочкой, 500 мг"
+          },
+          {
+            "gtin": "04620305920184",
+            "esklp_code": "21.20.10.114-000004-1-00009-2000001416572",
+            "ru_number": "ЛП-№(007581)-(РГ-RU)",
+            "ru_date": "08.11.2024",
+            "pack_size": "100 шт",
+            "primary_pack_desc": "БАНКА по 100 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Урсогепатол, таблетки, покрытые пленочной оболочкой, 500 мг"
+          }
+        ],
+        "slug": "ursogepatol-500-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "ursogepatol-500-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "a9091000eaf4542ff7c32a95",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "250 мг",
+      "ru_number": "ЛП-№(007581)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04620305921570",
+          "ru_number": "ЛП-№(007581)-(РГ-RU)"
+        },
+        {
+          "gtin": "04620305921686",
+          "ru_number": "ЛП-№(007581)-(РГ-RU)"
+        },
+        {
+          "gtin": "04620305921693",
+          "ru_number": "ЛП-№(007581)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Урсогепатол",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "250 мг",
+        "manufacturer": "АО АВВА РУС",
+        "ru_number": "ЛП-№(007581)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04620305921570",
+            "esklp_code": "21.20.10.114-000004-1-00076-2000001416562",
+            "ru_number": "ЛП-№(007581)-(РГ-RU)",
+            "ru_date": "08.11.2024",
+            "pack_size": "5 × 10 шт",
+            "primary_pack_desc": "5 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "5",
+            "label_name": "Урсогепатол, таблетки, покрытые пленочной оболочкой, 250 мг"
+          },
+          {
+            "gtin": "04620305921686",
+            "esklp_code": "21.20.10.114-000004-1-00076-2000001416565",
+            "ru_number": "ЛП-№(007581)-(РГ-RU)",
+            "ru_date": "08.11.2024",
+            "pack_size": "100 шт",
+            "primary_pack_desc": "БАНКА по 100 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Урсогепатол, таблетки, покрытые пленочной оболочкой, 250 мг"
+          },
+          {
+            "gtin": "04620305921693",
+            "esklp_code": "21.20.10.114-000004-1-00076-2000001416560",
+            "ru_number": "ЛП-№(007581)-(РГ-RU)",
+            "ru_date": "08.11.2024",
+            "pack_size": "10 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Урсогепатол, таблетки, покрытые пленочной оболочкой, 250 мг"
+          }
+        ],
+        "slug": "ursogepatol-250-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "ursogepatol-250-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "aeeab2eb3baec9e4f43e26d0",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "150 мг",
+      "ru_number": "ЛП-№(006893)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04606486026181",
+          "ru_number": "ЛП-№(006893)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486026204",
+          "ru_number": "ЛП-№(006893)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Ламивудин Канон",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "150 мг",
+        "manufacturer": "ЗАО КАНОНФАРМА ПРОДАКШН",
+        "ru_number": "ЛП-№(006893)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04606486026181",
+            "esklp_code": "21.20.10.194-000038-1-00057-2000001406825",
+            "ru_number": "ЛП-№(006893)-(РГ-RU)",
+            "ru_date": "16.09.2024",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Ламивудин Канон таблетки, покрытые пленочной оболочкой, 150 мг"
+          },
+          {
+            "gtin": "04606486026204",
+            "esklp_code": "21.20.10.194-000038-1-00057-2000001406830",
+            "ru_number": "ЛП-№(006893)-(РГ-RU)",
+            "ru_date": "16.09.2024",
+            "pack_size": "9 × 10 шт",
+            "primary_pack_desc": "9 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "9",
+            "label_name": "Ламивудин Канон таблетки, покрытые пленочной оболочкой, 150 мг"
+          },
+          {
+            "gtin": "04606486034933",
+            "esklp_code": "21.20.10.194-000038-1-00057-2000001406826",
+            "ru_number": "ЛП-№(006893)-(РГ-RU)",
+            "ru_date": "16.09.2024",
+            "pack_size": "30 шт",
+            "primary_pack_desc": "БАНКА по 30 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Ламивудин Канон таблетки, покрытые пленочной оболочкой, 150 мг банка (производство ЗАО \"Канонфарма продашн\")"
+          },
+          {
+            "gtin": "04606486034940",
+            "esklp_code": "21.20.10.194-000038-1-00057-2000001406829",
+            "ru_number": "ЛП-№(006893)-(РГ-RU)",
+            "ru_date": "16.09.2024",
+            "pack_size": "60 шт",
+            "primary_pack_desc": "БАНКА по 60 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Ламивудин Канон таблетки, покрытые пленочной оболочкой, 150 мг банка (производство ЗАО \"Канонфарма продашн\")"
+          },
+          {
+            "gtin": "04606486034957",
+            "esklp_code": "21.20.10.194-000038-1-00057-2000001406831",
+            "ru_number": "ЛП-№(006893)-(РГ-RU)",
+            "ru_date": "16.09.2024",
+            "pack_size": "90 шт",
+            "primary_pack_desc": "БАНКА по 90 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Ламивудин Канон таблетки, покрытые пленочной оболочкой, 150 мг банка (производство ЗАО \"Канонфарма продашн\")"
+          }
+        ],
+        "slug": "lamivudin-kanon-150-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "lamivudin-kanon-150-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "b380f49f1a2d07b84046282f",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "15 мг",
+      "ru_number": "ЛП-№(000808)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04690655027550",
+          "ru_number": "ЛП-№(000808)-(РГ-RU)"
+        },
+        {
+          "gtin": "04690655027604",
+          "ru_number": "ЛП-№(000808)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Ривароксабан-СЗ",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "15 мг",
+        "manufacturer": "НАО СЕВЕРНАЯ ЗВЕЗДА",
+        "ru_number": "ЛП-№(000808)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04690655027550",
+            "esklp_code": "21.20.10.131-000022-1-00045-2000001384977",
+            "ru_number": "ЛП-№(000808)-(РГ-RU)",
+            "ru_date": "23.05.2022",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Ривароксабан-СЗ таблетки, покрытые пленочной оболочкой, 15 мг"
+          },
+          {
+            "gtin": "04690655027604",
+            "esklp_code": "21.20.10.131-000022-1-00045-2000001384982",
+            "ru_number": "ЛП-№(000808)-(РГ-RU)",
+            "ru_date": "23.05.2022",
+            "pack_size": "3 × 30 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 30 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Ривароксабан-СЗ таблетки, покрытые пленочной оболочкой, 15 мг"
+          }
+        ],
+        "slug": "rivaroksaban-sz-15-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "rivaroksaban-sz-15-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "b380f49f1a2d07b84046282f",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "20 мг",
+      "ru_number": "ЛП-№(000808)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04690655027758",
+          "ru_number": "ЛП-№(000808)-(РГ-RU)"
+        },
+        {
+          "gtin": "04690655027857",
+          "ru_number": "ЛП-№(000808)-(РГ-RU)"
+        },
+        {
+          "gtin": "04690655027840",
+          "ru_number": "ЛП-№(000808)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Ривароксабан-СЗ",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "20 мг",
+        "manufacturer": "НАО СЕВЕРНАЯ ЗВЕЗДА",
+        "ru_number": "ЛП-№(000808)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04690655027758",
+            "esklp_code": "21.20.10.131-000022-1-00006-2000001384986",
+            "ru_number": "ЛП-№(000808)-(РГ-RU)",
+            "ru_date": "23.05.2022",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Ривароксабан-СЗ таблетки, покрытые пленочной оболочкой, 20 мг"
+          },
+          {
+            "gtin": "04690655027857",
+            "esklp_code": "21.20.10.131-000022-1-00006-2000001386538",
+            "ru_number": "ЛП-№(000808)-(РГ-RU)",
+            "ru_date": "23.05.2022",
+            "pack_size": "3 × 30 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 30 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Ривароксабан-СЗ таблетки, покрытые пленочной оболочкой, 20 мг"
+          },
+          {
+            "gtin": "04690655027840",
+            "esklp_code": "21.20.10.131-000022-1-00006-2000001386534",
+            "ru_number": "ЛП-№(000808)-(РГ-RU)",
+            "ru_date": "23.05.2022",
+            "pack_size": "2 × 30 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 30 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Ривароксабан-СЗ таблетки, покрытые пленочной оболочкой, 20 мг"
+          }
+        ],
+        "slug": "rivaroksaban-sz-20-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "rivaroksaban-sz-20-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "b380f49f1a2d07b84046282f",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "10 мг",
+      "ru_number": "ЛП-№(000808)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04690655031113",
+          "ru_number": "ЛП-№(000808)-(РГ-RU)"
+        },
+        {
+          "gtin": "04690655031168",
+          "ru_number": "ЛП-№(000808)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Ривароксабан-СЗ",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "10 мг",
+        "manufacturer": "НАО СЕВЕРНАЯ ЗВЕЗДА",
+        "ru_number": "ЛП-№(000808)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04690655031113",
+            "esklp_code": "21.20.10.131-000022-1-00076-2000001400092",
+            "ru_number": "ЛП-№(000808)-(РГ-RU)",
+            "ru_date": "23.05.2022",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Ривароксабан-СЗ таблетки, покрытые пленочной оболочкой, 10 мг"
+          },
+          {
+            "gtin": "04690655031168",
+            "esklp_code": "21.20.10.131-000022-1-00076-2000001400087",
+            "ru_number": "ЛП-№(000808)-(РГ-RU)",
+            "ru_date": "23.05.2022",
+            "pack_size": "3 × 30 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 30 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Ривароксабан-СЗ таблетки, покрытые пленочной оболочкой, 10 мг"
+          }
+        ],
+        "slug": "rivaroksaban-sz-10-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "rivaroksaban-sz-10-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "b81a0c380c7c18abcd148807",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "360 мг",
+      "ru_number": "ЛП-№(010083)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04610011974243",
+          "ru_number": "ЛП-№(010083)-(РГ-RU)"
+        },
+        {
+          "gtin": "04610011974236",
+          "ru_number": "ЛП-№(010083)-(РГ-RU)"
+        },
+        {
+          "gtin": "04610011974229",
+          "ru_number": "ЛП-№(010083)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Деферазирокс",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "360 мг",
+        "manufacturer": "ООО МАКИЗ-ФАРМА",
+        "ru_number": "ЛП-№(010083)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04610011974243",
+            "esklp_code": "21.20.23.190-000023-1-00166-2000001490891",
+            "ru_number": "ЛП-№(010083)-(РГ-RU)",
+            "ru_date": "12.05.2025",
+            "pack_size": "9 × 10 шт",
+            "primary_pack_desc": "9 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "9",
+            "label_name": "Деферазирокс, таблетки, покрытые пленочной оболочкой, 360 мг"
+          },
+          {
+            "gtin": "04610011974236",
+            "esklp_code": "21.20.23.190-000023-1-00166-2000001490892",
+            "ru_number": "ЛП-№(010083)-(РГ-RU)",
+            "ru_date": "12.05.2025",
+            "pack_size": "6 × 10 шт",
+            "primary_pack_desc": "6 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "6",
+            "label_name": "Деферазирокс, таблетки, покрытые пленочной оболочкой, 360 мг"
+          },
+          {
+            "gtin": "04610011974229",
+            "esklp_code": "21.20.23.190-000023-1-00166-2000001490893",
+            "ru_number": "ЛП-№(010083)-(РГ-RU)",
+            "ru_date": "12.05.2025",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Деферазирокс, таблетки, покрытые пленочной оболочкой, 360 мг"
+          }
+        ],
+        "slug": "deferaziroks-360-mg-tabletki-pokrytye-obolochkoy-2",
+        "canonical_slug": "deferaziroks-360-mg-tabletki-pokrytye-obolochkoy-2",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "b81a0c380c7c18abcd148807",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "180 мг",
+      "ru_number": "ЛП-№(010083)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04610011974212",
+          "ru_number": "ЛП-№(010083)-(РГ-RU)"
+        },
+        {
+          "gtin": "04610011974205",
+          "ru_number": "ЛП-№(010083)-(РГ-RU)"
+        },
+        {
+          "gtin": "04610011974199",
+          "ru_number": "ЛП-№(010083)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Деферазирокс",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "180 мг",
+        "manufacturer": "ООО МАКИЗ-ФАРМА",
+        "ru_number": "ЛП-№(010083)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04610011974212",
+            "esklp_code": "21.20.23.190-000023-1-00252-2000001490883",
+            "ru_number": "ЛП-№(010083)-(РГ-RU)",
+            "ru_date": "12.05.2025",
+            "pack_size": "9 × 10 шт",
+            "primary_pack_desc": "9 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "9",
+            "label_name": "Деферазирокс, таблетки, покрытые пленочной оболочкой, 180 мг"
+          },
+          {
+            "gtin": "04610011974205",
+            "esklp_code": "21.20.23.190-000023-1-00252-2000001490884",
+            "ru_number": "ЛП-№(010083)-(РГ-RU)",
+            "ru_date": "12.05.2025",
+            "pack_size": "6 × 10 шт",
+            "primary_pack_desc": "6 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "6",
+            "label_name": "Деферазирокс, таблетки, покрытые пленочной оболочкой, 180 мг"
+          },
+          {
+            "gtin": "04610011974199",
+            "esklp_code": "21.20.23.190-000023-1-00252-2000001490885",
+            "ru_number": "ЛП-№(010083)-(РГ-RU)",
+            "ru_date": "12.05.2025",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Деферазирокс, таблетки, покрытые пленочной оболочкой, 180 мг"
+          }
+        ],
+        "slug": "deferaziroks-180-mg-tabletki-pokrytye-obolochkoy-2",
+        "canonical_slug": "deferaziroks-180-mg-tabletki-pokrytye-obolochkoy-2",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "b8c04665d8e3d68f6395c287",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "500 мг",
+      "ru_number": "ЛП-№(012586)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04630106830728",
+          "ru_number": "ЛП-№(012586)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Саквинавир-АМЕДАРТ",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "500 мг",
+        "manufacturer": "ООО АМЕДАРТ",
+        "ru_number": "ЛП-№(012586)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04630106830728",
+            "esklp_code": "21.20.10.194-000020-1-00129-2000001868378",
+            "ru_number": "ЛП-№(012586)-(РГ-RU)",
+            "ru_date": "26.11.2025",
+            "pack_size": "120 шт",
+            "primary_pack_desc": "БАНКА по 120 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Саквинавир-АМЕДАРТ, таблетки, покрытые пленочной оболочкой, 500 мг"
+          }
+        ],
+        "slug": "sakvinavir-amedart-500-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "sakvinavir-amedart-500-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "cb5a99b97834a728c7651150",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "10 мг",
+      "ru_number": "ЛП-№(005057)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04690655029110",
+          "ru_number": "ЛП-№(005057)-(РГ-RU)"
+        },
+        {
+          "gtin": "04690655029127",
+          "ru_number": "ЛП-№(005057)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Мемантин-СЗ",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "10 мг",
+        "manufacturer": "НАО СЕВЕРНАЯ ЗВЕЗДА",
+        "ru_number": "ЛП-№(005057)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04690655029110",
+            "esklp_code": "21.20.10.236-000006-1-00183-2000001338594",
+            "ru_number": "ЛП-№(005057)-(РГ-RU)",
+            "ru_date": "02.04.2024",
+            "pack_size": "30 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 30 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Мемантин-СЗ таблетки, покрытые пленочной оболочкой, 10 мг"
+          },
+          {
+            "gtin": "04690655029127",
+            "esklp_code": "21.20.10.236-000006-1-00183-2000001338592",
+            "ru_number": "ЛП-№(005057)-(РГ-RU)",
+            "ru_date": "02.04.2024",
+            "pack_size": "3 × 30 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 30 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Мемантин-СЗ таблетки, покрытые пленочной оболочкой, 10 мг"
+          }
+        ],
+        "slug": "memantin-sz-10-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "memantin-sz-10-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "cb5a99b97834a728c7651150",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "20 мг",
+      "ru_number": "ЛП-№(005057)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04690655029103",
+          "ru_number": "ЛП-№(005057)-(РГ-RU)"
+        },
+        {
+          "gtin": "04690655031212",
+          "ru_number": "ЛП-№(005057)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Мемантин-СЗ",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "20 мг",
+        "manufacturer": "НАО СЕВЕРНАЯ ЗВЕЗДА",
+        "ru_number": "ЛП-№(005057)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04690655029103",
+            "esklp_code": "21.20.10.236-000006-1-00081-2000001338591",
+            "ru_number": "ЛП-№(005057)-(РГ-RU)",
+            "ru_date": "02.04.2024",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Мемантин-СЗ таблетки, покрытые пленочной оболочкой, 20 мг"
+          },
+          {
+            "gtin": "04690655031212",
+            "esklp_code": "21.20.10.236-000006-1-00081-2000001494055",
+            "ru_number": "ЛП-№(005057)-(РГ-RU)",
+            "ru_date": "02.04.2024",
+            "pack_size": "9 × 10 шт",
+            "primary_pack_desc": "9 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "9",
+            "label_name": "Мемантин-СЗ таблетки, покрытые пленочной оболочкой, 20 мг"
+          }
+        ],
+        "slug": "memantin-sz-20-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "memantin-sz-20-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "d279c75e0088cac9ddec6086",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "5 мг",
+      "ru_number": "ЛП-№(005737)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04606486044673",
+          "ru_number": "ЛП-№(005737)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Айвест Канон",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "5 мг",
+        "manufacturer": "ЗАО КАНОНФАРМА ПРОДАКШН",
+        "ru_number": "ЛП-№(005737)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04606486044673",
+            "esklp_code": "21.20.10.256-000004-1-00014-2000001377905",
+            "ru_number": "ЛП-№(005737)-(РГ-RU)",
+            "ru_date": "13.06.2024",
+            "pack_size": "10 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Айвест® Канон таблетки, покрытые пленочной оболочкой, 5 мг"
+          },
+          {
+            "gtin": "04606486044680",
+            "esklp_code": "21.20.10.256-000004-1-00014-2000001850469",
+            "ru_number": "ЛП-001854",
+            "ru_date": "27.09.2012",
+            "pack_size": "2 × 10 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Айвест® Канон таблетки, покрытые пленочной оболочкой, 5 мг"
+          },
+          {
+            "gtin": "04606486044697",
+            "esklp_code": "21.20.10.256-000004-1-00014-2000001796640",
+            "ru_number": "ЛП-001854",
+            "ru_date": "27.09.2012",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Айвест® Канон таблетки, покрытые пленочной оболочкой, 5 мг"
+          },
+          {
+            "gtin": "04606486044703",
+            "esklp_code": "21.20.10.256-000004-1-00014-2000001719995",
+            "ru_number": "ЛП-001854",
+            "ru_date": "27.09.2012",
+            "pack_size": "30 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 30 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Айвест® Канон таблетки, покрытые пленочной оболочкой, 5 мг"
+          },
+          {
+            "gtin": "04606486044710",
+            "esklp_code": "21.20.10.256-000004-1-00014-2000001708055",
+            "ru_number": "ЛП-001854",
+            "ru_date": "27.09.2012",
+            "pack_size": "2 × 30 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 30 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Айвест® Канон таблетки, покрытые пленочной оболочкой, 5 мг"
+          }
+        ],
+        "slug": "ayvest-kanon-5-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "ayvest-kanon-5-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "e0f7dfafe5a7a1264d1d09a6",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "14 мг",
+      "ru_number": "ЛП-№(002779)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04607028399312",
+          "ru_number": "ЛП-№(002779)-(РГ-RU)"
+        },
+        {
+          "gtin": "04607028399442",
+          "ru_number": "ЛП-№(002779)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Терифлуномид",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "14 мг",
+        "manufacturer": "АО БИОКАД",
+        "ru_number": "ЛП-005229",
+        "variants": [
+          {
+            "gtin": "04607028396090",
+            "esklp_code": "21.20.10.214-000010-1-00008-2000001650697",
+            "ru_number": "ЛП-005229",
+            "ru_date": "03.12.2018",
+            "pack_size": "2 × 14 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 14 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "терифлуномид, таблетки покрытые пленочной оболочкой, 14 мг (№28 томск зао \"биокад\")"
+          },
+          {
+            "gtin": "04607028398056",
+            "esklp_code": "21.20.10.214-000010-1-00008-2000001650697",
+            "ru_number": "ЛП-005229",
+            "ru_date": "03.12.2018",
+            "pack_size": "2 × 14 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 14 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Терифлуномид, таблетки, покрытые пленочной оболочкой, 14 мг"
+          },
+          {
+            "gtin": "04607028399312",
+            "esklp_code": "21.20.10.214-000010-1-00008-2000001276028",
+            "ru_number": "ЛП-№(002779)-(РГ-RU)",
+            "ru_date": "17.07.2023",
+            "pack_size": "2 × 14 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 14 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Терифлуномид, таблетки, покрытые пленочной оболочкой, 14 мг"
+          },
+          {
+            "gtin": "04607028399442",
+            "esklp_code": "21.20.10.214-000010-1-00008-2000001276028",
+            "ru_number": "ЛП-№(002779)-(РГ-RU)",
+            "ru_date": "17.07.2023",
+            "pack_size": "2 × 14 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 14 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Терифлуномид, таблетки, покрытые пленочной оболочкой, 14 мг"
+          }
+        ],
+        "slug": "teriflunomid-14-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "teriflunomid-14-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "e165130087b308c9552a8551",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "40 мг",
+      "ru_number": "ЛП-№(007838)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04606486041818",
+          "ru_number": "ЛП-№(007838)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486041771",
+          "ru_number": "ЛП-№(007838)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Валсартан Канон",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "40 мг",
+        "manufacturer": "ЗАО КАНОНФАРМА ПРОДАКШН",
+        "ru_number": "ЛП-№(007838)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04606486041818",
+            "esklp_code": "21.20.10.148-000003-1-00207-2000001425636",
+            "ru_number": "ЛП-№(007838)-(РГ-RU)",
+            "ru_date": "27.11.2024",
+            "pack_size": "98 шт",
+            "primary_pack_desc": "БАНКА по 98 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Валсартан Канон таблетки, покрытые пленочной оболочкой 40 мг"
+          },
+          {
+            "gtin": "04606486041795",
+            "esklp_code": "21.20.10.148-000003-1-00207-2000001743823",
+            "ru_number": "ЛП-007249",
+            "ru_date": "03.08.2021",
+            "pack_size": "6 × 10 шт",
+            "primary_pack_desc": "6 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "6",
+            "label_name": "Валсартан Канон таблетки, покрытые пленочной оболочкой 40 мг"
+          },
+          {
+            "gtin": "04606486041771",
+            "esklp_code": "21.20.10.148-000003-1-00207-2000001425640",
+            "ru_number": "ЛП-№(007838)-(РГ-RU)",
+            "ru_date": "27.11.2024",
+            "pack_size": "4 × 7 шт",
+            "primary_pack_desc": "4 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 7 шт",
+            "primary_in_consumer_qty": "4",
+            "label_name": "Валсартан Канон таблетки, покрытые пленочной оболочкой 40 мг"
+          },
+          {
+            "gtin": "04606486041764",
+            "esklp_code": "21.20.10.148-000003-1-00207-2000001693492",
+            "ru_number": "ЛП-007249",
+            "ru_date": "03.08.2021",
+            "pack_size": "2 × 7 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 7 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Валсартан Канон таблетки, покрытые пленочной оболочкой, 40 мг"
+          },
+          {
+            "gtin": "04606486041788",
+            "esklp_code": "21.20.10.148-000003-1-00207-2000001865558",
+            "ru_number": "ЛП-007249",
+            "ru_date": "03.08.2021",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Валсартан Канон таблетки, покрытые пленочной оболочкой 40 мг"
+          },
+          {
+            "gtin": "04606486041801",
+            "esklp_code": "21.20.10.148-000003-1-00207-2000001871164",
+            "ru_number": "ЛП-007249",
+            "ru_date": "03.08.2021",
+            "pack_size": "9 × 10 шт",
+            "primary_pack_desc": "9 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "9",
+            "label_name": "Валсартан Канон таблетки, покрытые пленочной оболочкой 40 мг"
+          }
+        ],
+        "slug": "valsartan-kanon-40-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "valsartan-kanon-40-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "e165130087b308c9552a8551",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "80 мг",
+      "ru_number": "ЛП-№(007838)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04606486041832",
+          "ru_number": "ЛП-№(007838)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486041849",
+          "ru_number": "ЛП-№(007838)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486041863",
+          "ru_number": "ЛП-№(007838)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486041870",
+          "ru_number": "ЛП-№(007838)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Валсартан Канон",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "80 мг",
+        "manufacturer": "ЗАО КАНОНФАРМА ПРОДАКШН",
+        "ru_number": "ЛП-007249",
+        "variants": [
+          {
+            "gtin": "04606486041825",
+            "esklp_code": "21.20.10.148-000003-1-00118-2000001686795",
+            "ru_number": "ЛП-007249",
+            "ru_date": "03.08.2021",
+            "pack_size": "2 × 7 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 7 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Валсартан Канон таблетки, покрытые пленочной оболочкой 80 мг"
+          },
+          {
+            "gtin": "04606486041832",
+            "esklp_code": "21.20.10.148-000003-1-00118-2000001425634",
+            "ru_number": "ЛП-№(007838)-(РГ-RU)",
+            "ru_date": "27.11.2024",
+            "pack_size": "4 × 7 шт",
+            "primary_pack_desc": "4 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 7 шт",
+            "primary_in_consumer_qty": "4",
+            "label_name": "Валсартан Канон таблетки, покрытые пленочной оболочкой 80 мг"
+          },
+          {
+            "gtin": "04606486041849",
+            "esklp_code": "21.20.10.148-000003-1-00118-2000001425633",
+            "ru_number": "ЛП-№(007838)-(РГ-RU)",
+            "ru_date": "27.11.2024",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Валсартан Канон таблетки, покрытые пленочной оболочкой 80 мг"
+          },
+          {
+            "gtin": "04606486041856",
+            "esklp_code": "21.20.10.148-000003-1-00118-2000001804948",
+            "ru_number": "ЛП-007249",
+            "ru_date": "03.08.2021",
+            "pack_size": "6 × 10 шт",
+            "primary_pack_desc": "6 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "6",
+            "label_name": "Валсартан Канон таблетки, покрытые пленочной оболочкой 80 мг"
+          },
+          {
+            "gtin": "04606486041863",
+            "esklp_code": "21.20.10.148-000003-1-00118-2000001425631",
+            "ru_number": "ЛП-№(007838)-(РГ-RU)",
+            "ru_date": "27.11.2024",
+            "pack_size": "9 × 10 шт",
+            "primary_pack_desc": "9 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "9",
+            "label_name": "Валсартан Канон таблетки, покрытые пленочной оболочкой 80 мг"
+          },
+          {
+            "gtin": "04606486041870",
+            "esklp_code": "21.20.10.148-000003-1-00118-2000001425630",
+            "ru_number": "ЛП-№(007838)-(РГ-RU)",
+            "ru_date": "27.11.2024",
+            "pack_size": "98 шт",
+            "primary_pack_desc": "БАНКА по 98 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Валсартан Канон таблетки, покрытые пленочной оболочкой 80 мг"
+          }
+        ],
+        "slug": "valsartan-kanon-80-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "valsartan-kanon-80-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "e165130087b308c9552a8551",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "160 мг",
+      "ru_number": "ЛП-№(007838)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04606486041894",
+          "ru_number": "ЛП-№(007838)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486041900",
+          "ru_number": "ЛП-№(007838)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486041924",
+          "ru_number": "ЛП-№(007838)-(РГ-RU)"
+        },
+        {
+          "gtin": "04606486041931",
+          "ru_number": "ЛП-№(007838)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Валсартан Канон",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "160 мг",
+        "manufacturer": "ЗАО КАНОНФАРМА ПРОДАКШН",
+        "ru_number": "ЛП-№(007838)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04606486041894",
+            "esklp_code": "21.20.10.148-000003-1-00151-2000001425646",
+            "ru_number": "ЛП-№(007838)-(РГ-RU)",
+            "ru_date": "27.11.2024",
+            "pack_size": "4 × 7 шт",
+            "primary_pack_desc": "4 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 7 шт",
+            "primary_in_consumer_qty": "4",
+            "label_name": "Валсартан Канон таблетки, покрытые пленочной оболочкой 160 мг"
+          },
+          {
+            "gtin": "04606486041900",
+            "esklp_code": "21.20.10.148-000003-1-00151-2000001425645",
+            "ru_number": "ЛП-№(007838)-(РГ-RU)",
+            "ru_date": "27.11.2024",
+            "pack_size": "3 × 10 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Валсартан Канон таблетки, покрытые пленочной оболочкой 160 мг"
+          },
+          {
+            "gtin": "04606486041917",
+            "esklp_code": "21.20.10.148-000003-1-00151-2000001685788",
+            "ru_number": "ЛП-007249",
+            "ru_date": "03.08.2021",
+            "pack_size": "6 × 10 шт",
+            "primary_pack_desc": "6 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "6",
+            "label_name": "Валсартан Канон таблетки, покрытые пленочной оболочкой 160 мг"
+          },
+          {
+            "gtin": "04606486041887",
+            "esklp_code": "21.20.10.148-000003-1-00151-2000001806667",
+            "ru_number": "ЛП-007249",
+            "ru_date": "03.08.2021",
+            "pack_size": "2 × 7 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 7 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Валсартан Канон таблетки, покрытые пленочной оболочкой 160 мг"
+          },
+          {
+            "gtin": "04606486041924",
+            "esklp_code": "21.20.10.148-000003-1-00151-2000001425643",
+            "ru_number": "ЛП-№(007838)-(РГ-RU)",
+            "ru_date": "27.11.2024",
+            "pack_size": "9 × 10 шт",
+            "primary_pack_desc": "9 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+            "primary_in_consumer_qty": "9",
+            "label_name": "Валсартан Канон таблетки, покрытые пленочной оболочкой 160 мг"
+          },
+          {
+            "gtin": "04606486041931",
+            "esklp_code": "21.20.10.148-000003-1-00151-2000001425642",
+            "ru_number": "ЛП-№(007838)-(РГ-RU)",
+            "ru_date": "27.11.2024",
+            "pack_size": "98 шт",
+            "primary_pack_desc": "БАНКА по 98 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Валсартан Канон таблетки, покрытые пленочной оболочкой 160 мг"
+          }
+        ],
+        "slug": "valsartan-kanon-160-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "valsartan-kanon-160-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "ed45df9a1186bbe368b95d77",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "1 мг",
+      "ru_number": "ЛП-№(004065)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "05310001281465",
+          "ru_number": "ЛП-№(004065)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Рисдонал",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "1 мг",
+        "manufacturer": "АЛКАЛОИД АД СКОПЬЕ",
+        "ru_number": "ЛС-000780",
+        "variants": [
+          {
+            "gtin": "05310001176570",
+            "esklp_code": "21.20.10.235-000019-1-00237-2000001594255",
+            "ru_number": "ЛС-000780",
+            "ru_date": "03.08.2010",
+            "pack_size": "2 × 10 шт",
+            "primary_pack_desc": "2 x БЛИСТЕР по 10 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Рисдонал® таблетки, покрытые пленочной оболочкой 1 мг"
+          },
+          {
+            "gtin": "05310001281465",
+            "esklp_code": "21.20.10.235-000019-1-00237-2000001305996",
+            "ru_number": "ЛП-№(004065)-(РГ-RU)",
+            "ru_date": "19.12.2023",
+            "pack_size": "2 × 10 шт",
+            "primary_pack_desc": "2 x БЛИСТЕР по 10 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Рисдонал® таблетки, покрытые пленочной оболочкой 1 мг"
+          }
+        ],
+        "slug": "risdonal-1-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "risdonal-1-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "ed45df9a1186bbe368b95d77",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "2 мг",
+      "ru_number": "ЛП-№(004065)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "05310001281441",
+          "ru_number": "ЛП-№(004065)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Рисдонал",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "2 мг",
+        "manufacturer": "АЛКАЛОИД АД СКОПЬЕ",
+        "ru_number": "ЛС-000780",
+        "variants": [
+          {
+            "gtin": "05310001176587",
+            "esklp_code": "21.20.10.235-000019-1-00230-2000001591735",
+            "ru_number": "ЛС-000780",
+            "ru_date": "03.08.2010",
+            "pack_size": "2 × 10 шт",
+            "primary_pack_desc": "2 x БЛИСТЕР по 10 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Рисдонал® таблетки, покрытые пленочной оболочкой 2 мг"
+          },
+          {
+            "gtin": "05310001281441",
+            "esklp_code": "21.20.10.235-000019-1-00230-2000001310288",
+            "ru_number": "ЛП-№(004065)-(РГ-RU)",
+            "ru_date": "19.12.2023",
+            "pack_size": "2 × 10 шт",
+            "primary_pack_desc": "2 x БЛИСТЕР по 10 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Рисдонал® таблетки, покрытые пленочной оболочкой 2 мг"
+          }
+        ],
+        "slug": "risdonal-2-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "risdonal-2-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "ed45df9a1186bbe368b95d77",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "3 мг",
+      "ru_number": "ЛП-№(004065)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "05310001281458",
+          "ru_number": "ЛП-№(004065)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Рисдонал",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "3 мг",
+        "manufacturer": "АЛКАЛОИД АД СКОПЬЕ",
+        "ru_number": "ЛС-000780",
+        "variants": [
+          {
+            "gtin": "05310001176594",
+            "esklp_code": "21.20.10.235-000019-1-00107-2000001613177",
+            "ru_number": "ЛС-000780",
+            "ru_date": "03.08.2010",
+            "pack_size": "2 × 10 шт",
+            "primary_pack_desc": "2 x БЛИСТЕР по 10 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Рисдонал® таблетки, покрытые пленочной оболочкой 3 мг"
+          },
+          {
+            "gtin": "05310001281458",
+            "esklp_code": "21.20.10.235-000019-1-00107-2000001306143",
+            "ru_number": "ЛП-№(004065)-(РГ-RU)",
+            "ru_date": "19.12.2023",
+            "pack_size": "2 × 10 шт",
+            "primary_pack_desc": "2 x БЛИСТЕР по 10 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Рисдонал® таблетки, покрытые пленочной оболочкой 3 мг"
+          }
+        ],
+        "slug": "risdonal-3-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "risdonal-3-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "f0da605424f29af3564460f1",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "10 мг",
+      "ru_number": "ЛП-№(003703)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04620017868286",
+          "ru_number": "ЛП-№(003703)-(РГ-RU)"
+        },
+        {
+          "gtin": "04620017868279",
+          "ru_number": "ЛП-№(003703)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Мацитентан-ФС",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "10 мг",
+        "manufacturer": "ООО ФАРМАСИНТЕЗ-ТЮМЕНЬ",
+        "ru_number": "ЛП-№(003703)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04620017868286",
+            "esklp_code": "21.20.10.142-000013-1-00017-2000001303478",
+            "ru_number": "ЛП-№(003703)-(РГ-RU)",
+            "ru_date": "16.11.2023",
+            "pack_size": "28 шт",
+            "primary_pack_desc": "БАНКА по 28 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Мацитентан-ФС, таблетки, покрытые пленочной оболочкой, 10 мг"
+          },
+          {
+            "gtin": "04620017868279",
+            "esklp_code": "21.20.10.142-000013-1-00017-2000001303479",
+            "ru_number": "ЛП-№(003703)-(РГ-RU)",
+            "ru_date": "16.11.2023",
+            "pack_size": "4 × 7 шт",
+            "primary_pack_desc": "4 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 7 шт",
+            "primary_in_consumer_qty": "4",
+            "label_name": "Мацитентан-ФС, таблетки, покрытые пленочной оболочкой, 10 мг"
+          }
+        ],
+        "slug": "macitentan-fs-10-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "macitentan-fs-10-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "f756c985f0fbc68208020db8",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "10 мг",
+      "ru_number": "ЛП-№(001095)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04690655017216",
+          "ru_number": "ЛП-№(001095)-(РГ-RU)"
+        },
+        {
+          "gtin": "04690655027536",
+          "ru_number": "ЛП-№(001095)-(РГ-RU)"
+        },
+        {
+          "gtin": "04690655032752",
+          "ru_number": "ЛП-№(001095)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Лерканидипин-СЗ",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "10 мг",
+        "manufacturer": "НАО СЕВЕРНАЯ ЗВЕЗДА",
+        "ru_number": "ЛП-№(001095)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04690655017216",
+            "esklp_code": "21.20.10.147-000009-1-00045-2000001461124",
+            "ru_number": "ЛП-№(001095)-(РГ-RU)",
+            "ru_date": "02.08.2022",
+            "pack_size": "30 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 30 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Лерканидипин-СЗ таблетки, покрытые пленочной оболочкой, 10 мг"
+          },
+          {
+            "gtin": "04690655027536",
+            "esklp_code": "21.20.10.147-000009-1-00045-2000001461122",
+            "ru_number": "ЛП-№(001095)-(РГ-RU)",
+            "ru_date": "02.08.2022",
+            "pack_size": "2 × 30 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 30 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Лерканидипин-СЗ таблетки, покрытые пленочной оболочкой, 10 мг"
+          },
+          {
+            "gtin": "04690655032752",
+            "esklp_code": "21.20.10.147-000009-1-00045-2000001461121",
+            "ru_number": "ЛП-№(001095)-(РГ-RU)",
+            "ru_date": "02.08.2022",
+            "pack_size": "3 × 30 шт",
+            "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 30 шт",
+            "primary_in_consumer_qty": "3",
+            "label_name": "Лерканидипин-СЗ таблетки, покрытые пленочной оболочкой, 10 мг"
+          }
+        ],
+        "slug": "lerkanidipin-sz-10-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "lerkanidipin-sz-10-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    },
+    {
+      "candidate_key": "f756c985f0fbc68208020db8",
+      "source_form": "таблетки, покрытые пленочной оболочкой",
+      "source_dosage": "20 мг",
+      "ru_number": "ЛП-№(001095)-(РГ-RU)",
+      "expected_GTIN_RU": [
+        {
+          "gtin": "04690655017278",
+          "ru_number": "ЛП-№(001095)-(РГ-RU)"
+        },
+        {
+          "gtin": "04690655017285",
+          "ru_number": "ЛП-№(001095)-(РГ-RU)"
+        }
+      ],
+      "medication": {
+        "name": "Лерканидипин-СЗ",
+        "form": "ТАБЛЕТКИ, ПОКРЫТЫЕ ОБОЛОЧКОЙ",
+        "dosage": "20 мг",
+        "manufacturer": "НАО СЕВЕРНАЯ ЗВЕЗДА",
+        "ru_number": "ЛП-№(001095)-(РГ-RU)",
+        "variants": [
+          {
+            "gtin": "04690655017278",
+            "esklp_code": "21.20.10.147-000009-1-00033-2000001461116",
+            "ru_number": "ЛП-№(001095)-(РГ-RU)",
+            "ru_date": "02.08.2022",
+            "pack_size": "30 шт",
+            "primary_pack_desc": "УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 30 шт",
+            "primary_in_consumer_qty": "1",
+            "label_name": "Лерканидипин-СЗ таблетки, покрытые пленочной оболочкой, 20 мг"
+          },
+          {
+            "gtin": "04690655017285",
+            "esklp_code": "21.20.10.147-000009-1-00033-2000001461114",
+            "ru_number": "ЛП-№(001095)-(РГ-RU)",
+            "ru_date": "02.08.2022",
+            "pack_size": "2 × 30 шт",
+            "primary_pack_desc": "2 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 30 шт",
+            "primary_in_consumer_qty": "2",
+            "label_name": "Лерканидипин-СЗ таблетки, покрытые пленочной оболочкой, 20 мг"
+          }
+        ],
+        "slug": "lerkanidipin-sz-20-mg-tabletki-pokrytye-obolochkoy",
+        "canonical_slug": "lerkanidipin-sz-20-mg-tabletki-pokrytye-obolochkoy",
+        "is_canonical": true
+      }
+    }
+  ]
+}
