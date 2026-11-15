@@ -14,6 +14,7 @@ import time
 import requests
 
 from .medication_original_pdfs import MAX_PDF_BYTES, validate_original_document
+from .instruction_original_store import PermanentOriginalStore, OriginalStoreError, STORE_DIRECTORY
 
 ORIGIN = 'https://pharma.eaeunion.org'
 BASE = ORIGIN + '/platformsvc/nonauthorizedplatform'
@@ -27,12 +28,14 @@ class OriginalUnavailable(ValueError):
 
 class OfficialPdfCache:
     def __init__(self, directory='/tmp/aptekaa-official-instruction-pdfs', *, max_bytes=128 * 1024 * 1024,
-                 deadline_seconds=25, session_factory=requests.Session, clock=time.monotonic, sleep=time.sleep):
+                 deadline_seconds=25, session_factory=requests.Session, clock=time.monotonic, sleep=time.sleep,
+                 original_store_directory=STORE_DIRECTORY):
         if not MAX_PDF_BYTES <= max_bytes <= 512 * 1024 * 1024 or not 5 <= deadline_seconds <= 30:
             raise ValueError('cache and deadline must be bounded')
         self.directory = Path(directory)
         self.max_bytes, self.deadline_seconds = max_bytes, deadline_seconds
         self.session_factory, self.clock, self.sleep = session_factory, clock, sleep
+        self.original_store = PermanentOriginalStore(original_store_directory, clock=clock)
         self.directory.mkdir(parents=True, exist_ok=True, mode=0o700)
         os.chmod(self.directory, 0o700)
 
@@ -283,10 +286,16 @@ class OfficialPdfCache:
 
     def get_bytes(self, document):
         doc = validate_original_document(document)
+        deadline = self.clock() + self.deadline_seconds
+        try:
+            stored = self.original_store.get_bytes(doc, deadline=deadline)
+        except OriginalStoreError:
+            raise OriginalUnavailable('retained official original could not be verified') from None
+        if stored is not None:
+            return stored
         cached = self._cached(doc)
         if cached is not None:
             return cached
-        deadline = self.clock() + self.deadline_seconds
         with self._source_lock(deadline):
             cached = self._cached(doc)
             if cached is not None:
