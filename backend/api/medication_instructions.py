@@ -20,6 +20,8 @@ from .async_cache import AsyncTTLValue
 
 logger = logging.getLogger(__name__)
 REQUIRED_SECTIONS = MEDICAL_REQUIRED_SECTIONS
+OFFICIAL_SOURCE_OMISSIONS = "official_source_omissions"
+OMITTABLE_SOURCE_SECTIONS = frozenset({"side_effects", "interactions", "overdose", "storage"})
 MAX_DOCUMENTS = 32
 MAX_BINDINGS = 128
 MAX_SECTIONS = 128
@@ -148,6 +150,58 @@ def instruction_content_hash(sections: list[dict]) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+def _official_omissions(document, completeness, profile, sections, declared_required):
+    """Require explicit per-section, whole-original review for the narrow exception."""
+    if "profile" not in completeness:
+        if "omitted_by_source" in completeness or "omission_evidence" in completeness:
+            raise ValueError("source omissions require an explicit completeness profile")
+        return frozenset(), {}
+    if completeness["profile"] != OFFICIAL_SOURCE_OMISSIONS:
+        raise ValueError("unknown completeness profile")
+    if profile != MEDICAL_INSTRUCTION:
+        raise ValueError("source omissions are not allowed for patient_leaflet")
+    source = _object(document.get("source"), "source")
+    if source.get("kind") not in ("official_registry", "official_manufacturer"):
+        raise ValueError("source omissions require an official source")
+    omitted = completeness.get("omitted_by_source")
+    if (not isinstance(omitted, list) or not omitted or any(not isinstance(key, str) for key in omitted)
+            or len(set(omitted)) != len(omitted) or not set(omitted).issubset(OMITTABLE_SOURCE_SECTIONS)):
+        raise ValueError("omitted_by_source must be a unique nonempty list of permitted source sections")
+    present_or_required = {section["key"] for section in sections}
+    if isinstance(declared_required, list):
+        present_or_required.update(key for key in declared_required if isinstance(key, str))
+    if any(candidate == key or candidate.startswith(key + "_")
+           for key in omitted for candidate in present_or_required):
+        raise ValueError("a source-omitted section cannot also be present or required")
+    evidence = _object(completeness.get("omission_evidence"), "completeness.omission_evidence")
+    if set(evidence) != set(omitted):
+        raise ValueError("every source omission requires its own evidence")
+    original_sha256 = _sha256(document.get("original_sha256"), "original_sha256")
+    validated_evidence = {}
+    for key in omitted:
+        item = _object(evidence[key], f"omission_evidence.{key}")
+        if _sha256(item.get("original_sha256"), "omission original_sha256") != original_sha256:
+            raise ValueError("omission evidence refers to a different original")
+        if (item.get("all_pages_verified") is not True or type(item.get("page_count")) is not int
+                or item["page_count"] <= 0):
+            raise ValueError("omission evidence requires review of every page of a positive page_count")
+        reason = _required_text(item.get("reason"), f"omission_evidence.{key}.reason")
+        if len(re.findall(r"[A-Za-zА-Яа-яЁё]", reason)) < 40:
+            raise ValueError("omission evidence requires a concrete source-review reason")
+        validated_evidence[key] = {
+            "original_sha256": original_sha256, "all_pages_verified": True, "page_count": item["page_count"],
+            "reviewer": _required_text(item.get("reviewer"), f"omission_evidence.{key}.reviewer"),
+            "verified_at": _timestamp(item.get("verified_at"), f"omission_evidence.{key}.verified_at"),
+            "reason": reason,
+        }
+    if len({item["page_count"] for item in validated_evidence.values()}) != 1:
+        raise ValueError("omission evidence has inconsistent page counts for the same original")
+    return frozenset(omitted), {
+        "profile": OFFICIAL_SOURCE_OMISSIONS, "omitted_by_source": list(omitted),
+        "omission_evidence": validated_evidence,
+    }
+
+
 def validate_document(document: dict) -> dict:
     """Return a validated plain-text copy; reject draft, partial or unscoped data."""
     if not isinstance(document, dict):
@@ -162,13 +216,14 @@ def validate_document(document: dict) -> dict:
     sections = _sections(document.get("sections"))
     keys = {section["key"] for section in sections}
     declared_required = completeness.get("required_sections")
+    omitted, omission_confirmation = _official_omissions(document, completeness, profile, sections, declared_required)
     if (
         completeness.get("is_complete") is not True
         or completeness.get("full_document_confirmed") is not True
         or completeness.get("missing_sections") != []
         or not isinstance(declared_required, list)
         or any(not isinstance(key, str) for key in declared_required)
-        or not required_sections(profile).issubset(set(declared_required))
+        or not (required_sections(profile) - omitted).issubset(set(declared_required))
         or not set(declared_required).issubset(keys)
     ):
         raise ValueError("document does not contain every required source section")
@@ -258,6 +313,7 @@ def validate_document(document: dict) -> dict:
         "completeness": {
             "is_complete": True, "full_document_confirmed": True,
             "required_sections": declared_required, "missing_sections": [],
+            **omission_confirmation,
         },
     }
 

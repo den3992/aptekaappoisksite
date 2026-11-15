@@ -95,6 +95,14 @@ class PdfSectionTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             document_type("smpc")
 
+    def test_partial_official_text_does_not_opt_into_source_omission_profile(self):
+        text = "Инструкция по медицинскому применению\nСостав\nТочный состав источника.\nПоказания к применению\nТочные показания.\nПротивопоказания\nТочные противопоказания.\nСпособ применения и дозы\nТочный способ применения."
+        report = analyze_text(text)
+        self.assertEqual(report["document_type"], "medical_instruction")
+        self.assertEqual(set(report["missing_sections"]), {"side_effects", "interactions", "overdose", "storage"})
+        self.assertNotIn("profile", report)
+        self.assertNotIn("omitted_by_source", report)
+
     def test_exact_source_text_and_unknown_sections_survive_splitting(self):
         text = "Официальный документ\nСостав:\nДанные 0,1 мг.\nОсобый раздел производителя\nЕго точный текст.\nСпособ применения и дозы\nТекст источника.\nУсловия хранения\nТочный текст хранения."
         sections = split_sections(text)

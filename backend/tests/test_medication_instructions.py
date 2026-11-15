@@ -10,7 +10,8 @@ from unittest.mock import patch
 from instruction_profiles import LEAFLET_SECTION_ORDER, PATIENT_LEAFLET
 from api import make_router
 from api.medication_instructions import (
-    REQUIRED_SECTIONS, MedicationInstructionService, instruction_content_hash,
+    OFFICIAL_SOURCE_OMISSIONS, OMITTABLE_SOURCE_SECTIONS, REQUIRED_SECTIONS,
+    MedicationInstructionService, instruction_content_hash,
     match_document_to_medication, medication_identity_fingerprint, validate_document,
     plain_text,
 )
@@ -71,6 +72,23 @@ def leaflet_document():
     return doc
 
 
+def omission_document(omitted=("overdose", "interactions")):
+    doc = document()
+    doc["source"]["kind"] = "official_manufacturer"
+    doc["sections"] = [section for section in doc["sections"] if section["key"] not in omitted]
+    doc["content_hash"] = instruction_content_hash(doc["sections"])
+    doc["completeness"].update({
+        "profile": OFFICIAL_SOURCE_OMISSIONS, "omitted_by_source": list(omitted),
+        "required_sections": sorted(REQUIRED_SECTIONS - set(omitted)),
+        "omission_evidence": {key: {
+            "original_sha256": doc["original_sha256"], "all_pages_verified": True,
+            "page_count": 2, "reviewer": "offline-test", "verified_at": "2026-11-15T00:00:00Z",
+            "reason": f"Проверены обе страницы сохранённого официального PDF: раздел {key} отсутствует, последняя страница заканчивается сведениями о производителе.",
+        } for key in omitted},
+    })
+    return doc
+
+
 def binding(doc, med):
     match = match_document_to_medication(doc, med)
     return {
@@ -117,6 +135,115 @@ class Collection:
 
 
 class ValidationTests(unittest.TestCase):
+    def test_official_source_omissions_are_explicit_complete_source_reviews(self):
+        for kind in ["official_registry", "official_manufacturer"]:
+            doc = omission_document(tuple(sorted(OMITTABLE_SOURCE_SECTIONS)))
+            doc["source"]["kind"] = kind
+            original = copy.deepcopy(doc)
+            validated = validate_document(doc)
+            self.assertEqual(doc, original)
+            self.assertEqual(validated["sections"], doc["sections"])
+            self.assertEqual(validated["completeness"], doc["completeness"])
+            self.assertEqual(validate_document(validated), validated)
+            self.assertEqual(match_document_to_medication(validated, medication())["covered_variants"], 1)
+            self.assertNotIn("document_type", validated)
+            self.assertEqual(validated["sections"][-1]["key"], "driving")
+
+    def test_partial_default_unknown_profile_and_leaflet_omissions_are_rejected(self):
+        for mode in ["no-profile", "no-profile-fields", "unknown-profile", "null-profile", "leaflet", "licensed"]:
+            doc = omission_document()
+            if mode == "no-profile":
+                del doc["completeness"]["profile"]
+            if mode == "no-profile-fields":
+                for key in ["profile", "omitted_by_source", "omission_evidence"]:
+                    del doc["completeness"][key]
+            if mode == "unknown-profile":
+                doc["completeness"]["profile"] = "allow_partial"
+            if mode == "null-profile":
+                doc["completeness"]["profile"] = None
+            if mode == "leaflet":
+                doc["document_type"] = PATIENT_LEAFLET
+            if mode == "licensed":
+                doc["source"]["kind"] = "licensed_reference"
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                validate_document(doc)
+
+    def test_source_omissions_cannot_remove_core_sections_or_use_invalid_lists(self):
+        for omitted in [[], ["overdose", "overdose"], ["unknown"], ["composition"], ["indications"],
+                        ["contraindications"], ["administration"], [None], "overdose"]:
+            doc = omission_document()
+            doc["completeness"]["omitted_by_source"] = omitted
+            with self.subTest(omitted=omitted), self.assertRaises(ValueError):
+                validate_document(doc)
+        for key in REQUIRED_SECTIONS - OMITTABLE_SOURCE_SECTIONS:
+            doc = omission_document()
+            doc["sections"] = [section for section in doc["sections"] if section["key"] != key]
+            doc["completeness"]["required_sections"].remove(key)
+            doc["content_hash"] = instruction_content_hash(doc["sections"])
+            with self.subTest(missing_core=key), self.assertRaises(ValueError):
+                validate_document(doc)
+
+    def test_each_omission_requires_valid_matching_original_and_whole_page_evidence(self):
+        changes = [
+            lambda item: item.pop("original_sha256"),
+            lambda item: item.update(original_sha256="b" * 64),
+            lambda item: item.update(all_pages_verified=False),
+            lambda item: item.update(page_count=0),
+            lambda item: item.update(page_count=-1),
+            lambda item: item.update(page_count=True),
+            lambda item: item.update(page_count=1.5),
+            lambda item: item.update(page_count="2"),
+            lambda item: item.update(reviewer=""),
+            lambda item: item.update(verified_at="2026-11-15"),
+            lambda item: item.update(reason="not present"),
+            lambda item: item.pop("reason"),
+        ]
+        for change in changes:
+            for key in ["overdose", "interactions"]:
+                doc = omission_document()
+                change(doc["completeness"]["omission_evidence"][key])
+                with self.subTest(key=key, change=change), self.assertRaises(ValueError):
+                    validate_document(doc)
+        for mode in ["missing", "extra", "page-count-conflict"]:
+            doc = omission_document()
+            evidence = doc["completeness"]["omission_evidence"]
+            if mode == "missing":
+                del evidence["overdose"]
+            if mode == "extra":
+                evidence["storage"] = copy.deepcopy(evidence["overdose"])
+            if mode == "page-count-conflict":
+                evidence["overdose"]["page_count"] = 3
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                validate_document(doc)
+
+    def test_omitted_sections_cannot_be_present_or_required_including_key_families(self):
+        for location in ["sections", "required"]:
+            for key in ["overdose", "overdose_2", "overdose_extra"]:
+                doc = omission_document()
+                if location == "sections":
+                    doc["sections"].append({"key": key, "title": "Раздел источника", "text": "Полный текст исходного раздела."})
+                    doc["content_hash"] = instruction_content_hash(doc["sections"])
+                else:
+                    doc["completeness"]["required_sections"].append(key)
+                with self.subTest(location=location, key=key), self.assertRaises(ValueError):
+                    validate_document(doc)
+
+    def test_source_omission_profile_preserves_all_existing_verification_guards(self):
+        for mode in ["draft", "not-full", "missing", "changed-text", "no-version"]:
+            doc = omission_document()
+            if mode == "draft":
+                doc["verification"]["status"] = "draft"
+            if mode == "not-full":
+                doc["completeness"]["full_document_confirmed"] = False
+            if mode == "missing":
+                doc["completeness"]["missing_sections"] = ["storage"]
+            if mode == "changed-text":
+                doc["sections"][0]["text"] += "Изменение после проверки."
+            if mode == "no-version":
+                doc["version"] = ""
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                validate_document(doc)
+
     def test_legacy_canonical_document_and_hash_are_byte_compatible(self):
         validated = validate_document(document())
         self.assertNotIn("document_type", validated)
@@ -321,6 +448,19 @@ class APITests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(attached["instructions"][0]["document_type"], "patient_leaflet")
         self.assertEqual(attached["instruction_coverage"]["covered_variants"], 1)
         doc["verification"]["status"] = "draft"
+        with patch("api.medication_instructions.logger.warning"):
+            attached = await MedicationInstructionService(self.db).attach(copy.deepcopy(self.med))
+        self.assertEqual(attached["instructions"], [])
+        self.assertEqual(attached["instruction_coverage"]["covered_variants"], 0)
+
+    async def test_official_source_omissions_need_valid_review_before_public_coverage(self):
+        doc = omission_document()
+        self.documents.rows, self.bindings.rows = [doc], [binding(doc, self.med)]
+        attached = await MedicationInstructionService(self.db).attach(copy.deepcopy(self.med))
+        self.assertEqual(attached["instructions"][0]["document_type"], "medical_instruction")
+        self.assertEqual(attached["instructions"][0]["sections"], doc["sections"])
+        self.assertEqual(attached["instruction_coverage"]["covered_variants"], 1)
+        doc["completeness"]["omission_evidence"]["overdose"]["all_pages_verified"] = False
         with patch("api.medication_instructions.logger.warning"):
             attached = await MedicationInstructionService(self.db).attach(copy.deepcopy(self.med))
         self.assertEqual(attached["instructions"], [])

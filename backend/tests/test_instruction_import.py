@@ -14,7 +14,7 @@ from scripts.import_medication_instructions import (
     ImportConflict, LOCK_ID, apply_plan, build_plan,
     file_sha256, load_documents, main, rollback_batch, writer_lease,
 )
-from test_medication_instructions import document, medication
+from test_medication_instructions import document, medication, omission_document
 
 
 def matches(row, query):
@@ -161,6 +161,29 @@ class ImportTests(unittest.TestCase):
         self.assertEqual(plan["coverage_planned"]["fully_covered_cards"], 0)
         self.assertEqual(plan["coverage_planned"]["covered_variants"], 1)
         self.assertEqual(self.db.instruction_documents.writes, [])
+
+    def test_source_omissions_preserve_archive_hash_and_immutable_review_on_apply(self):
+        doc = omission_document()
+        doc["original_sha256"] = file_sha256(self.original)
+        for item in doc["completeness"]["omission_evidence"].values():
+            item["original_sha256"] = doc["original_sha256"]
+        records = [{"document": doc, "original_file": str(self.original)}]
+        plan = self.plan(records=records)
+        self.assertEqual(plan["counts"]["planned_bindings"], 1)
+        self.original.write_bytes(b"changed after whole-source review")
+        with self.assertRaises(ImportConflict):
+            apply_plan(self.db, plan, batch_id="omissions-changed-original")
+        self.assertEqual(self.db.instruction_documents.rows, [])
+        self.original.write_bytes(b"original offline source record")
+        apply_plan(self.db, plan, batch_id="omissions-reviewed")
+        stored = self.db.instruction_documents.rows[0]
+        self.assertEqual(stored["completeness"], doc["completeness"])
+        changed_review = copy.deepcopy(doc)
+        changed_review["completeness"]["omission_evidence"]["overdose"]["reason"] += " Новый комментарий проверяющего."
+        with self.assertRaises(ImportConflict):
+            apply_plan(self.db, self.plan(records=[{"document": changed_review, "original_file": str(self.original)}]))
+        self.assertEqual(self.db.medications.writes, [])
+        self.assertEqual(self.db.prices.writes, [])
 
     def test_jsonl_preview_is_offline_by_default_and_original_hash_is_checked(self):
         path = self.folder / "docs.jsonl"
