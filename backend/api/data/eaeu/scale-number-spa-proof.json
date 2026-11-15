@@ -1,0 +1,13 @@
+{
+  "source_kind": "actual official public SPA assets, already cached; zero new HTTP",
+  "document_base_url": "https://pharma.eaeunion.org/pharma/registers/26/",
+  "chunk_url": "https://pharma.eaeunion.org/pharma/registers/26/770.dc617514172fcf80.js",
+  "chunk_sha256": "5c536c148448e8b5918d72ad2ec50adf00da3d1544c502ed6014e5e1dfe8a791",
+  "runtime_sha256": "4d914853ad550eddcd0add031501a0d70e2b35f5ad9cb44fef5b2213df753b9c",
+  "chunk_filename_mapping_observed": "770:\"dc617514172fcf80\"",
+  "html_base_observed": "<base href=\"/pharma/registers/26/\">",
+  "component": "cit-dosage-with-scale-item",
+  "exact_source_snippet": "function oe(Y,et){if(1&Y&&(C.ynx(0),C.TgZ(1,\"span\"),C._uU(2,\"x10\"),C.TgZ(3,\"sup\"),C._uU(4),C.qZA()(),C.BQk()),2&Y){const G=C.oxw(2);C.xp6(4),C.Oqu(G.scaleNumber)}}function Tt(Y,et){1&Y&&(C.ynx(0),C.TgZ(1,\"span\"),C._uU(2,\"\\xa0\"),C.qZA(),C.BQk())}function Ot(Y,et){if(1&Y&&(C.TgZ(0,\"span\"),C._uU(1),C.ALo(2,\"trimZero\"),C.qZA(),C.YNc(3,oe,5,1,\"ng-container\",2),C.YNc(4,Tt,3,0,\"ng-container\",2),C.TgZ(5,\"span\"),C._uU(6),C.qZA()),2&Y){const G=C.oxw();C.xp6(1),C.Oqu(C.xi3(2,4,G.value,G.saveZeroAtEnd)),C.xp6(2),C.Q6J(\"ngIf\",G.scaleNumber&&\"0\"!==G.scaleNumber),C.xp6(1),C.Q6J(\"ngIf\",G.value||G.scaleNumber),C.xp6(2),C.Oqu(G.measure)}}",
+  "inference_from_render_template": "When scaleNumber exists and differs from string0, the official component renders literal x10 followed by a superscript containing scaleNumber, after value. This directly establishes displayed decimal exponent semantics. For explicit string0 the exponent display is suppressed. Missing value is not thereby proven equivalent to zero.",
+  "safe_initial_scope": "Only exact explicit scaleNumber string0 on both dosage and active amount; no exponent or mass/volume conversions. Unknown/blank/nonzero scales remain draft."
+}
