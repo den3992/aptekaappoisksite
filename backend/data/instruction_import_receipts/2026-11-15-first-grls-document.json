@@ -18,12 +18,11 @@
     "covered_variants": 7,
     "fully_covered": false
   },
-  "recorded_at": "2026-11-15T04:25:00Z",
   "original_sha256": "32a58e7d601d0e8c6c970e8840d880d15b964d47def0a067efe6003b34e3b785",
   "content_hash": "e4835acb989dd7574e3b7963ffab04b04bd289a6825345509943a2887df38ab6",
   "plan_hash": "86fba761f2be5fce6ba7a96d51eacdae89302b18142e6afdd4d9d16b0c129081",
-  "api_revision": "3bfa43c",
   "original_archive": ".instruction-work/originals/32a58e7d601d0e8c6c970e8840d880d15b964d47def0a067efe6003b34e3b785.pdf",
   "scope_note": "Seven exact GTINs under this registration only; the seven variants under the other registration remain uncovered.",
-  "rollback_command": "python scripts/import_medication_instructions.py --apply --rollback instructions-20261115T042007Z-197e0e76"
+  "rollback_command": "python scripts/import_medication_instructions.py --apply --rollback instructions-20261115T042007Z-197e0e76",
+  "validation_revision": "3bfa43c"
 }
