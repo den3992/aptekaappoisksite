@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 import math
 import base64
+import asyncio
 from typing import Optional, List
 from datetime import datetime, timezone
 
@@ -27,6 +28,8 @@ from .pharmacies_seed import (
 from .price_indexing import REAL_SOURCES, MATCH_OK, availability_cutoff, indexable_pairs_pipeline
 from .async_cache import AsyncTTLValue
 from .medication_instructions import MedicationInstructionService
+from .medication_original_pdfs import MedicationOriginalService, validate_original_document
+from .instruction_original_delivery import OfficialPdfCache, OriginalUnavailable
 
 
 # ---------- Helpers for analogs filtering ----------
@@ -94,6 +97,48 @@ def _search_form_priority(form: str) -> int:
 def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
     router = APIRouter()
     instruction_service = MedicationInstructionService(db)
+    original_service = MedicationOriginalService(db)
+    original_cache = OfficialPdfCache()
+    original_slots = asyncio.Semaphore(2)
+
+    async def attach_instructions(med):
+        return await original_service.attach(await instruction_service.attach(med))
+
+    @router.get('/instructions/originals/{document_id}.pdf')
+    async def instruction_original(document_id: str, download: bool = False):
+        if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{0,127}', document_id):
+            raise HTTPException(404, 'Instruction original not found')
+        raw = await db.instruction_original_documents.find_one({'id': document_id}, {'_id': 0}, max_time_ms=1500)
+        if not raw:
+            raise HTTPException(404, 'Instruction original not found')
+        try:
+            doc = validate_original_document(raw)
+        except (ValueError, KeyError, TypeError):
+            raise HTTPException(404, 'Instruction original not found') from None
+        active = await db.medication_original_bindings.find_one({
+            'document_id': document_id, 'record_type': 'binding', 'status': 'verified', 'active': True,
+        }, {'_id': 0, 'binding_id': 1}, max_time_ms=1500)
+        if not active:
+            raise HTTPException(404, 'Instruction original not found')
+        try:
+            await asyncio.wait_for(original_slots.acquire(), timeout=1)
+            task = asyncio.create_task(asyncio.to_thread(original_cache.get_bytes, doc))
+            def release_slot(completed):
+                original_slots.release()
+                if not completed.cancelled():
+                    completed.exception()
+            # Cancellation/disconnection must not release capacity while the
+            # bounded network thread is still running in the background.
+            task.add_done_callback(release_slot)
+            body = await asyncio.wait_for(asyncio.shield(task), timeout=29)
+        except (OriginalUnavailable, TimeoutError, OSError):
+            raise HTTPException(503, 'Official instruction original is temporarily unavailable') from None
+        return Response(content=body, media_type='application/pdf', headers={
+            'Content-Disposition': ('attachment' if download else 'inline') + '; filename="' + document_id + '.pdf"',
+            'ETag': '"' + doc['original_sha256'] + '"',
+            'Cache-Control': 'public, max-age=86400, immutable',
+            'X-Content-Type-Options': 'nosniff',
+        })
 
     # One definition of an indexable city/medicine pair.  The same rule is
     # used by sitemap, metadata and IndexNow: a real positive price from at
@@ -350,7 +395,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         if med.get("force_empty_stock"):
             med["prices_by_city"] = {"msk": [], "spb": []}
             med["prices_source"] = "real"
-            return await instruction_service.attach(med)
+            return await attach_instructions(med)
 
         real_prices = {"msk": [], "spb": []}
         is_curated_priority = med.get("curated_source") == "priority_medications_2026-09"
@@ -575,7 +620,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
             except Exception:
                 pass
 
-        return await instruction_service.attach(med)
+        return await attach_instructions(med)
 
     @router.get("/medications/{slug}/analogs")
     async def medication_analogs(slug: str, limit: int = 8):

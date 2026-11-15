@@ -143,7 +143,8 @@ def find_overlaps(bindings, existing_bindings=()):
     ]
 
 
-def build_plan(records, medications, *, existing_bindings=(), existing_state_checked=False):
+def build_plan(records, medications, *, existing_bindings=(), existing_state_checked=False,
+               validator=validate_document, matcher=match_document_to_medication, archive_validator=None):
     """Pure indexed preview; does not create clients, write files or touch MongoDB."""
     index = CandidateIndex(medications)
     documents, rejected, blocked_ids = {}, [], set()
@@ -152,10 +153,12 @@ def build_plan(records, medications, *, existing_bindings=(), existing_state_che
             rejected.append({"line": record.get("line"), "reason": record["error"]})
             continue
         try:
-            document = validate_document(record.get("document"))
+            document = validator(record.get("document"))
             original_file = record.get("original_file")
             if original_file and file_sha256(Path(original_file)) != document["original_sha256"]:
                 raise ImportConflict("original file SHA-256 differs")
+            if original_file and archive_validator:
+                archive_validator(document, Path(original_file))
             entry = {"document": document, "original_file": original_file, "archive_verified": bool(original_file)}
             document_id = document["id"]
             if document_id in blocked_ids:
@@ -175,7 +178,7 @@ def build_plan(records, medications, *, existing_bindings=(), existing_state_che
         matches = 0
         for med in index.candidates(document):
             candidate_comparisons += 1
-            match = match_document_to_medication(document, med)
+            match = matcher(document, med)
             if not match["matched"]:
                 continue
             row = {
@@ -268,8 +271,8 @@ def _read_medication(db, slug):
     return db.medications.find_one({"slug": slug}, IDENTITY_PROJECTION, max_time_ms=TIMEOUT_MS)
 
 
-def _verify_live_binding(row, document, med):
-    matched = match_document_to_medication(document, med)
+def _verify_live_binding(row, document, med, *, matcher=match_document_to_medication):
+    matched = matcher(document, med)
     expected_keys = sorted(_variant_key(variant) for variant in matched["bindings"])
     actual_keys = sorted(_variant_key(variant) for variant in row["variant_bindings"])
     expected_id = binding_id(document["id"], med["slug"], matched["identity_fingerprint"], matched["bindings"])
@@ -283,7 +286,8 @@ def _verify_live_binding(row, document, med):
         raise ImportConflict("proposed binding no longer matches the live document/variant identity")
 
 
-def apply_plan(db, plan, *, batch_id=None):
+def apply_plan(db, plan, *, batch_id=None, validator=validate_document,
+               matcher=match_document_to_medication, archive_validator=None):
     """Recheck live identity and conflicts; never update medication or price data."""
     if plan.get("plan_hash") != _digest({"documents": plan["documents"], "bindings": plan["bindings"]}):
         raise ImportConflict("preview plan changed; regenerate and review it")
@@ -294,7 +298,7 @@ def apply_plan(db, plan, *, batch_id=None):
         return {"mode": "apply", "batch_id": batch_id, "added_documents": 0, "added_bindings": 0}
     with writer_lease(db) as renew:
         ensure_indexes(db)
-        document_by_id = {entry["document"]["id"]: validate_document(entry["document"]) for entry in plan["documents"]}
+        document_by_id = {entry["document"]["id"]: validator(entry["document"]) for entry in plan["documents"]}
         fingerprints = {row["medicine_slug"]: row["identity_fingerprint"] for row in plan["bindings"]}
         live_medications = {}
         for slug, fingerprint in fingerprints.items():
@@ -304,18 +308,20 @@ def apply_plan(db, plan, *, batch_id=None):
                 raise ImportConflict(f"medication identity changed: {slug}")
             live_medications[slug] = med
         for row in plan["bindings"]:
-            _verify_live_binding(row, document_by_id[row["document_id"]], live_medications[row["medicine_slug"]])
+            _verify_live_binding(row, document_by_id[row["document_id"]], live_medications[row["medicine_slug"]], matcher=matcher)
         existing_rows = read_existing_bindings(db, fingerprints)
         if find_overlaps(plan["bindings"], existing_rows):
             raise ImportConflict("live active instructions overlap the proposed variants")
         for entry in plan["documents"]:
             renew()
-            document = validate_document(entry["document"])
+            document = validator(entry["document"])
             path = entry.get("original_file")
             if not path or file_sha256(Path(path)) != document["original_sha256"]:
                 raise ImportConflict("apply requires a retained original file with matching SHA-256")
+            if archive_validator:
+                archive_validator(document, Path(path))
             existing = db.instruction_documents.find_one({"id": document["id"]}, max_time_ms=TIMEOUT_MS)
-            if existing and validate_document(existing) != document:
+            if existing and validator(existing) != document:
                 raise ImportConflict("immutable document id already has a different payload")
         for row in plan["bindings"]:
             existing = db.medication_instruction_bindings.find_one({"binding_id": row["binding_id"]}, max_time_ms=TIMEOUT_MS)
@@ -343,14 +349,14 @@ def apply_plan(db, plan, *, batch_id=None):
                         "source_archive": {"path": entry["original_file"], "sha256": document["original_sha256"]},
                     })
                     added_documents += 1
-                elif validate_document(existing) != document:
+                elif validator(existing) != document:
                     raise ImportConflict("immutable document changed during import")
             for row in plan["bindings"]:
                 renew()
                 med = _read_medication(db, row["medicine_slug"])
                 if not med or medication_identity_fingerprint(med) != row["identity_fingerprint"]:
                     raise ImportConflict(f"medication identity changed before binding: {row['medicine_slug']}")
-                _verify_live_binding(row, document_by_id[row["document_id"]], med)
+                _verify_live_binding(row, document_by_id[row["document_id"]], med, matcher=matcher)
                 updated = db.medication_instruction_bindings.update_one({"binding_id": row["binding_id"]}, {
                     "$setOnInsert": {**row, "_id": row["binding_id"], "record_type": "binding", "batch_id": batch_id, "created_at": _now()},
                 }, upsert=True)
@@ -389,7 +395,8 @@ def rollback_batch(db, batch_id):
         return {"mode": "rollback", "batch_id": batch_id, "disabled_bindings": updated.modified_count, "documents_retained": True}
 
 
-def main(argv=None):
+def main(argv=None, *, validator=validate_document, matcher=match_document_to_medication,
+         archive_validator=None, db_adapter=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--documents", type=Path)
     parser.add_argument("--manifest", type=Path)
@@ -409,6 +416,8 @@ def main(argv=None):
             client = MongoClient(os.environ["MONGO_URL"], serverSelectionTimeoutMS=3000,
                                  connectTimeoutMS=3000, socketTimeoutMS=10000)
             db = client[os.environ["DB_NAME"]]
+            if db_adapter:
+                db = db_adapter(db)
         if args.rollback:
             report = rollback_batch(db, args.rollback)
         else:
@@ -416,14 +425,16 @@ def main(argv=None):
             medications = list(load_manifest(args.manifest)) if args.manifest else list(db.medications.find(
                 {"is_canonical": {"$ne": False}}, IDENTITY_PROJECTION,
             ).batch_size(250).max_time_ms(TIMEOUT_MS))
-            report = build_plan(records, medications)
+            report = build_plan(records, medications, validator=validator, matcher=matcher,
+                                archive_validator=archive_validator)
             if db is not None:
                 existing = read_existing_bindings(db, {row["medicine_slug"] for row in report["bindings"]})
                 report["overlaps"] = find_overlaps(report["bindings"], existing)
                 report["counts"]["overlaps"] = len(report["overlaps"])
                 report["existing_state_checked"] = True
             if args.apply:
-                report["applied"] = apply_plan(db, report)
+                report["applied"] = apply_plan(db, report, validator=validator, matcher=matcher,
+                                               archive_validator=archive_validator)
                 report["mode"] = "apply"
         if args.report:
             args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
