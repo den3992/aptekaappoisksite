@@ -147,6 +147,15 @@ class EaeuMetadataTests(unittest.TestCase):
                 with self.assertRaises(EaeuSourceError):
                     client.fetch_metadata(Path(directory)/"raw", Path(directory)/"out", page_size=1)
 
+    def test_overfull_final_page_is_rejected_without_claiming_complete(self):
+        session = Session([Response({"result": [record(), record("0123456789abcdef01234568")], "matchedDocuments": 1})])
+        client = EaeuInstructionClient(session=session, limiter=Limiter())
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)/"out"
+            with self.assertRaisesRegex(EaeuSourceError, "exceeds the declared total"):
+                client.fetch_metadata(Path(directory)/"raw", output, page_size=2)
+            self.assertFalse(output.exists())
+
     def test_403_or_challenge_stops_source_without_retry(self):
         for response in (Response(status=403), Response(status=500, media="text/html", content=b"<html>CAPTCHA</html>")):
             session = Session([response])

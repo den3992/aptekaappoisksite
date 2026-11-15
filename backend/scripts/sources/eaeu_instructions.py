@@ -334,6 +334,8 @@ class EaeuInstructionClient:
                     expected_total = payload["matchedDocuments"]
                 elif expected_total != payload["matchedDocuments"]:
                     raise EaeuSourceError("EAEU total changed during pagination; snapshot needs review")
+                if count + len(payload["result"]) > expected_total:
+                    raise EaeuSourceError("EAEU page exceeds the declared total; snapshot needs review")
                 for record in payload["result"]:
                     metadata = normalize_record(record, saved["retrieved_at"])
                     if metadata["record_id"] in ids:
@@ -344,7 +346,7 @@ class EaeuInstructionClient:
                 if on_progress is not None:
                     on_progress({"records": count, "expected_records": expected_total,
                                  "page": page_index + 1, "page_size": page_size})
-                if skip + len(payload["result"]) >= expected_total:
+                if count == expected_total:
                     complete = True
                     break
                 if len(payload["result"]) < page_size:
