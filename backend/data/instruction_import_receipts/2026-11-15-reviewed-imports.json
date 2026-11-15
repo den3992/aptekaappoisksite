@@ -1,23 +1,23 @@
 {
-  "verified_at": "2026-11-15T06:29:22.947543+00:00",
+  "verified_at": "2026-11-15T06:54:02.936320+00:00",
   "verified_live_database": true,
   "public_deployment_pending": true,
-  "validation_revision": "fbd9a8a586c74dc0cd555b55833a29a5d9ea264f",
+  "validation_revision": "69e17464fb1c8f0ba10c7a992cdce6e156fec306",
   "inventory": {
     "canonical_cards": 22377,
     "total_variants": 72058
   },
   "coverage": {
-    "verified_documents": 64,
+    "verified_documents": 69,
     "verified_original_documents": 4,
-    "cards_with_instructions": 79,
+    "cards_with_instructions": 85,
     "cards_with_original_pdf": 4,
-    "cards_with_either_format": 81,
-    "fully_covered_cards": 13,
-    "covered_variants": 657,
+    "cards_with_either_format": 86,
+    "fully_covered_cards": 14,
+    "covered_variants": 719,
     "original_covered_variants": 36,
-    "combined_covered_variants": 667,
-    "combined_fully_covered_cards": 14
+    "combined_covered_variants": 721,
+    "combined_fully_covered_cards": 15
   },
   "batches": [
     {
@@ -789,6 +789,66 @@
         }
       ],
       "rollback_command": "python scripts/import_medication_instructions.py --apply --rollback instructions-20261115T062809Z-58343319"
+    },
+    {
+      "batch_id": "instructions-20261115T065158Z-72284dcf",
+      "plan_hash": "cf7b038c5dcc2b4a267835bdd90020ec1157ed1355b521a8eb3cd308d405d414",
+      "content_format": "verified_inline_text",
+      "added_documents": 5,
+      "added_bindings": 6,
+      "documents": [
+        {
+          "id": "renewal-fcd39989e3b14a3795f64c2f2bfe22590ca1014078dc88359aa462c20be7f690",
+          "title": "Метопролол Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(003736)-(РГ-RU)"
+          ],
+          "original_sha256": "fcd39989e3b14a3795f64c2f2bfe22590ca1014078dc88359aa462c20be7f690",
+          "original_url": "https://www.renewal.ru/upload/iblock/c79/d609ss6j1j4qkae2q5v4xccqkrkd7ok1/Metoprolol-Instruktsiya.pdf",
+          "content_hash": "2947ffee5465a5b99cb68d28d88eb87067bc2c468fa082195a76255fd2daa840"
+        },
+        {
+          "id": "renewal-94988085cb1ccce49b7fcb239ea2ede5ce089fa63c818e0ac7c53932ff7d15d7",
+          "title": "Нимесулид Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(003053)-(РГ-RU)"
+          ],
+          "original_sha256": "94988085cb1ccce49b7fcb239ea2ede5ce089fa63c818e0ac7c53932ff7d15d7",
+          "original_url": "https://www.renewal.ru/upload/iblock/dd4/iksjr8guo7dued1wtv0tkubc7v1eus6z/Nimesulid-Reneval-_-instruktsiya-po-primeneniyu.pdf",
+          "content_hash": "f188331274d33d0431cc5a2a2a0aa0bdcd8203cd7e79fbd6b103e0db0cf75398"
+        },
+        {
+          "id": "renewal-5db76e21e4754a2b5340b2db3b226072f55a1d81cb2a520bb1c9a29f3451bea5",
+          "title": "Парацетамол Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(002597)-(РГ-RU)"
+          ],
+          "original_sha256": "5db76e21e4754a2b5340b2db3b226072f55a1d81cb2a520bb1c9a29f3451bea5",
+          "original_url": "https://www.renewal.ru/upload/iblock/0d5/pvc43taofcxbxc9wct94kzubtdwhd870/Paratsetamol-Reneval-_-instruktsiya-po-primeneniyu.pdf",
+          "content_hash": "74dc5b8ff06815ea8bf5f1fb76fa8de8ca67bd6766476014d9cbf1233bac5a36"
+        },
+        {
+          "id": "renewal-b962c2869d1c7cd9afca138937e27f936693934b27a3ebb4d73347c65b5d3d74",
+          "title": "Фуросемид Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(000784)-(РГ-RU)"
+          ],
+          "original_sha256": "b962c2869d1c7cd9afca138937e27f936693934b27a3ebb4d73347c65b5d3d74",
+          "original_url": "https://www.renewal.ru/upload/iblock/0e9/szs05t69vz639jg7632kmhrpwbb18euo/Furosemid-40-mg-_56-_-instruktsiya-po-primeneniyu.pdf",
+          "content_hash": "555907bc1603680a39f161e39b56d7ab08525e1c15250b6180646ccba21f6c89"
+        },
+        {
+          "id": "renewal-2d6dfc54bf0d52ac84d6abda9deecc5c28150888dc692ea2875b10d777fc6004",
+          "title": "Лидокаин буфус — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(006684)-(РГ-RU)"
+          ],
+          "original_sha256": "2d6dfc54bf0d52ac84d6abda9deecc5c28150888dc692ea2875b10d777fc6004",
+          "original_url": "https://www.renewal.ru/upload/iblock/981/jthd7ke9ajhkrxaj1t008bl2asj1hsiu/Instruktsiya-140kh296-mm-20-mgml-_tekst_-ot-10.01.25.pdf",
+          "content_hash": "3babef969ab4ae91a289518fa50258d8c847ac6d18dc056a28ef343f1f971ad1"
+        }
+      ],
+      "rollback_command": "python scripts/import_medication_instructions.py --apply --rollback instructions-20261115T065158Z-72284dcf"
     },
     {
       "batch_id": "instructions-20261115T052600Z-0ef26473",
