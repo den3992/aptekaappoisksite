@@ -1,0 +1,43 @@
+{
+  "status": "publicly_verified",
+  "verified_at": "2026-11-15T07:57:47.851265+00:00",
+  "backend_runtime_revision": "69e17464fb1c8f0ba10c7a992cdce6e156fec306",
+  "next_runtime_revision": "278e18156b69cdec38ea167482b3f31039c80ee6",
+  "previous_public_release_receipt": "2026-11-15-public-release.json",
+  "added_instruction_documents": {
+    "inline": 2,
+    "whole_original_pdf": 12,
+    "note": "Some dosage-scoped PDF documents reference the same immutable whole original."
+  },
+  "coverage": {
+    "verified_documents": 71,
+    "verified_original_documents": 201,
+    "cards_with_instructions": 87,
+    "cards_with_original_pdf": 241,
+    "cards_with_either_format": 319,
+    "covered_variants": 729,
+    "original_covered_variants": 524,
+    "combined_covered_variants": 1205,
+    "combined_fully_covered_cards": 144
+  },
+  "source_archive_delta": {
+    "sha256": "5755535652633932af7f6686938a9cf5b3c35030901ad4dda70c2668fa8984f4",
+    "manifest_sha256": "b21f6d5a26fc1e4a64eddea4eb4829d2e0d76d89c77e4e72f2842d86ea92374b",
+    "base_archive_sha256": "a4d96aad443c9b1ea16967440670a9bb51ad180a7f98255c4212a3c2305b569b",
+    "combined_archive_ids_equal_live_ids": true,
+    "combined_canonical_document_count": 272,
+    "new_unique_original_pdfs_seeded": 4,
+    "all_seeded_unique_pdf": 256,
+    "cache_bytes": 90266000,
+    "preexisting_files_and_source_stops_preserved": true
+  },
+  "public_acceptance": {
+    "cards_checked": 14,
+    "whole_pdf_document_routes_checked": 12,
+    "unique_original_pdf_sha256_checked": 5,
+    "complete_inline_documents_checked": 2,
+    "all_expected_sections_in_server_html": true,
+    "proof_sha256": "0d145a8f21ade79710bf24971dfde8c5d20012795bec5e26bd65c578c50f06d6"
+  },
+  "scope_note": "These gains are confirmed in the live database and public server HTML/PDF routes. Full inline text and whole PDF originals remain separate formats. No instruction coverage is claimed for remaining unverified variants."
+}

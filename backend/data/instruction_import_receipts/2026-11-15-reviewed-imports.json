@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-11-15T07:29:47.813236+00:00",
+  "verified_at": "2026-11-15T07:54:16.540078+00:00",
   "verified_live_database": true,
   "public_deployment_pending": false,
   "validation_revision": "69e17464fb1c8f0ba10c7a992cdce6e156fec306",
@@ -8,16 +8,16 @@
     "total_variants": 72058
   },
   "coverage": {
-    "verified_documents": 69,
-    "verified_original_documents": 189,
-    "cards_with_instructions": 85,
-    "cards_with_original_pdf": 229,
-    "cards_with_either_format": 305,
+    "verified_documents": 71,
+    "verified_original_documents": 201,
+    "cards_with_instructions": 87,
+    "cards_with_original_pdf": 241,
+    "cards_with_either_format": 319,
     "fully_covered_cards": 14,
-    "covered_variants": 719,
-    "original_covered_variants": 475,
-    "combined_covered_variants": 1146,
-    "combined_fully_covered_cards": 136
+    "covered_variants": 729,
+    "original_covered_variants": 524,
+    "combined_covered_variants": 1205,
+    "combined_fully_covered_cards": 144
   },
   "batches": [
     {
@@ -849,6 +849,36 @@
         }
       ],
       "rollback_command": "python scripts/import_medication_instructions.py --apply --rollback instructions-20261115T065158Z-72284dcf"
+    },
+    {
+      "batch_id": "instructions-20261115T075216Z-9068b8f6",
+      "plan_hash": "db8f105e7e32a414b7093ab4753a0cd4e2e54ed9f382105d1456780a017207f9",
+      "content_format": "verified_inline_text",
+      "added_documents": 2,
+      "added_bindings": 2,
+      "documents": [
+        {
+          "id": "renewal-0f434588a81741869854a432fdb38dabe3aefbc85d02d20cea883770507bd5ea",
+          "title": "Тамсулозин Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(001739)-(РГ-RU)"
+          ],
+          "original_sha256": "0f434588a81741869854a432fdb38dabe3aefbc85d02d20cea883770507bd5ea",
+          "original_url": "https://www.renewal.ru/upload/iblock/a4b/9sj7b4w6wrof7m06eiz36ragh8ftdt2d/Tamsulozin-Reneval-0_4-mg-_30-_-instruktsiya-po-primeneniyu.pdf",
+          "content_hash": "786dc19735744c3ca8be0b334ec885e51301b774fd364c8fa1d65826300f80a9"
+        },
+        {
+          "id": "renewal-2d5148c7da95e20db9a1f1a04cacd8a03b282c25e41de669b8e13ce816e0f4d0",
+          "title": "Триметазидин МВ Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(002846)-(РГ-RU)"
+          ],
+          "original_sha256": "2d5148c7da95e20db9a1f1a04cacd8a03b282c25e41de669b8e13ce816e0f4d0",
+          "original_url": "https://www.renewal.ru/upload/iblock/6fd/uhs2bd9hiwqvz0jgqs2tki87m9tqekv8/Trimetazidin-MV-Reneval-35-mg-_-60-_-instruktsiya-po-primeneniyu.pdf",
+          "content_hash": "a40329e60874cb65b0a4f114ac270aebde411b90428965299d7d2f63725985c5"
+        }
+      ],
+      "rollback_command": "python scripts/import_medication_instructions.py --apply --rollback instructions-20261115T075216Z-9068b8f6"
     },
     {
       "batch_id": "instructions-20261115T052600Z-0ef26473",
@@ -4657,8 +4687,234 @@
         }
       ],
       "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T072450Z-9faa1073"
+    },
+    {
+      "batch_id": "instructions-20261115T075150Z-a660ee62",
+      "plan_hash": "ca69f1d37e2ad18659c0da4899e8281fb032a7098dbbd8f0cc02499f62f62701",
+      "content_format": "official_original_pdf",
+      "added_documents": 12,
+      "added_bindings": 12,
+      "documents": [
+        {
+          "id": "canon-original-cd5ec4b3131355a3f71057e0-7cc9f4f5cafc",
+          "title": "Метформин Лонг Канон — официальная инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(006590)-(РГ-RU)"
+          ],
+          "original_sha256": "cd5ec4b3131355a3f71057e0b86cfe5db0878f90b2a548f93bbc1339c98a4c6a",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 311393,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/metformin_long_kanon_500mg_750mg_1000mg/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/a56/czg98y7ofzprd8yd2w7o0jdrv6u4kb15.pdf"
+          }
+        },
+        {
+          "id": "canon-original-42808bdcab9feae16beb71e4-f935259bcf56",
+          "title": "Рисперидон Экспресс Канон — официальная инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(010621)-(РГ-RU)"
+          ],
+          "original_sha256": "42808bdcab9feae16beb71e45a94c9ee4c1ee404d6071021336e4e8014211d6e",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 308790,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/risperidon_ekspress_kanon/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/48e/w24y1r1or9e5sc3ldwwz7qblcb96rg3p.pdf"
+          }
+        },
+        {
+          "id": "canon-original-591bbb81ebf6ecd7afba3c6a-4634266c8aae",
+          "title": "Атомоксетин Канон — официальная инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(004835)-(РГ-RU)"
+          ],
+          "original_sha256": "591bbb81ebf6ecd7afba3c6a6b2a4c11e49d331606faf89096d06382bc46f2e6",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 325543,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/atomoksetin_kanon_10_mg_18_mg_25mg/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/56e/2sda3yr1upg76ydfd8v38mc32mtglvkb.pdf"
+          }
+        },
+        {
+          "id": "canon-original-591bbb81ebf6ecd7afba3c6a-129ace5664ed",
+          "title": "Атомоксетин Канон — официальная инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(004835)-(РГ-RU)"
+          ],
+          "original_sha256": "591bbb81ebf6ecd7afba3c6a6b2a4c11e49d331606faf89096d06382bc46f2e6",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 325543,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/atomoksetin_kanon_10_mg_18_mg_25mg/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/56e/2sda3yr1upg76ydfd8v38mc32mtglvkb.pdf"
+          }
+        },
+        {
+          "id": "canon-original-591bbb81ebf6ecd7afba3c6a-aa480c30e391",
+          "title": "Атомоксетин Канон — официальная инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(004835)-(РГ-RU)"
+          ],
+          "original_sha256": "591bbb81ebf6ecd7afba3c6a6b2a4c11e49d331606faf89096d06382bc46f2e6",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 325543,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/atomoksetin_kanon_10_mg_18_mg_25mg/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/56e/2sda3yr1upg76ydfd8v38mc32mtglvkb.pdf"
+          }
+        },
+        {
+          "id": "canon-original-591bbb81ebf6ecd7afba3c6a-c80fdb5f17fa",
+          "title": "Атомоксетин Канон — официальная инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(004835)-(РГ-RU)"
+          ],
+          "original_sha256": "591bbb81ebf6ecd7afba3c6a6b2a4c11e49d331606faf89096d06382bc46f2e6",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 325543,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/atomoksetin_kanon_10_mg_18_mg_25mg/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/56e/2sda3yr1upg76ydfd8v38mc32mtglvkb.pdf"
+          }
+        },
+        {
+          "id": "canon-original-541b60a63c98f1c764a4421f-9512c04e864d",
+          "title": "Ибупрофен Канон — официальная инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(005268)-(РГ-RU)"
+          ],
+          "original_sha256": "541b60a63c98f1c764a4421f2b4d684c8198c18641ec4ccd10e80e2b18824797",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 292616,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/ibuprofen_kanon_200_mg_400_mg/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/be3/m0s1pu8q4gxga31svhgom2hpg3grewz3.pdf"
+          }
+        },
+        {
+          "id": "canon-original-4a92d33452f1b2278c14873c-d4e5904f9ddb",
+          "title": "Тримебутин Канон — официальная инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(004609)-(РГ-RU)"
+          ],
+          "original_sha256": "4a92d33452f1b2278c14873cfc8e05bfc866623aac1cdae644daf2576fccd398",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 235380,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/trimebutin_kanon/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/eec/6djb6gfoupk2ut107g0bqhfp7yqydx28.pdf"
+          }
+        },
+        {
+          "id": "canon-original-4a92d33452f1b2278c14873c-cf73dd98236d",
+          "title": "Тримебутин Канон — официальная инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(004609)-(РГ-RU)"
+          ],
+          "original_sha256": "4a92d33452f1b2278c14873cfc8e05bfc866623aac1cdae644daf2576fccd398",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 235380,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/trimebutin_kanon/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/eec/6djb6gfoupk2ut107g0bqhfp7yqydx28.pdf"
+          }
+        },
+        {
+          "id": "canon-original-cd5ec4b3131355a3f71057e0-08bfa16ef7d8",
+          "title": "Метформин Лонг Канон — официальная инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(006590)-(РГ-RU)"
+          ],
+          "original_sha256": "cd5ec4b3131355a3f71057e0b86cfe5db0878f90b2a548f93bbc1339c98a4c6a",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 311393,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/metformin_long_kanon_500mg_750mg_1000mg/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/a56/czg98y7ofzprd8yd2w7o0jdrv6u4kb15.pdf"
+          }
+        },
+        {
+          "id": "canon-original-cd5ec4b3131355a3f71057e0-7b459dd0090d",
+          "title": "Метформин Лонг Канон — официальная инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(006590)-(РГ-RU)"
+          ],
+          "original_sha256": "cd5ec4b3131355a3f71057e0b86cfe5db0878f90b2a548f93bbc1339c98a4c6a",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 311393,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/metformin_long_kanon_500mg_750mg_1000mg/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/a56/czg98y7ofzprd8yd2w7o0jdrv6u4kb15.pdf"
+          }
+        },
+        {
+          "id": "canon-original-42808bdcab9feae16beb71e4-36923699fb92",
+          "title": "Рисперидон Экспресс Канон — официальная инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(010621)-(РГ-RU)"
+          ],
+          "original_sha256": "42808bdcab9feae16beb71e45a94c9ee4c1ee404d6071021336e4e8014211d6e",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 308790,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/risperidon_ekspress_kanon/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/48e/w24y1r1or9e5sc3ldwwz7qblcb96rg3p.pdf"
+          }
+        }
+      ],
+      "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T075150Z-a660ee62"
     }
   ],
-  "scope_note": "Coverage is verified against current live variant identities. Text and complete official PDF originals are counted separately; combined coverage uses the union of variant identities. Unverified registrations and manufacturers remain uncovered. Database imports and public application deployment are confirmed by the separate public release receipt.",
-  "public_release_receipt": "2026-11-15-public-release.json"
+  "scope_note": "These gains are confirmed in the live database and public server HTML/PDF routes. Full inline text and whole PDF originals remain separate formats. No instruction coverage is claimed for remaining unverified variants.",
+  "public_release_receipt": "2026-11-15-incremental-canon-renewal-release.json"
 }
