@@ -75,7 +75,7 @@ def validate_archive(document, path: Path):
 def main(argv=None):
     return import_main(argv, validator=validate_original_document,
                        matcher=match_original_to_medication, archive_validator=validate_archive,
-                       db_adapter=OriginalCollections)
+                       db_adapter=OriginalCollections, allow_variant_form_evidence=True)
 
 
 if __name__ == '__main__':

@@ -189,7 +189,7 @@ def validate_original_document(raw):
     }
 
 
-def match_original_to_medication(document, med):
+def match_original_to_medication(document, med, *, variant_form_evidence=None):
     doc = validate_original_document(document)
     variants = med.get('variants') or []
     result = {'matched': False, 'bindings': [], 'total_variants': len(variants), 'covered_variants': 0,
@@ -200,6 +200,14 @@ def match_original_to_medication(document, med):
             or _identity(med.get('manufacturer')) not in {_identity(v) for v in identity['manufacturers']}):
         result['reasons'].append('canonical medication name or explicit manufacturer differs')
         return result
+    form_keys = set()
+    if variant_form_evidence is not None:
+        from .canon_variant_form_evidence import eligible_variant_keys
+        try:
+            form_keys = eligible_variant_keys(doc, med, variant_form_evidence)
+        except (ValueError, KeyError, TypeError, AttributeError):
+            # Optional evidence cannot invalidate an ordinary strict binding.
+            pass
     for raw_variant in variants:
         variant = _variant(med, raw_variant)
         for scope in doc['scopes']:
@@ -207,7 +215,8 @@ def match_original_to_medication(document, med):
                 continue
             if scope['gtin'] and _gtin(variant['gtin']) != scope['gtin']:
                 continue
-            if any(_identity(scope[k]) != _identity(variant[k]) for k in ['form', 'dosage']):
+            strict = all(_identity(scope[k]) == _identity(variant[k]) for k in ['form', 'dosage'])
+            if not strict and _variant_key(variant) not in form_keys:
                 continue
             result['bindings'].append(variant)
             break
@@ -246,14 +255,28 @@ class MedicationOriginalService:
         for raw_doc in raw_docs:
             try:
                 doc = validate_original_document(raw_doc)
-                match = match_original_to_medication(doc, med)
+                strict_match = match_original_to_medication(doc, med)
             except (ValueError, KeyError, TypeError):
                 continue
-            allowed = {_variant_key(v): v for v in match['bindings']}
             bound = {}
             for row in rows:
                 if row.get('document_id') != doc['id']:
                     continue
+                # Each row must justify its own fallback. Never union one row's
+                # label proof into another row that merely names the same PDF.
+                allowed = {_variant_key(v): v for v in strict_match['bindings']}
+                proof = row.get('variant_form_evidence')
+                if proof is not None:
+                    from .canon_variant_form_evidence import evidence_digest, form_binding_id
+                    try:
+                        if (row.get('variant_form_evidence_sha256') != evidence_digest(proof)
+                                or row.get('binding_id') != form_binding_id(doc['id'], med['slug'], fingerprint,
+                                                                          row.get('variant_bindings'), proof)):
+                            raise ValueError('variant-form binding evidence differs')
+                        match = match_original_to_medication(doc, med, variant_form_evidence=proof)
+                        allowed.update({_variant_key(v): v for v in match['bindings']})
+                    except (ValueError, KeyError, TypeError, AttributeError):
+                        pass
                 for value in row.get('variant_bindings') or []:
                     if _variant_key(value) in allowed:
                         bound[_variant_key(value)] = allowed[_variant_key(value)]
@@ -276,7 +299,8 @@ class MedicationOriginalService:
         med['instruction_original_coverage'] = {'total_variants': len(variants), 'covered_variants': 0, 'fully_covered': False}
         if not med.get('slug'):
             return med
-        key = (med['slug'], medication_identity_fingerprint(med))
+        from .canon_variant_form_evidence import label_identity_digest
+        key = (med['slug'], medication_identity_fingerprint(med), label_identity_digest(med))
         if key not in self.cache:
             self.cache[key] = AsyncTTLValue(lambda: self._load(med), ttl=self.ttl, load_timeout=self.load_timeout,
                                             name='official instruction originals')

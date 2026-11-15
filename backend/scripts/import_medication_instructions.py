@@ -47,7 +47,10 @@ def file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def binding_id(document_id, medicine_slug, fingerprint, bindings) -> str:
+def binding_id(document_id, medicine_slug, fingerprint, bindings, *, variant_form_evidence=None) -> str:
+    if variant_form_evidence is not None:
+        from api.canon_variant_form_evidence import form_binding_id
+        return form_binding_id(document_id, medicine_slug, fingerprint, bindings, variant_form_evidence)
     return _digest({
         "document_id": document_id, "medicine_slug": medicine_slug,
         "identity_fingerprint": fingerprint,
@@ -97,6 +100,8 @@ def load_documents(path: Path) -> list[dict]:
                 records.append({"error": "document row must be an object", "line": line_number})
                 continue
             record = {"document": value.get("document", value), "line": line_number}
+            if 'variant_form_evidence' in value:
+                record['variant_form_evidence'] = value['variant_form_evidence']
             original_file = value.get("original_file")
             if original_file:
                 original_file = Path(original_file)
@@ -144,7 +149,8 @@ def find_overlaps(bindings, existing_bindings=()):
 
 
 def build_plan(records, medications, *, existing_bindings=(), existing_state_checked=False,
-               validator=validate_document, matcher=match_document_to_medication, archive_validator=None):
+               validator=validate_document, matcher=match_document_to_medication, archive_validator=None,
+               allow_variant_form_evidence=False):
     """Pure indexed preview; does not create clients, write files or touch MongoDB."""
     index = CandidateIndex(medications)
     documents, rejected, blocked_ids = {}, [], set()
@@ -160,6 +166,18 @@ def build_plan(records, medications, *, existing_bindings=(), existing_state_che
             if original_file and archive_validator:
                 archive_validator(document, Path(original_file))
             entry = {"document": document, "original_file": original_file, "archive_verified": bool(original_file)}
+            if 'variant_form_evidence' in record:
+                from api.canon_variant_form_evidence import validate_evidence_shape, MAX_VARIANTS
+                proofs = record['variant_form_evidence']
+                if not allow_variant_form_evidence or not isinstance(proofs, list) or not 1 <= len(proofs) <= MAX_VARIANTS:
+                    raise ImportConflict('explicit original-only variant-form evidence list is required')
+                by_slug = {}
+                for proof in proofs:
+                    validate_evidence_shape(proof)
+                    if proof['medicine_slug'] in by_slug:
+                        raise ImportConflict('duplicate variant-form medication evidence')
+                    by_slug[proof['medicine_slug']] = proof
+                entry['variant_form_evidence'] = by_slug
             document_id = document["id"]
             if document_id in blocked_ids:
                 raise ImportConflict("document id has conflicting input records")
@@ -167,6 +185,11 @@ def build_plan(records, medications, *, existing_bindings=(), existing_state_che
                 documents.pop(document_id)
                 blocked_ids.add(document_id)
                 raise ImportConflict("document id has conflicting input records")
+            if (document_id in documents and documents[document_id].get('variant_form_evidence')
+                    != entry.get('variant_form_evidence')):
+                documents.pop(document_id)
+                blocked_ids.add(document_id)
+                raise ImportConflict('document id has conflicting optional binding evidence')
             if document_id not in documents or original_file:
                 documents[document_id] = entry
         except (ValueError, TypeError, KeyError, OSError) as error:
@@ -176,9 +199,25 @@ def build_plan(records, medications, *, existing_bindings=(), existing_state_che
     for document_id, entry in documents.items():
         document = entry["document"]
         matches = 0
+        document_bindings, reviewed_slugs = [], set()
+        binding_proofs = entry.get('variant_form_evidence', {})
+        failure = None
         for med in index.candidates(document):
             candidate_comparisons += 1
-            match = matcher(document, med)
+            proof = binding_proofs.get(med['slug'])
+            try:
+                if proof is not None:
+                    from api.canon_variant_form_evidence import eligible_variant_keys
+                    eligible_variant_keys(document, med, proof)
+                    reviewed_slugs.add(med['slug'])
+                    match = matcher(document, med, variant_form_evidence=proof)
+                    if not match['matched']:
+                        raise ImportConflict('reviewed variant-form evidence did not match its source identity')
+                else:
+                    match = matcher(document, med)
+            except (ValueError, TypeError, KeyError) as error:
+                failure = str(error) if isinstance(error, ValueError) else type(error).__name__
+                break
             if not match["matched"]:
                 continue
             row = {
@@ -186,9 +225,18 @@ def build_plan(records, medications, *, existing_bindings=(), existing_state_che
                 "identity_fingerprint": match["identity_fingerprint"],
                 "variant_bindings": match["bindings"], "status": "verified", "active": True,
             }
-            row["binding_id"] = binding_id(document_id, med["slug"], match["identity_fingerprint"], match["bindings"])
-            bindings.append(row)
+            if proof is not None:
+                from api.canon_variant_form_evidence import evidence_digest
+                row['variant_form_evidence'] = proof
+                row['variant_form_evidence_sha256'] = evidence_digest(proof)
+            row["binding_id"] = binding_id(document_id, med["slug"], match["identity_fingerprint"], match["bindings"],
+                                           variant_form_evidence=proof)
+            document_bindings.append(row)
             matches += 1
+        if failure or reviewed_slugs != set(binding_proofs):
+            rejected.append({'document_id': document_id, 'reason': failure or 'variant-form evidence names an absent medication'})
+            continue
+        bindings.extend(document_bindings)
         if matches:
             matched_ids.add(document_id)
         else:
@@ -272,10 +320,24 @@ def _read_medication(db, slug):
 
 
 def _verify_live_binding(row, document, med, *, matcher=match_document_to_medication):
-    matched = matcher(document, med)
+    proof = row.get('variant_form_evidence')
+    if proof is not None:
+        from api.canon_variant_form_evidence import eligible_variant_keys, evidence_digest
+        try:
+            eligible_variant_keys(document, med, proof)
+            if row.get('variant_form_evidence_sha256') != evidence_digest(proof):
+                raise ValueError('optional binding evidence digest differs')
+        except (ValueError, TypeError, KeyError):
+            raise ImportConflict('reviewed variant-form label/source identity changed') from None
+        matched = matcher(document, med, variant_form_evidence=proof)
+    else:
+        if 'variant_form_evidence' in row or 'variant_form_evidence_sha256' in row:
+            raise ImportConflict('optional binding evidence is missing')
+        matched = matcher(document, med)
     expected_keys = sorted(_variant_key(variant) for variant in matched["bindings"])
     actual_keys = sorted(_variant_key(variant) for variant in row["variant_bindings"])
-    expected_id = binding_id(document["id"], med["slug"], matched["identity_fingerprint"], matched["bindings"])
+    expected_id = binding_id(document["id"], med["slug"], matched["identity_fingerprint"], matched["bindings"],
+                             variant_form_evidence=proof)
     if (
         not matched["matched"] or actual_keys != expected_keys
         or row["identity_fingerprint"] != matched["identity_fingerprint"]
@@ -287,12 +349,15 @@ def _verify_live_binding(row, document, med, *, matcher=match_document_to_medica
 
 
 def apply_plan(db, plan, *, batch_id=None, validator=validate_document,
-               matcher=match_document_to_medication, archive_validator=None):
+               matcher=match_document_to_medication, archive_validator=None,
+               allow_variant_form_evidence=False):
     """Recheck live identity and conflicts; never update medication or price data."""
     if plan.get("plan_hash") != _digest({"documents": plan["documents"], "bindings": plan["bindings"]}):
         raise ImportConflict("preview plan changed; regenerate and review it")
     if plan["rejected"] or plan["overlaps"]:
         raise ImportConflict("preview contains rejected rows or overlapping documents")
+    if not allow_variant_form_evidence and any('variant_form_evidence' in row for row in plan['bindings']):
+        raise ImportConflict('variant-form bindings require the explicit original-only importer')
     batch_id = batch_id or "instructions-" + _now().strftime("%Y%m%dT%H%M%SZ-") + uuid.uuid4().hex[:8]
     if not plan["bindings"]:
         return {"mode": "apply", "batch_id": batch_id, "added_documents": 0, "added_bindings": 0}
@@ -327,9 +392,10 @@ def apply_plan(db, plan, *, batch_id=None, validator=validate_document,
             existing = db.medication_instruction_bindings.find_one({"binding_id": row["binding_id"]}, max_time_ms=TIMEOUT_MS)
             if existing and (existing.get("active") is not True or existing.get("status") != "verified"):
                 raise ImportConflict("a deterministic binding was previously disabled; no implicit reactivation")
-            if existing and any(existing.get(key) != row.get(key) for key in (
-                "medicine_slug", "document_id", "identity_fingerprint", "variant_bindings",
-            )):
+            equality_fields = ["medicine_slug", "document_id", "identity_fingerprint", "variant_bindings"]
+            if 'variant_form_evidence' in row:
+                equality_fields += ['variant_form_evidence', 'variant_form_evidence_sha256']
+            if existing and any(existing.get(key) != row.get(key) for key in equality_fields):
                 raise ImportConflict("deterministic binding id has a different payload")
         audit_id = "batch:" + batch_id
         db.medication_instruction_bindings.insert_one({
@@ -396,7 +462,7 @@ def rollback_batch(db, batch_id):
 
 
 def main(argv=None, *, validator=validate_document, matcher=match_document_to_medication,
-         archive_validator=None, db_adapter=None):
+         archive_validator=None, db_adapter=None, allow_variant_form_evidence=False):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--documents", type=Path)
     parser.add_argument("--manifest", type=Path)
@@ -426,7 +492,8 @@ def main(argv=None, *, validator=validate_document, matcher=match_document_to_me
                 {"is_canonical": {"$ne": False}}, IDENTITY_PROJECTION,
             ).batch_size(250).max_time_ms(TIMEOUT_MS))
             report = build_plan(records, medications, validator=validator, matcher=matcher,
-                                archive_validator=archive_validator)
+                                archive_validator=archive_validator,
+                                allow_variant_form_evidence=allow_variant_form_evidence)
             if db is not None:
                 existing = read_existing_bindings(db, {row["medicine_slug"] for row in report["bindings"]})
                 report["overlaps"] = find_overlaps(report["bindings"], existing)
@@ -434,7 +501,8 @@ def main(argv=None, *, validator=validate_document, matcher=match_document_to_me
                 report["existing_state_checked"] = True
             if args.apply:
                 report["applied"] = apply_plan(db, report, validator=validator, matcher=matcher,
-                                               archive_validator=archive_validator)
+                                               archive_validator=archive_validator,
+                                               allow_variant_form_evidence=allow_variant_form_evidence)
                 report["mode"] = "apply"
         if args.report:
             args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
