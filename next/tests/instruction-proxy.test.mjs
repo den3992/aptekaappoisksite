@@ -174,6 +174,19 @@ test('PDF capacity includes unread downstream bodies and is released exactly onc
   assert.equal(last.status, 200); await last.body.cancel();
 });
 
+test('a downstream chunk does not retain the complete PDF backing allocation', async () => {
+  const large = Buffer.concat([Buffer.from('%PDF-1.7\n'), Buffer.alloc(128 * 1024, 32), Buffer.from('\n%%EOF\n')]);
+  const digest = createHash('sha256').update(large).digest('hex');
+  const proxy = make({ fetchImpl: async () => pdfResponse({ body: large, etag: `"${digest}"` }) });
+  const response = await proxy.original(request(), 'large');
+  const reader = response.body.getReader();
+  const { value } = await reader.read();
+  assert.equal(value.byteLength, 64 * 1024);
+  assert.equal(value.buffer.byteLength, value.byteLength);
+  assert.notEqual(value.buffer, large.buffer);
+  await reader.cancel();
+});
+
 test('JSON concurrency and both stream size limits are bounded', async () => {
   const proxy = make({ fetchImpl: async () => jsonResponse() });
   const pending = [];

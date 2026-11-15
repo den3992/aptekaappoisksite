@@ -114,7 +114,9 @@ export function createInstructionProxy({
         pull(stream) {
           if (!buffer) return;
           const end = Math.min(offset + 64 * 1024, buffer.length);
-          stream.enqueue(buffer.subarray(offset, end));
+          // Copy this bounded chunk: a subarray would retain the complete
+          // backing PDF buffer while a slow client holds the final chunk.
+          stream.enqueue(new Uint8Array(buffer.subarray(offset, end)));
           offset = end;
           if (offset === buffer.length) { stream.close(); finish(); }
         },
