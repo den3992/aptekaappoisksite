@@ -1,0 +1,62 @@
+{
+  "actual_proof_sha256": {
+    "apply-v4.json": "ebda2567acdd29a4e9b98c26f067b5fb9f93b386880c832a2977154610d619cb",
+    "create-fence-v4.json": "65a580855b3cbe6dc5dafe5866ccfa7edf89927e6b83f0b2eedb710070576718",
+    "public39-v4-wire-v2.json": "f8cb4fecbe600e8240a96c153eefdcca87e61e8af8dbd3bf89257f138c789fd9",
+    "verify-after-public-v4-attempt2.json": "f15d85235a06e78e64515af52a27bebc2daa4ea64332d1ddb53babca92a216ee",
+    "verify-before-public-v4.json": "77fed37157140746d0ef7a19f52ef22e25ef3adac6c20ac0219cdfda3867a057"
+  },
+  "added_binding_rows": 56,
+  "added_cards": 51,
+  "added_covered_variants": 94,
+  "added_instruction_documents": {
+    "existing_whole_originals_reused": 5,
+    "inline": 0,
+    "whole_original_pdf": 34
+  },
+  "backend_instructions_runtime_revision": "68f11780248004051611c8eb67de4c18b2b83a8c",
+  "batch_id": "instructions-20261115T164543Z-794a3671",
+  "combined_actual_proof_sha256": "b7cf68f7f90d1ebb1f13a0f546a04b667f385cc65271383e3a74027ddee26f80",
+  "coverage": {
+    "active_binding_rows": 517,
+    "cards_with_either_format": 501,
+    "cards_with_instructions": 87,
+    "cards_with_original_pdf": 423,
+    "combined_covered_variants": 1607,
+    "combined_fully_covered_cards": 257,
+    "covered_variants": 729,
+    "original_covered_variants": 926,
+    "verified_documents": 71,
+    "verified_original_documents": 334
+  },
+  "independent_final_acceptance_sha256": "80631fef6fa071b4eac3a2efc39cd60b47137cf95e019ad377b34e9ecf1df700",
+  "next_runtime_revision": "278e18156b69cdec38ea167482b3f31039c80ee6",
+  "original_store": {
+    "logical_bytes": 170530254,
+    "old353_PDFs_preserved": true,
+    "runtime_read_only": true,
+    "unique_PDFs": 387
+  },
+  "permanent_publication_fence": {
+    "older_publication_fences_preserved": true,
+    "rollback0849_forbidden": true,
+    "sha256": "6c1ccb22941af843be7f456cf01dd23d5cffb13ac2508e873e2084da00eeec0d"
+  },
+  "production_git_during_verification": "d4264393077615489acda89b69268fd60ec4c145",
+  "public_acceptance": {
+    "changed_cards_checked": 56,
+    "fresh_all501_associations_equal_before_and_after_HTTP": true,
+    "snapshot_sha256": "1378d546a1577c50e576b44e922de4bbea11110f92f43332995cfeceb73805ae",
+    "unique_whole_PDFs_checked": 39
+  },
+  "runtime": {
+    "instruction_sidecar_config": "sha256:f0e381f916f6dca38bd7ba7d74b299d25aa7f6af43c573a7657e61852c22ab98",
+    "instruction_sidecar_manifest": "sha256:8d0439f46f3c3c9328621e91b2033c31c94eac70cdfc03856f48d1dd52ece962",
+    "original_backend_next_edge_unchanged": true,
+    "pricing_processes_preserved": true,
+    "service_memory_limit_bytes": 268435456
+  },
+  "scope_note": "Official whole PDF originals; no authored clinical text. Counts describe exact current variant identities. Partial cards remain partial. Instruction revision dates that are unknown are not called latest. The 10,000-card target is not achieved.",
+  "status": "publicly_verified",
+  "verified_at": "2026-11-15T17:10:52.560872+00:00"
+}
