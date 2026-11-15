@@ -1,0 +1,53 @@
+{
+  "status": "publicly_verified",
+  "verified_at": "2026-11-15T09:42:01.628916+00:00",
+  "backend_runtime_revision": "b3b6d29437e752ae45fc79209aaefc1e7719c7b1",
+  "next_runtime_revision": "278e18156b69cdec38ea167482b3f31039c80ee6",
+  "previous_public_release_receipt": "2026-11-15-incremental-canon7-release.json",
+  "added_instruction_documents": {
+    "inline": 0,
+    "whole_original_pdf": 3
+  },
+  "added_cards": 3,
+  "added_covered_variants": 6,
+  "batch_id": "instructions-20261115T094044Z-26bef804",
+  "coverage": {
+    "verified_documents": 71,
+    "verified_original_documents": 224,
+    "cards_with_instructions": 87,
+    "cards_with_original_pdf": 264,
+    "cards_with_either_format": 342,
+    "covered_variants": 729,
+    "original_covered_variants": 607,
+    "combined_covered_variants": 1288,
+    "combined_fully_covered_cards": 155
+  },
+  "source_archive": {
+    "sha256": "9c5c2c16d8cd5f7293aa413fa684e030486a74ab08bd54cb4a5dd0b999e0c292",
+    "manifest_sha256": "5c0720585ffb09cacd122ec20d0a791f3a72a745f16ba076304df8b488c49efc",
+    "canonical_documents": 3,
+    "unique_original_pdf": 3,
+    "original_pdf_bytes": 3271808,
+    "wrapper_sha256": "a675e7ef41aac64523a88a1fc7d3cf5e379ac0aba2d280efc36ccd60f4f04e76",
+    "provenance_capsule_sha256": "9f7d61c3287b34604ca3d34262b769e69e300e1b861b419e9728cd05ecb2707e",
+    "provenance_manifest_sha256": "38e099e3a430164002db7be608bf66ccd7acb95fe84c84cc007ce2f0b13ab02a",
+    "independent_data_review_sha256": "fe6d9e0838cbfca4160732cc35db8e9c8fa82393334d298dcc730ecf18f1874f",
+    "native_actual128_proof_sha256": "9d1fd5baedf75acb67853f3f24ca021b3a0e0b6bc5e647fd388141b1bb5fc3cb",
+    "independent_artifact_review_sha256": "10314e03e2db5ce0403cf781c4b1b7016bd075ca87bdff394884e10b4405f325",
+    "seed_proof_sha256": "84cf17d9aa0aa17970d4b80a02ea42f0d0c3087aaec7f74482936e65cc1230c2",
+    "all_seeded_unique_pdf": 277,
+    "cache_bytes": 117652801,
+    "source_stops_preserved": true,
+    "all_live_document_ids_equal_reviewed_archived_ids": true,
+    "live_canonical_document_count": 295,
+    "manual_clinical_all_pages_review_claimed": false
+  },
+  "public_acceptance": {
+    "cards_checked": 3,
+    "whole_pdf_document_routes_checked": 3,
+    "unique_original_pdf_sha256_checked": 3,
+    "server_html_and_pdf_bytes_verified": true,
+    "proof_sha256": "eb6327fe65e1cd8078bc01005be60135b4f284cd3ae6e44c6fb538f4c3ce23da"
+  },
+  "scope_note": "Coverage is confirmed in the live database and public card HTML/PDF routes. Whole PDF originals and verified inline text are counted separately. Exact current RU, form, strength and source/GRLS manufacturer evidence are required; registrations, strengths or variants without reviewed matches remain uncovered."
+}

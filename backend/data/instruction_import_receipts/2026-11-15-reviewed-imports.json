@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-11-15T09:25:34.060430+00:00",
+  "verified_at": "2026-11-15T09:42:42.015658+00:00",
   "verified_live_database": true,
   "public_deployment_pending": false,
   "validation_revision": "b3b6d29437e752ae45fc79209aaefc1e7719c7b1",
@@ -9,15 +9,15 @@
   },
   "coverage": {
     "verified_documents": 71,
-    "verified_original_documents": 221,
+    "verified_original_documents": 224,
     "cards_with_instructions": 87,
-    "cards_with_original_pdf": 261,
-    "cards_with_either_format": 339,
+    "cards_with_original_pdf": 264,
+    "cards_with_either_format": 342,
     "fully_covered_cards": 14,
     "covered_variants": 729,
-    "original_covered_variants": 601,
-    "combined_covered_variants": 1282,
-    "combined_fully_covered_cards": 152
+    "original_covered_variants": 607,
+    "combined_covered_variants": 1288,
+    "combined_fully_covered_cards": 155
   },
   "batches": [
     {
@@ -5323,8 +5323,78 @@
         }
       ],
       "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T092300Z-84078d9e"
+    },
+    {
+      "batch_id": "instructions-20261115T094044Z-26bef804",
+      "plan_hash": "b90549c6bf17f91d779fb0db3939a8a8eb32930c60b1a9f1635284a116622809",
+      "content_format": "official_original_pdf",
+      "added_documents": 3,
+      "added_bindings": 3,
+      "documents": [
+        {
+          "id": "eaeu-pdf-67c04ebb30dcf83481cfc3c7-42c28efb15ee51a8-3f3043bc813f",
+          "title": "Эналаприл — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(011311)-(РГ-RU)"
+          ],
+          "original_sha256": "42c28efb15ee51a8660b3c4c2b139f0d0e1683fad7315cf34a01a4a8f2f832cc",
+          "content_format": "official_original_pdf",
+          "page_count": 23,
+          "original_bytes": 1179123,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/67c04ebb30dcf83481cfc3c7",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "67c04ebb30dcf83481cfc3c7",
+            "uploaded_file_path": "4a46474c-deb5-48a7-bae6-d3001b691b6c/bc51cfb6-8ab2-4e7d-878d-63d6bec8d2c6/file_2159913746065536.pdf",
+            "metadata_sha256": "39ac1b98fd1d576f8bd523e3e20cfba1bb5aa2d964543909dce1e0c7b0e921c0"
+          }
+        },
+        {
+          "id": "eaeu-pdf-6a1d679530dcf8a024867acd-7bc59273143521fe-a51ba305342e",
+          "title": "Кетопрофен Органика — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(007678)-(РГ-RU)"
+          ],
+          "original_sha256": "7bc59273143521fe360b38dd0bfddaa6ae0c30ade7a34a2a6b55695712b49813",
+          "content_format": "official_original_pdf",
+          "page_count": 14,
+          "original_bytes": 1026836,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/6a1d679530dcf8a024867acd",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "6a1d679530dcf8a024867acd",
+            "uploaded_file_path": "a9757137-b5f1-41f6-8c65-d09c1ae70dfd/023a4628-d422-4060-9ade-074754d7fd6b/file_19260525698574390.pdf",
+            "metadata_sha256": "c2e717df8916b425aff4e7ecbd1e7eff7b2c420fa6693e992bfa2f06d71129be"
+          }
+        },
+        {
+          "id": "eaeu-pdf-69ccf6ad30dcf898bd61222c-cfa6a5ebf304d8cf-ab9f6a6b1e88",
+          "title": "Амиодарон — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(009122)-(РГ-RU)"
+          ],
+          "original_sha256": "cfa6a5ebf304d8cfb6a7a9ddeaec6b98d9f6396d10ce910a695f14efdcede4b7",
+          "content_format": "official_original_pdf",
+          "page_count": 24,
+          "original_bytes": 1065849,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/69ccf6ad30dcf898bd61222c",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "69ccf6ad30dcf898bd61222c",
+            "uploaded_file_path": "061ea4c9-f14c-415a-bed9-6fb4756e0377/82a1da6a-26aa-4e61-a38d-dacadd73055e/file_11989152069721026.pdf",
+            "metadata_sha256": "9e12d73dce22b9054a81e1f241678c4ff5c663dfa99bc813745701158d6c8b3e"
+          }
+        }
+      ],
+      "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T094044Z-26bef804"
     }
   ],
-  "scope_note": "Coverage is confirmed in the live database and public card HTML/PDF routes. Whole PDF originals and verified inline text are counted separately. Form evidence is bound to exact current variant labels, registrations and product identifiers; registrations, strengths or variants without reviewed matches remain uncovered.",
-  "public_release_receipt": "2026-11-15-incremental-canon7-release.json"
+  "scope_note": "Coverage is confirmed in the live database and public card HTML/PDF routes. Whole PDF originals and verified inline text are counted separately. Exact current RU, form, strength and source/GRLS manufacturer evidence are required; registrations, strengths or variants without reviewed matches remain uncovered.",
+  "public_release_receipt": "2026-11-15-incremental-eaeu3-release.json"
 }
