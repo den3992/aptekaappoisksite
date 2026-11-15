@@ -1,0 +1,111 @@
+{
+  "status": "publicly_verified",
+  "verified_at": "2026-11-15T12:26:17.022219+00:00",
+  "backend_runtime_revision": "0849af75fbdc5e2fe9a10f0eeeeea37ccd6d67fa",
+  "next_runtime_revision": "278e18156b69cdec38ea167482b3f31039c80ee6",
+  "deployment_source_git": "bb1022b6ced7efd0414cd6144776d4db7cf2a0bb",
+  "previous_public_release_receipt": "2026-11-15-incremental-eaeu-concentration19-ozon21-release.json",
+  "added_instruction_documents": {
+    "inline": 0,
+    "whole_original_pdf": 31
+  },
+  "added_cards": 54,
+  "added_covered_variants": 127,
+  "batch_id": "instructions-20261115T122255Z-62a2b6dc",
+  "coverage": {
+    "verified_documents": 71,
+    "verified_original_documents": 298,
+    "cards_with_instructions": 87,
+    "cards_with_original_pdf": 370,
+    "cards_with_either_format": 448,
+    "fully_covered_cards": 14,
+    "covered_variants": 729,
+    "original_covered_variants": 821,
+    "combined_covered_variants": 1502,
+    "combined_fully_covered_cards": 213
+  },
+  "source_archive": {
+    "sha256": "491d9534aae6d34d39e4938c08dac97a69d4b48698748214ba2dfb58af50123e",
+    "manifest_sha256": "d615364d0cccf3e38884c537c4db53ca41c891877017e13498024d59efc40489",
+    "canonical_documents": 31,
+    "unique_original_pdf": 31,
+    "original_pdf_bytes": 14086698,
+    "PDF_pages": 404,
+    "combined_wrapper_sha256": "f9286b8444615cd98322686d82469f51dc49569a8cdde96740b3081cfec2f610",
+    "reviewed_wrapper_paths_sha256": [
+      {
+        "bytes": 1739606,
+        "path": "/tmp/aptekaa-instructions-20261115/eaeu/film30-current-generation-20261115/pending-verified.jsonl",
+        "sha256": "7f06cc59e08c64f0ed31298e9815b31673c2e10a44245634d5e702f8ded57abb"
+      },
+      {
+        "bytes": 62621,
+        "path": "/tmp/aptekaa-instructions-20261115/eaeu/drotaverin-velfarm-current-reconstruction-20261115/pending-verified.jsonl",
+        "sha256": "669091de3e87cdde770056d0fe9952c9ea5383173db5901aee0ede722ec18587"
+      }
+    ],
+    "per_binding_variant_form_evidence_only_outside_canonical_documents": true,
+    "provenance_capsule_sha256": "a5cd4ee6732bb5ca8e340ff7588e0059f4584f0eee2eec8a917b1f1c9500b938",
+    "provenance_manifest_sha256": "809c908ed4137f9b1240ef0ff5bb021a288b9749dc8ab92143d3475f42d404d4",
+    "independent_DATA_reviews": [
+      {
+        "bytes": 2649,
+        "path": "/tmp/aptekaa-instructions-20261115/eaeu/film30-current-generation-20261115/independent-skeptic-data-review.json",
+        "sha256": "ed4569a0282c19c4013e0a08ad718d06ed3addcde875011ce7179696fe04900f"
+      },
+      {
+        "bytes": 4566,
+        "path": "/tmp/aptekaa-instructions-20261115/drotaverin-independent-review/independent-data-review-v2.json",
+        "sha256": "a502573e2b1b3d149b349b3edfc9c674c2dc913e6120f9d22444aca241b41de8"
+      }
+    ],
+    "native_actual128_proof_sha256": "c6c937cdb89c8efd8e0a93d94c22bbc04806346a4c5531e4cf67195b9a350583",
+    "independent_artifact_review_sha256": "d5c70ca16aedd087d69135560809b19bfb2df90392640b20db5826aeec110558",
+    "live_canonical_document_count": 369,
+    "all_live_document_ids_equal_reviewed_archived_ids": true,
+    "automatically_extracted_clinical_text_published": false
+  },
+  "permanent_original_store": {
+    "unique_pdf": 351,
+    "logical_bytes": 151989008,
+    "limit_bytes": 536870912,
+    "read_only_runtime": true,
+    "seed351_existing_pdf": 320,
+    "seed351_hardlinked": 31,
+    "seed351_copied": 0,
+    "native_ready_proof_sha256": "57b797c378134718a6ae0eba99ce183520f379cb5950b4794e7ff431c0c944de",
+    "old_LRU_unique_pdf": 280,
+    "old_LRU_bytes": 118941781,
+    "old_LRU_seeded_by_this_release": false
+  },
+  "runtime_release": {
+    "image_archive_sha256": "6fc73ee0d4744104f0a22a5dd891127017f234b14f2ac773f208c68d605d9722",
+    "metadata_sha256": "6b6a872bfb407ca484dacaacdcc05c3e55c0e10af78f115be1c35efd707b3c0e",
+    "thin_image_transport_sha256": "5bd5ac5aa411bd1169701b7632cb7e2f8f093eea77abcbb6b1333b297ef4be54",
+    "actual_thin_stage_proof_sha256": "2da3b49294a21f1b4d22425cec933d48253a0e8aa5d52e8d95c54d0f3bd83ec0",
+    "runtime_confirmation_proof_sha256": "7d47caf30cac0d295e960d48e606b6c20526ef1c7a0205179158036f5034cc46",
+    "confirmed_rollout_state_sha256": "106c8e7862f0aedc6c23e4a6c42c2d594ab56e66c3f2fcdf8b182a9ef03bf23a",
+    "actual_readonly351_256_proof_sha256": "277e53484115b0fe744adcde47a1691955130a2364a1bf7968816c33343b9536",
+    "actual_missing_default256_proof_sha256": "f81d8114709d992ebf78aa49f100018ebeaf8d507c0b9b42f035123a0fd71e4a",
+    "main_safe_tests": 643,
+    "main_safe_subtests": 640,
+    "runtime_memory_limit_bytes": 268435456,
+    "original_backend_next_edge_actions": 0,
+    "old357_publication_fence_sha256": "53a321f144f9c6e2588779754fc93db6af6bab2714949fac9ae944e40cde3d06",
+    "exact_original_edge_mount_order_proof_sha256": "2fe1241667c48061a83a3356b9e2e988413599e556171075dc7da2844fbf2f06"
+  },
+  "publication_fence": {
+    "path": "/home/ubuntu/aptekaa-release/instruction-profile-publication-film31-started.json",
+    "sha256": "2ff38f37c707768d9cde266afae497825e3fc496314e366adfbe4dd5de38e4a9",
+    "rollbackE0_forbidden": true,
+    "rollback357_forbidden": true
+  },
+  "public_acceptance": {
+    "new_cards_checked": 54,
+    "unique_new_PDF_SHA_checked": 31,
+    "server_HTML_and_PDF_bytes_verified": true,
+    "proof_sha256": "8ec2ba1d0f9a09b06725c5fa212c0a3eedfcf4217f6855c56e9fa7f711d39384",
+    "old5_regression_sha256": "8ea153c36682bae2fd9d8e4afe09330f629d49110d02ad23a01b690d933d41d0"
+  },
+  "scope_note": "Live coverage is verified against current variant identities. Whole official PDF originals and inline text are counted separately. Exact current registration, form, strength and manufacturer evidence are required; unmatched variants remain uncovered. Unknown instruction revision dates are not called latest. Film-profile recovery requires 0849-compatible code and the readonly permanent store351; E0 and 357 rollback are forbidden after the durable film31 publication fence."
+}

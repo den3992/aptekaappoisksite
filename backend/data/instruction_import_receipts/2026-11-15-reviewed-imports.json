@@ -1,23 +1,23 @@
 {
-  "verified_at": "2026-11-15T11:33:13.123982+00:00",
+  "verified_at": "2026-11-15T12:26:00.665852+00:00",
   "verified_live_database": true,
   "public_deployment_pending": false,
-  "validation_revision": "e0acf2412e95fdf7e2812062952dc00e1fd3f457",
+  "validation_revision": "0849af75fbdc5e2fe9a10f0eeeeea37ccd6d67fa",
   "inventory": {
     "canonical_cards": 22377,
     "total_variants": 72058
   },
   "coverage": {
     "verified_documents": 71,
-    "verified_original_documents": 267,
+    "verified_original_documents": 298,
     "cards_with_instructions": 87,
-    "cards_with_original_pdf": 316,
-    "cards_with_either_format": 394,
+    "cards_with_original_pdf": 370,
+    "cards_with_either_format": 448,
     "fully_covered_cards": 14,
     "covered_variants": 729,
-    "original_covered_variants": 694,
-    "combined_covered_variants": 1375,
-    "combined_fully_covered_cards": 174
+    "original_covered_variants": 821,
+    "combined_covered_variants": 1502,
+    "combined_fully_covered_cards": 213
   },
   "batches": [
     {
@@ -6267,8 +6267,638 @@
         }
       ],
       "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T112831Z-e8bb6c3f"
+    },
+    {
+      "batch_id": "instructions-20261115T122255Z-62a2b6dc",
+      "plan_hash": "be8fd115e742423bbcbda36acb83ab857833e42c337bc8deac3d1eadf086f9e8",
+      "content_format": "official_original_pdf",
+      "added_documents": 31,
+      "added_bindings": 54,
+      "documents": [
+        {
+          "id": "eaeu-pdf-69d35a2330dcf8073f48430f-df49775bffdabef7-6907d6e0b7a1",
+          "title": "ИБУПРОФЕН — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(001536)-(РГ-RU)"
+          ],
+          "original_sha256": "df49775bffdabef7d7629a51a37ada1e165e64f1005ccf2a096c66e0b3b08f7b",
+          "content_format": "official_original_pdf",
+          "page_count": 18,
+          "original_bytes": 402034,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/69d35a2330dcf8073f48430f",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "69d35a2330dcf8073f48430f",
+            "uploaded_file_path": "d2f930fd-eaf0-422c-abf2-815561a3fbd3/761b9783-8654-45fc-8811-2d44d08ffac6/file_11987023458546984.pdf",
+            "metadata_sha256": "ce7bd661c0b321a73ad2108c6e1953d87a41c8348beeb9bc23b625fbc139cbb6"
+          }
+        },
+        {
+          "id": "eaeu-pdf-699d70b830dcf88c4b8568a6-3c335da51390deb0-fb82e8a713aa",
+          "title": "Акситиниб-АМЕДАРТ — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(012553)-(РГ-RU)"
+          ],
+          "original_sha256": "3c335da51390deb0a5c48dc13e517b34f4cb95c88985ca143c1ecc2658d1b953",
+          "content_format": "official_original_pdf",
+          "page_count": 12,
+          "original_bytes": 639162,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/699d70b830dcf88c4b8568a6",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "699d70b830dcf88c4b8568a6",
+            "uploaded_file_path": "0ca77c0e-a2c1-4f95-8f84-01a099fb0ed4/0cbc2ef9-6889-44d6-8067-999a738ff596/file_3966699150372214.pdf",
+            "metadata_sha256": "56238ca452217fe5fca9aaf9b0f3424da977b16e9accbf389d44ce2db1c4fa64"
+          }
+        },
+        {
+          "id": "eaeu-pdf-666c1dfd30dcf88455e1787b-29d5c620961bf8a0-21f54190297d",
+          "title": "ДляЖенс® проги — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(010936)-(РГ-RU)"
+          ],
+          "original_sha256": "29d5c620961bf8a07c49096e856e98db2025501b30aebe4cb6806f8a537d9dfb",
+          "content_format": "official_original_pdf",
+          "page_count": 17,
+          "original_bytes": 774982,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/666c1dfd30dcf88455e1787b",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "666c1dfd30dcf88455e1787b",
+            "uploaded_file_path": "61086f56-181d-4a84-bae4-9bf5b543bf72/f28cc05b-cf08-47ff-bebb-65dde69e7655/file_37548003643630925.pdf",
+            "metadata_sha256": "2691358b79ea8d6350797bd0cfcfd94d9a2a753d1d41b9283fc28da92da9bf60"
+          }
+        },
+        {
+          "id": "eaeu-pdf-67cad2b330dcf83481cfd192-c131d956df491ac4-27e2ada1db0c",
+          "title": "Верапамил — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(010590)-(РГ-RU)"
+          ],
+          "original_sha256": "c131d956df491ac4b1907d0fda1a19978a4808e812518b9ffd21bf4de8c2338e",
+          "content_format": "official_original_pdf",
+          "page_count": 21,
+          "original_bytes": 523910,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/67cad2b330dcf83481cfd192",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "67cad2b330dcf83481cfd192",
+            "uploaded_file_path": "be85d156-c787-4c67-befa-9c30d0fd989a/7349d11d-8506-4f7e-bef4-c29705487077/file_35844467130400875.pdf",
+            "metadata_sha256": "227c80e47c471ff7821e7284563f69598a80232669238d1f8bf23b4f934b393e"
+          }
+        },
+        {
+          "id": "eaeu-pdf-6682576a30dcf88d7dd8620b-8459d34d9ab46cc7-4dd7987f8947",
+          "title": "Лосмерид — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(011825)-(РГ-RU)"
+          ],
+          "original_sha256": "8459d34d9ab46cc73544774fb64664e211096cc5b94fd6c85241e20434e40455",
+          "content_format": "official_original_pdf",
+          "page_count": 9,
+          "original_bytes": 223811,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/6682576a30dcf88d7dd8620b",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "6682576a30dcf88d7dd8620b",
+            "uploaded_file_path": "7e022c3c-8e0f-4db7-adb1-375901c4d35f/84977def-a333-48b9-b5b6-d5f75acb8ebc/file_4380501758085969.pdf",
+            "metadata_sha256": "2e94b51ea6ea2885ddac4d3ab2c29e4f3c014caf285f72192e2bc6b07c650b9f"
+          }
+        },
+        {
+          "id": "eaeu-pdf-697892b130dcf84919abdde3-37c82fcd328ea3ec-3150fff1f438",
+          "title": "Флувоксамин-СЗ — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(008323)-(РГ-RU)"
+          ],
+          "original_sha256": "37c82fcd328ea3ecac3c119dbab53387d7c0d19f1d81799f5edc1029c02314e7",
+          "content_format": "official_original_pdf",
+          "page_count": 13,
+          "original_bytes": 432069,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/697892b130dcf84919abdde3",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "697892b130dcf84919abdde3",
+            "uploaded_file_path": "26392371-89d1-40a3-8469-4a84b1b16622/0bb891fd-8c13-4ebd-a82c-287d5eec737a/file_13028845507910827.pdf",
+            "metadata_sha256": "d003f8e1de5fcdb5ad299b118e25d4803525b7b562373e213e583d90e374bd04"
+          }
+        },
+        {
+          "id": "eaeu-pdf-69f8771330dcf8fdae00c362-2babe53af489accd-4925dda12394",
+          "title": "Плагрил® — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(010943)-(РГ-RU)"
+          ],
+          "original_sha256": "2babe53af489accd5447c9321b6012ad79c99e0a227a1e71f4cca9322c6d6a9c",
+          "content_format": "official_original_pdf",
+          "page_count": 36,
+          "original_bytes": 874671,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/69f8771330dcf8fdae00c362",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "69f8771330dcf8fdae00c362",
+            "uploaded_file_path": "47b21984-15e7-4a94-83cc-c5aa332c213b/25ec0edb-cca9-4dbb-baa0-724690ea561b/file_13370322305846953.pdf",
+            "metadata_sha256": "ce0fe9e6addcc550394da60734eb428ca5beeb23beeaef6fbe250c19ef61718a"
+          }
+        },
+        {
+          "id": "eaeu-pdf-6a18216530dcf8a024867124-899b4b073d0f79b1-71e909927f01",
+          "title": "Окскарбазепин — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(006029)-(РГ-RU)"
+          ],
+          "original_sha256": "899b4b073d0f79b131e67ce7741d2b0510a36bcdf05a3c9012d4c7b0707484f4",
+          "content_format": "official_original_pdf",
+          "page_count": 12,
+          "original_bytes": 508836,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/6a18216530dcf8a024867124",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "6a18216530dcf8a024867124",
+            "uploaded_file_path": "0a6947f3-0ab2-4de7-ad1c-f301f700d9bb/611ae238-3ded-4452-b50e-7db4f2bc1951/file_19085251030943328.pdf",
+            "metadata_sha256": "b686a7e3623fd8c527f71aeb42dbb103bcdb6b2f2a0d44f1c4bc7f4b48c21f21"
+          }
+        },
+        {
+          "id": "eaeu-pdf-68b1635730dcf805fb2eb437-81eddbf612e680f9-a196d82e239c",
+          "title": "АЛБЕНДАЗОЛ-АЛИУМ — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(000864)-(РГ-RU)"
+          ],
+          "original_sha256": "81eddbf612e680f97d0e455fb0bf3cb3f06c5c882f5f94aef827ca4a13847a9a",
+          "content_format": "official_original_pdf",
+          "page_count": 9,
+          "original_bytes": 296475,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/68b1635730dcf805fb2eb437",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "68b1635730dcf805fb2eb437",
+            "uploaded_file_path": "f37b2c69-9665-43ea-9065-74c3dd253e0f/cd46cb95-2b0f-4868-b1df-575d2e5a88d4/file_12675386502559269.pdf",
+            "metadata_sha256": "a9236a26ff119302dab7fc870bf728871acbabbef2a8e3cf16cc1e4689612ad5"
+          }
+        },
+        {
+          "id": "eaeu-pdf-616eb35dfb44f10e170dc384-afddddc471d41a50-d7bf307aa47b",
+          "title": "Азурикс® — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(000611)-(РГ-RU)"
+          ],
+          "original_sha256": "afddddc471d41a50334183586827902302018e9bbd1c3975da3113073173bbf6",
+          "content_format": "official_original_pdf",
+          "page_count": 15,
+          "original_bytes": 405612,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/616eb35dfb44f10e170dc384",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "616eb35dfb44f10e170dc384",
+            "uploaded_file_path": "9b2844b3-02af-47dc-8a31-1c18c7c2c1f4/583a7074-5399-4680-8dde-a9d1e0536969/file_1443782419788459.pdf",
+            "metadata_sha256": "5e9aa8b116c33d863aa20c86b902cca5889840ad204b0e1b43f0d9bbcb2a83af"
+          }
+        },
+        {
+          "id": "eaeu-pdf-65c5ea1e30dcf8482095c5b7-61631115bc86be0f-90ad0fd55d01",
+          "title": "ЛИМФОДИАВЕНА — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(003851)-(РГ-RU)"
+          ],
+          "original_sha256": "61631115bc86be0f187cfd0264138fb4d1ddfdcc33b7d44528f02f32dd9df7cc",
+          "content_format": "official_original_pdf",
+          "page_count": 5,
+          "original_bytes": 592340,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/65c5ea1e30dcf8482095c5b7",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "65c5ea1e30dcf8482095c5b7",
+            "uploaded_file_path": "a8e215ad-995b-4cba-8c9a-ab992654d9a9/d83b43c3-1342-4137-8789-a16496d362cb/file_3433293415174053.pdf",
+            "metadata_sha256": "0ed592991368a76b86632d8b80cb98795186d14864903226f4ba021617cd1800"
+          }
+        },
+        {
+          "id": "eaeu-pdf-696a206e30dcf8e4837b91c6-42ebde13a77fe036-5b8c78a78ecb",
+          "title": "Бисопролол-АКОС — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(010427)-(РГ-RU)"
+          ],
+          "original_sha256": "42ebde13a77fe0368e7e910811a1ded65d63bb42084da8fb7da609d01dc028e8",
+          "content_format": "official_original_pdf",
+          "page_count": 8,
+          "original_bytes": 194887,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/696a206e30dcf8e4837b91c6",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "696a206e30dcf8e4837b91c6",
+            "uploaded_file_path": "4ad09003-379f-4299-b477-8d3fbc3113e1/f331a829-cf93-4519-a1be-54fa9614a845/file_69634199119972.pdf",
+            "metadata_sha256": "4712e72332d372a0ff365246c27b2e481d09ab62a675fa4016b35a6e41861283"
+          }
+        },
+        {
+          "id": "eaeu-pdf-67695bf230dcf8c882a562ee-4b072056d256ff88-ca9533b34804",
+          "title": "Сертралин Канон — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(002924)-(РГ-RU)"
+          ],
+          "original_sha256": "4b072056d256ff88d363530dfb6a5cb08454d2c7592fed7516a2d7cf6678e63a",
+          "content_format": "official_original_pdf",
+          "page_count": 18,
+          "original_bytes": 672764,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/67695bf230dcf8c882a562ee",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "67695bf230dcf8c882a562ee",
+            "uploaded_file_path": "a6a63c1e-02c9-45ef-96c2-9b5630058a95/8b3cc2b8-6e79-4c23-ab10-40b2b95d1076/file_23647943244815862.pdf",
+            "metadata_sha256": "bc70c5233d72031bff3973931e9d57b9d2c816e8f600e4dc36f3a5d197508766"
+          }
+        },
+        {
+          "id": "eaeu-pdf-68d63fd230dcf88de633c134-8290246d85733f23-1ac357c3c33c",
+          "title": "Капецитабин — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(003491)-(РГ-RU)"
+          ],
+          "original_sha256": "8290246d85733f237648dde17ced6ac39ff7c290149410b6f8a89e8b9700aebe",
+          "content_format": "official_original_pdf",
+          "page_count": 17,
+          "original_bytes": 489607,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/68d63fd230dcf88de633c134",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "68d63fd230dcf88de633c134",
+            "uploaded_file_path": "19a1a87a-cc69-484a-93ac-a748b60e63a1/3b2e0b48-0b8d-4776-849a-8cd64a473ad2/file_20034378928965323.pdf",
+            "metadata_sha256": "cbd3f6750ffb96b3023a89a5f22ee666d707fc09b5023bb55eb6ead09415ae27"
+          }
+        },
+        {
+          "id": "eaeu-pdf-6675574c30dcf88d7dd851cc-ab2c06e9ac22406f-87f14be216b2",
+          "title": "Нифедипин — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(008277)-(РГ-RU)"
+          ],
+          "original_sha256": "ab2c06e9ac22406fd901d713b542ba0094022c69d5e51acf033118dc3e1490aa",
+          "content_format": "official_original_pdf",
+          "page_count": 14,
+          "original_bytes": 244093,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/6675574c30dcf88d7dd851cc",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "6675574c30dcf88d7dd851cc",
+            "uploaded_file_path": "9ad0c13d-3c24-4a7e-999a-d5801e68473d/0dc2d57d-bff6-4697-9ce6-b7cbbf971521/file_21742598758872713.pdf",
+            "metadata_sha256": "adde486fca102ed080945e5bbddbe777cc08ef9284d4d2f5294fbbdba82230b1"
+          }
+        },
+        {
+          "id": "eaeu-pdf-6a0302b330dcf847b6c508c5-f1fac9bbb4c1a687-f594dc3e92bb",
+          "title": "ТИКАГРЕЛОР — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(002187)-(РГ-RU)"
+          ],
+          "original_sha256": "f1fac9bbb4c1a6876396088725344813c9492a1355e060f7096126b917a4d7b3",
+          "content_format": "official_original_pdf",
+          "page_count": 10,
+          "original_bytes": 309819,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/6a0302b330dcf847b6c508c5",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "6a0302b330dcf847b6c508c5",
+            "uploaded_file_path": "0e5ac6fa-8e7e-4bd3-876c-c844b0d5d2f4/2880de57-82a6-436f-9fe5-d143e23b1bff/file_13887114165609734.pdf",
+            "metadata_sha256": "73cdf2657f1c9fa077be3a35babfcdfcce5996fe2d7344c7c837476f10faa61c"
+          }
+        },
+        {
+          "id": "eaeu-pdf-69c1207030dcf898bd60fcee-da81303937a60020-be84f9abe2c9",
+          "title": "РАЙТБУФЕН — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(010163)-(РГ-RU)"
+          ],
+          "original_sha256": "da81303937a60020ff6967551ceb73ac6c973be115d8f9ecf4a2eef8483d79ed",
+          "content_format": "official_original_pdf",
+          "page_count": 19,
+          "original_bytes": 488660,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/69c1207030dcf898bd60fcee",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "69c1207030dcf898bd60fcee",
+            "uploaded_file_path": "40b48b5c-c975-4013-a5de-129bbbaf395c/61c971c2-87cc-4bc2-a8a3-c33aba5d7e0a/file_19075373576232004.pdf",
+            "metadata_sha256": "20989826ba55e6f54eb443fb15334a7cd67ec072cf8cbcaba414af3c3ca937a0"
+          }
+        },
+        {
+          "id": "eaeu-pdf-69c2726830dcf898bd6100d5-46b1a42d2b122573-27023cfcba4d",
+          "title": "Аторвастатин Альфактив — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(012225)-(РГ-RU)"
+          ],
+          "original_sha256": "46b1a42d2b122573e493d49aed289537ca1bd6be05862a5c9f5c55f3b77515b8",
+          "content_format": "official_original_pdf",
+          "page_count": 14,
+          "original_bytes": 368488,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/69c2726830dcf898bd6100d5",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "69c2726830dcf898bd6100d5",
+            "uploaded_file_path": "5e795afd-62c0-449a-b23a-9db7c71d2453/dfabd6af-c673-4fda-ad64-5ad072d49bb1/file_11311503485500043.pdf",
+            "metadata_sha256": "0919bc0786d4c27d57d586ea4519a2382aebd86ec3bdab2b60049e45176feb59"
+          }
+        },
+        {
+          "id": "eaeu-pdf-651cfe87fb44f11984026f0d-e44ab2107e0bbe80-8c20fb1cce7b",
+          "title": "Урсогепатол® — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(007581)-(РГ-RU)"
+          ],
+          "original_sha256": "e44ab2107e0bbe80b06f15606639691effd866d09584154dd06f2971120daa6b",
+          "content_format": "official_original_pdf",
+          "page_count": 11,
+          "original_bytes": 384802,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/651cfe87fb44f11984026f0d",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "651cfe87fb44f11984026f0d",
+            "uploaded_file_path": "82394bdd-1125-4113-848f-864f7606d9af/2cc5c879-07c6-415b-baa5-991c2164955d/file_16055266110753214.pdf",
+            "metadata_sha256": "ef673c65dae2875d0152ff03b727555eec89d61c58d41cea87622c60d8778544"
+          }
+        },
+        {
+          "id": "eaeu-pdf-667aa0f030dcf88d7dd85842-223a6125e9dd185f-9a9cb5e2018c",
+          "title": "Ламивудин Канон — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(006893)-(РГ-RU)"
+          ],
+          "original_sha256": "223a6125e9dd185fdb9a106fb3d72a23db14c9d84df5ae8fa32fad9586ddfdb9",
+          "content_format": "official_original_pdf",
+          "page_count": 18,
+          "original_bytes": 611661,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/667aa0f030dcf88d7dd85842",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "667aa0f030dcf88d7dd85842",
+            "uploaded_file_path": "de895bcd-8804-4e66-b07b-aae20d23801d/09dba9c2-f332-4a97-9a13-0ef8cc040865/file_12933496328179502.pdf",
+            "metadata_sha256": "8848e386f16edf084afa0ba85fabe33b1f3dd28468314988ecde81d36caead24"
+          }
+        },
+        {
+          "id": "eaeu-pdf-69df6cfe30dcf8ca40af2777-ad0d6bfcc1ab8f9d-066d7b09d58d",
+          "title": "Ривароксабан-СЗ — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(000808)-(РГ-RU)"
+          ],
+          "original_sha256": "ad0d6bfcc1ab8f9d9d940bc430e87928a5eae932b14eb76673d7e9e687d1fae4",
+          "content_format": "official_original_pdf",
+          "page_count": 9,
+          "original_bytes": 361315,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/69df6cfe30dcf8ca40af2777",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "69df6cfe30dcf8ca40af2777",
+            "uploaded_file_path": "009532f5-6775-4ba0-bc3a-c7c04de78469/a9c59094-b40c-4f1e-9634-2c7f4de9cad2/file_13629341866498575.pdf",
+            "metadata_sha256": "ee80add59bfaf04169af5de4c51ce35fc61b52b53081f4403d6d4972dd716fc6"
+          }
+        },
+        {
+          "id": "eaeu-pdf-65c5ffaa30dcf8482095c5fb-f8a4b878b5ac2589-ba4fd811828e",
+          "title": "Деферазирокс — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(010083)-(РГ-RU)"
+          ],
+          "original_sha256": "f8a4b878b5ac2589f1e4fc3a94fef9144437cf513f3b1cbca2ec0b3d0d0dd54a",
+          "content_format": "official_original_pdf",
+          "page_count": 14,
+          "original_bytes": 379591,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/65c5ffaa30dcf8482095c5fb",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "65c5ffaa30dcf8482095c5fb",
+            "uploaded_file_path": "73373ba4-a9d7-48c9-a15b-abfe2364b3ea/8a43d9b8-1f71-43c3-8da4-634d97fad5cf/file_32638246700917199.pdf",
+            "metadata_sha256": "b3370ce5b796c32bd8a90cc2e8ddd5231ca639ac939929c94025ed4646eea96d"
+          }
+        },
+        {
+          "id": "eaeu-pdf-697c9ad230dcf899376660b4-32320de1ef8224f8-4a7a80314151",
+          "title": "Саквинавир-АМЕДАРТ — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(012586)-(РГ-RU)"
+          ],
+          "original_sha256": "32320de1ef8224f8b15801f73f6447f82325fb8301065b2a7e97f41bb14c2e60",
+          "content_format": "official_original_pdf",
+          "page_count": 11,
+          "original_bytes": 546283,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/697c9ad230dcf899376660b4",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "697c9ad230dcf899376660b4",
+            "uploaded_file_path": "d159b1ef-4521-4030-b807-c94ef41f4d4e/79798952-a1f2-49d0-9376-ab9c06fcac17/file_13018818981431474.pdf",
+            "metadata_sha256": "9265ecfb12dccdb6539738721591128096a222f3401ffdf5b33ff257dcaabe7e"
+          }
+        },
+        {
+          "id": "eaeu-pdf-69e9f25e30dcf88a6e9dc144-78ca0020f7214ce0-e3fad14dd375",
+          "title": "Мемантин-СЗ — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(005057)-(РГ-RU)"
+          ],
+          "original_sha256": "78ca0020f7214ce064a758b2bf2491b2bf864a178b6b4d97f9e4736a9f4b30b8",
+          "content_format": "official_original_pdf",
+          "page_count": 7,
+          "original_bytes": 631144,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/69e9f25e30dcf88a6e9dc144",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "69e9f25e30dcf88a6e9dc144",
+            "uploaded_file_path": "066849be-18ef-4688-83b9-ef6ef2671631/ad7518a7-ac1b-40d8-8e25-b332ff1605b9/file_20286525438030343.pdf",
+            "metadata_sha256": "4c0b7c6544f239e9be02a39ba7810a785c7df0bc4778585a80887f85ceacbae1"
+          }
+        },
+        {
+          "id": "eaeu-pdf-6825cdc630dcf80e3d93c4a9-4a632ec3dd331646-e7d4ebb39eb1",
+          "title": "Айвест® Канон — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(005737)-(РГ-RU)"
+          ],
+          "original_sha256": "4a632ec3dd331646dff870e9941af4ae7036c436616bf03ed5a5b3a54a779a7b",
+          "content_format": "official_original_pdf",
+          "page_count": 6,
+          "original_bytes": 638014,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/6825cdc630dcf80e3d93c4a9",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "6825cdc630dcf80e3d93c4a9",
+            "uploaded_file_path": "e783bb4e-aae6-441c-ac11-690dd16b77d7/5fa7c195-3387-4d71-b280-3b8b43b11a03/file_35836467532989540.pdf",
+            "metadata_sha256": "43715fa3a0d12f7aac161a6f3bb23dffd7e579a43eb76d5cee897e0316b6661a"
+          }
+        },
+        {
+          "id": "eaeu-pdf-6953a5be30dcf8a1cb216548-a0aefd5bcfb9d271-2985b11ffae0",
+          "title": "Терифлуномид — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(002779)-(РГ-RU)"
+          ],
+          "original_sha256": "a0aefd5bcfb9d271dd8e128a6ae8f5c6511c5368c82941f13d5c95d411df89e0",
+          "content_format": "official_original_pdf",
+          "page_count": 11,
+          "original_bytes": 214314,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/6953a5be30dcf8a1cb216548",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "6953a5be30dcf8a1cb216548",
+            "uploaded_file_path": "db98f4ea-c5ac-4db2-b2ca-98f0ae6850c8/897d633e-afea-4df8-935f-d877c0daa80b/file_19333549659112924.pdf",
+            "metadata_sha256": "2dd86f44c9e013b8900da473d739ef0eb346b134b5827ed6108a911ae8f9db6d"
+          }
+        },
+        {
+          "id": "eaeu-pdf-6943dd3330dcf8a1cb2125e4-150039f3a82f5f21-a895b5300036",
+          "title": "Валсартан Канон — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(007838)-(РГ-RU)"
+          ],
+          "original_sha256": "150039f3a82f5f2194eb7c14eaff93ede646b4c77914092e87e7916709402bc3",
+          "content_format": "official_original_pdf",
+          "page_count": 10,
+          "original_bytes": 244553,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/6943dd3330dcf8a1cb2125e4",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "6943dd3330dcf8a1cb2125e4",
+            "uploaded_file_path": "b8b46521-0351-43ee-8145-1cafb585fcfd/cb8b143e-47dc-4fc4-a09f-e7d2fd8ccc5e/file_13201800825530990.pdf",
+            "metadata_sha256": "d8ddfd44c2f9e466c704629823c38ef940c654753a5374383ae4dbc56f30dbc7"
+          }
+        },
+        {
+          "id": "eaeu-pdf-6904923230dcf89f92938065-e4d2a4e24a51ebe8-aa646c5b21c0",
+          "title": "Рисдонал® — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(004065)-(РГ-RU)"
+          ],
+          "original_sha256": "e4d2a4e24a51ebe8b694b2358b6a1d2121739be73960cc0ef37f65a52b3da58f",
+          "content_format": "official_original_pdf",
+          "page_count": 15,
+          "original_bytes": 319187,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/6904923230dcf89f92938065",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "6904923230dcf89f92938065",
+            "uploaded_file_path": "f64bc961-3c60-4233-8f2d-0d52ce03bc65/a9345a64-8d59-4e7d-966c-bd7e3a76a9d4/file_467577573718804.pdf",
+            "metadata_sha256": "312eeace373ff7cd66860672addafa7eecf2208b9340ed6b7d3dc09e3fd1a84b"
+          }
+        },
+        {
+          "id": "eaeu-pdf-6a18213230dcf8a024867118-df0e057dbcee4be9-ebe756e7f796",
+          "title": "Мацитентан-ФС — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(003703)-(РГ-RU)"
+          ],
+          "original_sha256": "df0e057dbcee4be9064768f582c04d4029b567d800a27efb2e4312def2fed7e1",
+          "content_format": "official_original_pdf",
+          "page_count": 11,
+          "original_bytes": 711138,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/6a18213230dcf8a024867118",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "6a18213230dcf8a024867118",
+            "uploaded_file_path": "148524d0-44b4-4214-a8fd-d83e4c98253a/4c18f994-ee41-45b9-851d-80f8da9ba84d/file_15792241453550304.pdf",
+            "metadata_sha256": "f0cdae0d4eb0ac67fb196857ef8b4ac8ac56c03183905478def8ef549a3011a8"
+          }
+        },
+        {
+          "id": "eaeu-pdf-69c3f43530dcf898bd6106d2-928bb1dbe0b152cc-83e8eab37ad6",
+          "title": "Лерканидипин-СЗ — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(001095)-(РГ-RU)"
+          ],
+          "original_sha256": "928bb1dbe0b152cc6cdc313989a8f1657878f360f56a7369f7ce0416141f7feb",
+          "content_format": "official_original_pdf",
+          "page_count": 7,
+          "original_bytes": 336414,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/69c3f43530dcf898bd6106d2",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "69c3f43530dcf898bd6106d2",
+            "uploaded_file_path": "b8cc6440-14c9-43e8-b5fa-61cff7d9f68e/bd453ed6-0358-4c32-8502-5b85c4182304/file_11906668086555538.pdf",
+            "metadata_sha256": "c75368884225f7abaf7d7c6330022aa70675e527226531efa6573e53e2373054"
+          }
+        },
+        {
+          "id": "eaeu-pdf-689c641330dcf803b624f470-bece2e1da5e4d1e5-0b1e543f63b9",
+          "title": "ДРОТАВЕРИН ВЕЛФАРМ — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(004257)-(РГ-RU)"
+          ],
+          "original_sha256": "bece2e1da5e4d1e583b87feffb3a0e53cefe3ce93c4b4c9655f92018ad04cc21",
+          "content_format": "official_original_pdf",
+          "page_count": 7,
+          "original_bytes": 266062,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/689c641330dcf803b624f470",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "689c641330dcf803b624f470",
+            "uploaded_file_path": "aba11262-9496-4959-9939-bf66af37a192/ddc50723-0379-4a1d-92bb-45b8fe7e04eb/file_14772562339363339.pdf",
+            "metadata_sha256": "21461f2cf8808498ada16440481336ffb1b773a23e06e50ccb69c43adfae6ddc"
+          }
+        }
+      ],
+      "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T122255Z-62a2b6dc"
     }
   ],
-  "scope_note": "Live coverage is verified against current variant identities. Whole official PDF originals and inline text are counted separately. Exact current registration, form, strength and manufacturer evidence are required; unmatched variants remain uncovered. Unknown instruction revision dates are not called latest. New-profile recovery requires E0-compatible code and the readonly permanent store.",
-  "public_release_receipt": "2026-11-15-incremental-eaeu-concentration19-ozon21-release.json"
+  "scope_note": "Live coverage is verified against current variant identities. Whole official PDF originals and inline text are counted separately. Exact current registration, form, strength and manufacturer evidence are required; unmatched variants remain uncovered. Unknown instruction revision dates are not called latest. Film-profile recovery requires 0849-compatible code and the readonly permanent store351; E0 and 357 rollback are forbidden after the durable film31 publication fence.",
+  "public_release_receipt": "2026-11-15-incremental-eaeu-film30-drot1-release.json"
 }
