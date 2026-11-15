@@ -14,6 +14,7 @@ import re
 import unicodedata
 
 from .medication_instructions import _identity, _ru
+from .instruction_original_structured_dose import PROOF_MODE as STRUCTURED_DOSE_MODE, prove_structured_solid_dose
 
 PAIRED_ENTITY_MODE = 'eaeu_paired_entity_v1'
 
@@ -141,7 +142,8 @@ def _active_tuples(snapshot, form):
     return tuples
 
 
-def derive_identity_evidence(snapshot, registration, scopes, manufacturers, grls_row, *, manufacturer_proof_mode=None):
+def derive_identity_evidence(snapshot, registration, scopes, manufacturers, grls_row, *,
+                             manufacturer_proof_mode=None, dosage_proof_mode=None):
     """Return literal, reproducible proof fields or raise on any uncertainty.
 
     This does not verify PDF approval, completeness, version or binary integrity;
@@ -149,6 +151,8 @@ def derive_identity_evidence(snapshot, registration, scopes, manufacturers, grls
     """
     if manufacturer_proof_mode not in {None, PAIRED_ENTITY_MODE}:
         raise ValueError('unsupported manufacturer proof mode')
+    if dosage_proof_mode not in (None, STRUCTURED_DOSE_MODE):
+        raise ValueError('unsupported dosage proof mode')
     pairs = _paired_entities(snapshot) if manufacturer_proof_mode == PAIRED_ENTITY_MODE else []
     _check_grls(grls_row, registration)
     source_names = snapshot.get('manufacturers') or []
@@ -209,25 +213,33 @@ def derive_identity_evidence(snapshot, registration, scopes, manufacturers, grls
         matches = [v for v in fragments if _identity(v).startswith(prefix)]
         if not matches:
             raise ValueError('scope form/dosage is absent from literal GRLS release forms')
-        active_text = None
+        active_text, structured_strength = None, None
         if dosage.strip() == '~':
             if len(_active_tuples(snapshot, form)) > 1:
                 raise ValueError('unspecified dosage cannot select between differing EAEU active strengths')
         else:
             matches_source = [v for v in _active_strengths(snapshot, form) if _identity(v) == _identity(dosage)]
-            if not matches_source:
+            if matches_source:
+                active_text = sorted(matches_source)[0]
+            elif dosage_proof_mode == STRUCTURED_DOSE_MODE:
+                structured_strength = prove_structured_solid_dose(snapshot, form, dosage)
+            else:
                 raise ValueError('numeric dosage lacks a literal single-active EAEU substanceText')
-            active_text = sorted(matches_source)[0]
-        scope_evidence.append({'ru_number': _ru(ru), 'form': form, 'dosage': dosage,
-                               'grls_release_form': sorted(matches)[0],
-                               'source_form': snapshot['form'],
-                               'source_active_substance_text': active_text})
+        scope_proof = {'ru_number': _ru(ru), 'form': form, 'dosage': dosage,
+                       'grls_release_form': sorted(matches)[0],
+                       'source_form': snapshot['form'],
+                       'source_active_substance_text': active_text}
+        if structured_strength is not None:
+            scope_proof['source_structured_strength'] = structured_strength
+        scope_evidence.append(scope_proof)
     result = {'current_grls_registration': grls_row,
             'current_grls_registration_sha256': _hash(grls_row),
             'manufacturer_evidence': manufacturer_evidence,
             'scope_evidence': scope_evidence}
     if manufacturer_proof_mode is not None:
         result['manufacturer_proof_mode'] = manufacturer_proof_mode
+    if dosage_proof_mode is not None:
+        result['dosage_proof_mode'] = dosage_proof_mode
     return result
 
 
@@ -236,7 +248,8 @@ def validate_identity_evidence(document, snapshot, registration, scopes, manufac
     evidence = document.get('evidence') or {}
     expected = derive_identity_evidence(snapshot, registration, scopes, manufacturers,
                                         evidence.get('current_grls_registration'),
-                                        manufacturer_proof_mode=evidence.get('manufacturer_proof_mode'))
+                                        manufacturer_proof_mode=evidence.get('manufacturer_proof_mode'),
+                                        dosage_proof_mode=evidence.get('dosage_proof_mode'))
     for field, value in expected.items():
         if evidence.get(field) != value:
             raise ValueError('invalid or incomplete original identity proof: ' + field)

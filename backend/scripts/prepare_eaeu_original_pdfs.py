@@ -21,6 +21,7 @@ import sys
 import time
 
 from api.instruction_original_evidence import PAIRED_ENTITY_MODE, derive_identity_evidence, validate_identity_evidence
+from api.instruction_original_structured_dose import PROOF_MODE as STRUCTURED_DOSE_MODE
 from api.medication_instructions import _identity, _ru
 from api.medication_original_pdfs import (
     MAX_PAGES, MAX_PDF_BYTES, canonical_hash, match_original_to_medication,
@@ -138,7 +139,8 @@ def _document_type(binary, attachment):
     raise OriginalPreparationError('actual document type requires manual identity review')
 
 
-def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None, manufacturer_proof_mode=None):
+def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
+                      manufacturer_proof_mode=None, dosage_proof_mode=None):
     """Build a wrapper after the caller's full-registry uniqueness preflight."""
     folder = Path(folder)
     candidate = proof.get('candidate') or {}
@@ -181,7 +183,8 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
             names = list(dict.fromkeys([med.get('manufacturer'), source_name]))
             try:
                 derive_identity_evidence(snapshot, registration, [scope], names, grls,
-                                         manufacturer_proof_mode=manufacturer_proof_mode)
+                                         manufacturer_proof_mode=manufacturer_proof_mode,
+                                         dosage_proof_mode=dosage_proof_mode)
                 proven_names = names
                 break
             except ValueError as error:
@@ -206,6 +209,8 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
     if manufacturer_proof_mode is not None:
         fingerprint_payload.update(manufacturer_proof_mode=manufacturer_proof_mode,
                                    source_normalization_generation=proof.get('source_normalization_generation'))
+    if dosage_proof_mode is not None:
+        fingerprint_payload['dosage_proof_mode'] = dosage_proof_mode
     version_fingerprint = canonical_hash(fingerprint_payload)
     checkpoint_path = folder / 'official-original-verification.json'
     checkpoint = json.loads(checkpoint_path.read_text()) if checkpoint_path.exists() else {'versions': {}}
@@ -229,7 +234,8 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
     if manufacturer_proof_mode is not None:
         evidence['source_normalization_generation'] = proof.get('source_normalization_generation')
     evidence.update(derive_identity_evidence(snapshot, registration, scopes, manufacturers, grls,
-                                             manufacturer_proof_mode=manufacturer_proof_mode))
+                                             manufacturer_proof_mode=manufacturer_proof_mode,
+                                             dosage_proof_mode=dosage_proof_mode))
     document = {
         'id': 'eaeu-pdf-' + oid + '-' + sha[:16] + '-' + version_fingerprint[:12],
         'title': registration['trade_name'] + ' — официальный оригинал инструкции',
@@ -272,9 +278,11 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
 
 def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_path, *,
                    registry_index_path, registry_validation_path, max_candidates=None,
-                   manufacturer_proof_mode=None):
+                   manufacturer_proof_mode=None, dosage_proof_mode=None):
     if manufacturer_proof_mode not in {None, PAIRED_ENTITY_MODE}:
         raise OriginalPreparationError('unsupported manufacturer proof mode')
+    if dosage_proof_mode not in (None, STRUCTURED_DOSE_MODE):
+        raise OriginalPreparationError('unsupported dosage proof mode')
     registry_by_ru, registry_proof, source_snapshots = _registry_index(
         registry_index_path, registry_validation_path,
         retain_snapshots=manufacturer_proof_mode is not None)
@@ -321,7 +329,8 @@ def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_
                     'preserved_raw_metadata_sha256': current_snapshot['metadata_sha256'],
                     'added_fact_fields': ['manufacturer_entities']}
             wrapper, preview = prepare_candidate(proof, path.parent, catalog_by_ru[ru], grls_by_ru[ru],
-                                                  manufacturer_proof_mode=manufacturer_proof_mode)
+                                                  manufacturer_proof_mode=manufacturer_proof_mode,
+                                                  dosage_proof_mode=dosage_proof_mode)
             if wrapper['document']['id'] in seen_ids:
                 counts['duplicate_document'] += 1
                 continue
@@ -343,7 +352,7 @@ def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_
             'network_requests': 0, 'database_writes': 0, 'previews': previews,
             'output_path': str(output_path), 'rejection_path': str(rejection_path),
             'full_registry_uniqueness': registry_proof,
-            'manufacturer_proof_mode': manufacturer_proof_mode}
+            'manufacturer_proof_mode': manufacturer_proof_mode, 'dosage_proof_mode': dosage_proof_mode}
 
 
 def main(argv=None):
@@ -355,6 +364,8 @@ def main(argv=None):
     parser.add_argument('--registry-validation', required=True, help='Complete metadata count/hash validation proof')
     parser.add_argument('--manufacturer-proof-mode', choices=[PAIRED_ENTITY_MODE], default=None,
                         help='Explicitly enable primary same-stage25 long/brief entity pairs; legacy is unchanged')
+    parser.add_argument('--dosage-proof-mode', choices=[STRUCTURED_DOSE_MODE], default=None,
+                        help='Explicit direct single-active solid strength proof from pinned classifiers; no unit conversions')
     parser.add_argument('--output', required=True)
     parser.add_argument('--rejections', required=True)
     parser.add_argument('--report', required=True)
@@ -366,7 +377,8 @@ def main(argv=None):
                             args.rejections, registry_index_path=args.registry_index,
                             registry_validation_path=args.registry_validation,
                             max_candidates=args.max_candidates,
-                            manufacturer_proof_mode=args.manufacturer_proof_mode)
+                            manufacturer_proof_mode=args.manufacturer_proof_mode,
+                            dosage_proof_mode=args.dosage_proof_mode)
     Path(args.report).write_text(json.dumps(report, ensure_ascii=False, indent=2))
     print(json.dumps({key: value for key, value in report.items() if key != 'previews'}, ensure_ascii=False))
 
