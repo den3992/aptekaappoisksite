@@ -1,0 +1,148 @@
+"""No network: official-link discovery and stop/identity guard fixtures."""
+import io
+import json
+from pathlib import Path
+import tempfile
+import unittest
+from urllib.error import HTTPError
+from urllib.robotparser import RobotFileParser
+
+from scripts.sources.renewal_instructions import (
+    ORIGIN, RenewalAccessError, RenewalClient, RenewalSourceError,
+    Provider, discover, extraction_diagnostics, is_challenge, parse_product_html, public_url, relevant_slugs, robots_lines,
+)
+
+
+class Response(io.BytesIO):
+    def __init__(self, body, status=200, headers=None):
+        super().__init__(body)
+        self.status, self.headers = status, headers or {}
+
+
+class Opener:
+    def __init__(self, response):
+        self.response = response
+        self.calls = []
+
+    def open(self, request, timeout):
+        self.calls.append(request)
+        return self.response
+
+
+class RenewalTests(unittest.TestCase):
+    def test_only_actual_official_instruction_links_are_kept(self):
+        html = '''<h1>Тестовый препарат Реневал 10 мг</h1>
+        <a href="/upload/iblock/fixture/test.pdf">Скачать инструкцию</a>
+        <a href="/upload/iblock/fixture/test.pdf">Подробнее в инструкции</a>
+        <a href="https://other.test/instruction.pdf">Инструкция</a>
+        <a href="javascript:alert(1)">Инструкция</a>
+        <a href="/upload/privacy.pdf">Политика конфиденциальности</a>
+        <a href="/login/?file=instruction.pdf">Инструкция</a>'''
+        result = parse_product_html(html, ORIGIN + '/products/fixture/')
+        self.assertEqual(result['title'], 'Тестовый препарат Реневал 10 мг')
+        self.assertEqual([row['url'] for row in result['pdf_links']], [ORIGIN + '/upload/iblock/fixture/test.pdf'])
+
+    def test_product_selection_is_a_hint_and_respects_name_boundaries(self):
+        meds = [{'slug':'test','name':'Тест® Реневал','manufacturer':'АО ПФК ОБНОВЛЕНИЕ'},
+                {'slug':'different','name':'Тест','manufacturer':'Другая компания'}]
+        self.assertEqual(relevant_slugs('Тест Реневал 10 мг №30', meds), ['test'])
+        self.assertEqual(relevant_slugs('Тест Реневалплюс 10 мг', meds), [])
+
+    def test_no_role_or_auth_claim_and_no_foreign_or_query_urls(self):
+        opener = Opener(Response(b'public fixture'))
+        client = RenewalClient(opener)
+        body, meta = client.get(ORIGIN + '/products/fixture/')
+        self.assertEqual(body, b'public fixture')
+        self.assertEqual(opener.calls[0].get_method(), 'GET')
+        self.assertNotIn('Cookie', opener.calls[0].headers)
+        self.assertNotIn('Authorization', opener.calls[0].headers)
+        for url in ['https://other.test/file.pdf', ORIGIN + '/?role=doctor', 'javascript:alert(1)']:
+            with self.assertRaises(RenewalSourceError):
+                public_url(url)
+
+    def test_access_denial_stops_after_one_request(self):
+        for status in [401,403,429]:
+            opener = Opener(Response(b'blocked', status))
+            with self.assertRaises(RenewalAccessError):
+                RenewalClient(opener).get(ORIGIN + '/products/fixture/')
+            self.assertEqual(len(opener.calls), 1)
+        self.assertTrue(is_challenge(b'<form id="challenge-form">'))
+        self.assertFalse(is_challenge(b'<script src="recaptcha.js"></script><h1>Public product</h1>'))
+
+    def test_provider_configuration_keeps_host_and_path_boundaries(self):
+        provider = Provider('fixture','https://manufacturer.test',('manufacturer.test',),'/catalog/',('/files/',),('fixture',))
+        html = '<h1>Fixture medicine</h1><a href="/files/instruction.pdf">Инструкция</a><a href="https://www.renewal.ru/upload/instruction.pdf">Инструкция</a>'
+        row = parse_product_html(html,'https://manufacturer.test/catalog/product/',provider)
+        self.assertEqual([x['url'] for x in row['pdf_links']],['https://manufacturer.test/files/instruction.pdf'])
+        self.assertEqual(robots_lines(r'User-Agent: *\r\nDisallow: /private/\r\nSitemap: https://manufacturer.test/sitemap.xml'),
+                         ['User-Agent: *','Disallow: /private/','Sitemap: https://manufacturer.test/sitemap.xml'])
+
+    def test_mixed_sitemap_urls_skip_http_and_foreign_without_upgrade(self):
+        class PublicFixtureClient:
+            provider = Provider('fixture','https://manufacturer.test',('manufacturer.test',),'/catalog/',('/files/',),('fixture',))
+
+            def __init__(self):
+                self.calls = []
+
+            def get(self, url, **kwargs):
+                self.calls.append(url)
+                payloads = {
+                    'https://manufacturer.test/robots.txt': b'User-agent: *\nSitemap: http://manufacturer.test/ar/sitemap.xml\nSitemap: https://foreign.test/sitemap.xml\nSitemap: https://manufacturer.test/sitemap.xml\n',
+                    'https://manufacturer.test/sitemap.xml': b'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://manufacturer.test/catalog/medicine/</loc></url></urlset>',
+                }
+                return payloads[url], {'url': url, 'sha256':'fixture'}
+
+        client = PublicFixtureClient()
+        with tempfile.TemporaryDirectory() as folder:
+            directory = Path(folder)
+            self.assertEqual(discover(client, directory), ['https://manufacturer.test/catalog/medicine/'])
+            result = json.loads((directory / 'product-urls.json').read_text())
+        self.assertEqual(client.calls, ['https://manufacturer.test/robots.txt', 'https://manufacturer.test/sitemap.xml'])
+        self.assertEqual([item['url'] for item in result['ignored_source_urls']],
+                         ['http://manufacturer.test/ar/sitemap.xml', 'https://foreign.test/sitemap.xml'])
+
+    def test_patient_and_professional_leaflets_are_candidates_not_approval(self):
+        html = '<h1>Fixture</h1><a href="/upload/patient.pdf">Скачать информацию для пациента</a><a href="/upload/professional.pdf">Скачать информацию для работника здравоохранения</a><a href="/upload/general.pdf">Общая характеристика лекарственного препарата</a>'
+        result = parse_product_html(html, ORIGIN + '/products/fixture/')
+        self.assertEqual(len(result['pdf_links']), 3)
+        self.assertNotIn('verification', result)
+
+    def test_incomplete_transport_is_rejected(self):
+        opener = Opener(Response(b'%PDF-fixture', headers={'Content-Length': '1000'}))
+        with self.assertRaisesRegex(RenewalSourceError, 'Content-Length'):
+            RenewalClient(opener).get(ORIGIN + '/upload/fixture.pdf')
+
+    def test_redirect_respects_robots_without_requesting_disallowed_target(self):
+        opener = Opener(Response(b'', 302, {'Location': '/private/instruction.pdf'}))
+        client = RenewalClient(opener)
+        client.robots = RobotFileParser()
+        client.robots.parse(['User-agent: *', 'Disallow: /private/'])
+        with self.assertRaisesRegex(RenewalSourceError, 'robots.txt'):
+            client.get(ORIGIN + '/upload/fixture.pdf')
+        self.assertEqual(len(opener.calls), 1)
+
+    def test_empty_required_heading_is_not_semantic_completeness(self):
+        report = {'text':'ИНСТРУКЦИЯ ПО МЕДИЦИНСКОМУ ПРИМЕНЕНИЮ', 'missing_sections':[],
+                  'sections':[{'key':'composition','title':'Состав','text':'Состав'},
+                              {'key':'composition_2','title':'Состав','text':'Состав\nFixture table text'}]}
+        row = extraction_diagnostics(report)
+        self.assertTrue(row['old_headers_present'])
+        self.assertEqual(row['heading_only_sections'], ['composition'])
+        self.assertTrue(row['clinical_table_order_review'])
+        self.assertFalse(row['classification_is_approval'])
+        self.assertNotEqual(row['verification_status'], 'verified')
+
+    def test_leaflet_profile_does_not_claim_old_instruction_headers(self):
+        report = {'text':'Листок-вкладыш. Информация для пациента',
+                  'document_type':'patient_leaflet', 'missing_sections':[], 'sections':[],
+                  'section_review_reasons':[]}
+        row = extraction_diagnostics(report)
+        self.assertEqual(row['extracted_document_type'], 'patient_leaflet')
+        self.assertTrue(row['required_profile_sections_present'])
+        self.assertIsNone(row['old_headers_present'])
+        self.assertFalse(row['classification_is_approval'])
+        self.assertNotEqual(row['verification_status'], 'verified')
+
+
+if __name__ == '__main__':
+    unittest.main()
