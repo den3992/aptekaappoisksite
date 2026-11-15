@@ -1,22 +1,22 @@
 {
-  "verified_at": "2026-11-15T06:13:24.237053+00:00",
+  "verified_at": "2026-11-15T06:29:22.947543+00:00",
   "verified_live_database": true,
   "public_deployment_pending": true,
-  "validation_revision": "0ab6f9245d9dfec4738f69f8c2b18060350b7991",
+  "validation_revision": "fbd9a8a586c74dc0cd555b55833a29a5d9ea264f",
   "inventory": {
     "canonical_cards": 22377,
     "total_variants": 72058
   },
   "coverage": {
-    "verified_documents": 58,
+    "verified_documents": 64,
     "verified_original_documents": 4,
-    "cards_with_instructions": 73,
+    "cards_with_instructions": 79,
     "cards_with_original_pdf": 4,
-    "cards_with_either_format": 76,
+    "cards_with_either_format": 81,
     "fully_covered_cards": 13,
-    "covered_variants": 609,
+    "covered_variants": 657,
     "original_covered_variants": 36,
-    "combined_covered_variants": 637,
+    "combined_covered_variants": 667,
     "combined_fully_covered_cards": 14
   },
   "batches": [
@@ -709,6 +709,86 @@
         }
       ],
       "rollback_command": "python scripts/import_medication_instructions.py --apply --rollback instructions-20261115T061212Z-9d1ae6fb"
+    },
+    {
+      "batch_id": "instructions-20261115T061650Z-3c1d0092",
+      "plan_hash": "fd485c6ca45bee451617e3322938cacfb63a0141311d0a5e5347c0a1dd1a6155",
+      "content_format": "verified_inline_text",
+      "added_documents": 3,
+      "added_bindings": 3,
+      "documents": [
+        {
+          "id": "renewal-5c547bdc5f69dcb29c94a69d755f7cb9a327db52038e5e68ade14f59b6725719",
+          "title": "Пустырника экстракт Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(004617)-(РГ-RU)"
+          ],
+          "original_sha256": "5c547bdc5f69dcb29c94a69d755f7cb9a327db52038e5e68ade14f59b6725719",
+          "original_url": "https://www.renewal.ru/upload/iblock/acb/praxuwl9cyoqxmyg36hxbpuqsjtlmb6h/Instruktsiya-104kh147-mm-ot-09.02.26-_1_.pdf",
+          "content_hash": "91f7f487f0d0ea0f9aa540bb6578ee21536892d876d3e6ba6ee89351b3907cde"
+        },
+        {
+          "id": "renewal-0b2da57301ad51df0e38651421b99dbb17a891c3e0f1366061da2d6102fc8f1f",
+          "title": "Прополиса настойка Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(001380)-(РГ-RU)"
+          ],
+          "original_sha256": "0b2da57301ad51df0e38651421b99dbb17a891c3e0f1366061da2d6102fc8f1f",
+          "original_url": "https://www.renewal.ru/upload/iblock/7c1/djzaao7u8hybbd4fsmqx8tyjuxawt6ki/Propolisa-nastoyka-Reneval-25-ml-_-instruktsiya-po-primeneniyu.pdf",
+          "content_hash": "cd440f48c950e9325fb25d8260a35abeeb356dd730fceeff7685bbdb7b8ae832"
+        },
+        {
+          "id": "renewal-e0ad52e3172a93332ff96ee2117deb20efeaa0275a34b954f69d4b1d5c5ac464",
+          "title": "Валидол Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(004475)-(РГ-RU)"
+          ],
+          "original_sha256": "e0ad52e3172a93332ff96ee2117deb20efeaa0275a34b954f69d4b1d5c5ac464",
+          "original_url": "https://www.renewal.ru/upload/iblock/ff5/ql8jm0acitlgwpvdg6wniurah20flm21/Validol-Reneval-Instruktsiya-104kh147-mm-ot-07.05.24-_tekst_.pdf",
+          "content_hash": "5908f6e09649e562b608b72d63a03dcd1f84c4cd2764d4fd5774b6e4952c97bc"
+        }
+      ],
+      "rollback_command": "python scripts/import_medication_instructions.py --apply --rollback instructions-20261115T061650Z-3c1d0092"
+    },
+    {
+      "batch_id": "instructions-20261115T062809Z-58343319",
+      "plan_hash": "f211fceb0cd76afb794ff947dfc263a624b023bffcd99f5c97ed1b5d77d2e2cf",
+      "content_format": "verified_inline_text",
+      "added_documents": 3,
+      "added_bindings": 3,
+      "documents": [
+        {
+          "id": "renewal-2ebd41f3ac2690e9b98dc49db3294883c9132cfb9a30d22c5b0a3e1ba461abae",
+          "title": "Калия перманганат Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(006488)-(РГ-RU)"
+          ],
+          "original_sha256": "2ebd41f3ac2690e9b98dc49db3294883c9132cfb9a30d22c5b0a3e1ba461abae",
+          "original_url": "https://www.renewal.ru/upload/iblock/cef/m4kppwfsnc1xspgk0i96k2knq0m9f9z8/Kaliya-permanganat-Instruktsiya.pdf",
+          "content_hash": "cf577841cd0c7012c48bb0bd1c68c706ff33edf6b685123ca5adc8b7cbe72d14"
+        },
+        {
+          "id": "renewal-d208d3074f892a535577c0e3a451b260d7523bd1e6fc24b8fe6a76ce637be5ee",
+          "title": "Римантадин Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(000773)-(РГ-RU)"
+          ],
+          "original_sha256": "d208d3074f892a535577c0e3a451b260d7523bd1e6fc24b8fe6a76ce637be5ee",
+          "original_url": "https://www.renewal.ru/upload/iblock/fff/%D0%A0%D0%B8%D0%BC%D0%B0%D0%BD%D1%82%D0%B0%D0%B4%D0%B8%D0%BD%20%D0%A0%D0%B5%D0%BD%D0%B5%D0%B2%D0%B0%D0%BB%2050%20%D0%BC%D0%B3%20-%20%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D1%8F%20%D0%BF%D0%BE%20%D0%BF%D1%80%D0%B8%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D1%8E.pdf",
+          "content_hash": "b985f1a8107469c4db49c10c20ea7876c2f2fec5b32f807e24255951984c3dcf"
+        },
+        {
+          "id": "renewal-460e16b4bf26c4d061ca6bdf33597ba9632c6073f5882f4e0e32a147acf55eb4",
+          "title": "Ацетилсалициловая кислота Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(001700)-(РГ-RU)"
+          ],
+          "original_sha256": "460e16b4bf26c4d061ca6bdf33597ba9632c6073f5882f4e0e32a147acf55eb4",
+          "original_url": "https://www.renewal.ru/upload/iblock/772/je9tv11w75ekddfiui7y9hd0w88f4nkg/ATSSK-Reneval-shipuchie-500mg-_20-_-Instruktsiya-po-primeneniyu.pdf",
+          "content_hash": "73561974718177b27fb3dbcbe559ca27ec871b9eaea62fa3925856c993b458ea"
+        }
+      ],
+      "rollback_command": "python scripts/import_medication_instructions.py --apply --rollback instructions-20261115T062809Z-58343319"
     },
     {
       "batch_id": "instructions-20261115T052600Z-0ef26473",
