@@ -64,11 +64,15 @@ def plain_text(value: str) -> str:
 
 
 def _identity(value) -> str:
-    return re.sub(r"\s+", " ", unicodedata.normalize("NFKC", str(value or ""))).strip().casefold()
+    text = str(value or "").replace("®", "").replace("™", "")
+    return re.sub(r"\s+", " ", unicodedata.normalize("NFKC", text)).strip().casefold()
 
 
 def _ru(value) -> str:
-    return re.sub(r"\s+", "", unicodedata.normalize("NFKC", str(value or ""))).upper()
+    text = re.sub(r"\s+", "", unicodedata.normalize("NFKC", str(value or ""))).upper()
+    # N and the number sign are spelling variants of the number marker only.
+    # Never strip letters/digits, procedure suffixes, or registration prefixes.
+    return re.sub(r"^((?:ЛП|ЛСР|П|Р)-?)(?:NO|N)(?=[(\d])", r"\1N", text)
 
 
 def _gtin(value) -> str:

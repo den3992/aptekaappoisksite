@@ -98,6 +98,19 @@ class Collection:
 
 
 class ValidationTests(unittest.TestCase):
+    def test_number_marker_and_trademark_typography_do_not_create_false_misses(self):
+        doc = document()
+        doc["identity"]["trade_name"] = "Пример®"
+        doc["registration_numbers"] = ["ЛП-№(000015)-(РГ-RU)"]
+        doc["scopes"] = [{"ru_number": "ЛП-№(000015)-(РГ-RU)", "form": "таблетки", "dosage": "500 мг"}]
+        item = medication()
+        item["variants"][0]["ru_number"] = "ЛП-N (000015)-(РГ-RU)"
+        self.assertEqual(match_document_to_medication(doc, item)["covered_variants"], 1)
+        item["variants"][0]["ru_number"] = "ЛП-N (000016)-(РГ-RU)"
+        self.assertFalse(match_document_to_medication(doc, item)["matched"])
+        item["variants"][0]["ru_number"] = "ЛП-N (000015)-(ГП-RU)"
+        self.assertFalse(match_document_to_medication(doc, item)["matched"])
+
     def test_official_registration_number_typography_is_preserved(self):
         doc = document()
         official = "ЛП-№(005951)-(РГ-RU)"
