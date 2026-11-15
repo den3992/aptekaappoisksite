@@ -19,6 +19,26 @@ PDF_MANUFACTURER = 'ООО «Гротекс»'
 PDF_ADDRESS = 'Россия, 195279, Санкт-Петербург, Индустриальный пр., д.71, к.2, лит.А'
 GRLS_COMPANY = 'Общество с ограниченной ответственностью "Гротекс" (ООО "Гротекс")'
 GRLS_ADDRESS = '195279, г. Санкт-Петербург, Индустриальный проспект, д. 71, корп. 2, лит. А, Россия'
+# Opt-in literal typography for exactly two independently reviewed originals.
+# The SHA and physical page pins are the admission boundary, not examples that
+# permit another document/company/site or a general address normalization.
+GROTEX_ADDRESS_PROFILE = 'solopharm_grotex_71_2_A_typography_v1'
+_GROTEX_ADDRESS_TUPLES = {
+    'atrevozol_country_separate_full_pr': (
+        'f712fb4233228757dc6d3f69857c4c2e13fbb0f549102b32e667c0adf5ec89d9', 7, 7,
+        'Российская Федерация',
+        '195279, г. Санкт-Петербург, Индустриальный проспект, д. 71, корп. 2, лит. А',
+        'Производитель\nРоссийская Федерация\nООО «Гротекс»\n'
+        '195279, г. Санкт-Петербург, Индустриальный проспект, д. 71, корп. 2, лит. А',
+    ),
+    'pentox_country_companyline_short_pr': (
+        'ab75a66b13554ab76142b16a71ccc423d386334beff8a961a1897e17d85d8e0c', 10, 10,
+        'Россия',
+        '195279, Санкт-Петербург, Индустриальный пр., д. 71, корп. 2, лит. А',
+        'Производитель\nООО «Гротекс», Россия\n'
+        '195279, Санкт-Петербург, Индустриальный пр., д. 71, корп. 2, лит. А',
+    ),
+}
 _DOCUMENT_SUFFIXES = re.compile(r'\.(?:pdf|docx?|od[ft]|rtf|xlsx?|pptx?|txt|zip)(?:$|[/;])', re.I)
 _DOCUMENT_MIME = re.compile(r'^(?:application/(?:pdf|msword|rtf|postscript)|text/(?:plain|rtf|csv))(?:\s*;|$)|officedocument|opendocument|vnd\.ms-(?:excel|powerpoint)', re.I)
 _MEDICAL_LABEL = re.compile(r'инструкц|instruk|instruction|лист[ао]к[\s-]*вкладыш|информаци[яю]\s+для\s+(?:пациент|работник)|общ[а-я]+\s+характеристик|(?<!\w)(?:ОХЛП|PIL|SmPC)(?!\w)|leaflet', re.I)
@@ -133,13 +153,41 @@ def validate_solopharm_product_html(document, body):
         raise ValueError('one actual Solopharm instruction anchor and sole document version are required')
 
 
+def _validate_pinned_address_typography(document, manufacturer):
+    """Require the unchanged physical block from one of two reviewed PDFs."""
+    if manufacturer.get('physical_address_profile') != GROTEX_ADDRESS_PROFILE:
+        raise ValueError('unknown Solopharm literal address profile')
+    key = manufacturer.get('physical_address_tuple')
+    if not isinstance(key, str) or len(key) > 64 or key not in _GROTEX_ADDRESS_TUPLES:
+        raise ValueError('unknown Solopharm literal address tuple')
+    sha, count, page, country, address, context = _GROTEX_ADDRESS_TUPLES[key]
+    evidence = document.get('evidence')
+    visual = evidence.get('visual_identity') if isinstance(evidence, dict) else None
+    if (document.get('original_sha256') != sha or type(document.get('page_count')) is not int
+            or document['page_count'] != count or not isinstance(visual, dict)
+            or visual.get('original_sha256') != sha or type(visual.get('page_count')) is not int
+            or visual['page_count'] != count or visual.get('all_pages_visually_reviewed') is not True
+            or manufacturer.get('page_indices') != [page]):
+        raise ValueError('Solopharm literal address tuple requires its exact PDF SHA and physical pages')
+    # Exact comparisons impose fixed length bounds. No legal/whitespace/address
+    # normalization is applied on this new opt-in path, including raw context.
+    expected = {'raw': PDF_MANUFACTURER, 'raw_role': 'Производитель',
+                'physical_country_raw': country, 'physical_address_raw': address, 'context_raw': context}
+    if any(type(manufacturer.get(field)) is not str or manufacturer[field] != value
+           for field, value in expected.items()):
+        raise ValueError('Solopharm literal address tuple requires its separate exact producer block')
+
+
 def validate_solopharm_physical_proof(document, manufacturer, grls_parts):
     """Corroborate the exact observed factory without a new legal/address alias."""
     if (document.get('revision_date') is not None or document.get('approved_at') is not None
             or document.get('version') != 'sha256:' + document['original_sha256']):
         raise ValueError('Solopharm uses a SHA archive version and no inferred revision/approval date')
     if (_legal(manufacturer['raw']) != _legal(PDF_MANUFACTURER)
-            or manufacturer.get('physical_address_raw') != PDF_ADDRESS
             or _legal(grls_parts[1].strip()) != _legal(GRLS_COMPANY)
             or grls_parts[2].strip() != GRLS_ADDRESS):
+        raise ValueError('Solopharm requires the same observed Grotex finished factory at 71/2/A')
+    if 'physical_address_profile' in manufacturer:
+        _validate_pinned_address_typography(document, manufacturer)
+    elif manufacturer.get('physical_address_raw') != PDF_ADDRESS:
         raise ValueError('Solopharm requires the same observed Grotex finished factory at 71/2/A')
