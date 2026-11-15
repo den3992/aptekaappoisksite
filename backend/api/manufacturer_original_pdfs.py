@@ -36,6 +36,9 @@ MANUFACTURER_PROFILES = {
     'solopharm': {'name': 'Solopharm', 'hosts': SOLOPHARM_HOSTS,
                   'product_prefix': '/products/', 'pdf_prefix': '/storage/files/products/',
                   'footer_pdfs': {}},
+    'vertex': {'name': 'Vertex', 'hosts': ('vertex.spb.ru',),
+               'product_prefix': '/products/', 'pdf_prefix': '/upload/medialibrary/',
+               'footer_pdfs': {}},
 }
 PHYSICAL_FINISHED_STAGE_MODE = 'physical_pdf_finished_stage_v1'
 _GRLS_FINISHED_ROLE = (r'производитель\s*\((?:готовой\s+лф|все\s+стадии)\)'
@@ -65,10 +68,10 @@ def _manufacturer_url(value, provider, *, prefix=None, pdf=False):
     if (parsed.scheme != 'https' or parsed.hostname not in profile['hosts'] or port not in (None, 443)
             or parsed.username or parsed.password or '?' in value or '#' in value
             or '\\' in value or re.search(r'%2e|%2f|%5c|%00', value, re.I)
-            or (provider in ('canon', 'solopharm') and re.search(r'[\x00-\x20\x7f]|%25', value, re.I))):
+            or (provider in ('canon', 'solopharm', 'vertex') and re.search(r'[\x00-\x20\x7f]|%25', value, re.I))):
         raise ValueError('only public HTTPS ' + label + ' URLs on port 443 are supported')
-    if provider == 'solopharm' and '.' in parsed.path.split('/'):
-        raise ValueError('Solopharm static paths cannot contain dot segments')
+    if provider in ('solopharm', 'vertex') and '.' in parsed.path.split('/'):
+        raise ValueError(('Solopharm' if provider == 'solopharm' else 'Vertex') + ' static paths cannot contain dot segments')
     decoded = parsed.path
     for _ in range(4):
         decoded = unquote(decoded)
@@ -220,6 +223,9 @@ class _ProductLinks(HTMLParser):
 
 
 def validate_product_html(document, body):
+    if document.get('source', {}).get('provider') == 'vertex':
+        from .vertex_original_pdfs import validate_vertex_product_html
+        return validate_vertex_product_html(document, body)
     provider = document['source']['provider']
     if provider == 'solopharm':
         from .solopharm_original_pdfs import validate_solopharm_product_html
@@ -308,12 +314,18 @@ def validate_manufacturer_original_document(raw):
             for item in value:
                 reject_credentials(item)
     reject_credentials(evidence)
+    if provider != 'vertex' and 'vertex_physical_proof' in evidence:
+        raise ValueError('Vertex physical proof cannot be used by another provider')
     product = _object(evidence.get('product_page'), 'evidence.product_page')
     if product.get('url') != product_url or product.get('pdf_url') != pdf_url:
         raise ValueError('product page evidence differs from the selected source')
     _sha256(product.get('html_sha256'), 'product_page.html_sha256')
     href = _literal(product.get('actual_href'), 'product_page.actual_href')
-    if provider == 'solopharm':
+    if provider == 'vertex':
+        from .vertex_original_pdfs import vertex_href, validate_vertex_product_proof
+        validate_vertex_product_proof(product)
+        resolved_href = vertex_href(product_url, href)
+    elif provider == 'solopharm':
         from .solopharm_original_pdfs import solopharm_href, validate_solopharm_product_proof
         validate_solopharm_product_proof(product)
         resolved_href = solopharm_href(product_url, href)
@@ -388,11 +400,15 @@ def validate_manufacturer_original_document(raw):
     for raw_scope in scopes:
         scope = _object(raw_scope, 'scope')
         form, dose = _required_text(scope.get('form'), 'scope.form'), _required_text(scope.get('dosage'), 'scope.dosage')
-        if (_ru(scope.get('ru_number')) != number or scope.get('gtin') or scope.get('manufacturer_scope')
+        scope_gtin = None
+        if provider == 'vertex':
+            from .vertex_original_pdfs import vertex_scope_gtin
+            scope_gtin = vertex_scope_gtin(scope, number)
+        if (_ru(scope.get('ru_number')) != number or (scope.get('gtin') and provider != 'vertex') or scope.get('manufacturer_scope')
                 or dose == '~' or not any(_identity(line).startswith(_identity(form + ', ' + dose + ',')) for line in release_forms)):
             raise ValueError('scope requires literal exact GRLS RU/form/dosage without conversions')
         pairs.add((_identity(form), _identity(dose)))
-        validated_scopes.append({'gtin': None, 'ru_number': number, 'form': form, 'dosage': dose})
+        validated_scopes.append({'gtin': scope_gtin, 'ru_number': number, 'form': form, 'dosage': dose})
     if len(pairs) != 1:
         raise ValueError('one unambiguous form/dosage pair is supported per visual proof')
     visual = _object(evidence.get('visual_identity'), 'visual_identity')
@@ -423,7 +439,10 @@ def validate_manufacturer_original_document(raw):
             or not _pdf_manufacturer_matches(proofs['manufacturer']['raw'], parts[1].strip(), evidence, provider)):
         raise ValueError('literal physical PDF identity differs from exact GRLS scopes/manufacturer')
     role = _literal(proofs['manufacturer'].get('raw_role'), 'visual manufacturer raw_role')
-    if (not re.search(r'\bпроизводител[ья]\b|производство\s+готовой', role, re.I)
+    if provider == 'vertex':
+        from .vertex_original_pdfs import validate_vertex_physical_proof
+        validate_vertex_physical_proof(doc, proofs['manufacturer'], parts)
+    elif (not re.search(r'\bпроизводител[ья]\b|производство\s+готовой', role, re.I)
             or re.search(r'держател|владел|упаков|контрол|выпускающ', role, re.I)):
         raise ValueError('visual PDF role does not prove the finished-product manufacturer')
     if mode == PHYSICAL_FINISHED_STAGE_MODE:

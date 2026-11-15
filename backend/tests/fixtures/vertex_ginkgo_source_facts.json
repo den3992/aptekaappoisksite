@@ -1,0 +1,146 @@
+{
+  "record_type": "retained_source_facts_for_unit_metadata_tests_not_publication_approval",
+  "source_observations_sha256": "677226079a686e954cebaa40666cb23ff2a56d8745fa3911eded1318419d2140",
+  "current_grls_registration": {
+    "registration_number": "ЛП-№(002790)-(РГ-RU)",
+    "registration_key": "ЛП-N(002790)-(РГ-RU)",
+    "registered_at": "18.07.2023",
+    "expires_at": "",
+    "cancelled_at": "",
+    "holder": "Акционерное общество \"ВЕРТЕКС\" (АО \"ВЕРТЕКС\")",
+    "trade_name": "Гинкго Билоба",
+    "inn": "Гинкго двулопастного листьев экстракт",
+    "release_forms": "капсулы, 40 мг, 20 шт. - упаковки ячейковые контурные (3 шт.)  - пачки картонные (60 шт.)  - Без рецепта; капсулы, 40 мг, 20 шт. - упаковки ячейковые контурные (2 шт.)  - пачки картонные (40 шт.)  - Без рецепта; капсулы, 40 мг, 20 шт. - упаковки ячейковые контурные - пачки картонные (20 шт.)  - Без рецепта; капсулы, 40 мг, 15 шт. - упаковки ячейковые контурные (6 шт.)  - пачки картонные (90 шт.)  - Без рецепта; капсулы, 40 мг, 15 шт. - упаковки ячейковые контурные (4 шт.)  - пачки картонные (60 шт.)  - Без рецепта; капсулы, 40 мг, 15 шт. - упаковки ячейковые контурные (2 шт.)  - пачки картонные (30 шт.)  - Без рецепта; капсулы, 40 мг, 10 шт. - упаковки ячейковые контурные (6 шт.)  - пачки картонные (60 шт.)  - Без рецепта; капсулы, 40 мг, 10 шт. - упаковки ячейковые контурные (4 шт.)  - пачки картонные (40 шт.)  - Без рецепта; капсулы, 40 мг, 10 шт. - упаковки ячейковые контурные (3 шт.)  - пачки картонные (30 шт.)  - Без рецепта; капсулы, 40 мг, 10 шт. - упаковки ячейковые контурные (2 шт.)  - пачки картонные (20 шт.)  - Без рецепта; капсулы, 80 мг, 20 шт. - упаковки ячейковые контурные (3 шт.)  - пачки картонные (60 шт.)  - Без рецепта; капсулы, 80 мг, 20 шт. - упаковки ячейковые контурные (2 шт.)  - пачки картонные (40 шт.)  - Без рецепта; капсулы, 80 мг, 20 шт. - упаковки ячейковые контурные - пачки картонные (20 шт.)  - Без рецепта; капсулы, 80 мг, 15 шт. - упаковки ячейковые контурные (6 шт.)  - пачки картонные (90 шт.)  - Без рецепта; капсулы, 80 мг, 15 шт. - упаковки ячейковые контурные (4 шт.)  - пачки картонные (60 шт.)  - Без рецепта; капсулы, 80 мг, 15 шт. - упаковки ячейковые контурные (2 шт.)  - пачки картонные (30 шт.)  - Без рецепта; капсулы, 80 мг, 10 шт. - упаковки ячейковые контурные (6 шт.)  - пачки картонные (60 шт.)  - Без рецепта; капсулы, 80 мг, 10 шт. - упаковки ячейковые контурные (4 шт.)  - пачки картонные (40 шт.)  - Без рецепта; капсулы, 80 мг, 10 шт. - упаковки ячейковые контурные (3 шт.)  - пачки картонные (30 шт.)  - Без рецепта; капсулы, 80 мг, 10 шт. - упаковки ячейковые контурные (2 шт.)  - пачки картонные (20 шт.)  - Без рецепта; ",
+    "production_stages": "Производитель (готовой ЛФ),Акционерное общество \"ВЕРТЕКС\" (АО \"ВЕРТЕКС\"), г. Санкт-Петербург, Дорога в Каменку, д.62, лит. А, Россия_x000D_\n",
+    "normative_documentation": "ЛП-№(002790)-(РГ-RU)-210726,2026,Гинкго Билоба; _x000D_\n",
+    "snapshot_file": "/tmp/aptekaa-instructions-20261115/grls-export/grls2026-11-13-1-Действующий.xlsx",
+    "snapshot_sha256": "84f6a9a88a6bc9e2ea83aefa11b6ff6f54c19e76a3e99f55793a68e12044e1fa",
+    "sheet": "Действующий",
+    "row": 3638,
+    "source_status_book": "Действующий"
+  },
+  "grls_production_fragment": "Производитель (готовой ЛФ),Акционерное общество \"ВЕРТЕКС\" (АО \"ВЕРТЕКС\"), г. Санкт-Петербург, Дорога в Каменку, д.62, лит. А, Россия",
+  "physical_producer_block": "Держатель регистрационного удостоверения и производитель\nРоссийская Федерация\nАО «ВЕРТЕКС»\nАдрес: 197350, г. Санкт-Петербург, Дорога в Каменку, д. 62, лит. А.\nТел.: 8 (800) 2000 305\nАдрес электронной почты: vertex@vertex.spb.ru\nАдрес электронной почты для информирования о нежелательных реакциях:\npharmacovigilance@vertex.spb.ru",
+  "physical_representative_block": "За любой информацией о препарате, а также в случаях возникновения претензий следует\nобращаться к местному представителю держателя регистрационного удостоверения.\nРоссийская Федерация\nАО «ВЕРТЕКС»\nАдрес: 197350, г. Санкт-Петербург, Дорога в Каменку, д. 62, лит. А.\nТел.: 8 (800) 2000 305\nВеб-сайт: vertex.spb.ru",
+  "literal_fields": {
+    "registration_number": {
+      "raw": "ЛП-№(002790)-(РГ-RU)",
+      "page_indices": [
+        1
+      ]
+    },
+    "trade_name": {
+      "raw": "Гинкго Билоба",
+      "page_indices": [
+        1,
+        7
+      ]
+    },
+    "form": {
+      "raw": "капсулы",
+      "page_indices": [
+        1,
+        7
+      ]
+    },
+    "dosage": {
+      "raw": "80 мг",
+      "page_indices": [
+        1,
+        7
+      ]
+    },
+    "manufacturer": {
+      "raw": "АО «ВЕРТЕКС»",
+      "raw_role": "Держатель регистрационного удостоверения и производитель",
+      "page_indices": [
+        8
+      ]
+    },
+    "finished_site": {
+      "raw": "197350, г. Санкт-Петербург, Дорога в Каменку, д. 62, лит. А.",
+      "page_indices": [
+        8
+      ]
+    },
+    "physical_source_host": {
+      "raw": "Веб-сайт: vertex.spb.ru",
+      "page_indices": [
+        8
+      ],
+      "context": "Separate localrepresentative block on same page with same literal company/address, not inside first producer block; no invented external ownership certification."
+    }
+  },
+  "selected_scope": {
+    "slug": "ginkgo-biloba-80-mg-kapsuly",
+    "trade_name": "Гинкго Билоба",
+    "manufacturer": "АО ВЕРТЕКС",
+    "ru_number": "ЛП-№(002790)-(РГ-RU)",
+    "form": "КАПСУЛЫ",
+    "dosage": "80 мг",
+    "selected_current_RU_variant_count": 1,
+    "selected_current_RU_variant": {
+      "gtin": "04670033324402",
+      "esklp_code": "21.20.10.236-000003-1-00201-2000001267862",
+      "ru_number": "ЛП-№(002790)-(РГ-RU)",
+      "ru_date": "18.07.2023",
+      "pack_size": "6 × 10 шт",
+      "primary_pack_desc": "6 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+      "primary_in_consumer_qty": "6",
+      "label_name": "капсулы \"Гинкго Билоба\" 80 мг"
+    },
+    "total_card_variants": 2,
+    "fully_covered_card_if_only_this_scope_is_published": false,
+    "excluded_old_RU_variants": [
+      {
+        "gtin": "04607003247119",
+        "esklp_code": "21.20.10.236-000003-1-00201-2000001575795",
+        "ru_number": "ЛП-002183",
+        "ru_date": "15.08.2013",
+        "pack_size": "3 × 10 шт",
+        "primary_pack_desc": "3 x УПАКОВКА ЯЧЕЙКОВАЯ КОНТУРНАЯ по 10 шт",
+        "primary_in_consumer_qty": "3",
+        "label_name": "капсулы \"гинкго билоба\" 80 мг"
+      }
+    ]
+  },
+  "source_product_page": {
+    "product_url": "https://vertex.spb.ru/products/otc-medicines/ginkgo-biloba/",
+    "retained_HTML": "/private/tmp/aptekaa-instructions-20261115/vertex-bulk/products/895a7284abe361c4dd95624ff0ffaa4888c1d774e51fcb37d86b1747e9e74051.html.gz",
+    "HTML_sha256": "af91c9c935d9396562259bc7e5c043299562b43851c44ddf9569182f021917e6",
+    "actual_document_links": [
+      {
+        "raw_href": "/upload/medialibrary/474/ynjviprwywq0fdgixjdksijs8na3tqeu.pdf",
+        "resolved_url": "https://vertex.spb.ru/upload/medialibrary/474/ynjviprwywq0fdgixjdksijs8na3tqeu.pdf",
+        "tag": "a",
+        "actual_inner_text": "Информация для пациента",
+        "actual_attributes": {
+          "title": "ЛВ Гинкго-Билоба.pdf",
+          "href": "/upload/medialibrary/474/ynjviprwywq0fdgixjdksijs8na3tqeu.pdf"
+        }
+      }
+    ],
+    "distinct_document_urls": [
+      "https://vertex.spb.ru/upload/medialibrary/474/ynjviprwywq0fdgixjdksijs8na3tqeu.pdf"
+    ],
+    "sole_actual_PDF_observed": true,
+    "source_guard_observation_error": null,
+    "future_Vertex_provider_not_implemented": true
+  },
+  "version_context": {
+    "physical_report_stamp_raw": "СООТВЕТСТВУЕТ ЭКСПЕРТНОМУ ОТЧЕТУ от 13.07.2023 № 13167 (ПОСЛЕДОВАТЕЛЬНОСТЬ 0001)",
+    "physical_firstpage_registration_date_raw": "от 18.07.2023",
+    "physical_revision_heading_raw": "Листок-вкладыш пересмотрен",
+    "physical_revision_heading_value": null,
+    "current_GRLS_normative_documentation_raw": "ЛП-№(002790)-(РГ-RU)-210726,2026,Гинкго Билоба; _x000D_\n",
+    "normative_documentation_is_not_instruction_revision_date": true,
+    "source_LastModified_header_raw": "Wed, 18 Oct 2023 09:42:53 GMT",
+    "approved_at": null,
+    "revision_date": null,
+    "immutable_version": "originalSHA256:b7dd6ba6a2556532e1e7afe9e5df1d65e4040bc6c887a00af3dad30b6092097d",
+    "no_competing_retained_instruction_version_observed": true,
+    "independent_version_context_review_pending": true,
+    "original_red_stamp_overlays_some_lines_preserved": true,
+    "no_stamp_removal_or_clinical_text_repairs": true
+  }
+}
