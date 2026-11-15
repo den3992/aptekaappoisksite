@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-11-15T12:26:00.665852+00:00",
+  "verified_at": "2026-11-15T12:47:13.866794+00:00",
   "verified_live_database": true,
   "public_deployment_pending": false,
   "validation_revision": "0849af75fbdc5e2fe9a10f0eeeeea37ccd6d67fa",
@@ -9,15 +9,15 @@
   },
   "coverage": {
     "verified_documents": 71,
-    "verified_original_documents": 298,
+    "verified_original_documents": 300,
     "cards_with_instructions": 87,
-    "cards_with_original_pdf": 370,
-    "cards_with_either_format": 448,
+    "cards_with_original_pdf": 372,
+    "cards_with_either_format": 450,
     "fully_covered_cards": 14,
     "covered_variants": 729,
-    "original_covered_variants": 821,
-    "combined_covered_variants": 1502,
-    "combined_fully_covered_cards": 213
+    "original_covered_variants": 832,
+    "combined_covered_variants": 1513,
+    "combined_fully_covered_cards": 215
   },
   "batches": [
     {
@@ -6897,8 +6897,58 @@
         }
       ],
       "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T122255Z-62a2b6dc"
+    },
+    {
+      "batch_id": "instructions-20261115T124439Z-e6161ba8",
+      "plan_hash": "8ac8f5fd496cba38def6d747f516099c68779ff44cdac321a5f4802cb8b02138",
+      "content_format": "official_original_pdf",
+      "added_documents": 2,
+      "added_bindings": 2,
+      "documents": [
+        {
+          "id": "eaeu-pdf-65bc9fe2fb44f16f25b6c087-762e6d9fbaf32672-63107b83e64a",
+          "title": "Преднизолон — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(011517)-(РГ-RU)"
+          ],
+          "original_sha256": "762e6d9fbaf3267232f5036f97b21f6ec8e8e6862467712345ec8c3a01b97b3a",
+          "content_format": "official_original_pdf",
+          "page_count": 18,
+          "original_bytes": 439393,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/65bc9fe2fb44f16f25b6c087",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "65bc9fe2fb44f16f25b6c087",
+            "uploaded_file_path": "aa874ebf-abe0-422e-bbdb-c10ec48c9ecc/c3de8d66-2016-4e97-963b-9d3e41d7fe73/file_2827873967393786.pdf",
+            "metadata_sha256": "1c731ba5862dd643ef9bb43fa897e666e3484e747da2e481a4f6bae14e9f2d82"
+          }
+        },
+        {
+          "id": "eaeu-pdf-69d38ee030dcf86ffb0bbef2-b18e541472548d95-f36a0835bb8d",
+          "title": "ТИМЕКСОН® — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(003579)-(РГ-RU)"
+          ],
+          "original_sha256": "b18e541472548d9566c4701b32ce4457e4f3e227eb03452fb3dfb0e94ab4a745",
+          "content_format": "official_original_pdf",
+          "page_count": 18,
+          "original_bytes": 350715,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/69d38ee030dcf86ffb0bbef2",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "69d38ee030dcf86ffb0bbef2",
+            "uploaded_file_path": "0cbe629c-b7d2-417b-be6a-4da47f75ea7e/9ba223cd-df8e-40f5-b148-7759a691b250/file_12425739959513696.pdf",
+            "metadata_sha256": "6c7ef7f85a6a9baee8fa6d8d8460b409ab2529a5df9832445e9ce30678e68f47"
+          }
+        }
+      ],
+      "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T124439Z-e6161ba8"
     }
   ],
-  "scope_note": "Live coverage is verified against current variant identities. Whole official PDF originals and inline text are counted separately. Exact current registration, form, strength and manufacturer evidence are required; unmatched variants remain uncovered. Unknown instruction revision dates are not called latest. Film-profile recovery requires 0849-compatible code and the readonly permanent store351; E0 and 357 rollback are forbidden after the durable film31 publication fence.",
-  "public_release_receipt": "2026-11-15-incremental-eaeu-film30-drot1-release.json"
+  "scope_note": "Current live coverage uses exact current variant identities; official whole PDF originals and verified inline text are counted separately. This data-only2 release uses unchanged0849 code/image and the existing readonly store mount. No new runtime image or app recreation occurred. Existing E0/357 publication fences remain permanent; compatible recovery requires 0849 plus the readonly permanent store. Unknown instruction revision dates are not called latest.",
+  "public_release_receipt": "2026-11-15-incremental-eaeu-existing-finished-two-release.json"
 }

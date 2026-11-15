@@ -1,0 +1,85 @@
+{
+  "status": "publicly_verified",
+  "verified_at": "2026-11-15T12:45:55.419477+00:00",
+  "data_only_release": true,
+  "backend_runtime_revision": "0849af75fbdc5e2fe9a10f0eeeeea37ccd6d67fa",
+  "next_runtime_revision": "278e18156b69cdec38ea167482b3f31039c80ee6",
+  "production_git_unchanged": "bb1022b6ced7efd0414cd6144776d4db7cf2a0bb",
+  "previous_public_release_receipt": "2026-11-15-incremental-eaeu-film30-drot1-release.json",
+  "previous_public_release_receipt_sha256": "daafdbb4ed72f9543a5855fc7d27e6be7f2c3109e50e227b999b8216325d4d96",
+  "added_instruction_documents": {
+    "inline": 0,
+    "whole_original_pdf": 2
+  },
+  "added_cards": 2,
+  "added_covered_variants": 11,
+  "batch_id": "instructions-20261115T124439Z-e6161ba8",
+  "coverage": {
+    "verified_documents": 71,
+    "verified_original_documents": 300,
+    "cards_with_instructions": 87,
+    "cards_with_original_pdf": 372,
+    "cards_with_either_format": 450,
+    "fully_covered_cards": 14,
+    "covered_variants": 729,
+    "original_covered_variants": 832,
+    "combined_covered_variants": 1513,
+    "combined_fully_covered_cards": 215
+  },
+  "source_archive": {
+    "sha256": "af401353d4a4633b3f2f1f083d66e06d5609662693a4535f78cb5a7e6d296bd1",
+    "manifest_sha256": "2f3032d7c900b9c22cf2f10d4f11bac9c8069594c28f760a7e29515de1dbcf79",
+    "provenance_capsule_sha256": "b7d76d641a92df66b8855492c26f518f6cbc5fe37b079dfd1a23d1888306d261",
+    "provenance_manifest_sha256": "3584f0c08a0fdddc0dea1caee902baf44b0ee4b411dccc96eabce4b5ae1433ab",
+    "canonical_documents": 2,
+    "unique_original_pdf": 2,
+    "PDF_pages": 36,
+    "original_pdf_bytes": 790108,
+    "combined_wrapper_sha256": "20d10f9e1e435f24fa1987b55fc50f2320164db2e7a0bd3011b392851a8f0394",
+    "independent_DATA_reviews": [
+      {
+        "bytes": 1236,
+        "path": "/tmp/aptekaa-instructions-20261115/eaeu-existing-finished-two-20261115/independent-skeptic-data-review.json",
+        "sha256": "03f6cd4398092af28d59036d5637bd5251521c801d67a3e63c23410a44fdca38"
+      }
+    ],
+    "native_actual128_proof_sha256": "a9b0dffc4a3ef5fe1fbeefaaaec9dbfb3447115b32a443cb158440fcf4044083",
+    "independent_artifact_review_sha256": "4e2a83fbb2ddc7a8c17ee5288bc3629f3c1379821286acddf30c5659990724ab",
+    "live_canonical_document_count": 371,
+    "all_live_document_ids_equal_reviewed_archived_ids": true,
+    "automatically_extracted_clinical_text_published": false
+  },
+  "permanent_original_store": {
+    "unique_pdf": 353,
+    "logical_bytes": 152779116,
+    "limit_bytes": 536870912,
+    "read_only_runtime": true,
+    "seed_existing_pdf": 351,
+    "seed_hardlinked": 2,
+    "seed_copied": 0,
+    "native_ready_proof_sha256": "efb176b860577211b0be0c9099ddd86f6aa1f90bf01f86eea519cc48061187ce",
+    "old351_fullSHA_inode_all_metadata_preserved": true,
+    "old_LRU_seeded_by_this_release": false
+  },
+  "runtime_preservation": {
+    "unchanged_runtime_state_sha256": "106c8e7862f0aedc6c23e4a6c42c2d594ab56e66c3f2fcdf8b182a9ef03bf23a",
+    "actual_same0849_readonly353_256_proof_sha256": "96b707e4f9864d599a49545e234958ee05c8d280aba5e889421f19d96820e58b",
+    "independent_actual_runtime_eligibility_sha256": "b90a229effe1d480beb6b158b145e0261732bd5ed526df93571ba734cee9f686",
+    "new_image": false,
+    "app_recreation": false,
+    "original_backend_next_edge_actions": 0,
+    "Git_changes": 0,
+    "readonly_store_mount_changed": false,
+    "four_runtime_receipts_and_both_publication_fences_preserved": true,
+    "forever_e0_publication_fence_sha256": "53a321f144f9c6e2588779754fc93db6af6bab2714949fac9ae944e40cde3d06",
+    "forever_film31_publication_fence_sha256": "2ff38f37c707768d9cde266afae497825e3fc496314e366adfbe4dd5de38e4a9",
+    "new_publication_fence_created": false
+  },
+  "public_acceptance": {
+    "new_cards_checked": 2,
+    "unique_new_PDF_SHA_checked": 2,
+    "server_HTML_and_PDF_bytes_verified": true,
+    "proof_sha256": "2b2a176df6c5d5ebc3567d906da6855fe84ecfccfab9323524839d8737da6ff4"
+  },
+  "scope_note": "Current live coverage uses exact current variant identities; official whole PDF originals and verified inline text are counted separately. This data-only2 release uses unchanged0849 code/image and the existing readonly store mount. No new runtime image or app recreation occurred. Existing E0/357 publication fences remain permanent; compatible recovery requires 0849 plus the readonly permanent store. Unknown instruction revision dates are not called latest."
+}
