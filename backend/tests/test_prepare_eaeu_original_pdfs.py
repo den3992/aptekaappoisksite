@@ -43,6 +43,15 @@ def _replace_original(folder, proof, text, **kwargs):
     proof['download'].update(sha256=hashlib.sha256(binary).hexdigest(), bytes=len(binary))
 
 
+def _registry_files(tmp_path, sources):
+    path = tmp_path / 'full-registry.jsonl'
+    path.write_text(''.join(json.dumps(s, ensure_ascii=False) + '\n' for s in sources))
+    proof = tmp_path / 'registry-validation.json'
+    proof.write_text(json.dumps({'complete': True, 'records': len(sources), 'expected_records': len(sources),
+                                'metadata_sha256': hashlib.sha256(path.read_bytes()).hexdigest()}))
+    return path, proof
+
+
 def corpus_fixture(tmp_path):
     doc = original_document()
     folder = tmp_path / 'corpus' / 'synthetic-candidate'
@@ -106,7 +115,9 @@ def test_corpus_separates_verified_originals_from_rejections(tmp_path):
     catalog_path, grls_path = tmp_path / 'catalog.jsonl', tmp_path / 'grls.jsonl'
     catalog_path.write_text(json.dumps({'medication': med}, ensure_ascii=False) + '\n')
     grls_path.write_text(json.dumps(grls, ensure_ascii=False) + '\n')
-    report = prepare_corpus(folder.parent, catalog_path, grls_path, tmp_path / 'verified.jsonl', tmp_path / 'drafts.jsonl')
+    index, validation = _registry_files(tmp_path, [proof['candidate']['source']])
+    report = prepare_corpus(folder.parent, catalog_path, grls_path, tmp_path / 'verified.jsonl', tmp_path / 'drafts.jsonl',
+                             registry_index_path=index, registry_validation_path=validation)
     assert report['counts']['verified_original_documents'] == 1
     assert report['counts']['rejected_or_needs_review'] == 1
     assert report['covered_cards'] == report['covered_variants'] == 1
@@ -138,3 +149,31 @@ def test_repeat_generation_keeps_immutable_id_and_payload(tmp_path):
     grls['row'] = 3
     third, _ = prepare_candidate(proof, folder, [med], [grls], checked_at='2026-01-02T00:00:00Z')
     assert third['document']['id'] != first['document']['id']
+
+
+def test_cross_record_current_ru_is_rejected_even_if_second_pdf_not_downloaded(tmp_path):
+    folder, proof, grls, med = corpus_fixture(tmp_path)
+    other = copy.deepcopy(proof['candidate']['source'])
+    other['record_id'] = '1123456789abcdef01234567'
+    other['russian_registrations'][0]['documents'][0]['uploaded_file_path'] = 'example/other.pdf'
+    index, validation = _registry_files(tmp_path, [proof['candidate']['source'], other])
+    catalog, grls_path = tmp_path / 'catalog.jsonl', tmp_path / 'grls.jsonl'
+    catalog.write_text(json.dumps({'medication': med}, ensure_ascii=False) + '\n')
+    grls_path.write_text(json.dumps(grls, ensure_ascii=False) + '\n')
+    report = prepare_corpus(folder.parent, catalog, grls_path, tmp_path / 'verified.jsonl', tmp_path / 'drafts.jsonl',
+                             registry_index_path=index, registry_validation_path=validation)
+    assert report['counts'].get('verified_original_documents', 0) == 0
+    assert report['counts']['rejected_or_needs_review'] == 1
+    assert 'ambiguous records' in json.loads((tmp_path / 'drafts.jsonl').read_text())['reason']
+
+
+def test_partial_or_changed_registry_index_cannot_claim_uniqueness(tmp_path):
+    folder, proof, grls, med = corpus_fixture(tmp_path)
+    index, validation = _registry_files(tmp_path, [proof['candidate']['source']])
+    p = json.loads(validation.read_text())
+    p['expected_records'] = 2
+    validation.write_text(json.dumps(p))
+    with pytest.raises(OriginalPreparationError, match='complete hash-bound'):
+        prepare_corpus(folder.parent, tmp_path / 'catalog.jsonl', tmp_path / 'grls.jsonl',
+                       tmp_path / 'verified.jsonl', tmp_path / 'drafts.jsonl',
+                       registry_index_path=index, registry_validation_path=validation)

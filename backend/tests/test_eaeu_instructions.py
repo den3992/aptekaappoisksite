@@ -91,6 +91,17 @@ class EaeuMetadataTests(unittest.TestCase):
         self.assertEqual(metadata["package_dosages"][0]["dosage"]["dosageUnitDetails"]
                          ["dosageUnitMeasure"]["value"], "17")
 
+    def test_explicit_certificate_cancel_date_is_not_hidden_by_registered_status(self):
+        raw = record()
+        certificate = raw['drugCountryRegistrationDetails'][0]['drugRegistrationCertificateDetails']
+        certificate['certificateCancelDate'] = {'$date': '2025-01-01T00:00:00Z'}
+        normalized = normalize_record(raw, '2026-11-15T10:00:00+00:00')
+        self.assertEqual(normalized['russian_registrations'][0]['cancelled_at'], '2025-01-01T00:00:00Z')
+        self.assertEqual(normalized['russian_registrations'][0]['registration_status_code'], '03')
+        certificate['docCancellationDate'] = {'$date': '2025-01-02T00:00:00Z'}
+        with self.assertRaisesRegex(EaeuSourceError, 'conflicting explicit cancellation dates'):
+            normalize_record(raw, '2026-11-15T10:00:00+00:00')
+
     def test_project_filename_flag_and_malicious_path_rejected(self):
         raw = record()
         doc = raw["drugCountryRegistrationDetails"][0]["drugDocumentsDetails"]["drugDocumentList"][0]

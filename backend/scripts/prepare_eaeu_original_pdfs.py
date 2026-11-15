@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -39,6 +40,42 @@ def _read_jsonl(path):
                     yield json.loads(line)
                 except json.JSONDecodeError as error:
                     raise OriginalPreparationError(f'invalid JSONL row {number}') from error
+
+
+def _registry_index(index_path, validation_path):
+    """Use the full validated metadata snapshot, including not-yet-downloaded PDFs."""
+    proof = json.loads(Path(validation_path).read_text())
+    by_ru, ids, digest = defaultdict(list), set(), hashlib.sha256()
+    with Path(index_path).open('rb') as handle:
+        for line in handle:
+            digest.update(line)
+            if not line.strip():
+                continue
+            source = json.loads(line)
+            oid = source.get('record_id')
+            if not isinstance(oid, str) or not re.fullmatch(r'[a-f0-9]{24}', oid) or oid in ids:
+                raise OriginalPreparationError('full registry index has missing/duplicate record IDs')
+            ids.add(oid)
+            for registration in source.get('russian_registrations') or []:
+                if (registration.get('country') != 'RU' or registration.get('registration_status_code') != '03'
+                        or registration.get('cancelled_at')):
+                    continue
+                if registration.get('valid_until'):
+                    expiry = datetime.fromisoformat(registration['valid_until'].replace('Z', '+00:00'))
+                    if expiry.tzinfo is None:
+                        raise OriginalPreparationError('registry expiry timezone is absent')
+                    if expiry <= datetime.now(timezone.utc):
+                        continue
+                if any(d.get('kind') == 'USAGE_INSTRUCTION' for d in registration.get('documents') or []):
+                    by_ru[_ru(registration.get('registration_number'))].append({
+                        'record_id': oid, 'metadata_sha256': source.get('metadata_sha256')})
+    if (proof.get('complete') is not True or proof.get('records') != len(ids)
+            or proof.get('expected_records') != len(ids) or not ids
+            or proof.get('metadata_sha256') != digest.hexdigest()):
+        raise OriginalPreparationError('a complete hash-bound registry metadata index is required')
+    return by_ru, {'metadata_sha256': digest.hexdigest(), 'records': len(ids),
+                   'validation_path': str(validation_path),
+                   'ambiguous_current_ru': {ru: rows for ru, rows in by_ru.items() if len(rows) != 1}}
 
 
 def check_original_pdf(path, attachment, expected_sha256):
@@ -99,7 +136,7 @@ def _document_type(binary, attachment):
 
 
 def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None):
-    """Return one validated immutable-original wrapper and exact match evidence."""
+    """Build a wrapper after the caller's full-registry uniqueness preflight."""
     folder = Path(folder)
     candidate = proof.get('candidate') or {}
     snapshot, selected = candidate.get('source') or {}, candidate.get('document') or {}
@@ -222,7 +259,9 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None)
         'rejected_targets': rejected_targets}
 
 
-def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_path, *, max_candidates=None):
+def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_path, *,
+                   registry_index_path, registry_validation_path, max_candidates=None):
+    registry_by_ru, registry_proof = _registry_index(registry_index_path, registry_validation_path)
     catalog_by_ru = defaultdict(list)
     for value in _read_jsonl(catalog_path):
         med = value.get('medication', value)
@@ -243,6 +282,12 @@ def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_
         try:
             proof = json.loads(path.read_text())
             ru = _ru((proof.get('candidate', {}).get('registration') or {}).get('registration_number'))
+            current_records = registry_by_ru.get(ru) or []
+            snapshot = proof.get('candidate', {}).get('source') or {}
+            if len(current_records) != 1:
+                raise OriginalPreparationError('current RU has absent/ambiguous records in full registry index')
+            if current_records[0] != {key: snapshot.get(key) for key in ['record_id', 'metadata_sha256']}:
+                raise OriginalPreparationError('candidate source differs from the current full registry index')
             wrapper, preview = prepare_candidate(proof, path.parent, catalog_by_ru[ru], grls_by_ru[ru])
             if wrapper['document']['id'] in seen_ids:
                 counts['duplicate_document'] += 1
@@ -263,7 +308,8 @@ def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_
     return {'counts': dict(counts), 'covered_cards': len({m['slug'] for p in previews for m in p['matches']}),
             'covered_variants': sum(m['covered_variants'] for p in previews for m in p['matches']),
             'network_requests': 0, 'database_writes': 0, 'previews': previews,
-            'output_path': str(output_path), 'rejection_path': str(rejection_path)}
+            'output_path': str(output_path), 'rejection_path': str(rejection_path),
+            'full_registry_uniqueness': registry_proof}
 
 
 def main(argv=None):
@@ -271,6 +317,8 @@ def main(argv=None):
     parser.add_argument('--corpus-root', required=True)
     parser.add_argument('--catalog', required=True)
     parser.add_argument('--grls-index', required=True)
+    parser.add_argument('--registry-index', required=True, help='Full normalized EAEU metadata JSONL, not a PDF-only subset')
+    parser.add_argument('--registry-validation', required=True, help='Complete metadata count/hash validation proof')
     parser.add_argument('--output', required=True)
     parser.add_argument('--rejections', required=True)
     parser.add_argument('--report', required=True)
@@ -279,7 +327,9 @@ def main(argv=None):
     if args.max_candidates is not None and args.max_candidates < 1:
         parser.error('--max-candidates must be positive')
     report = prepare_corpus(args.corpus_root, args.catalog, args.grls_index, args.output,
-                            args.rejections, max_candidates=args.max_candidates)
+                            args.rejections, registry_index_path=args.registry_index,
+                            registry_validation_path=args.registry_validation,
+                            max_candidates=args.max_candidates)
     Path(args.report).write_text(json.dumps(report, ensure_ascii=False, indent=2))
     print(json.dumps({key: value for key, value in report.items() if key != 'previews'}, ensure_ascii=False))
 

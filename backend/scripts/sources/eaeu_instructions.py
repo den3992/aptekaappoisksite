@@ -121,6 +121,10 @@ def normalize_record(record: Mapping[str, Any], retrieved_at: str) -> dict:
         if (country.get("unifiedCountryCode") or {}).get("value") != "RU":
             continue
         certificate = country.get("drugRegistrationCertificateDetails") or {}
+        cancellation = _date(certificate.get("docCancellationDate"))
+        certificate_cancellation = _date(certificate.get("certificateCancelDate"))
+        if cancellation and certificate_cancellation and cancellation != certificate_cancellation:
+            raise EaeuSourceError("EAEU certificate contains conflicting explicit cancellation dates")
         docs = []
         for group in _list(country.get("drugDocumentsDetails")):
             for document in _list(group.get("drugDocumentList")):
@@ -153,7 +157,7 @@ def normalize_record(record: Mapping[str, Any], retrieved_at: str) -> dict:
             "registration_status": certificate.get("registrationStatusName"),
             "registered_at": _date(certificate.get("docCreationDate")),
             "valid_until": _date(certificate.get("docValidityDate")),
-            "cancelled_at": _date(certificate.get("docCancellationDate")),
+            "cancelled_at": cancellation or certificate_cancellation,
             "documents": docs,
         })
     return {
