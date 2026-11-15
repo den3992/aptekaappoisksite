@@ -102,14 +102,29 @@ def normalize_record(record: Mapping[str, Any], retrieved_at: str) -> dict:
     if not isinstance(oid, str) or not re.fullmatch(r"[a-f0-9]{24}", oid):
         raise EaeuSourceError("EAEU record has no valid public id")
     drug = record.get("drugDetails") or {}
-    manufacturers = []
-    for holder in _list(drug.get("manufacturingAuthorizationHolderDetails")):
-        for area in _list(holder.get("manufacturingAreaDetails")):
+    manufacturers, manufacturer_entities = [], []
+    raw_holders = drug.get("manufacturingAuthorizationHolderDetails")
+    for holder_index, holder in enumerate(_list(raw_holders)):
+        raw_areas = holder.get("manufacturingAreaDetails")
+        for area_index, area in enumerate(_list(raw_areas)):
             stages = _list(area.get("manufactureStageDetails"))
             if any(str(stage.get("manufacturingStageCode")) == "25" for stage in stages):
                 name = area.get("businessEntityName") or area.get("businessEntityBriefName")
                 if isinstance(name, str) and name not in manufacturers:
                     manufacturers.append(name)
+                pointer = "/drugDetails/manufacturingAuthorizationHolderDetails"
+                if isinstance(raw_holders, list):
+                    pointer += "/" + str(holder_index)
+                pointer += "/manufacturingAreaDetails"
+                if isinstance(raw_areas, list):
+                    pointer += "/" + str(area_index)
+                manufacturer_entities.append({
+                    "source_pointer": pointer,
+                    "source_entity_sha256": hashlib.sha256(_canonical(area).encode("utf-8")).hexdigest(),
+                    "name": area.get("businessEntityName"),
+                    "brief_name": area.get("businessEntityBriefName"),
+                    "raw_entity": area,
+                })
     packages = []
     for package_form in _list(drug.get("packageFormDetails")):
         for package in _list(package_form.get("packageDetails")):
@@ -166,7 +181,8 @@ def normalize_record(record: Mapping[str, Any], retrieved_at: str) -> dict:
         "metadata_sha256": hashlib.sha256(_canonical(record).encode("utf-8")).hexdigest(),
         "source_version": record.get("version"),
         "form": (drug.get("dosageFormDetails") or {}).get("dosageFormName"),
-        "manufacturers": manufacturers, "package_dosages": packages,
+        "manufacturers": manufacturers, "manufacturer_entities": manufacturer_entities,
+        "package_dosages": packages,
         "russian_registrations": ru_registrations,
         "text_imported": False, "pdf_downloaded": False,
     }

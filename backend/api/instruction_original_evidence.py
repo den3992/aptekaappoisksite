@@ -15,6 +15,8 @@ import unicodedata
 
 from .medication_instructions import _identity, _ru
 
+PAIRED_ENTITY_MODE = 'eaeu_paired_entity_v1'
+
 
 def _hash(value):
     return hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True,
@@ -50,6 +52,37 @@ def _production_companies(grls):
         company = parts[1].strip()
         result.append((line, company, _company_aliases(company)))
     return result
+
+
+def _paired_entities(snapshot):
+    entities = snapshot.get('manufacturer_entities')
+    if not isinstance(entities, list) or not 1 <= len(entities) <= 128:
+        raise ValueError('paired legal identity requires explicit EAEU manufacturing entities')
+    pointers, pairs = set(), []
+    pointer_pattern = (r'/drugDetails/manufacturingAuthorizationHolderDetails(?:/(?:0|[1-9][0-9]*))?'
+                       r'/manufacturingAreaDetails(?:/(?:0|[1-9][0-9]*))?')
+    for entity in entities:
+        if not isinstance(entity, dict):
+            raise ValueError('invalid source manufacturing entity')
+        raw, pointer = entity.get('raw_entity'), entity.get('source_pointer')
+        if (not isinstance(raw, dict) or not isinstance(pointer, str)
+                or not re.fullmatch(pointer_pattern, pointer) or pointer in pointers
+                or entity.get('source_entity_sha256') != _hash(raw)):
+            raise ValueError('source manufacturing entity pointer/hash is invalid')
+        pointers.add(pointer)
+        stages = raw.get('manufactureStageDetails') or []
+        stages = [stages] if isinstance(stages, dict) else stages
+        if not isinstance(stages, list) or not any(isinstance(v, dict) and str(v.get('manufacturingStageCode')) == '25' for v in stages):
+            raise ValueError('source legal entity lacks an explicit finished-product stage25')
+        name, brief = raw.get('businessEntityName'), raw.get('businessEntityBriefName')
+        if entity.get('name') != name or entity.get('brief_name') != brief:
+            raise ValueError('source entity names differ from its literal hashed payload')
+        actual_name = name or brief
+        if not isinstance(actual_name, str) or actual_name not in snapshot.get('manufacturers', []):
+            raise ValueError('paired entity is absent from the explicit finished manufacturer list')
+        if isinstance(name, str) and name.strip() and isinstance(brief, str) and brief.strip():
+            pairs.append(entity)
+    return pairs
 
 
 def _check_grls(grls, registration):
@@ -108,12 +141,15 @@ def _active_tuples(snapshot, form):
     return tuples
 
 
-def derive_identity_evidence(snapshot, registration, scopes, manufacturers, grls_row):
+def derive_identity_evidence(snapshot, registration, scopes, manufacturers, grls_row, *, manufacturer_proof_mode=None):
     """Return literal, reproducible proof fields or raise on any uncertainty.
 
     This does not verify PDF approval, completeness, version or binary integrity;
     callers must independently verify those facts before publishing an original.
     """
+    if manufacturer_proof_mode not in {None, PAIRED_ENTITY_MODE}:
+        raise ValueError('unsupported manufacturer proof mode')
+    pairs = _paired_entities(snapshot) if manufacturer_proof_mode == PAIRED_ENTITY_MODE else []
     _check_grls(grls_row, registration)
     source_names = snapshot.get('manufacturers') or []
     if not isinstance(source_names, list) or not source_names:
@@ -135,11 +171,26 @@ def derive_identity_evidence(snapshot, registration, scopes, manufacturers, grls
                     candidates.append({'alias': alias, 'source_name': source_name,
                                        'grls_company': company,
                                        'grls_production_fragment': fragment})
+        for entity in pairs:
+            entity_names = {_legal(entity['name']), _legal(entity['brief_name'])}
+            for fragment, company, aliases in companies:
+                legal_aliases = {_legal(v) for v in aliases}
+                if not entity_names.intersection(legal_aliases):
+                    continue
+                if _legal(alias) in entity_names | legal_aliases:
+                    candidates.append({'alias': alias, 'source_name': entity['name'],
+                        'grls_company': company, 'grls_production_fragment': fragment,
+                        'source_entity_pointer': entity['source_pointer'],
+                        'source_entity_sha256': entity['source_entity_sha256'],
+                        'source_entity_long_name': entity['name'],
+                        'source_entity_brief_name': entity['brief_name']})
         if not candidates:
             raise ValueError('manufacturer alias lacks literal EAEU and GRLS legal-entity evidence')
         # Multiple GRLS stages for the same entity are harmless; pick stable
         # literal evidence, without claiming that its GRLS role was finished LF.
-        manufacturer_evidence.append(sorted(candidates, key=lambda v: (v['source_name'], v['grls_production_fragment']))[0])
+        manufacturer_evidence.append(sorted(candidates, key=lambda v: (
+            bool(v.get('source_entity_pointer')), v['source_name'], v['grls_production_fragment'],
+            v.get('source_entity_pointer', '')))[0])
 
     fragments = [v.strip() for v in (grls_row.get('release_forms') or '').split(';') if v.strip()]
     scope_evidence = []
@@ -171,17 +222,21 @@ def derive_identity_evidence(snapshot, registration, scopes, manufacturers, grls
                                'grls_release_form': sorted(matches)[0],
                                'source_form': snapshot['form'],
                                'source_active_substance_text': active_text})
-    return {'current_grls_registration': grls_row,
+    result = {'current_grls_registration': grls_row,
             'current_grls_registration_sha256': _hash(grls_row),
             'manufacturer_evidence': manufacturer_evidence,
             'scope_evidence': scope_evidence}
+    if manufacturer_proof_mode is not None:
+        result['manufacturer_proof_mode'] = manufacturer_proof_mode
+    return result
 
 
 def validate_identity_evidence(document, snapshot, registration, scopes, manufacturers):
     """Require independently reproducible evidence for every alias and scope."""
     evidence = document.get('evidence') or {}
     expected = derive_identity_evidence(snapshot, registration, scopes, manufacturers,
-                                        evidence.get('current_grls_registration'))
+                                        evidence.get('current_grls_registration'),
+                                        manufacturer_proof_mode=evidence.get('manufacturer_proof_mode'))
     for field, value in expected.items():
         if evidence.get(field) != value:
             raise ValueError('invalid or incomplete original identity proof: ' + field)

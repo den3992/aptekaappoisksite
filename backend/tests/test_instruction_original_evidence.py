@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from api.instruction_original_evidence import derive_identity_evidence, validate_identity_evidence
+from api.instruction_original_evidence import PAIRED_ENTITY_MODE, derive_identity_evidence, validate_identity_evidence
 
 
 def _hash(value):
@@ -145,3 +145,98 @@ def test_tilde_does_not_select_between_differing_source_strengths():
     with pytest.raises(ValueError, match='differing EAEU active strengths'):
         derive_identity_evidence(snapshot, snapshot['russian_registrations'][0], doc['scopes'],
                                  doc['identity']['manufacturers'], grls)
+
+
+def paired_document():
+    doc = original_document()
+    snapshot = doc['evidence']['registry_snapshot']
+    raw = {'businessEntityName': snapshot['manufacturers'][0],
+           'businessEntityBriefName': 'АО «Пример»',
+           'manufactureStageDetails': [{'manufacturingStageCode': '25'}]}
+    snapshot['manufacturer_entities'] = [{
+        'source_pointer': '/drugDetails/manufacturingAuthorizationHolderDetails/0/manufacturingAreaDetails/0',
+        'source_entity_sha256': _hash(raw), 'name': raw['businessEntityName'],
+        'brief_name': raw['businessEntityBriefName'], 'raw_entity': raw}]
+    # No GRLS short alias: the new short name is proven solely by the exact
+    # same EAEU finished entity whose long name literally matches GRLS.
+    grls = doc['evidence']['current_grls_registration']
+    grls['production_stages'] = 'Производитель (готовой ЛФ),Акционерное общество "Пример", Россия_x000D_\n'
+    doc['evidence'].update(derive_identity_evidence(snapshot, snapshot['russian_registrations'][0],
+        doc['scopes'], doc['identity']['manufacturers'], grls, manufacturer_proof_mode=PAIRED_ENTITY_MODE))
+    doc['evidence']['registry_snapshot_sha256'] = _hash(snapshot)
+    return doc
+
+
+def test_same_finished_entity_long_brief_pair_is_explicit_opt_in():
+    doc = paired_document()
+    expected = _validate(doc)
+    short = expected['manufacturer_evidence'][0]
+    assert short['source_entity_pointer'].endswith('/manufacturingAreaDetails/0')
+    assert short['source_entity_sha256'] == _hash(doc['evidence']['registry_snapshot']['manufacturer_entities'][0]['raw_entity'])
+    assert short['source_entity_brief_name'] == 'АО «Пример»'
+    # This document cannot silently fall back to the older proof definition.
+    doc['evidence'].pop('manufacturer_proof_mode')
+    with pytest.raises(ValueError):
+        _validate(doc)
+
+
+@pytest.mark.parametrize('problem', ['mixed_fields', 'holder_pointer', 'packer', 'bad_hash',
+                                   'ao_to_oao', 'latin_prefix', 'unknown_mode'])
+def test_paired_entity_proof_rejects_unproven_aliases(problem):
+    doc = paired_document()
+    entity = doc['evidence']['registry_snapshot']['manufacturer_entities'][0]
+    if problem == 'mixed_fields':
+        entity['brief_name'] = 'АО Другой'
+    elif problem == 'holder_pointer':
+        entity['source_pointer'] = '/drugDetails/manufacturingAuthorizationHolderDetails/0'
+    elif problem == 'packer':
+        entity['raw_entity']['manufactureStageDetails'][0]['manufacturingStageCode'] = '60'
+        entity['source_entity_sha256'] = _hash(entity['raw_entity'])
+    elif problem == 'bad_hash':
+        entity['source_entity_sha256'] = 'd' * 64
+    elif problem == 'ao_to_oao':
+        doc['identity']['manufacturers'][0] = 'ОАО ПРИМЕР'
+    elif problem == 'latin_prefix':
+        doc['identity']['manufacturers'][0] = 'AO ПРИМЕР'
+    else:
+        doc['evidence']['manufacturer_proof_mode'] = 'invented'
+    with pytest.raises(ValueError):
+        _validate(doc)
+
+
+def test_different_finished_entity_brief_cannot_bind_the_first_grls_company():
+    doc = paired_document()
+    snapshot = doc['evidence']['registry_snapshot']
+    other = copy.deepcopy(snapshot['manufacturer_entities'][0])
+    other['source_pointer'] = other['source_pointer'][:-1] + '1'
+    other['name'] = other['raw_entity']['businessEntityName'] = 'Акционерное общество «Другой»'
+    other['brief_name'] = other['raw_entity']['businessEntityBriefName'] = 'АО «Другой»'
+    other['source_entity_sha256'] = _hash(other['raw_entity'])
+    snapshot['manufacturer_entities'].append(other)
+    snapshot['manufacturers'].append(other['name'])
+    doc['identity']['manufacturers'][0] = 'АО Другой'
+    with pytest.raises(ValueError):
+        _validate(doc)
+
+
+def test_ozon_farm_pair_never_becomes_ozon_alias():
+    doc = paired_document()
+    snapshot = doc['evidence']['registry_snapshot']
+    entity = snapshot['manufacturer_entities'][0]
+    entity['name'] = entity['raw_entity']['businessEntityName'] = 'Общество с ограниченной ответственностью «Озон Фарм»'
+    entity['brief_name'] = entity['raw_entity']['businessEntityBriefName'] = 'ООО «Озон Фарм»'
+    entity['source_entity_sha256'] = _hash(entity['raw_entity'])
+    snapshot['manufacturers'] = [entity['name']]
+    doc['identity']['manufacturers'] = ['ООО ОЗОН']
+    doc['evidence']['current_grls_registration']['production_stages'] = 'Производитель (готовой ЛФ),' + entity['name'] + ', Россия'
+    with pytest.raises(ValueError, match='manufacturer alias'):
+        _validate(doc)
+
+
+def test_legacy_evidence_and_document_bytes_remain_unchanged():
+    doc = original_document()
+    before = json.dumps(doc, ensure_ascii=False, sort_keys=True)
+    result = _validate(doc)
+    assert 'manufacturer_proof_mode' not in result
+    assert all('source_entity_pointer' not in row for row in result['manufacturer_evidence'])
+    assert json.dumps(doc, ensure_ascii=False, sort_keys=True) == before

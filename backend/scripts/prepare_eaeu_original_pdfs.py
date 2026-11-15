@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter, defaultdict
+from copy import deepcopy
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -19,7 +20,7 @@ import subprocess
 import sys
 import time
 
-from api.instruction_original_evidence import derive_identity_evidence, validate_identity_evidence
+from api.instruction_original_evidence import PAIRED_ENTITY_MODE, derive_identity_evidence, validate_identity_evidence
 from api.medication_instructions import _identity, _ru
 from api.medication_original_pdfs import (
     MAX_PAGES, MAX_PDF_BYTES, canonical_hash, match_original_to_medication,
@@ -42,10 +43,10 @@ def _read_jsonl(path):
                     raise OriginalPreparationError(f'invalid JSONL row {number}') from error
 
 
-def _registry_index(index_path, validation_path):
+def _registry_index(index_path, validation_path, *, retain_snapshots=False):
     """Use the full validated metadata snapshot, including not-yet-downloaded PDFs."""
     proof = json.loads(Path(validation_path).read_text())
-    by_ru, ids, digest = defaultdict(list), set(), hashlib.sha256()
+    by_ru, ids, digest, snapshots = defaultdict(list), set(), hashlib.sha256(), {}
     with Path(index_path).open('rb') as handle:
         for line in handle:
             digest.update(line)
@@ -56,6 +57,8 @@ def _registry_index(index_path, validation_path):
             if not isinstance(oid, str) or not re.fullmatch(r'[a-f0-9]{24}', oid) or oid in ids:
                 raise OriginalPreparationError('full registry index has missing/duplicate record IDs')
             ids.add(oid)
+            if retain_snapshots:
+                snapshots[oid] = source
             for registration in source.get('russian_registrations') or []:
                 if (registration.get('country') != 'RU' or registration.get('registration_status_code') != '03'
                         or registration.get('cancelled_at')):
@@ -75,7 +78,7 @@ def _registry_index(index_path, validation_path):
         raise OriginalPreparationError('a complete hash-bound registry metadata index is required')
     return by_ru, {'metadata_sha256': digest.hexdigest(), 'records': len(ids),
                    'validation_path': str(validation_path),
-                   'ambiguous_current_ru': {ru: rows for ru, rows in by_ru.items() if len(rows) != 1}}
+                   'ambiguous_current_ru': {ru: rows for ru, rows in by_ru.items() if len(rows) != 1}}, snapshots
 
 
 def check_original_pdf(path, attachment, expected_sha256):
@@ -135,7 +138,7 @@ def _document_type(binary, attachment):
     raise OriginalPreparationError('actual document type requires manual identity review')
 
 
-def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None):
+def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None, manufacturer_proof_mode=None):
     """Build a wrapper after the caller's full-registry uniqueness preflight."""
     folder = Path(folder)
     candidate = proof.get('candidate') or {}
@@ -177,7 +180,8 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None)
         for source_name in source_names:
             names = list(dict.fromkeys([med.get('manufacturer'), source_name]))
             try:
-                derive_identity_evidence(snapshot, registration, [scope], names, grls)
+                derive_identity_evidence(snapshot, registration, [scope], names, grls,
+                                         manufacturer_proof_mode=manufacturer_proof_mode)
                 proven_names = names
                 break
             except ValueError as error:
@@ -195,10 +199,14 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None)
 
     scopes.sort(key=lambda v: (_ru(v['ru_number']), v['form'], v['dosage']))
     manufacturers.sort()
-    version_fingerprint = canonical_hash({'snapshot_sha256': canonical_hash(snapshot),
+    fingerprint_payload = {'snapshot_sha256': canonical_hash(snapshot),
         'grls_row_sha256': canonical_hash(grls), 'original_sha256': binary['sha256'],
         'registration_number': ru_key, 'document_type': profile,
-        'scopes': scopes, 'manufacturers': manufacturers})
+        'scopes': scopes, 'manufacturers': manufacturers}
+    if manufacturer_proof_mode is not None:
+        fingerprint_payload.update(manufacturer_proof_mode=manufacturer_proof_mode,
+                                   source_normalization_generation=proof.get('source_normalization_generation'))
+    version_fingerprint = canonical_hash(fingerprint_payload)
     checkpoint_path = folder / 'official-original-verification.json'
     checkpoint = json.loads(checkpoint_path.read_text()) if checkpoint_path.exists() else {'versions': {}}
     previous = (checkpoint.get('versions') or {}).get(version_fingerprint)
@@ -218,7 +226,10 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None)
         'inline_text_verified': False, 'ocr_text_published': False,
         'preparation_version_fingerprint': version_fingerprint,
     }
-    evidence.update(derive_identity_evidence(snapshot, registration, scopes, manufacturers, grls))
+    if manufacturer_proof_mode is not None:
+        evidence['source_normalization_generation'] = proof.get('source_normalization_generation')
+    evidence.update(derive_identity_evidence(snapshot, registration, scopes, manufacturers, grls,
+                                             manufacturer_proof_mode=manufacturer_proof_mode))
     document = {
         'id': 'eaeu-pdf-' + oid + '-' + sha[:16] + '-' + version_fingerprint[:12],
         'title': registration['trade_name'] + ' — официальный оригинал инструкции',
@@ -260,8 +271,13 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None)
 
 
 def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_path, *,
-                   registry_index_path, registry_validation_path, max_candidates=None):
-    registry_by_ru, registry_proof = _registry_index(registry_index_path, registry_validation_path)
+                   registry_index_path, registry_validation_path, max_candidates=None,
+                   manufacturer_proof_mode=None):
+    if manufacturer_proof_mode not in {None, PAIRED_ENTITY_MODE}:
+        raise OriginalPreparationError('unsupported manufacturer proof mode')
+    registry_by_ru, registry_proof, source_snapshots = _registry_index(
+        registry_index_path, registry_validation_path,
+        retain_snapshots=manufacturer_proof_mode is not None)
     catalog_by_ru = defaultdict(list)
     for value in _read_jsonl(catalog_path):
         med = value.get('medication', value)
@@ -288,7 +304,24 @@ def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_
                 raise OriginalPreparationError('current RU has absent/ambiguous records in full registry index')
             if current_records[0] != {key: snapshot.get(key) for key in ['record_id', 'metadata_sha256']}:
                 raise OriginalPreparationError('candidate source differs from the current full registry index')
-            wrapper, preview = prepare_candidate(proof, path.parent, catalog_by_ru[ru], grls_by_ru[ru])
+            if manufacturer_proof_mode is not None:
+                current_snapshot = source_snapshots[snapshot['record_id']]
+                legacy_snapshot = {key: value for key, value in current_snapshot.items()
+                                   if key != 'manufacturer_entities'}
+                if snapshot != current_snapshot and snapshot != legacy_snapshot:
+                    raise OriginalPreparationError('current source upgrade is not additive manufacturer_entities only')
+                if not isinstance(current_snapshot.get('manufacturer_entities'), list):
+                    raise OriginalPreparationError('current source has no explicit manufacturing entity generation')
+                proof = deepcopy(proof)
+                proof['candidate']['source'] = current_snapshot
+                proof['source_normalization_generation'] = {
+                    'method': 'additive_manufacturer_entities_v1',
+                    'legacy_normalized_snapshot_sha256': canonical_hash(legacy_snapshot),
+                    'new_normalized_snapshot_sha256': canonical_hash(current_snapshot),
+                    'preserved_raw_metadata_sha256': current_snapshot['metadata_sha256'],
+                    'added_fact_fields': ['manufacturer_entities']}
+            wrapper, preview = prepare_candidate(proof, path.parent, catalog_by_ru[ru], grls_by_ru[ru],
+                                                  manufacturer_proof_mode=manufacturer_proof_mode)
             if wrapper['document']['id'] in seen_ids:
                 counts['duplicate_document'] += 1
                 continue
@@ -309,7 +342,8 @@ def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_
             'covered_variants': sum(m['covered_variants'] for p in previews for m in p['matches']),
             'network_requests': 0, 'database_writes': 0, 'previews': previews,
             'output_path': str(output_path), 'rejection_path': str(rejection_path),
-            'full_registry_uniqueness': registry_proof}
+            'full_registry_uniqueness': registry_proof,
+            'manufacturer_proof_mode': manufacturer_proof_mode}
 
 
 def main(argv=None):
@@ -319,6 +353,8 @@ def main(argv=None):
     parser.add_argument('--grls-index', required=True)
     parser.add_argument('--registry-index', required=True, help='Full normalized EAEU metadata JSONL, not a PDF-only subset')
     parser.add_argument('--registry-validation', required=True, help='Complete metadata count/hash validation proof')
+    parser.add_argument('--manufacturer-proof-mode', choices=[PAIRED_ENTITY_MODE], default=None,
+                        help='Explicitly enable primary same-stage25 long/brief entity pairs; legacy is unchanged')
     parser.add_argument('--output', required=True)
     parser.add_argument('--rejections', required=True)
     parser.add_argument('--report', required=True)
@@ -329,7 +365,8 @@ def main(argv=None):
     report = prepare_corpus(args.corpus_root, args.catalog, args.grls_index, args.output,
                             args.rejections, registry_index_path=args.registry_index,
                             registry_validation_path=args.registry_validation,
-                            max_candidates=args.max_candidates)
+                            max_candidates=args.max_candidates,
+                            manufacturer_proof_mode=args.manufacturer_proof_mode)
     Path(args.report).write_text(json.dumps(report, ensure_ascii=False, indent=2))
     print(json.dumps({key: value for key, value in report.items() if key != 'previews'}, ensure_ascii=False))
 

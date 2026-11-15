@@ -8,7 +8,8 @@ from pypdf.generic import (ArrayObject, ByteStringObject, ContentStream, Diction
 import pytest
 
 from scripts.prepare_eaeu_original_pdfs import OriginalPreparationError, prepare_candidate, prepare_corpus
-from test_instruction_original_evidence import original_document, original_medication
+from api.instruction_original_evidence import PAIRED_ENTITY_MODE
+from test_instruction_original_evidence import original_document, original_medication, paired_document
 
 
 def _write_pdf(path, text, *, missing_image=False):
@@ -177,3 +178,44 @@ def test_partial_or_changed_registry_index_cannot_claim_uniqueness(tmp_path):
         prepare_corpus(folder.parent, tmp_path / 'catalog.jsonl', tmp_path / 'grls.jsonl',
                        tmp_path / 'verified.jsonl', tmp_path / 'drafts.jsonl',
                        registry_index_path=index, registry_validation_path=validation)
+
+
+def _paired_corpus_inputs(tmp_path):
+    folder, proof, _, med = corpus_fixture(tmp_path)
+    paired = paired_document()
+    newer = copy.deepcopy(proof['candidate']['source'])
+    newer['manufacturer_entities'] = paired['evidence']['registry_snapshot']['manufacturer_entities']
+    index, validation = _registry_files(tmp_path, [newer])
+    catalog, grls_path = tmp_path / 'catalog.jsonl', tmp_path / 'grls.jsonl'
+    catalog.write_text(json.dumps({'medication': med}, ensure_ascii=False) + '\n')
+    grls_path.write_text(json.dumps(paired['evidence']['current_grls_registration'], ensure_ascii=False) + '\n')
+    return folder, proof, index, validation, catalog, grls_path
+
+
+def test_new_pair_generation_is_additive_and_preserves_old_source_proof(tmp_path):
+    folder, proof, index, validation, catalog, grls_path = _paired_corpus_inputs(tmp_path)
+    original_bytes = (folder / 'source-proof.json').read_bytes()
+    common = dict(registry_index_path=index, registry_validation_path=validation)
+    legacy = prepare_corpus(folder.parent, catalog, grls_path, tmp_path / 'legacy.jsonl',
+                             tmp_path / 'legacy-drafts.jsonl', **common)
+    assert legacy['counts'].get('verified_original_documents', 0) == 0
+    paired = prepare_corpus(folder.parent, catalog, grls_path, tmp_path / 'paired.jsonl',
+                             tmp_path / 'paired-drafts.jsonl',
+                             manufacturer_proof_mode=PAIRED_ENTITY_MODE, **common)
+    assert paired['counts']['verified_original_documents'] == 1
+    doc = json.loads((tmp_path / 'paired.jsonl').read_text())['document']
+    assert doc['evidence']['manufacturer_proof_mode'] == PAIRED_ENTITY_MODE
+    assert doc['evidence']['source_normalization_generation']['added_fact_fields'] == ['manufacturer_entities']
+    assert (folder / 'source-proof.json').read_bytes() == original_bytes
+
+
+def test_nonadditive_source_upgrade_is_never_silently_accepted(tmp_path):
+    folder, proof, index, validation, catalog, grls_path = _paired_corpus_inputs(tmp_path)
+    source = json.loads(index.read_text())
+    source['form'] = 'капсулы'
+    index, validation = _registry_files(tmp_path, [source])
+    report = prepare_corpus(folder.parent, catalog, grls_path, tmp_path / 'paired.jsonl',
+        tmp_path / 'drafts.jsonl', registry_index_path=index, registry_validation_path=validation,
+        manufacturer_proof_mode=PAIRED_ENTITY_MODE)
+    assert report['counts'].get('verified_original_documents', 0) == 0
+    assert 'not additive' in json.loads((tmp_path / 'drafts.jsonl').read_text())['reason']

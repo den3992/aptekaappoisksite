@@ -1,5 +1,6 @@
 """Offline synthetic fixtures for the official public registry adapter."""
 import copy
+import hashlib
 import json
 import tempfile
 import unittest
@@ -90,6 +91,23 @@ class EaeuMetadataTests(unittest.TestCase):
         self.assertEqual(metadata["manufacturers"], ["Fixture Manufacturer"])
         self.assertEqual(metadata["package_dosages"][0]["dosage"]["dosageUnitDetails"]
                          ["dosageUnitMeasure"]["value"], "17")
+
+    def test_long_brief_pair_is_same_explicit_finished_area_not_holder_or_packer(self):
+        raw = record()
+        holder = raw['drugDetails']['manufacturingAuthorizationHolderDetails'][0]
+        holder['businessEntityBriefName'] = 'Fixture Holder Brief'
+        area = holder['manufacturingAreaDetails'][0]
+        area['businessEntityBriefName'] = 'Fixture Manufacturer Brief'
+        holder['manufacturingAreaDetails'][1]['businessEntityBriefName'] = 'Fixture Packer Brief'
+        normalized = normalize_record(raw, '2026-11-15T10:00:00+00:00')
+        entities = normalized['manufacturer_entities']
+        self.assertEqual(len(entities), 1)
+        self.assertEqual(entities[0]['source_pointer'], '/drugDetails/manufacturingAuthorizationHolderDetails/0/manufacturingAreaDetails/0')
+        self.assertEqual(entities[0]['name'], 'Fixture Manufacturer')
+        self.assertEqual(entities[0]['brief_name'], 'Fixture Manufacturer Brief')
+        self.assertEqual(entities[0]['raw_entity'], area)
+        self.assertEqual(entities[0]['source_entity_sha256'], hashlib.sha256(json.dumps(area,
+            ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode()).hexdigest())
 
     def test_explicit_certificate_cancel_date_is_not_hidden_by_registered_status(self):
         raw = record()
