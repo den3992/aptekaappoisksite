@@ -682,10 +682,15 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
   useEffect(() => {
     let cancelled = false;
     // Если нет initialMed (SPA-навигация между препаратами) — показываем спиннер.
+    const controller = new AbortController();
     // При первом маунте с SSR-данными loading уже false, не перезатираем.
     if (!med) setLoading(true);
     setNotFound(false);
-    Promise.all([fetchMed(slug, city.id), fetchAnalogs(slug, 8), fetchPharmacies(city.id)])
+    Promise.all([
+      fetchMed(slug, city.id, { signal: controller.signal }),
+      fetchAnalogs(slug, 8).catch(() => []),
+      fetchPharmacies(city.id).catch(() => []),
+    ])
       .then(([m, a, ph]) => {
         if (cancelled) return;
         setMed(m);
@@ -694,12 +699,15 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
       })
       .catch((e) => {
         if (!cancelled) {
-          setNotFound(e?.response?.status === 404);
-          setMed(null);
+          const missing = e?.response?.status === 404;
+          setNotFound(missing);
+          // An unavailable optional/refresh API must not erase the already
+          // rendered instruction for this exact SSR city/medicine pair.
+          setMed(!missing && initialMed?.slug === slug && city.id === cityParam ? initialMed : null);
         }
       })
       .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+    return () => { cancelled = true; controller.abort(); };
   }, [slug, city.id]);
 
   // Реестр аптек города (до ~2400 точек) — только когда карта затребована

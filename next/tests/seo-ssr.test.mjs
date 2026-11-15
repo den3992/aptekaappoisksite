@@ -224,7 +224,8 @@ test('verified original PDF is SSR-visible with separate partial coverage and no
   assert.match(original, /Официальная инструкция \(PDF\)/);
   assert.match(original, /Листок-вкладыш \(PDF\)/);
   assert.match(original.replace(/<!-- -->/g,''), /Официальные PDF подтверждены для 1 из 3 вариантов/);
-  assert.match(original,/href="\/api\/instructions\/originals\/fixture-pdf-only\.pdf"/);
+  assert.match(original,/href="\/instrukcii\/originaly\/fixture-pdf-only"/);
+  assert.match(original,/href="\/instrukcii\/originaly\/fixture-pdf-only\?download=true"/);
   for (const text of ['Отдельный документ в PDF','Тестовый официальный источник PDF','fixture-pdf-v1','РУ-ТЕСТ-PDF','00000000000003','Открыть полную инструкцию (PDF)','Скачать PDF']) assert.ok(original.includes(text),text);
   assert.doesNotMatch(original,/Текст PDF не должен стать опубликованным текстом/);
   const legacy = html.match(/<section id="o-preparate"[\s\S]*?<\/section>/)?.[0] || '';
@@ -246,7 +247,7 @@ test('equal file SHA preserves the PDF when inline text covers only some of its 
   const {html} = await page('/msk/preparaty/instruction-original-partial');
   const original = html.match(/<section id="instrukciya-pdf"[\s\S]*?<\/section>/)?.[0];
   assert.ok(original);
-  assert.match(original,/fixture-same-file\.pdf/);
+  assert.match(original,/href="\/instrukcii\/originaly\/fixture-same-file"/);
   assert.match(original,/00000000000001/);
   assert.match(original,/00000000000004/);
   const inline = html.match(/<section id="instrukciya"[\s\S]*?<\/section>/)?.[0];

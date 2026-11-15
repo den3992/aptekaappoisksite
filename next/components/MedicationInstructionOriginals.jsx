@@ -1,7 +1,8 @@
 import React from 'react';
+import { instructionOriginalPath } from '../lib/medicationPaths.mjs';
 
 function downloadUrl(value) {
-  return typeof value === 'string' && /^\/api\/instructions\/originals\/[A-Za-z0-9_-]+\.pdf$/.test(value) ? value : null;
+  return instructionOriginalPath(value);
 }
 
 function sourceUrl(value) {

@@ -1,7 +1,7 @@
 // Centralized API client with helpers backed by FastAPI catalog endpoints.
 // Replaces the static `mock.js` data source.
 import axios from 'axios';
-import { timedCache } from '../lib/timedCache';
+import { timedCache } from '../lib/timedCache.js';
 
 // Изоморфный base URL:
 // — на сервере (Server Components, Node-рантайм Next.js) идём напрямую
@@ -56,8 +56,11 @@ export async function suggestMeds(q, limit = 8) {
   return data;
 }
 
-export async function fetchMed(slug, city) {
-  const { data } = await http.get(`/medications/${slug}`, city ? { params: { city } } : undefined);
+export async function fetchMed(slug, city, { signal } = {}) {
+  const config = { ...(city ? { params: { city } } : {}), signal };
+  const { data } = typeof window === 'undefined'
+    ? await http.get(`/medications/${encodeURIComponent(slug)}`, config)
+    : await axios.get(`/catalog-data/medications/${encodeURIComponent(slug)}`, { ...config, timeout: 25_000 });
   return data;
 }
 
