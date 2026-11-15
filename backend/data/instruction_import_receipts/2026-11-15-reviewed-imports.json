@@ -1,22 +1,29 @@
 {
-  "verified_at": "2026-11-15T04:52:34.892734+00:00",
+  "verified_at": "2026-11-15T05:33:20.829269+00:00",
   "verified_live_database": true,
   "public_deployment_pending": true,
-  "validation_revision": "3fa91d5",
+  "validation_revision": "bf2537566c35847c7de4e025a1944c0de893f2ca",
   "inventory": {
     "canonical_cards": 22377,
     "total_variants": 72058
   },
   "coverage": {
-    "verified_documents": 11,
-    "cards_with_instructions": 13,
-    "fully_covered_cards": 5,
-    "covered_variants": 111
+    "verified_documents": 37,
+    "verified_original_documents": 1,
+    "cards_with_instructions": 50,
+    "cards_with_original_pdf": 1,
+    "cards_with_either_format": 51,
+    "fully_covered_cards": 13,
+    "covered_variants": 439,
+    "original_covered_variants": 2,
+    "combined_covered_variants": 441,
+    "combined_fully_covered_cards": 14
   },
   "batches": [
     {
       "batch_id": "instructions-20261115T042007Z-197e0e76",
       "plan_hash": "86fba761f2be5fce6ba7a96d51eacdae89302b18142e6afdd4d9d16b0c129081",
+      "content_format": "verified_inline_text",
       "added_documents": 1,
       "added_bindings": 1,
       "documents": [
@@ -26,8 +33,8 @@
           "registration_numbers": [
             "ЛП-№(005951)-(РГ-RU)"
           ],
-          "original_url": "https://grls.minzdrav.gov.ru/InstrImg/2024/07/22/1506970/d127b9e3-8de7-4de9-94fe-24002095edd2.pdf",
           "original_sha256": "32a58e7d601d0e8c6c970e8840d880d15b964d47def0a067efe6003b34e3b785",
+          "original_url": "https://grls.minzdrav.gov.ru/InstrImg/2024/07/22/1506970/d127b9e3-8de7-4de9-94fe-24002095edd2.pdf",
           "content_hash": "e4835acb989dd7574e3b7963ffab04b04bd289a6825345509943a2887df38ab6"
         }
       ],
@@ -36,6 +43,7 @@
     {
       "batch_id": "instructions-20261115T043227Z-e859153e",
       "plan_hash": "34f6b72cd893250a04f85b5623b1c73038e155463df717e2a510750eff72652e",
+      "content_format": "verified_inline_text",
       "added_documents": 1,
       "added_bindings": 2,
       "documents": [
@@ -45,8 +53,8 @@
           "registration_numbers": [
             "ЛП-№(004551)-(РГ-RU)"
           ],
-          "original_url": "https://www.renewal.ru/upload/iblock/452/19e93z0k60q8eglmyshiciaqff5eed5z/Instruktsiya-170kh247-mm-_tekst_-ot-23.08.24-_1_.pdf",
           "original_sha256": "1f04b4c925911b94f6a04d54d8b02df5f85e38e1f2c58111f7bbe6cd3cb7178e",
+          "original_url": "https://www.renewal.ru/upload/iblock/452/19e93z0k60q8eglmyshiciaqff5eed5z/Instruktsiya-170kh247-mm-_tekst_-ot-23.08.24-_1_.pdf",
           "content_hash": "fdad1202e9131fb16c9ab384e4e17162d54a3bef223f950834d02050ca0f4d23"
         }
       ],
@@ -55,6 +63,7 @@
     {
       "batch_id": "instructions-20261115T043824Z-05144619",
       "plan_hash": "720091bda07c5a6a05f9cfc496f22ad29cefccaa4e5276031e29da288bc2e7e1",
+      "content_format": "verified_inline_text",
       "added_documents": 1,
       "added_bindings": 1,
       "documents": [
@@ -64,8 +73,8 @@
           "registration_numbers": [
             "ЛП-№(003602)-(РГ-RU)"
           ],
-          "original_url": "https://www.renewal.ru/upload/iblock/c80/seyyajgtp7rz4ws0usah6egf0kqkghiq/Ambroksol-Reneval-rastvor-4ml_15-_-instruktsiya-po-primeneniyu.pdf",
           "original_sha256": "c7be3ed5b549ac727d91e5170427bb9628b85bdba3844437be0a909b50061835",
+          "original_url": "https://www.renewal.ru/upload/iblock/c80/seyyajgtp7rz4ws0usah6egf0kqkghiq/Ambroksol-Reneval-rastvor-4ml_15-_-instruktsiya-po-primeneniyu.pdf",
           "content_hash": "f9d82cf1708f2f5904d7518c73d153e9ea128635272075bda67397af9b7b4983"
         }
       ],
@@ -74,6 +83,7 @@
     {
       "batch_id": "instructions-20261115T045200Z-ed09da15",
       "plan_hash": "3a6e57ee15a7aafb5dd0f668f6014814bd43f7ca869308c8e09d4e37f9d9ed77",
+      "content_format": "verified_inline_text",
       "added_documents": 8,
       "added_bindings": 9,
       "documents": [
@@ -83,8 +93,8 @@
           "registration_numbers": [
             "ЛП-№(004493)-(РГ-RU)"
           ],
-          "original_url": "https://www.renewal.ru/upload/iblock/fff/Аммиак%20Реневал%2010%2025мл%20-%20инструкция%20по%20применению.pdf",
           "original_sha256": "2f381d848176bf39f1878e2c7fef95b93d9ef367bcd164250134250a2ee256ea",
+          "original_url": "https://www.renewal.ru/upload/iblock/fff/Аммиак%20Реневал%2010%2025мл%20-%20инструкция%20по%20применению.pdf",
           "content_hash": "129225b626163ba0640203e0a5fcf9ce2a6b21228d850ed216635b48ff5bb6fb"
         },
         {
@@ -93,8 +103,8 @@
           "registration_numbers": [
             "ЛП-№(003128)-(РГ-RU)"
           ],
-          "original_url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/646b150cfb44f149ab0f1a09",
           "original_sha256": "a2948b46cd0f9727a41e3d3d4836defc306d626caee5d1992e9ebfc1e5874716",
+          "original_url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/646b150cfb44f149ab0f1a09",
           "content_hash": "77dc868ec6e48d734c9d1684956576b3f95c72a8d1985c80a50077bdd2b9cbf5"
         },
         {
@@ -103,8 +113,8 @@
           "registration_numbers": [
             "ЛП-№(006743)-(РГ-RU)"
           ],
-          "original_url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/6655843130dcf8c77b997a02",
           "original_sha256": "cfb546d3767a90ec1b0f9786c37695185042f9237da11fefb74f43a12d870f45",
+          "original_url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/6655843130dcf8c77b997a02",
           "content_hash": "5746cf797525f9a464f5ca0b4ea6b49a5497f126627b0dc3e8e69299dbed16bd"
         },
         {
@@ -113,8 +123,8 @@
           "registration_numbers": [
             "ЛП-№(013582)-(РГ-RU)"
           ],
-          "original_url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/68b6983330dcf8b6d9d66867",
           "original_sha256": "8611ab3ea4ff072d14a5df7665d55ce2bc847e4084cbc9695798db59259b7bcc",
+          "original_url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/68b6983330dcf8b6d9d66867",
           "content_hash": "8441a51ed1254a6e0e913908806db3ded163d4791e998140ae8a4df91b2dabf5"
         },
         {
@@ -123,8 +133,8 @@
           "registration_numbers": [
             "ЛП-№(004556)-(РГ-RU)"
           ],
-          "original_url": "https://www.renewal.ru/upload/iblock/eda/ovi1kiaw2lt5l5cqng03ozlw6cjrasce/Instruktsiya-Askorutin-_2_.pdf",
           "original_sha256": "5e44d003e33e0d5eaaf8dccf0a67567fe3e0431cb0384bd9f1fc7f6937b7ee24",
+          "original_url": "https://www.renewal.ru/upload/iblock/eda/ovi1kiaw2lt5l5cqng03ozlw6cjrasce/Instruktsiya-Askorutin-_2_.pdf",
           "content_hash": "5a19a18bdfaea33e86bb249a4dd978d6996eb7b62f3b3b32255adbefc2767e51"
         },
         {
@@ -133,8 +143,8 @@
           "registration_numbers": [
             "ЛП-№(005348)-(РГ-RU)"
           ],
-          "original_url": "https://www.renewal.ru/upload/iblock/6d1/5f3241xk293jzgu7i9x80db1ajk7rc4k/Askorbinovaya-kislota-s-glyukozoy_instruktsiya-po-primeneniyu.pdf",
           "original_sha256": "9b236beeb04617508817614749e488315122230541d100b9e05243861f9a5ec6",
+          "original_url": "https://www.renewal.ru/upload/iblock/6d1/5f3241xk293jzgu7i9x80db1ajk7rc4k/Askorbinovaya-kislota-s-glyukozoy_instruktsiya-po-primeneniyu.pdf",
           "content_hash": "b430d434ce9750cd0af4b98f2ed1a7a9ae49306b45245f550887ce2c6416d0c6"
         },
         {
@@ -143,8 +153,8 @@
           "registration_numbers": [
             "ЛП-№(001154)-(РГ-RU)"
           ],
-          "original_url": "https://www.renewal.ru/upload/iblock/6d5/6brzib14a81f3hdo1or1vujk89ydaojg/Anaprilin-Reneval-10mg-_112-_-instruktsiya-po-primeneniyu.pdf",
           "original_sha256": "99679db9d4c6c2f75b3491bca52f82329b22128f569d6a1352e0a38146c21a56",
+          "original_url": "https://www.renewal.ru/upload/iblock/6d5/6brzib14a81f3hdo1or1vujk89ydaojg/Anaprilin-Reneval-10mg-_112-_-instruktsiya-po-primeneniyu.pdf",
           "content_hash": "f4f75b06d1d2434fd4c0f7618cd685b2b1d5c0e731ac8bba5a4c56fad60386f1"
         },
         {
@@ -153,13 +163,333 @@
           "registration_numbers": [
             "ЛП-№(005046)-(РГ-RU)"
           ],
-          "original_url": "https://www.renewal.ru/upload/iblock/9dd/wfi1qnx60qch89gxmc2j7d5qvv00ozpi/Asparkam-Reneval-_-instruktsiya-po-primeneniyu.pdf",
           "original_sha256": "398311ec602d1f7df9b5b88f9a9ac7877dd1dfd8bda7cd64002a14c36d8814f8",
+          "original_url": "https://www.renewal.ru/upload/iblock/9dd/wfi1qnx60qch89gxmc2j7d5qvv00ozpi/Asparkam-Reneval-_-instruktsiya-po-primeneniyu.pdf",
           "content_hash": "8afd2693ef2c6d2a2df446d120764debc9672e2fb2d6983838e12b3f0682bb25"
         }
       ],
       "rollback_command": "python scripts/import_medication_instructions.py --apply --rollback instructions-20261115T045200Z-ed09da15"
+    },
+    {
+      "batch_id": "instructions-20261115T045736Z-017a78c7",
+      "plan_hash": "fba01cdbc04db3e557fe17ffb58aad0639ef42a512557b3cb6a5b89f3190900e",
+      "content_format": "verified_inline_text",
+      "added_documents": 6,
+      "added_bindings": 8,
+      "documents": [
+        {
+          "id": "eaeu-68e7a10530dcf8261ad22ad7-a3ec06d7c3f3025c",
+          "title": "Шалфея листья — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(013841)-(РГ-RU)"
+          ],
+          "original_sha256": "a3ec06d7c3f3025c96216d77ebf83f5a338df7a8d3d207159db9b06c49699f69",
+          "original_url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/68e7a10530dcf8261ad22ad7",
+          "content_hash": "083c609e2be4299487de559e4d85bed69b12b5aed59767ccd53e3fe4f064e726"
+        },
+        {
+          "id": "eaeu-682ede7330dcf8016b7c53fb-c774bb8d26226027",
+          "title": "Натрия хлорид — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(011880)-(РГ-RU)"
+          ],
+          "original_sha256": "c774bb8d262260279d6977a8821548d31f4a79cb27b33ac5fed7f81a4c4053ca",
+          "original_url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/682ede7330dcf8016b7c53fb",
+          "content_hash": "5f3d6690076b4b941c4048553c7e22046169bc8e1899eb0444e5a9dcf1e5c09d"
+        },
+        {
+          "id": "canon-7892e2128875c1bd27b7c111c7dd31e2eca6e1e1e074498abba96a513c92a672",
+          "title": "Анэспум — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(005595)-(РГ-RU)"
+          ],
+          "original_sha256": "7892e2128875c1bd27b7c111c7dd31e2eca6e1e1e074498abba96a513c92a672",
+          "original_url": "https://www.canonpharma.ru/upload/iblock/6c0/sdm1tpyco39pl9v560ha2kxgfcnw72o0.pdf",
+          "content_hash": "70346cf06f0f667f38d6a764b0babb3c7cd349276ca6c3554028435ffe111135"
+        },
+        {
+          "id": "renewal-a761ce38457b2e6b2dccb761ee45e2842df53898019b9c49bdad9ee7d9a95072",
+          "title": "Бисопролол Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(006558)-(РГ-RU)"
+          ],
+          "original_sha256": "a761ce38457b2e6b2dccb761ee45e2842df53898019b9c49bdad9ee7d9a95072",
+          "original_url": "https://www.renewal.ru/upload/iblock/35b/gz82nr8m32yhb7s3uysctuft7s87mo26/Bisoprolol-Reneval-_-instruktsiya-po-primeneniyu.pdf",
+          "content_hash": "77209f16aab09d96135b2bae4a517278bd06446261d4be0ae4a7cc2afaaa5c8a"
+        },
+        {
+          "id": "renewal-9befbcca8596c4af61c43687c025a4310cdd5af8409d33b73e8c86c5bb939dd2",
+          "title": "Глицин Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(003075)-(РГ-RU)"
+          ],
+          "original_sha256": "9befbcca8596c4af61c43687c025a4310cdd5af8409d33b73e8c86c5bb939dd2",
+          "original_url": "https://www.renewal.ru/upload/iblock/fff/%D0%93%D0%BB%D0%B8%D1%86%D0%B8%D0%BD%20%D0%A0%D0%B5%D0%BD%D0%B5%D0%B2%D0%B0%D0%BB%20100%20%D0%BC%D0%B3%20-%20%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D1%8F%20%D0%BF%D0%BE%20%D0%BF%D1%80%D0%B8%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D1%8E.pdf",
+          "content_hash": "348e2368c676126bf09edf0c7f5d225ae2a2b02d402d259e62afb9240e447f63"
+        },
+        {
+          "id": "renewal-2cb384a7413f0eaa59d0d95271b1f4652b5ba6536e5cfcc4a8fab45bac8d3ee8",
+          "title": "Кальция глюконат Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(004977)-(РГ-RU)"
+          ],
+          "original_sha256": "2cb384a7413f0eaa59d0d95271b1f4652b5ba6536e5cfcc4a8fab45bac8d3ee8",
+          "original_url": "https://www.renewal.ru/upload/iblock/29a/w36ub44b2s38lrt54tapdlfz72he71kt/Instruktsiya-155kh147-mm-ot-22.05.24.pdf",
+          "content_hash": "806cfb0bd88a9aaf10c4aad4275f4a140b60bb5f055b9e2bd5d1a8412df6aa3f"
+        }
+      ],
+      "rollback_command": "python scripts/import_medication_instructions.py --apply --rollback instructions-20261115T045736Z-017a78c7"
+    },
+    {
+      "batch_id": "instructions-20261115T052501Z-7f21ea33",
+      "plan_hash": "8d43ea771be195fdb4e6710552eec1692de9756f788a284ad5b4ed40ede81701",
+      "content_format": "verified_inline_text",
+      "added_documents": 10,
+      "added_bindings": 13,
+      "documents": [
+        {
+          "id": "eaeu-62f9eeabfb44f10afa1a65d7-752a13656fb6391f",
+          "title": "Тагиста — листок-вкладыш к таблеткам 8 мг, 16 мг и 24 мг",
+          "registration_numbers": [
+            "ЛП-№(001928)-(РГ-RU)"
+          ],
+          "original_sha256": "752a13656fb6391f69559ca3707d0ebec1884aa64e6e142f43d85092407014da",
+          "original_url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/62f9eeabfb44f10afa1a65d7",
+          "content_hash": "c85c5f24286789c8e0c7b665f293af63a3d59927295cd6c22bf3e58960d991f0"
+        },
+        {
+          "id": "renewal-f1ca9c4f3bcab71de76ed4dc13f0e8fcd8e2311f1f8f7b9fc9e9fea6d8068c0a",
+          "title": "Бромгексин Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(003047)-(РГ-RU)"
+          ],
+          "original_sha256": "f1ca9c4f3bcab71de76ed4dc13f0e8fcd8e2311f1f8f7b9fc9e9fea6d8068c0a",
+          "original_url": "https://www.renewal.ru/upload/iblock/297/77wsr863xieq1sjezr6qs85ezms0urey/Instruktsiya-Bromgeksin-Reneval.pdf",
+          "content_hash": "57683ea3740eda0e2731391bbcf4f5cb2eb6b808bcedd639cc685cc842ea9f9f"
+        },
+        {
+          "id": "renewal-43be083413f28d612a7645e85a0ca3156a092f1e31a5506ad28e24688e3e7672",
+          "title": "Бетагистин Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(005362)-(РГ-RU)"
+          ],
+          "original_sha256": "43be083413f28d612a7645e85a0ca3156a092f1e31a5506ad28e24688e3e7672",
+          "original_url": "https://www.renewal.ru/upload/iblock/fff/%D0%91%D0%B5%D1%82%D0%B0%D0%B3%D0%B8%D1%81%D1%82%D0%B8%D0%BD%20%D0%A0%D0%B5%D0%BD%D0%B5%D0%B2%D0%B0%D0%BB-%20%D0%98%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D1%8F%20%D0%BF%D0%BE%20%D0%BF%D1%80%D0%B8%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D1%8E.pdf",
+          "content_hash": "0bb428f537c4da3020b546080f213df4607d419d0c2b52fbdaf9453033568390"
+        },
+        {
+          "id": "renewal-45554a40d1414823326f5a8d158ff5fe847038cd0e347ab374d7627b85cc5d9a",
+          "title": "Фурацилин Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(004000)-(РГ-RU)"
+          ],
+          "original_sha256": "45554a40d1414823326f5a8d158ff5fe847038cd0e347ab374d7627b85cc5d9a",
+          "original_url": "https://www.renewal.ru/upload/iblock/bbc/44zf9el1bt1e9b588wzgdd618uwdz360/Furatsilin-Reneval-_-instruktsiya-po-primeneniyu.pdf",
+          "content_hash": "762ac88573348923081e4022fe29c491f5d57bdfb316363c200c4fc1b51cb282"
+        },
+        {
+          "id": "renewal-722b0061544a84293df151cdf1b10c1d3c1cd237c77c76f3a6a0a2e8af5d65e5",
+          "title": "Валерианы экстракт Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(005031)-(РГ-RU)"
+          ],
+          "original_sha256": "722b0061544a84293df151cdf1b10c1d3c1cd237c77c76f3a6a0a2e8af5d65e5",
+          "original_url": "https://www.renewal.ru/upload/iblock/0f0/dw7r3ijilkoibrc0byn2aecc6b3k9yzk/Instruktsiya-155kh147-mm-ot-04.06.24.pdf",
+          "content_hash": "f1ee355fc34bd6692c2f2b4ec3295c956c8b27a8ca107003ebeb69d449a035b6"
+        },
+        {
+          "id": "renewal-cd8b9e63e4bf32c4f4b76f1a26a073374897146d286037f3ad59bcfacfedfdf3",
+          "title": "Метронидазол Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(001274)-(РГ-RU)"
+          ],
+          "original_sha256": "cd8b9e63e4bf32c4f4b76f1a26a073374897146d286037f3ad59bcfacfedfdf3",
+          "original_url": "https://www.renewal.ru/upload/iblock/f40/qigjd433hyfzla37devluc1nfcn5ltcr/Instruktsiya-170kh247-mm-ot-14.10.26.pdf",
+          "content_hash": "4fd1266cb5ced813a31f9027613e1a2b4b45dea5c0be2648176d044be9397118"
+        },
+        {
+          "id": "renewal-5ebcc691e3afe2516fdb8c78c8cfe9c73ce6551624123686deeb93fbf508a3f9",
+          "title": "Омепразол Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(001085)-(РГ-RU)"
+          ],
+          "original_sha256": "5ebcc691e3afe2516fdb8c78c8cfe9c73ce6551624123686deeb93fbf508a3f9",
+          "original_url": "https://www.renewal.ru/upload/iblock/1aa/czxq0pdks3h5ie080sk182wiscyz2cjx/Instruktsiya-170kh296-mm-10mg-ot-08.04.25.pdf",
+          "content_hash": "3ebc2460db94cc083efcc3221303d7ec4c7712dbc3dd6ebd33f32c5e2529b764"
+        },
+        {
+          "id": "renewal-81034dcc0247d75bb9e2afbf2b32ccfc533ccd03b1162165d4ace5d44f302a48",
+          "title": "Омепразол Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(001085)-(РГ-RU)"
+          ],
+          "original_sha256": "81034dcc0247d75bb9e2afbf2b32ccfc533ccd03b1162165d4ace5d44f302a48",
+          "original_url": "https://www.renewal.ru/upload/iblock/a02/qvfjkf5wj6f3fpudwrh9a7trq5vnbkww/Instruktsiya-po-primeneniyu-Omeprazol-20-mg.pdf",
+          "content_hash": "d31e5861db8e69eed74b38d471a95039c4a4a80fc7c3c31b90b17b8f95108061"
+        },
+        {
+          "id": "renewal-39c6cec7b062d820ebc57698a3cf2cf2b578f7adb36ddc51d8209dddc690c2cd",
+          "title": "Рефурокс — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(001636)-(РГ-RU)"
+          ],
+          "original_sha256": "39c6cec7b062d820ebc57698a3cf2cf2b578f7adb36ddc51d8209dddc690c2cd",
+          "original_url": "https://www.renewal.ru/upload/iblock/89d/wd9ts5lpsg93chdko7alb4lu6nbtl12k/Refuroks-200-mg-_-instruktsiya-po-primeneniyu.pdf",
+          "content_hash": "5c072cedd184467638d141e051932b020249a6dfe9b5174286b2566075ac4701"
+        },
+        {
+          "id": "renewal-6bb43fc71b9e7c163cc83ee085abbc4919d829a03a857257e62e0d264aac9383",
+          "title": "Циннаризин Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(000882)-(РГ-RU)"
+          ],
+          "original_sha256": "6bb43fc71b9e7c163cc83ee085abbc4919d829a03a857257e62e0d264aac9383",
+          "original_url": "https://www.renewal.ru/upload/iblock/7aa/p2xue1inv8gwp2fd6vxaxjdqatnlw5x3/TSinnarizin-25-mg-_56-_-instruktsiya-po-primeneniyu.pdf",
+          "content_hash": "71f8ee0a5da3337ef3b155b64341c46bc36e5af1519723a7732bf96b27416004"
+        }
+      ],
+      "rollback_command": "python scripts/import_medication_instructions.py --apply --rollback instructions-20261115T052501Z-7f21ea33"
+    },
+    {
+      "batch_id": "instructions-20261115T053212Z-8e156cbe",
+      "plan_hash": "5999cd2e449497dd4758cffddc726ea08e78522a03c3883a9ec950abccc7082e",
+      "content_format": "verified_inline_text",
+      "added_documents": 10,
+      "added_bindings": 16,
+      "documents": [
+        {
+          "id": "renewal-6ef3138bb235552476d941631f3c5399cda4989f9b8ba9155d355ac1115a3421",
+          "title": "Калия йодид Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(004568)-(РГ-RU)"
+          ],
+          "original_sha256": "6ef3138bb235552476d941631f3c5399cda4989f9b8ba9155d355ac1115a3421",
+          "original_url": "https://www.renewal.ru/upload/iblock/657/rczx40q79rxz6x2fi9ap6baq812fojg1/Instruktsiya-155kh222-mm-_tekst_-ot-04.06.25.pdf",
+          "content_hash": "ec087c1d5694e2fd62267bcade1561b529f79239c93fd8ce19cb5e11613bd480"
+        },
+        {
+          "id": "renewal-d1a43fa9c07a3981f98e23650a7a94d35935287e227155593a1f7823bbcfc028",
+          "title": "Кетотифен Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(000845)-(РГ-RU)"
+          ],
+          "original_sha256": "d1a43fa9c07a3981f98e23650a7a94d35935287e227155593a1f7823bbcfc028",
+          "original_url": "https://www.renewal.ru/upload/iblock/fff/%D0%9A%D0%B5%D1%82%D0%BE%D1%82%D0%B8%D1%84%D0%B5%D0%BD%20%D0%A0%D0%B5%D0%BD%D0%B5%D0%B2%D0%B0%D0%BB%20%D0%98%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D1%8F.pdf",
+          "content_hash": "9560b81ddb8c59f6366600696679b86c51c1dff499a321b146f6b27aceca2a25"
+        },
+        {
+          "id": "renewal-314b149a497e98b0bcf4325e6044147dd778dc44c2e26d0f94c04586f345e986",
+          "title": "Флогардин — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(005823)-(РГ-RU)"
+          ],
+          "original_sha256": "314b149a497e98b0bcf4325e6044147dd778dc44c2e26d0f94c04586f345e986",
+          "original_url": "https://www.renewal.ru/upload/iblock/fff/%D0%A4%D0%BB%D0%BE%D0%B3%D0%B0%D1%80%D0%B4%D0%B8%D0%BD%2060%20%D0%BC%D0%B3%20%E2%84%9610%20-%20%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D1%8F%20%D0%BF%D0%BE%20%D0%BF%D1%80%D0%B8%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D1%8E.pdf",
+          "content_hash": "3bb2db9c016164ef1556b9038ce6eefaf7adbd4143ff6dae3011b4a8b1861097"
+        },
+        {
+          "id": "renewal-e5ab1feeac2af34121debec9ab053d45fa4edc3fad918245f23934ca05a477af",
+          "title": "Флогардин — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(005508)-(РГ-RU)"
+          ],
+          "original_sha256": "e5ab1feeac2af34121debec9ab053d45fa4edc3fad918245f23934ca05a477af",
+          "original_url": "https://www.renewal.ru/upload/iblock/f96/1hdhczz4luq8318fiaxij6lbgem1w46j/Flogardin-_-instruktsiya-po-primeneniyu.pdf",
+          "content_hash": "920ba092171a8c1ed6d8c8bf0d8b7d589ec528206f8fcb30941dfba225e51146"
+        },
+        {
+          "id": "renewal-21bd27631a56560ed64fd445a4d672f5f70f6d02a1450f4f1b01d80b31317a21",
+          "title": "Нафтизин Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(002847)-(РГ-RU)"
+          ],
+          "original_sha256": "21bd27631a56560ed64fd445a4d672f5f70f6d02a1450f4f1b01d80b31317a21",
+          "original_url": "https://www.renewal.ru/upload/iblock/9be/v81u1cj1edr1za408hdi0zjmxwe4zpxq/Naftizin_Reneval_Sprey_20ml_0_1_Instruktsiya-po-primeneniyu.pdf",
+          "content_hash": "33d06b6c7eeae1b047c85dad562b0080aa533e52cb35c2b58ebb1bd8197d7b93"
+        },
+        {
+          "id": "renewal-b362e17711a58e66e6a698dca54cca5307c8f40cfdc22c30012e55f139b3eec6",
+          "title": "Левомицетин Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(002213)-(РГ-RU)"
+          ],
+          "original_sha256": "b362e17711a58e66e6a698dca54cca5307c8f40cfdc22c30012e55f139b3eec6",
+          "original_url": "https://www.renewal.ru/upload/iblock/2c0/y0j0tywpowk3x9o4aums7sdc8ost5vmx/Instruktsiya-140kh147-mm-ot-25.08.23-_tekst_.pdf",
+          "content_hash": "369340b14b5d98bd73c02127850d0b9f80c63927ebce52ee9fd9828adb11ca23"
+        },
+        {
+          "id": "renewal-f649dc8137eb176f6ebf08e7822e8dff2c3945e5120257bb38c1a5b1132b929a",
+          "title": "Бисакодил Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(003498)-(РГ-RU)"
+          ],
+          "original_sha256": "f649dc8137eb176f6ebf08e7822e8dff2c3945e5120257bb38c1a5b1132b929a",
+          "original_url": "https://www.renewal.ru/upload/iblock/456/ldfidvjdv4aazdh19nelxkih38lnnn9l/Bisakodil-Reneval-5-mg-_-instruktsiya-po-primeneniyu.pdf",
+          "content_hash": "1b5f0ff31c597972a2755908a31d6f3f3ed90abb281c5e25604f5deadaad313b"
+        },
+        {
+          "id": "renewal-75564403763cee5c3d2766f88a008a42e6d23cfbbd1a178b31ee861769fa9e0d",
+          "title": "Фурадонин Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(002745)-(РГ-RU)"
+          ],
+          "original_sha256": "75564403763cee5c3d2766f88a008a42e6d23cfbbd1a178b31ee861769fa9e0d",
+          "original_url": "https://www.renewal.ru/upload/iblock/338/q8c3lgfj7jxf39mgxt7fbhc60oi3fko8/Furadonin-Reneval-instruktsiya-po-primeneniyu.pdf",
+          "content_hash": "b92c2121611b4e61fa73d12fd854accb7bb3e1c608b54a1bb399dbe379128343"
+        },
+        {
+          "id": "renewal-2aa36ec34dadb38b4b51e58d0a6f7d59fbae3c2f5b7c8ad8bed0c177f75dab63",
+          "title": "Уголь активированный Реневал — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(003517)-(РГ-RU)"
+          ],
+          "original_sha256": "2aa36ec34dadb38b4b51e58d0a6f7d59fbae3c2f5b7c8ad8bed0c177f75dab63",
+          "original_url": "https://www.renewal.ru/upload/iblock/a2e/989nis52aul01dyuj2lxn1sfe7elqwkq/Instruktsiya-155kh147-mm-ot-23.09.25.pdf",
+          "content_hash": "a5c550a3e8ca976e761d8dfe16c59a30373fd70ef644e484cfe6a2f9aa5a2529"
+        },
+        {
+          "id": "renewal-2e5628bc14ff470e45856b2afb88b04b3c5cea1692df053451f4d8c84c1d9c13",
+          "title": "Никотиновая кислота буфус — инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(003042)-(РГ-RU)"
+          ],
+          "original_sha256": "2e5628bc14ff470e45856b2afb88b04b3c5cea1692df053451f4d8c84c1d9c13",
+          "original_url": "https://www.renewal.ru/upload/iblock/5a3/8ckldyxz4md03i1bs0xpk01ebu56f14x/Instruktsiya-104kh222-mm-ot-02.02.26.pdf",
+          "content_hash": "ca59722bf27fd226579bae48cf28f180689b53e390ba1f30cb9f3054bec7508f"
+        }
+      ],
+      "rollback_command": "python scripts/import_medication_instructions.py --apply --rollback instructions-20261115T053212Z-8e156cbe"
+    },
+    {
+      "batch_id": "instructions-20261115T052600Z-0ef26473",
+      "plan_hash": "aa5a4e1fcd988fdb6d6fd24b6edb167de820b3c8a7368f1f4f7f24f8fc03f3a0",
+      "content_format": "official_original_pdf",
+      "added_documents": 1,
+      "added_bindings": 1,
+      "documents": [
+        {
+          "id": "eaeu-pdf-5eccf3b7fb44f1505043ed61-9df6db07a1508241",
+          "title": "Супрастин — официальный оригинал инструкции",
+          "registration_numbers": [
+            "ЛП-№(000101)-(РГ-RU)"
+          ],
+          "original_sha256": "9df6db07a1508241b1226466ccc3b26b713275724d5334bbeadf4e3982480e8f",
+          "content_format": "official_original_pdf",
+          "page_count": 8,
+          "original_bytes": 7516195,
+          "source": {
+            "name": "Единый реестр зарегистрированных лекарственных средств ЕАЭС",
+            "url": "https://pharma.eaeunion.org/pharma/registers/26/ru/register/registered-medicinal-products/5eccf3b7fb44f1505043ed61",
+            "kind": "official_registry",
+            "provider": "eaeu",
+            "record_id": "5eccf3b7fb44f1505043ed61",
+            "uploaded_file_path": "986b980f-8cfe-4f11-bc2c-61beae3d03db/66bfbd93-0ea6-474f-89ab-7a84f4b22827/file_31731738125390140.pdf",
+            "metadata_sha256": "b0686d7b3834f54a80bc59d3ee1507a058563d924a3c0dcb3e4e86f4a6c9a7b4"
+          }
+        }
+      ],
+      "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T052600Z-0ef26473"
     }
   ],
-  "scope_note": "Coverage is computed by the instruction service against current variant identities. Old registrations and other manufacturers remain uncovered unless independently verified. This receipt confirms database imports; public application deployment is pending."
+  "scope_note": "Coverage is verified against current live variant identities. Text and complete official PDF originals are counted separately; combined coverage uses the union of variant identities. Unverified registrations and manufacturers remain uncovered. Database imports are confirmed; public application deployment is pending."
 }
