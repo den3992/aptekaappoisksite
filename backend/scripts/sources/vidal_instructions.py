@@ -274,6 +274,7 @@ def _text(value: Any) -> str:
         return ""
     parser = _TextExtractor()
     parser.feed(value)
+    parser.close()
     return "\n".join(line for line in
         (re.sub(r"\s+", " ", html.unescape(part)).strip()
          for part in "".join(parser.parts).splitlines()) if line).strip()

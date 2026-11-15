@@ -303,6 +303,13 @@ class VidalNormalizationTests(unittest.TestCase):
         changed["document"]["sideEffects"] = "Changed fixture text"
         self.assertNotEqual(first, self.normalize(changed)["original_sha256"])
 
+    def test_html_parser_preserves_a_final_character_reference(self):
+        product = fixture_product()
+        product["composition"] = "Fixture &gt"
+        doc = self.normalize(product)
+        section = next(section for section in doc["sections"] if section["key"] == "composition")
+        self.assertEqual(section["text"], "Fixture >")
+
 
 if __name__ == "__main__":
     unittest.main()
