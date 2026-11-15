@@ -36,7 +36,7 @@ before(async () => {
       if (url.pathname.endsWith('/cancel.pdf')) {
         response.writeHead(200, { 'content-type': 'application/pdf', 'content-length': pdf.length, etag: `"${sha}"` });
         response.write(pdf.subarray(0, 5));
-        request.once('close', () => { cancelledUpstream = true; });
+        response.once('close', () => { cancelledUpstream = true; });
         cancelStarted(); return;
       }
       response.writeHead(200, { 'content-type': 'application/pdf', 'content-length': pdf.length, etag: `"${sha}"`, 'set-cookie': 'upstream=private' });
