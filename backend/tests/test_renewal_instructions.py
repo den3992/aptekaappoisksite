@@ -102,6 +102,19 @@ class RenewalTests(unittest.TestCase):
         self.assertEqual([item['url'] for item in result['ignored_source_urls']],
                          ['http://manufacturer.test/ar/sitemap.xml', 'https://foreign.test/sitemap.xml'])
 
+    def test_vertex_observed_title_and_patient_tab_exclude_research(self):
+        provider = Provider('vertex','https://vertex.spb.ru',('vertex.spb.ru',),'/products/',('/upload/',),('вертекс',))
+        html = '''<title>Карбоцистеин</title><meta property="og:title" content="Карбоцистеин">
+        <div class="product-information__content-box" data-index="2"><div class="product-information__row">
+        <b>Информация для пациента</b><a title="карбоцистеин.pdf" href="/upload/medialibrary/fixture.pdf">Карбоцистеин сироп</a></div></div>
+        <div class="product-information__content-box" data-index="5"><div class="product-information__row">
+        <a href="/upload/medialibrary/study.pdf">Исследование инструкции и эффективности препарата</a></div></div>'''
+        row = parse_product_html(html,provider.origin+'/products/otc-medicines/carbocisteine/',provider)
+        self.assertEqual(row['title'], 'Карбоцистеин')
+        self.assertEqual([link['url'] for link in row['pdf_links']], ['https://vertex.spb.ru/upload/medialibrary/fixture.pdf'])
+        row = parse_product_html('<meta property="og:title" content="ДУОКОЛД&amp;reg;">',provider.origin+'/products/otc-medicines/duocold/',provider)
+        self.assertEqual(row['title'], 'ДУОКОЛД®')
+
     def test_patient_and_professional_leaflets_are_candidates_not_approval(self):
         html = '<h1>Fixture</h1><a href="/upload/patient.pdf">Скачать информацию для пациента</a><a href="/upload/professional.pdf">Скачать информацию для работника здравоохранения</a><a href="/upload/general.pdf">Общая характеристика лекарственного препарата</a>'
         result = parse_product_html(html, ORIGIN + '/products/fixture/')

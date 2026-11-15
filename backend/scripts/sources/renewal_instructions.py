@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 import gzip
 import hashlib
 from html.parser import HTMLParser
+from html import unescape
 import json
 from pathlib import Path
 import re
@@ -146,6 +147,10 @@ class ProductParser(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.h1_depth = 0
         self.h1 = []
+        self.title_depth = 0
+        self.document_title = []
+        self.og_title = ''
+        self.div_document_context = []
         self.link = None
         self.links = []
 
@@ -153,12 +158,28 @@ class ProductParser(HTMLParser):
         values = dict(attrs)
         if tag == 'h1':
             self.h1_depth += 1
+        if tag == 'title':
+            self.title_depth += 1
+        if tag == 'meta' and values.get('property', '').lower() == 'og:title':
+            self.og_title = unescape(values.get('content', ''))
+        if tag == 'div':
+            # Observed Vertex product tab 2 contains patient documents; tab 5
+            # contains research articles and must not be treated as instructions.
+            product_tab = (values.get('data-index') if 'product-information__content-box' in values.get('class', '').split()
+                           else self.div_document_context[-1] if self.div_document_context else None)
+            self.div_document_context.append(product_tab)
         if tag == 'a':
-            self.link = {'href': values.get('href', ''), 'text': [values.get('title', ''), values.get('aria-label', '')]}
+            self.link = {'href': values.get('href', ''), 'text': [values.get('title', ''), values.get('aria-label', '')],
+                         'vertex_document_tab': bool(self.div_document_context and self.div_document_context[-1] == '2'),
+                         'vertex_research_tab': bool(self.div_document_context and self.div_document_context[-1] == '5')}
 
     def handle_endtag(self, tag):
         if tag == 'h1':
             self.h1_depth = max(0, self.h1_depth - 1)
+        if tag == 'title':
+            self.title_depth = max(0, self.title_depth - 1)
+        if tag == 'div' and self.div_document_context:
+            self.div_document_context.pop()
         if tag == 'a' and self.link:
             self.link['text'] = ' '.join(' '.join(self.link['text']).split())
             self.links.append(self.link)
@@ -167,6 +188,8 @@ class ProductParser(HTMLParser):
     def handle_data(self, data):
         if self.h1_depth:
             self.h1.append(data)
+        if self.title_depth:
+            self.document_title.append(data)
         if self.link:
             self.link['text'].append(data)
 
@@ -176,7 +199,9 @@ def parse_product_html(html, url, provider=RENEWAL):
     parser.feed(html)
     links = {}
     for link in parser.links:
-        if not re.search(r'инструкц|instruk|лист[ао]к[\s-]*вкладыш|информаци[яю]\s+для\s+(?:пациент|работник)|общ[а-я]+\s+характеристик|охлп', link['text'] + ' ' + link['href'], re.I):
+        if provider.key == 'vertex' and link['vertex_research_tab']:
+            continue
+        if not (provider.key == 'vertex' and link['vertex_document_tab']) and not re.search(r'инструкц|instruk|лист[ао]к[\s-]*вкладыш|информаци[яю]\s+для\s+(?:пациент|работник)|общ[а-я]+\s+характеристик|охлп', link['text'] + ' ' + link['href'], re.I):
             continue
         try:
             target = public_url(link['href'], url, provider)
@@ -185,7 +210,10 @@ def parse_product_html(html, url, provider=RENEWAL):
         if not urlsplit(target).path.lower().endswith('.pdf') or not urlsplit(target).path.startswith(provider.pdf_prefixes):
             continue
         links[target] = {'url': target, 'label': link['text']}
-    return {'product_url': public_url(url, provider=provider), 'title': ' '.join(' '.join(parser.h1).split()), 'pdf_links': list(links.values())}
+    title = ' '.join(' '.join(parser.h1).split())
+    if not title and provider.key == 'vertex':
+        title = ' '.join(' '.join(parser.document_title).split()) or parser.og_title.strip()
+    return {'product_url': public_url(url, provider=provider), 'title': title, 'pdf_links': list(links.values())}
 
 
 def label(value):
