@@ -31,6 +31,14 @@ class Opener:
 
 
 class RenewalTests(unittest.TestCase):
+    def test_observed_solopharm_data_title_labels_instruction_icon_links(self):
+        provider = Provider('solopharm', 'https://solopharm.com', ('solopharm.com',),
+                            '/products/', ('/storage/files/products/',), ('гротекс',))
+        html = '<h1>Тестовый препарат</h1><a data-title="Читать инструкцию" href="/storage/files/products/opaque.pdf"><svg></svg></a>'
+        parsed = parse_product_html(html, 'https://solopharm.com/products/fixture/', provider)
+        self.assertEqual(len(parsed['pdf_links']), 1)
+        self.assertEqual(parsed['pdf_links'][0]['url'], 'https://solopharm.com/storage/files/products/opaque.pdf')
+
     def test_observed_binnopharm_download_anchors_remain_unverified_source_candidates(self):
         provider = Provider('binnopharm', 'https://binnopharmgroup.ru', ('binnopharmgroup.ru',),
                             '/catalog/', ('/upload/',), ('синтез',))

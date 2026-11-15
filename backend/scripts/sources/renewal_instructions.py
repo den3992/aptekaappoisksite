@@ -190,7 +190,7 @@ class ProductParser(HTMLParser):
                            else self.div_document_context[-1] if self.div_document_context else None)
             self.div_document_context.append(product_tab)
         if tag == 'a':
-            self.link = {'href': values.get('href', ''), 'text': [values.get('title', ''), values.get('aria-label', '')],
+            self.link = {'href': values.get('href', ''), 'text': [values.get('title', ''), values.get('aria-label', ''), values.get('data-title', '')],
                          'explicit_download': 'download' in values,
                          'vertex_document_tab': bool(self.div_document_context and self.div_document_context[-1] == '2'),
                          'vertex_research_tab': bool(self.div_document_context and self.div_document_context[-1] == '5')}
