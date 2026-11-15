@@ -66,6 +66,18 @@ def check_resources(reader):
         content_operators(page.get_contents(), resources)
 
 
+def alternate_medical_heading(first_page):
+    """Recognize one complete observed heading, never a body reference or OHLP."""
+    heading = re.search(
+        r'^[ \t\u00a0]*инструкция\s+по\s+применению\s+лекарственного\s+'
+        r'препарата\s+для\s+медицинского\s+применения[ \t\u00a0]*(?=\r?$)',
+        first_page, re.I | re.M)
+    # Search the full physical page so cutting at 12k cannot invent a line end.
+    # A conflicting OHLP heading can occur later in the PDF drawing order.
+    return bool(heading and heading.end() <= 12000 and not re.search(
+        r'общая\s+характеристика\s+лекарственного\s+препарата', first_page, re.I))
+
+
 def main():
     try:
         import resource
@@ -91,7 +103,8 @@ def main():
         profile = None
         if re.search(r'листок\s*[-–—]\s*вкладыш', first_page[:12000], re.I):
             profile = 'patient_leaflet'
-        elif re.search(r'инструкци[яи]\s+по\s+медицинскому\s+применению', first_page[:12000], re.I):
+        elif (re.search(r'инструкци[яи]\s+по\s+медицинскому\s+применению', first_page[:12000], re.I)
+              or alternate_medical_heading(first_page)):
             profile = 'medical_instruction'
         print(json.dumps({'original_sha256': hashlib.sha256(body).hexdigest(), 'original_bytes': len(body),
                           'page_count': len(reader.pages), 'all_pages_resolved': True, 'encrypted': False,

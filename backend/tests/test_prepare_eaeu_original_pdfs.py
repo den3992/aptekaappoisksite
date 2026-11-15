@@ -134,6 +134,56 @@ def test_stale_heading_sidecar_does_not_approve_blank_pdf(tmp_path):
         prepare_candidate(proof, folder, [med], [grls])
 
 
+@pytest.mark.parametrize('heading, expected_profile', [
+    ('ИНСТРУКЦИЯ по применению лекарственного препарата для медицинского применения', 'medical_instruction'),
+    ('  инструкция\nпо применению лекарственного препарата\nдля медицинского применения  \nПрепарат', 'medical_instruction'),
+    ('\tИнструкция\r\nпо применению лекарственного препарата для медицинского применения\r\nПрепарат', 'medical_instruction'),
+    ('ИНСТРУКЦИЯ ПО МЕДИЦИНСКОМУ ПРИМЕНЕНИЮ', 'medical_instruction'),
+    ('ИНСТРУКЦИИ ПО МЕДИЦИНСКОМУ ПРИМЕНЕНИЮ', 'medical_instruction'),
+    ('Листок-вкладыш — информация для пациента', 'patient_leaflet'),
+])
+def test_complete_literal_medical_headings_in_actual_pdf(tmp_path, heading, expected_profile):
+    folder, proof, grls, med = corpus_fixture(tmp_path)
+    _replace_original(folder, proof, heading)
+    wrapper, _ = prepare_candidate(proof, folder, [med], [grls])
+    assert wrapper['document']['document_type'] == expected_profile
+    assert wrapper['document']['evidence']['inline_text_verified'] is False
+
+
+@pytest.mark.parametrize('text', [
+    '',
+    'ОБЩАЯ ХАРАКТЕРИСТИКА ЛЕКАРСТВЕННОГО ПРЕПАРАТА',
+    'ИНСТРУКЦИИ по применению лекарственного препарата для медицинского применения',
+    'Указана инструкция по применению лекарственного препарата для медицинского применения',
+    'ИНСТРУКЦИЯ по применению лекарственного препарата для медицинского применения в приложении',
+    'ИНСТРУКЦИЯ по применению лекарственного препарата',
+    'ИНСТРУКЦИЯ по применению лекарственного препарата для медицинского применения\n'
+        'ОБЩАЯ ХАРАКТЕРИСТИКА ЛЕКАРСТВЕННОГО ПРЕПАРАТА',
+    'ИНСТРУКЦИЯ по применению лекарственного препарата для медицинского применения\n'
+        + 'x' * 12050 + '\nОБЩАЯ ХАРАКТЕРИСТИКА ЛЕКАРСТВЕННОГО ПРЕПАРАТА',
+    'x' * 12050 + '\nИНСТРУКЦИЯ по применению лекарственного препарата для медицинского применения',
+    'ИНСТРУКЦИЯ по применению лекарственного препарата для медицинского применения'
+        + ' ' * 12050 + 'в приложении',
+])
+def test_alternate_heading_does_not_approve_unknown_or_conflicting_pdf(tmp_path, text):
+    folder, proof, grls, med = corpus_fixture(tmp_path)
+    _replace_original(folder, proof, text)
+    with pytest.raises(OriginalPreparationError, match='actual document type'):
+        prepare_candidate(proof, folder, [med], [grls])
+
+
+@pytest.mark.parametrize('problem', ['late_project', 'broken_resource'])
+def test_alternate_heading_preserves_whole_page_project_and_resource_guards(tmp_path, problem):
+    folder, proof, grls, med = corpus_fixture(tmp_path)
+    heading = 'ИНСТРУКЦИЯ по применению лекарственного препарата для медицинского применения\n'
+    if problem == 'late_project':
+        _replace_original(folder, proof, heading + 'x' * 12050 + '\nPROJECT')
+    else:
+        _replace_original(folder, proof, heading, missing_image=True)
+    with pytest.raises((OriginalPreparationError, ValueError)):
+        prepare_candidate(proof, folder, [med], [grls])
+
+
 def test_broken_nested_resource_is_rejected_before_wrapper(tmp_path):
     folder, proof, grls, med = corpus_fixture(tmp_path)
     _replace_original(folder, proof, 'ИНСТРУКЦИЯ ПО МЕДИЦИНСКОМУ ПРИМЕНЕНИЮ', missing_image=True)
