@@ -49,6 +49,14 @@ class RenewalTests(unittest.TestCase):
         self.assertEqual(relevant_slugs('Тест Реневал 10 мг №30', meds), ['test'])
         self.assertEqual(relevant_slugs('Тест Реневалплюс 10 мг', meds), [])
 
+    def test_literal_percent_in_actual_pdf_name_is_encoded_without_double_encoding(self):
+        url = public_url('/upload/iblock/fixture/Раствор 0,1% 10мл.pdf')
+        self.assertIn('0,1%25%2010', url)
+        self.assertIn('%D0%A0', url)
+        self.assertEqual(public_url(url), url)
+        self.assertEqual(public_url('/upload/fixture/already%20encoded%25.pdf'),
+                         ORIGIN + '/upload/fixture/already%20encoded%25.pdf')
+
     def test_no_role_or_auth_claim_and_no_foreign_or_query_urls(self):
         opener = Opener(Response(b'public fixture'))
         client = RenewalClient(opener)

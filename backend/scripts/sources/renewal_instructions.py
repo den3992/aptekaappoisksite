@@ -84,7 +84,10 @@ def public_url(value, base=None, provider=RENEWAL):
     parsed = urlsplit(urljoin(base or provider.origin, value))
     if parsed.scheme != 'https' or parsed.hostname not in provider.allowed_hosts or parsed.username or parsed.password or parsed.query:
         raise RenewalSourceError('link is not a public canonical provider URL')
-    return urlunsplit(('https', parsed.netloc, quote(parsed.path, safe="/%:@!$&'()*+,;=-._~"), '', ''))
+    # Public PDF names may contain a literal percent sign (e.g. "0,1% 10 мл").
+    # Preserve existing escapes, but encode raw percent signs before quoting.
+    path = re.sub(r'%(?![0-9a-fA-F]{2})', '%25', parsed.path)
+    return urlunsplit(('https', parsed.netloc, quote(path, safe="/%:@!$&'()*+,;=-._~"), '', ''))
 
 
 def is_challenge(body):
