@@ -55,6 +55,7 @@ export default function MedicationInstructions({ instructions, coverage }) {
             {partial && <p className="mb-5 rounded-lg bg-slate-50 px-4 py-3 text-sm leading-relaxed text-slate-600" data-testid="med-instructions-partial">Инструкции подтверждены для {coverage.covered_variants} из {coverage.total_variants} вариантов. Для остальных вариантов инструкция ещё не подтверждена. Сверяйте регистрационный номер, форму выпуска и дозировку.</p>}
             <div className="space-y-8">
               {documents.map((document, index) => {
+                const isPatientLeaflet = document.document_type === 'patient_leaflet';
                 const bindings = Array.isArray(document.bindings) ? document.bindings : [];
                 const registrationNumbers = [...new Set([
                   ...(Array.isArray(document.registration_numbers) ? document.registration_numbers : []),
@@ -63,8 +64,9 @@ export default function MedicationInstructions({ instructions, coverage }) {
                 const sourceUrl = externalUrl(document.source?.url);
                 const originalUrl = externalUrl(document.original_url);
                 return (
-                  <article key={document.id || index} className={index ? 'border-t border-slate-200 pt-8' : ''} data-testid="med-instruction-document">
-                    <h3 className="text-lg font-semibold text-slate-900">{document.title || 'Инструкция по применению'}{!document.title && registrationNumbers.length > 0 ? ` — ${registrationNumbers.join(', ')}` : ''}</h3>
+                  <article key={document.id || index} className={index ? 'border-t border-slate-200 pt-8' : ''} data-testid="med-instruction-document" data-document-type={isPatientLeaflet ? 'patient_leaflet' : 'medical_instruction'}>
+                    <h3 className="text-lg font-semibold text-slate-900">{isPatientLeaflet ? 'Листок-вкладыш' : document.title || 'Инструкция по применению'}{!document.title && registrationNumbers.length > 0 ? ` — ${registrationNumbers.join(', ')}` : ''}</h3>
+                    {isPatientLeaflet && document.title && <p className="mt-1 text-base text-slate-700">{document.title}</p>}
                     <dl className="mt-3 space-y-2 text-sm text-slate-600">
                       {registrationNumbers.length > 0 && <div><dt className="inline font-medium text-slate-700">Регистрационные номера (РУ): </dt><dd className="inline">{registrationNumbers.join(', ')}</dd></div>}
                       {document.source?.name && <div><dt className="inline font-medium text-slate-700">Источник: </dt><dd className="inline">{sourceUrl ? <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-700 hover:underline">{document.source.name}</a> : document.source.name}</dd></div>}

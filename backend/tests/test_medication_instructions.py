@@ -1,10 +1,13 @@
 """Offline verification of source identity, per-variant binding and API fail-closed behavior."""
 import asyncio
 import copy
+import hashlib
+import json
 import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from instruction_profiles import LEAFLET_SECTION_ORDER, PATIENT_LEAFLET
 from api import make_router
 from api.medication_instructions import (
     REQUIRED_SECTIONS, MedicationInstructionService, instruction_content_hash,
@@ -50,6 +53,22 @@ def document():
         },
         "sections": sections, "content_hash": instruction_content_hash(sections),
     }
+
+
+def leaflet_document():
+    doc = document()
+    doc["id"] = "leaflet-v1"
+    doc["document_type"] = PATIENT_LEAFLET
+    doc["sections"] = [{
+        "key": "source_preamble", "title": "Начало исходного документа",
+        "text": "Листок-вкладыш — информация для пациента\nПример 500 мг, таблетки.\nСохраните этот листок-вкладыш.",
+    }] + [
+        {"key": key, "title": key, "text": "Полный точный текст соответствующего раздела исходного листка-вкладыша для пациента."}
+        for key in LEAFLET_SECTION_ORDER
+    ]
+    doc["content_hash"] = instruction_content_hash(doc["sections"])
+    doc["completeness"]["required_sections"] = list(LEAFLET_SECTION_ORDER)
+    return doc
 
 
 def binding(doc, med):
@@ -98,6 +117,70 @@ class Collection:
 
 
 class ValidationTests(unittest.TestCase):
+    def test_legacy_canonical_document_and_hash_are_byte_compatible(self):
+        validated = validate_document(document())
+        self.assertNotIn("document_type", validated)
+        self.assertEqual(validated["content_hash"], "6e8fd915c26e2ead551dc6ef23224c473c8a5465b136f88882f512af9cfeb398")
+        canonical = json.dumps(validated, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        self.assertEqual(hashlib.sha256(canonical.encode()).hexdigest(), "b5dd8f277f26bf078efba5d99f1e7aaafe492c51be62c797a041fe4ef8726dcb")
+        explicit = {**document(), "document_type": "medical_instruction"}
+        self.assertEqual(validate_document(explicit), validated)
+        self.assertEqual(validate_document(validated), validated)
+
+    def test_patient_leaflet_uses_its_six_sections_and_preserves_explicit_type(self):
+        doc = leaflet_document()
+        validated = validate_document(doc)
+        self.assertEqual(validated["document_type"], PATIENT_LEAFLET)
+        self.assertEqual(validate_document(validated), validated)
+        self.assertEqual(validated["sections"], doc["sections"])
+        self.assertEqual(match_document_to_medication(doc, medication())["covered_variants"], 1)
+        self.assertEqual(validated["content_hash"], instruction_content_hash(validated["sections"]))
+
+    def test_leaflet_header_is_required_in_preserved_source_preamble(self):
+        for mode in ["absent", "body-citation", "inline-preamble-citation"]:
+            doc = leaflet_document()
+            doc["sections"] = doc["sections"][1:]
+            if mode == "body-citation":
+                doc["sections"][0]["text"] += "\nЛисток-вкладыш — информация для пациента"
+            if mode == "inline-preamble-citation":
+                doc["sections"].insert(0, {"key": "source_preamble", "title": "Начало документа",
+                    "text": "В другом источнике упомянут листок-вкладыш, см. ссылку."})
+            doc["content_hash"] = instruction_content_hash(doc["sections"])
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                validate_document(doc)
+        doc = leaflet_document()
+        doc["sections"][0]["text"] = "Перед применением препарата полностью прочитайте листок-вкладыш, поскольку он содержит важные сведения."
+        doc["content_hash"] = instruction_content_hash(doc["sections"])
+        self.assertEqual(validate_document(doc)["document_type"], PATIENT_LEAFLET)
+
+    def test_unknown_document_types_are_rejected(self):
+        for value in ["smpc", "leaflet", "", None, {}]:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                validate_document({**document(), "document_type": value})
+
+    def test_leaflet_missing_heading_body_order_or_duplicate_never_passes(self):
+        for key in LEAFLET_SECTION_ORDER:
+            doc = leaflet_document()
+            doc["sections"] = [section for section in doc["sections"] if section["key"] != key]
+            doc["content_hash"] = instruction_content_hash(doc["sections"])
+            with self.subTest(missing=key), self.assertRaises(ValueError):
+                validate_document(doc)
+        for mode in ["heading-only", "order", "duplicate", "no-manual-confirmation", "draft"]:
+            doc = leaflet_document()
+            if mode == "heading-only":
+                doc["sections"][1]["text"] = "1. Что из себя представляет препарат Пример и для чего его применяют"
+            if mode == "order":
+                doc["sections"][1], doc["sections"][2] = doc["sections"][2], doc["sections"][1]
+            if mode == "duplicate":
+                doc["sections"].append({**doc["sections"][1], "key": "leaflet_about_2"})
+            if mode == "no-manual-confirmation":
+                doc["completeness"]["full_document_confirmed"] = False
+            if mode == "draft":
+                doc["verification"]["status"] = "draft"
+            doc["content_hash"] = instruction_content_hash(doc["sections"])
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                validate_document(doc)
+
     def test_number_marker_and_trademark_typography_do_not_create_false_misses(self):
         doc = document()
         doc["identity"]["trade_name"] = "Пример®"
@@ -227,8 +310,21 @@ class APITests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(attached["instructions"][0]["bindings"]), 1)
         self.assertNotIn("verification", attached["instructions"][0])
         self.assertEqual(set(attached["instructions"][0]["source"]), {"name", "url"})
+        self.assertEqual(attached["instructions"][0]["document_type"], "medical_instruction")
         await service.attach(copy.deepcopy(self.med))
         self.assertEqual(len(self.bindings.calls), 1)
+
+    async def test_public_leaflet_type_and_coverage_require_verified_active_document(self):
+        doc = leaflet_document()
+        self.documents.rows, self.bindings.rows = [doc], [binding(doc, self.med)]
+        attached = await MedicationInstructionService(self.db).attach(copy.deepcopy(self.med))
+        self.assertEqual(attached["instructions"][0]["document_type"], "patient_leaflet")
+        self.assertEqual(attached["instruction_coverage"]["covered_variants"], 1)
+        doc["verification"]["status"] = "draft"
+        with patch("api.medication_instructions.logger.warning"):
+            attached = await MedicationInstructionService(self.db).attach(copy.deepcopy(self.med))
+        self.assertEqual(attached["instructions"], [])
+        self.assertEqual(attached["instruction_coverage"]["covered_variants"], 0)
 
     async def test_changed_identity_rejects_stored_binding_and_avoids_old_cache(self):
         service = MedicationInstructionService(self.db)

@@ -11,14 +11,15 @@ from datetime import datetime
 from html.parser import HTMLParser
 from urllib.parse import urlsplit
 
+from instruction_profiles import (
+    MEDICAL_INSTRUCTION, MEDICAL_REQUIRED_SECTIONS, PATIENT_LEAFLET,
+    document_type, leaflet_section_problems, required_sections,
+)
 from .async_cache import AsyncTTLValue
 
 
 logger = logging.getLogger(__name__)
-REQUIRED_SECTIONS = frozenset({
-    "composition", "indications", "contraindications", "administration",
-    "side_effects", "interactions", "overdose", "storage",
-})
+REQUIRED_SECTIONS = MEDICAL_REQUIRED_SECTIONS
 MAX_DOCUMENTS = 32
 MAX_BINDINGS = 128
 MAX_SECTIONS = 128
@@ -151,6 +152,7 @@ def validate_document(document: dict) -> dict:
     """Return a validated plain-text copy; reject draft, partial or unscoped data."""
     if not isinstance(document, dict):
         raise ValueError("document must be an object")
+    profile = document_type(document.get("document_type", MEDICAL_INSTRUCTION))
     verification = _object(document.get("verification"), "verification")
     if verification.get("status") != "verified":
         raise ValueError("document is not verified")
@@ -166,10 +168,12 @@ def validate_document(document: dict) -> dict:
         or completeness.get("missing_sections") != []
         or not isinstance(declared_required, list)
         or any(not isinstance(key, str) for key in declared_required)
-        or not REQUIRED_SECTIONS.issubset(set(declared_required))
+        or not required_sections(profile).issubset(set(declared_required))
         or not set(declared_required).issubset(keys)
     ):
         raise ValueError("document does not contain every required source section")
+    if profile == PATIENT_LEAFLET and leaflet_section_problems(sections):
+        raise ValueError("patient_leaflet requires six ordered, substantive and unambiguous source sections")
     content_hash = _sha256(document.get("content_hash"), "content_hash")
     if content_hash != instruction_content_hash(sections):
         raise ValueError("content_hash does not match all sections")
@@ -239,6 +243,7 @@ def validate_document(document: dict) -> dict:
         except (ValueError, TypeError, AttributeError):
             raise ValueError("approved_at must be an ISO date or null") from None
     return {
+        **({"document_type": PATIENT_LEAFLET} if profile == PATIENT_LEAFLET else {}),
         "id": _required_text(document.get("id"), "id"),
         "title": _required_text(document.get("title"), "title"),
         "registration_numbers": numbers,
@@ -382,6 +387,7 @@ class MedicationInstructionService:
                         "id", "title", "registration_numbers", "version", "approved_at", "retrieved_at",
                         "original_url", "sections",
                     )},
+                    "document_type": document.get("document_type", MEDICAL_INSTRUCTION),
                     "source": {key: document["source"][key] for key in ("name", "url")},
                     "bindings": list(bound.values()),
                 })

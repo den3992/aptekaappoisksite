@@ -21,7 +21,7 @@ const instructionDocuments = [
     bindings:[{gtin:'00000000000001',ru_number:'РУ-ТЕСТ-1',pack_size:'20 шт',form:'тестовая форма А',dosage:'тестовая дозировка А'}],
   },
   {
-    id:'fixture-document-2', title:'Тестовая инструкция второго РУ', registration_numbers:['РУ-ТЕСТ-2'],
+    id:'fixture-document-2', title:'Тестовый документ второго РУ', document_type:'patient_leaflet', registration_numbers:['РУ-ТЕСТ-2'],
     source:{name:'Второй тестовый источник',url:'javascript:alert(1)'}, original_url:'javascript:alert(2)',
     sections:[{key:'fixture-two',title:'Второй тестовый раздел',text:'Текст второго документа.\n\n3. Третий пункт\n4. Четвёртый пункт'}],
     bindings:[{gtin:'00000000000002',ru_number:'РУ-ТЕСТ-2',pack_size:'20 шт',form:'тестовая форма Б',dosage:'тестовая дозировка Б'}],
@@ -58,6 +58,7 @@ before(async () => {
         variants:[{pack_size:'20 шт'}], prices_by_city:{}, seo_indexable:false,
         instructions:hasInstructions ? instructionDocuments : [],
         instruction_coverage:{total_variants:3,covered_variants:hasInstructions ? 2 : 0,fully_covered:false},
+        instruction_candidates:[{document_type:'patient_leaflet',title:'Непроверенный черновой листок',verification:{status:'draft'},sections:[{key:'draft',title:'Черновик',text:'Этот черновик не подтверждает покрытие.'}]}],
         enrichment:{summary:'Тестовое старое описание.',indications:['Тестовые старые показания.'],contraindications:['Тестовые старые противопоказания.'],how_to_take:'Тестовый старый способ применения.'},
       }));
     } else {
@@ -159,6 +160,9 @@ test('complete instructions, provenance and every exact binding appear before Ja
   assert.ok(section, 'instruction must be actual SSR HTML, not just an RSC prop');
   assert.match(html, /href="#instrukciya"[^>]*>Инструкция по применению<\/a>/);
   assert.equal((section.match(/data-testid="med-instruction-document"/g) || []).length, 2);
+  assert.match(section, /data-document-type="patient_leaflet"[\s\S]*?<h3[^>]*>Листок-вкладыш<\/h3>/);
+  assert.match(section, /Тестовый документ второго РУ/);
+  assert.doesNotMatch(section, /Непроверенный черновой листок|Этот черновик не подтверждает покрытие/);
   for (const expected of ['Первый тестовый абзац.','Первый пункт','Второй пункт','Текст второго документа.','3. Третий пункт','4. Четвёртый пункт','РУ-ТЕСТ-1','РУ-ТЕСТ-2','00000000000001','00000000000002','тестовая форма А','тестовая форма Б','тестовая дозировка А','тестовая дозировка Б','fixture-v1','02.01.2026','15.11.2026']) assert.ok(section.includes(expected), expected);
   assert.match(section.replace(/<!-- -->/g, ''), /Инструкции подтверждены для 2 из 3 вариантов/);
   assert.match(section, /href="https:\/\/example\.test\/registry\/1"/);

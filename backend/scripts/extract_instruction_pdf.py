@@ -11,6 +11,11 @@ import json
 from pathlib import Path
 import re
 
+from instruction_profiles import (
+    LEAFLET_SECTION_ORDER, MEDICAL_INSTRUCTION, PATIENT_LEAFLET,
+    has_leaflet_header, leaflet_heading, leaflet_section_problems,
+    required_sections, substantive_leaflet_text,
+)
 
 HEADINGS = [
     ("composition", "Состав", r"состав(?:\s+(?:препарата|на\s+.*))?"),
@@ -35,8 +40,7 @@ HEADINGS = [
     ("dispensing", "Условия отпуска", r"условия\s+отпуска(?:\s+из\s+аптек)?"),
     ("manufacturer", "Производитель", r"производител[ьи]|организация,?\s+принимающая\s+претензии.*"),
 ]
-REQUIRED_KEYS = {"composition", "indications", "contraindications", "administration",
-                 "side_effects", "interactions", "overdose", "storage"}
+REQUIRED_KEYS = set(required_sections())
 PATTERNS = [(key, title, re.compile(r"^\s*(?:\d+(?:\.\d+)*[.)]?\s+)?(?:" + pattern + r")\s*[:.]?\s*$", re.I))
             for key, title, pattern in HEADINGS]
 
@@ -69,6 +73,65 @@ def split_sections(text: str) -> list[dict]:
     return sections
 
 
+def _leaflet_structure(text: str) -> dict:
+    lines = text.replace("\r\n", "\n").replace("\r", "\n").splitlines()
+    headings, index = [], 0
+    while index < len(lines):
+        candidate = leaflet_heading(lines, index)
+        if candidate:
+            headings.append(candidate)
+            index = candidate["end"]
+        else:
+            index += 1
+    front = "\n".join(lines[:headings[0]["start"]]) if headings else text
+    if not has_leaflet_header(front):
+        return {"detected": False, "candidate": False, "sections": [], "review_reasons": []}
+    ignored = set()
+    # Six consecutive titles without intervening bodies are a contents block,
+    # even when PDF extraction omitted its label, dot leaders or page numbers.
+    for start in range(max(0, len(headings) - 5)):
+        group = headings[start:start + 6]
+        if [item["key"] for item in group] != list(LEAFLET_SECTION_ORDER):
+            continue
+        if all(len(re.findall(r"[A-Za-zА-Яа-яЁё]", "\n".join(lines[left["end"]:right["start"]]))) < 15
+               for left, right in zip(group, group[1:])):
+            ignored.update(range(start, start + 6))
+    bodies = [heading for index, heading in enumerate(headings) if index not in ignored]
+    sections, seen, cursor = [], {}, 0
+    key, title = "source_preamble", "Начало исходного документа"
+    for heading in bodies + [{"start": len(lines)}]:
+        body = "\n".join(lines[cursor:heading["start"]]).strip()
+        if body:
+            seen[key] = seen.get(key, 0) + 1
+            sections.append({"key": key if seen[key] == 1 else f"{key}_{seen[key]}", "title": title, "text": body})
+        if "key" in heading:
+            key, title, cursor = heading["key"], heading["title"], heading["start"]
+    detected = bool(bodies) and any(
+        section["key"] in LEAFLET_SECTION_ORDER and substantive_leaflet_text(section["text"], section["title"])
+        for section in sections
+    )
+    reasons = leaflet_section_problems(sections)
+    if not detected:
+        reasons.append("Patient leaflet header or contents found without substantive main section bodies.")
+    return {"detected": detected, "candidate": True, "sections": sections, "review_reasons": reasons}
+
+
+def analyze_text(text: str) -> dict:
+    """Classify and split text for review; no extraction ever proves approval."""
+    leaflet = _leaflet_structure(text)
+    profile = PATIENT_LEAFLET if leaflet["detected"] else MEDICAL_INSTRUCTION
+    sections = leaflet["sections"] if leaflet["detected"] else split_sections(text)
+    required = required_sections(profile)
+    present = {section["key"] for section in sections if profile != PATIENT_LEAFLET
+               or substantive_leaflet_text(section["text"], section["title"])}
+    return {
+        "document_type": profile, "sections": sections,
+        "required_sections": sorted(required), "missing_sections": sorted(required - present),
+        "section_review_reasons": leaflet["review_reasons"] if leaflet["candidate"] else [],
+        **({"candidate_document_type": PATIENT_LEAFLET} if leaflet["candidate"] and not leaflet["detected"] else {}),
+    }
+
+
 def extract_pdf(path: Path) -> dict:
     from pypdf import PdfReader
 
@@ -89,9 +152,8 @@ def extract_pdf(path: Path) -> dict:
         pages.append({"page": index, "text": text, "characters": len(text.strip()),
                       "letters": len(re.findall(r"[A-Za-zА-Яа-яЁё]", text))})
     text = "\n\n".join(page["text"] for page in pages)
-    sections = split_sections(text)
-    keys = {section["key"] for section in sections}
-    missing = sorted(REQUIRED_KEYS - keys)
+    analysis = analyze_text(text)
+    missing = analysis["missing_sections"]
     scant_pages = [page["page"] for page in pages if page["letters"] < 40]
     warnings = []
     if scant_pages:
@@ -100,13 +162,15 @@ def extract_pdf(path: Path) -> dict:
         warnings.append("Source contains a draft marker; approval must be verified separately.")
     if missing:
         warnings.append("Required headings were not all found; never label this extraction a verified full instruction.")
+    warnings.extend(analysis["section_review_reasons"])
     return {
         "original_file": str(path.resolve()), "original_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
-        "page_count": len(pages), "pages": pages, "text": text, "sections": sections,
+        "page_count": len(pages), "pages": pages, "text": text, **analysis,
         "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
         "characters": len(text), "pages_requiring_review": scant_pages,
-        "required_sections": sorted(REQUIRED_KEYS), "missing_sections": missing,
         "extraction_has_text_on_every_page": not scant_pages,
+        "extraction_has_required_sections": not missing and not analysis["section_review_reasons"] and not scant_pages,
+        "full_document_confirmed": False,
         "verification_status": "draft", "warnings": warnings,
     }
 
