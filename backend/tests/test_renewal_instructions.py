@@ -4,12 +4,13 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.robotparser import RobotFileParser
 
 from scripts.sources.renewal_instructions import (
     ORIGIN, RenewalAccessError, RenewalClient, RenewalSourceError,
-    Provider, discover, extraction_diagnostics, is_challenge, parse_product_html, public_url, relevant_slugs, robots_lines,
+    Provider, _worker_rss_kib, discover, extraction_diagnostics, is_challenge, parse_product_html, public_url, relevant_slugs, robots_lines,
 )
 
 
@@ -142,6 +143,21 @@ class RenewalTests(unittest.TestCase):
         self.assertIsNone(row['old_headers_present'])
         self.assertFalse(row['classification_is_approval'])
         self.assertNotEqual(row['verification_status'], 'verified')
+
+    def test_linux_memory_monitor_uses_proc_without_ps(self):
+        with patch('scripts.sources.renewal_instructions.sys.platform', 'linux'), \
+             patch.object(Path, 'read_text', return_value='Name:\tpython\nVmRSS:\t123456 kB\n'), \
+             patch('scripts.sources.renewal_instructions.subprocess.run') as run:
+            self.assertEqual(_worker_rss_kib(123), 123456)
+            run.assert_not_called()
+        with patch('scripts.sources.renewal_instructions.sys.platform', 'linux'), \
+             patch.object(Path, 'read_text', side_effect=FileNotFoundError):
+            self.assertIsNone(_worker_rss_kib(123))
+
+    def test_unavailable_macos_memory_monitor_fails_closed(self):
+        with patch('scripts.sources.renewal_instructions.sys.platform', 'darwin'), \
+             patch('scripts.sources.renewal_instructions.subprocess.run', side_effect=FileNotFoundError):
+            self.assertIsNone(_worker_rss_kib(123))
 
 
 if __name__ == '__main__':

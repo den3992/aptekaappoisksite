@@ -437,6 +437,22 @@ def _extract_job(job):
         return {'original_file': original, 'error_type': type(error).__name__}
 
 
+def _worker_rss_kib(pid):
+    """Linux slim images lack ps; both paths measure resident memory in KiB."""
+    if sys.platform.startswith('linux'):
+        try:
+            status = Path(f'/proc/{pid}/status').read_text()
+        except OSError:
+            return None
+        match = re.search(r'^VmRSS:\s+(\d+)\s+kB\s*$', status, re.M)
+        return int(match.group(1)) if match else None
+    try:
+        sample = subprocess.run(['ps', '-o', 'rss=', '-p', str(pid)], capture_output=True, text=True)
+    except OSError:
+        return None
+    return int(sample.stdout.strip()) if sample.returncode == 0 and sample.stdout.strip().isdigit() else None
+
+
 def _supervised_extract_job(job):
     original, destination = job
     command = [sys.executable, '-m', 'scripts.sources.renewal_instructions', 'extract-one',
@@ -445,9 +461,13 @@ def _supervised_extract_job(job):
     child = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     reason = None
     while child.poll() is None:
-        sample = subprocess.run(['ps', '-o', 'rss=', '-p', str(child.pid)], capture_output=True, text=True)
-        if sample.stdout.strip().isdigit():
-            peak = max(peak, int(sample.stdout.strip()))
+        rss = _worker_rss_kib(child.pid)
+        if rss is None:
+            if child.poll() is not None:
+                break
+            reason = 'worker_memory_monitor_unavailable'
+        else:
+            peak = max(peak, rss)
         if peak > 512 * 1024:
             reason = 'worker_rss_limit'
         elif time.monotonic() - started > 120:
