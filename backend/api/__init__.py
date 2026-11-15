@@ -26,6 +26,7 @@ from .pharmacies_seed import (
 )
 from .price_indexing import REAL_SOURCES, MATCH_OK, availability_cutoff, indexable_pairs_pipeline
 from .async_cache import AsyncTTLValue
+from .medication_instructions import MedicationInstructionService
 
 
 # ---------- Helpers for analogs filtering ----------
@@ -92,6 +93,7 @@ def _search_form_priority(form: str) -> int:
 
 def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
     router = APIRouter()
+    instruction_service = MedicationInstructionService(db)
 
     # One definition of an indexable city/medicine pair.  The same rule is
     # used by sitemap, metadata and IndexNow: a real positive price from at
@@ -348,7 +350,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
         if med.get("force_empty_stock"):
             med["prices_by_city"] = {"msk": [], "spb": []}
             med["prices_source"] = "real"
-            return med
+            return await instruction_service.attach(med)
 
         real_prices = {"msk": [], "spb": []}
         is_curated_priority = med.get("curated_source") == "priority_medications_2026-09"
@@ -573,7 +575,7 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
             except Exception:
                 pass
 
-        return med
+        return await instruction_service.attach(med)
 
     @router.get("/medications/{slug}/analogs")
     async def medication_analogs(slug: str, limit: int = 8):

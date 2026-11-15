@@ -1,0 +1,39 @@
+{
+  "id": "example-only-not-a-real-instruction",
+  "title": "Пример схемы документа — не публиковать",
+  "registration_numbers": ["EXAMPLE-RU-001"],
+  "version": "source-document-version",
+  "approved_at": null,
+  "retrieved_at": "2026-11-15T00:00:00Z",
+  "source": {
+    "name": "Источник примера",
+    "provider": "example",
+    "kind": "official_registry",
+    "url": "https://example.org/product",
+    "source_product_id": "product-001",
+    "source_document_id": "document-001",
+    "rights_basis": "Example only; use a confirmed basis for real documents"
+  },
+  "original_url": "https://example.org/original.pdf",
+  "original_sha256": "REPLACE_WITH_SHA256_OF_ORIGINAL_FILE_OR_SOURCE_API_RECORD",
+  "content_hash": "COMPUTE_WITH_instruction_content_hash_AFTER_ALL_SECTIONS_ARE_COLLECTED",
+  "identity": {
+    "trade_name": "Название из документа",
+    "manufacturers": ["Производитель из документа; держатель РУ не подставляется"]
+  },
+  "scopes": [
+    {"ru_number": "EXAMPLE-RU-001", "form": "Форма из документа", "dosage": "Дозировка из документа"},
+    {"gtin": "04600000000000", "ru_number": "EXAMPLE-RU-001"}
+  ],
+  "verification": {"status": "draft", "verified_at": null, "verified_by": null},
+  "completeness": {
+    "is_complete": false,
+    "full_document_confirmed": false,
+    "required_sections": ["composition", "indications", "contraindications", "administration", "side_effects", "interactions", "overdose", "storage"],
+    "missing_sections": ["composition", "indications", "contraindications", "administration", "side_effects", "interactions", "overdose", "storage"]
+  },
+  "sections": [
+    {"key": "composition", "title": "Состав", "text": "Полный исходный текст соответствующего раздела. Это пример схемы, не медицинская инструкция."},
+    {"key": "special_instructions", "title": "Особые указания", "text": "Сохраняйте все дополнительные разделы источника, а не только восемь обязательных."}
+  ]
+}
