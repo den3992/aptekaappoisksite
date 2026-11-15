@@ -15,6 +15,7 @@ import unicodedata
 
 from .medication_instructions import _identity, _ru
 from .instruction_original_structured_dose import PROOF_MODE as STRUCTURED_DOSE_MODE, prove_structured_solid_dose
+from .instruction_original_concentration import PROOF_MODE as CONCENTRATION_DOSE_MODE, prove_structured_mg_per_ml_dose
 
 PAIRED_ENTITY_MODE = 'eaeu_paired_entity_v1'
 
@@ -149,9 +150,13 @@ def derive_identity_evidence(snapshot, registration, scopes, manufacturers, grls
     This does not verify PDF approval, completeness, version or binary integrity;
     callers must independently verify those facts before publishing an original.
     """
+    from .instruction_original_ozon_prefix import PROOF_MODE as OZON_PREFIX_MODE, derive_ozon_prefix_evidence
+    if manufacturer_proof_mode == OZON_PREFIX_MODE:
+        return derive_ozon_prefix_evidence(snapshot, registration, scopes, manufacturers,
+                                         grls_row, dosage_proof_mode=dosage_proof_mode)
     if manufacturer_proof_mode not in {None, PAIRED_ENTITY_MODE}:
         raise ValueError('unsupported manufacturer proof mode')
-    if dosage_proof_mode not in (None, STRUCTURED_DOSE_MODE):
+    if dosage_proof_mode not in (None, STRUCTURED_DOSE_MODE, CONCENTRATION_DOSE_MODE):
         raise ValueError('unsupported dosage proof mode')
     pairs = _paired_entities(snapshot) if manufacturer_proof_mode == PAIRED_ENTITY_MODE else []
     _check_grls(grls_row, registration)
@@ -213,8 +218,13 @@ def derive_identity_evidence(snapshot, registration, scopes, manufacturers, grls
         matches = [v for v in fragments if _identity(v).startswith(prefix)]
         if not matches:
             raise ValueError('scope form/dosage is absent from literal GRLS release forms')
-        active_text, structured_strength = None, None
-        if dosage.strip() == '~':
+        active_text, structured_strength, structured_concentration = None, None, None
+        if dosage_proof_mode == CONCENTRATION_DOSE_MODE:
+            # Always validate every same-form package in this explicit mode,
+            # even when one literal substanceText already matches the dose.
+            # Otherwise a good first package could hide an incompatible one.
+            structured_concentration = prove_structured_mg_per_ml_dose(snapshot, form, dosage)
+        elif dosage.strip() == '~':
             if len(_active_tuples(snapshot, form)) > 1:
                 raise ValueError('unspecified dosage cannot select between differing EAEU active strengths')
         else:
@@ -231,6 +241,8 @@ def derive_identity_evidence(snapshot, registration, scopes, manufacturers, grls
                        'source_active_substance_text': active_text}
         if structured_strength is not None:
             scope_proof['source_structured_strength'] = structured_strength
+        if structured_concentration is not None:
+            scope_proof['source_structured_concentration'] = structured_concentration
         scope_evidence.append(scope_proof)
     result = {'current_grls_registration': grls_row,
             'current_grls_registration_sha256': _hash(grls_row),

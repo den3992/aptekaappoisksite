@@ -22,6 +22,8 @@ import time
 
 from api.instruction_original_evidence import PAIRED_ENTITY_MODE, derive_identity_evidence, validate_identity_evidence
 from api.instruction_original_structured_dose import PROOF_MODE as STRUCTURED_DOSE_MODE
+from api.instruction_original_concentration import PROOF_MODE as CONCENTRATION_DOSE_MODE
+from api.instruction_original_ozon_prefix import PROOF_MODE as OZON_PREFIX_MODE
 from api.medication_instructions import _identity, _ru
 from api.medication_original_pdfs import (
     MAX_PAGES, MAX_PDF_BYTES, canonical_hash, match_original_to_medication,
@@ -212,6 +214,8 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
                                    source_normalization_generation=proof.get('source_normalization_generation'))
     if dosage_proof_mode is not None:
         fingerprint_payload['dosage_proof_mode'] = dosage_proof_mode
+    if dosage_proof_mode == CONCENTRATION_DOSE_MODE:
+        fingerprint_payload['source_normalization_generation'] = proof.get('source_normalization_generation')
     version_fingerprint = canonical_hash(fingerprint_payload)
     checkpoint_path = folder / 'official-original-verification.json'
     checkpoint = json.loads(checkpoint_path.read_text()) if checkpoint_path.exists() else {'versions': {}}
@@ -232,7 +236,7 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
         'inline_text_verified': False, 'ocr_text_published': False,
         'preparation_version_fingerprint': version_fingerprint,
     }
-    if manufacturer_proof_mode is not None:
+    if manufacturer_proof_mode is not None or dosage_proof_mode == CONCENTRATION_DOSE_MODE:
         evidence['source_normalization_generation'] = proof.get('source_normalization_generation')
     evidence.update(derive_identity_evidence(snapshot, registration, scopes, manufacturers, grls,
                                              manufacturer_proof_mode=manufacturer_proof_mode,
@@ -280,13 +284,13 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
 def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_path, *,
                    registry_index_path, registry_validation_path, max_candidates=None,
                    manufacturer_proof_mode=None, dosage_proof_mode=None):
-    if manufacturer_proof_mode not in {None, PAIRED_ENTITY_MODE}:
+    if manufacturer_proof_mode not in {None, PAIRED_ENTITY_MODE, OZON_PREFIX_MODE}:
         raise OriginalPreparationError('unsupported manufacturer proof mode')
-    if dosage_proof_mode not in (None, STRUCTURED_DOSE_MODE):
+    if dosage_proof_mode not in (None, STRUCTURED_DOSE_MODE, CONCENTRATION_DOSE_MODE):
         raise OriginalPreparationError('unsupported dosage proof mode')
     registry_by_ru, registry_proof, source_snapshots = _registry_index(
         registry_index_path, registry_validation_path,
-        retain_snapshots=manufacturer_proof_mode is not None)
+        retain_snapshots=manufacturer_proof_mode is not None or dosage_proof_mode == CONCENTRATION_DOSE_MODE)
     catalog_by_ru = defaultdict(list)
     for value in _read_jsonl(catalog_path):
         med = value.get('medication', value)
@@ -313,7 +317,7 @@ def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_
                 raise OriginalPreparationError('current RU has absent/ambiguous records in full registry index')
             if current_records[0] != {key: snapshot.get(key) for key in ['record_id', 'metadata_sha256']}:
                 raise OriginalPreparationError('candidate source differs from the current full registry index')
-            if manufacturer_proof_mode is not None:
+            if manufacturer_proof_mode is not None or dosage_proof_mode == CONCENTRATION_DOSE_MODE:
                 current_snapshot = source_snapshots[snapshot['record_id']]
                 legacy_snapshot = {key: value for key, value in current_snapshot.items()
                                    if key != 'manufacturer_entities'}
@@ -363,10 +367,10 @@ def main(argv=None):
     parser.add_argument('--grls-index', required=True)
     parser.add_argument('--registry-index', required=True, help='Full normalized EAEU metadata JSONL, not a PDF-only subset')
     parser.add_argument('--registry-validation', required=True, help='Complete metadata count/hash validation proof')
-    parser.add_argument('--manufacturer-proof-mode', choices=[PAIRED_ENTITY_MODE], default=None,
+    parser.add_argument('--manufacturer-proof-mode', choices=[PAIRED_ENTITY_MODE, OZON_PREFIX_MODE], default=None,
                         help='Explicitly enable primary same-stage25 long/brief entity pairs; legacy is unchanged')
-    parser.add_argument('--dosage-proof-mode', choices=[STRUCTURED_DOSE_MODE], default=None,
-                        help='Explicit direct single-active solid strength proof from pinned classifiers; no unit conversions')
+    parser.add_argument('--dosage-proof-mode', choices=[STRUCTURED_DOSE_MODE, CONCENTRATION_DOSE_MODE], default=None,
+                        help='Explicit single-active solid or direct O25/kind04 concentration proof; no unit conversions')
     parser.add_argument('--output', required=True)
     parser.add_argument('--rejections', required=True)
     parser.add_argument('--report', required=True)
