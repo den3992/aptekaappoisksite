@@ -47,11 +47,28 @@ reproducible literal evidence. It rejects uncertain versions, projects, mismatch
 forms or strengths, unrelated legal entities and missing source data. Retain its
 verification checkpoints: repeated runs reuse the same immutable payload.
 
+The complete EAEU index and its count/SHA validation are mandatory; uniqueness
+cannot be inferred from downloaded PDFs alone. Explicit optional proof modes are
+`--manufacturer-proof-mode eaeu_paired_entity_v1` (long/brief names from one
+finished-product manufacturing entity) and `--dosage-proof-mode
+eaeu_structured_solid_v1` (single-active solid form, exact quantity/mass unit,
+explicit zero scale, pinned public classifiers, no unit conversions). The default
+literal path and its old immutable payloads stay unchanged.
+
+The separate `official_manufacturer` profile currently supports **Renewal only**.
+It requires a visually reviewed complete PDF and exact current GRLS identity,
+including a finished-product manufacturer stage. Store the raw official product
+HTML beside `original_file` as `<html_sha256>.html`; both preview and apply verify
+its hash and the actual selected href. Unknown additional product PDFs require
+version review; only two explicitly reviewed legal footer links are excluded.
+An unknown clinical revision date stays null. Conflicting versions remain draft.
+
 ## Apply and rollback
 
 Supply `MONGO_URL` and `DB_NAME` only through the existing secret loader or an
 in-memory local tunnel configuration; never print credentials or put them in Git.
-Run the same importer without `--manifest`, add `--apply`, and retain `--report`.
+Add `--apply` and retain `--report`. An optional local `--manifest` avoids a full
+catalog read, while apply still rechecks each selected live identity and overlap.
 Run bulk imports and production deployments outside 03:00–07:00 UTC.
 
 Text writes use `instruction_documents` and `medication_instruction_bindings`.
@@ -76,6 +93,10 @@ fixed hosts, no redirects, cross-process source serialization and one request
 start per second. The complete bounded file is checked against its recorded
 length and SHA **before** any bytes are sent. A source revision with a new SHA
 requires a new audit; it cannot silently replace an existing document.
+
+Renewal uses a separate fixed-host HTTPS `/upload/*.pdf` branch with redirects
+disabled and the same byte/hash/cache/concurrency limits. A denial stops only
+that source; it does not stop the independent EAEU source.
 
 Only a reconstructible cache under `/tmp/aptekaa-official-instruction-pdfs` is
 written by the API (128 MiB maximum). Requests have bounded concurrency, including

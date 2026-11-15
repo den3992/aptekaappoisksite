@@ -154,6 +154,8 @@ class OfficialPdfCache:
 
     def _download(self, doc, deadline):
         source = doc['source']
+        if source['kind'] == 'official_manufacturer':
+            return self._download_manufacturer(doc, deadline)
         session = self.session_factory()
         try:
             payload = {'uri': ATTACHMENT + source['record_id'] + '/files?file=' + source['uploaded_file_path'], 'gp': 'g'}
@@ -187,6 +189,76 @@ class OfficialPdfCache:
                 raise OriginalUnavailable('official original differs from its verified version')
             return body
         finally:
+            session.close()
+
+    def _download_manufacturer(self, doc, deadline):
+        from .manufacturer_original_pdfs import renewal_pdf_url
+        url = renewal_pdf_url(doc['source']['pdf_url'])
+        stopped = self.directory / '.source-stopped-renewal'
+        if stopped.exists():
+            raise OriginalUnavailable('official manufacturer source access is temporarily unavailable')
+        next_path = self.directory / '.next-request-at'
+        try:
+            next_at = float(next_path.read_text())
+        except (OSError, ValueError):
+            next_at = 0
+        if next_at - self.clock() > 2:
+            next_at = 0
+        if next_at > self.clock():
+            delay = next_at - self.clock()
+            if delay >= self._remaining(deadline):
+                raise OriginalUnavailable('official original deadline exceeded')
+            self.sleep(delay)
+        self._remaining(deadline)
+        next_path.write_text(str(self.clock() + 1))
+        remaining = self._remaining(deadline)
+        session, response = self.session_factory(), None
+        # Static official files require no environment credentials, cookies,
+        # role claims or cross-origin workflow. TLS verification stays enabled.
+        session.trust_env = False
+        try:
+            response = session.request('GET', url,
+                headers={'User-Agent': 'Aptekaa-Official-Instructions/1.0',
+                         'Accept': 'application/pdf, application/octet-stream, */*', 'Accept-Encoding': 'identity'},
+                timeout=(min(3, remaining), min(5, remaining)), allow_redirects=False, stream=True, verify=True)
+            if response.status_code in {401, 403, 429}:
+                stopped.write_text('official manufacturer denied access; manual audit required\n')
+                raise OriginalUnavailable('official manufacturer source access is temporarily unavailable')
+            if response.status_code != 200:
+                prefix = bytearray()
+                for chunk in response.iter_content(chunk_size=1024):
+                    self._remaining(deadline)
+                    prefix.extend(chunk[:4096 - len(prefix)])
+                    if len(prefix) >= 4096:
+                        break
+                if re.search(rb'captcha|cf-chl|challenge-platform|checking your browser', prefix, re.I):
+                    stopped.write_text('official manufacturer returned an access challenge; manual audit required\n')
+                raise OriginalUnavailable('official manufacturer source is temporarily unavailable')
+            declared = response.headers.get('Content-Length')
+            if declared and (not declared.isdigit() or int(declared) > doc['original_bytes']):
+                raise OriginalUnavailable('official response exceeds the byte limit')
+            body = bytearray()
+            for chunk in response.iter_content(chunk_size=64 * 1024):
+                self._remaining(deadline)
+                body.extend(chunk)
+                if len(body) > doc['original_bytes']:
+                    raise OriginalUnavailable('official response exceeds the byte limit')
+            body = bytes(body)
+            if declared and len(body) != int(declared):
+                raise OriginalUnavailable('official response was truncated')
+            if not body.startswith(b'%PDF-') and re.search(rb'captcha|cf-chl|challenge-platform|checking your browser', body[:4096], re.I):
+                stopped.write_text('official manufacturer returned an access challenge; manual audit required\n')
+                raise OriginalUnavailable('official manufacturer source access is temporarily unavailable')
+            if not self._body_is_expected(body, doc):
+                raise OriginalUnavailable('official original differs from its verified version')
+            return body
+        except (requests.RequestException, ValueError, TypeError, OSError) as error:
+            if isinstance(error, OriginalUnavailable):
+                raise
+            raise OriginalUnavailable('official manufacturer original could not be retrieved') from None
+        finally:
+            if response is not None:
+                response.close()
             session.close()
 
     def _save(self, doc, body):

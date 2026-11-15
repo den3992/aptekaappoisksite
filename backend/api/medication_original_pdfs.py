@@ -39,6 +39,9 @@ def _future_or_absent(value, field):
 def validate_original_document(raw):
     """Validate provenance and exact variant scopes; never claim an OCR approval."""
     doc = _object(raw, 'document')
+    if isinstance(doc.get('source'), dict) and doc['source'].get('kind') == 'official_manufacturer':
+        from .manufacturer_original_pdfs import validate_manufacturer_original_document
+        return validate_manufacturer_original_document(doc)
     if doc.get('content_format') != CONTENT_FORMAT or doc.get('sections'):
         raise ValueError('whole PDF originals must be explicit and contain no purported inline sections')
     identifier = _required_text(doc.get('id'), 'id')
@@ -247,6 +250,7 @@ class MedicationOriginalService:
             result.append({
                 **{key: doc[key] for key in ['id', 'title', 'content_format', 'document_type', 'registration_numbers',
                                             'version', 'approved_at', 'original_sha256', 'page_count', 'original_bytes']},
+                **({'revision_date': doc['revision_date']} if doc['source']['kind'] == 'official_manufacturer' else {}),
                 'source': {key: doc['source'][key] for key in ['name', 'url']},
                 'download_url': '/api/instructions/originals/' + doc['id'] + '.pdf',
                 'matched_variants': list(bound.values()),

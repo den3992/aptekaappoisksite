@@ -23,6 +23,11 @@ class OriginalCollections:
 
 
 def validate_archive(document, path: Path):
+    if document.get('source', {}).get('kind') == 'official_manufacturer':
+        from api.manufacturer_original_pdfs import validate_manufacturer_archive
+        # Never skip the HTML guard via the PDF parser cache: apply must prove
+        # the retained actual href again even for an unchanged original PDF.
+        validate_manufacturer_archive(document, path)
     if path.stat().st_size != document['original_bytes']:
         raise ValueError('retained original byte length differs')
     with path.open('rb') as source:
