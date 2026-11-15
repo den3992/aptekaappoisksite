@@ -1,22 +1,22 @@
 {
-  "verified_at": "2026-11-15T08:17:23.345694+00:00",
+  "verified_at": "2026-11-15T08:48:38.686328+00:00",
   "verified_live_database": true,
   "public_deployment_pending": false,
-  "validation_revision": "69e17464fb1c8f0ba10c7a992cdce6e156fec306",
+  "validation_revision": "01eedb1665618647f7689103f7edfc0fdfa28e0d",
   "inventory": {
     "canonical_cards": 22377,
     "total_variants": 72058
   },
   "coverage": {
     "verified_documents": 71,
-    "verified_original_documents": 206,
+    "verified_original_documents": 210,
     "cards_with_instructions": 87,
-    "cards_with_original_pdf": 246,
-    "cards_with_either_format": 324,
+    "cards_with_original_pdf": 250,
+    "cards_with_either_format": 328,
     "fully_covered_cards": 14,
     "covered_variants": 729,
-    "original_covered_variants": 534,
-    "combined_covered_variants": 1215,
+    "original_covered_variants": 543,
+    "combined_covered_variants": 1224,
     "combined_fully_covered_cards": 145
   },
   "batches": [
@@ -5023,8 +5023,90 @@
         }
       ],
       "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T081604Z-1a437286"
+    },
+    {
+      "batch_id": "instructions-20261115T084710Z-a787ed7c",
+      "plan_hash": "c859e0a2af10cff271ee2eac7aee4f17b3285b424ccba0a3810868e71f06c75f",
+      "content_format": "official_original_pdf",
+      "added_documents": 4,
+      "added_bindings": 4,
+      "documents": [
+        {
+          "id": "solopharm-original-6ed677ad00bc0b39bdd5b006-cd52252d3e21",
+          "title": "Инструкция по медицинскому применению: Трекрезан — 200 мг",
+          "registration_numbers": [
+            "ЛП-№(010553)-(РГ-RU)"
+          ],
+          "original_sha256": "6ed677ad00bc0b39bdd5b006591b35a00f8758f901b3e3d74e422c6e02ee7cdf",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 2972933,
+          "source": {
+            "name": "Официальный производитель — ООО «Гротекс» (Solopharm)",
+            "url": "https://solopharm.com/products/trekrezan/tabletki-200-mg-10",
+            "kind": "official_manufacturer",
+            "provider": "solopharm",
+            "pdf_url": "https://solopharm.com/storage/files/products/RoumtgqYEavjxh7oAvf5SVRDeoAQNpIH9MYLA5xu.pdf"
+          }
+        },
+        {
+          "id": "solopharm-original-91c590e0d38f53ce59aa8854-6b5d78425f8e",
+          "title": "Инструкция по медицинскому применению: Солонэкс — 10 мг/мл",
+          "registration_numbers": [
+            "ЛП-№(001477)-(РГ-RU)"
+          ],
+          "original_sha256": "91c590e0d38f53ce59aa885448792a8b78e0f045a2613cd1bcea18cd434764be",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 8568659,
+          "source": {
+            "name": "Официальный производитель — ООО «Гротекс» (Solopharm)",
+            "url": "https://solopharm.com/products/soloneks/kapli-10-mgml-20-ml",
+            "kind": "official_manufacturer",
+            "provider": "solopharm",
+            "pdf_url": "https://solopharm.com/storage/files/products/9AqReNFNRwlVc1MF5CjdhxPU0zN4WRfwcWaxawLi.pdf"
+          }
+        },
+        {
+          "id": "solopharm-original-bba472ab4a1a2e97a2810888-21a36ef3ec3d",
+          "title": "Инструкция по медицинскому применению: ЭЛЬПАСОЛ солофарм — 5 мг/мл",
+          "registration_numbers": [
+            "ЛП-№(003361)-(РГ-RU)"
+          ],
+          "original_sha256": "bba472ab4a1a2e97a28108887160c5b3d2e392d2e9b23611f4001688b3983adf",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 120173,
+          "source": {
+            "name": "Официальный производитель — ООО «Гротекс» (Solopharm)",
+            "url": "https://solopharm.com/products/elpasol/5-mgml-poliflak-100-ml",
+            "kind": "official_manufacturer",
+            "provider": "solopharm",
+            "pdf_url": "https://solopharm.com/storage/files/products/AITUqlLxBRYTmBb0R8eGbtVFKQOxsPhBAj5j2RdG.pdf"
+          }
+        },
+        {
+          "id": "solopharm-original-d44448f616f15b0293eb5900-1c9350be9696",
+          "title": "Инструкция по медицинскому применению: Новатрон — 1 мг/мл",
+          "registration_numbers": [
+            "ЛП-№(001026)-(РГ-RU)"
+          ],
+          "original_sha256": "d44448f616f15b0293eb59008cec9c78a7980165bad8af19db3b813d43a63266",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 8760880,
+          "source": {
+            "name": "Официальный производитель — ООО «Гротекс» (Solopharm)",
+            "url": "https://solopharm.com/products/novatron/ampuly-politvist-10",
+            "kind": "official_manufacturer",
+            "provider": "solopharm",
+            "pdf_url": "https://solopharm.com/storage/files/products/hfssSJZV0OfauiuWo1N6YzXlykKN1Cu5tEMTxcn5.pdf"
+          }
+        }
+      ],
+      "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T084710Z-a787ed7c"
     }
   ],
   "scope_note": "Coverage is confirmed in the live database and public card HTML/PDF routes. Whole PDF originals and verified inline text are counted separately. Remaining unverified variants have no claimed instruction coverage.",
-  "public_release_receipt": "2026-11-15-incremental-eaeu5-release.json"
+  "public_release_receipt": "2026-11-15-incremental-solopharm4-release.json"
 }

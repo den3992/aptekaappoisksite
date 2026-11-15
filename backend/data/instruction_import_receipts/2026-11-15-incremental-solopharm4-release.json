@@ -1,0 +1,46 @@
+{
+  "status": "publicly_verified",
+  "verified_at": "2026-11-15T08:49:22.391440+00:00",
+  "backend_runtime_revision": "01eedb1665618647f7689103f7edfc0fdfa28e0d",
+  "next_runtime_revision": "278e18156b69cdec38ea167482b3f31039c80ee6",
+  "previous_public_release_receipt": "2026-11-15-incremental-eaeu5-release.json",
+  "added_instruction_documents": {
+    "inline": 0,
+    "whole_original_pdf": 4
+  },
+  "coverage": {
+    "verified_documents": 71,
+    "verified_original_documents": 210,
+    "cards_with_instructions": 87,
+    "cards_with_original_pdf": 250,
+    "cards_with_either_format": 328,
+    "covered_variants": 729,
+    "original_covered_variants": 543,
+    "combined_covered_variants": 1224,
+    "combined_fully_covered_cards": 145
+  },
+  "source_archive": {
+    "sha256": "d04ddd771e537d3afa9b794f0e69be1bd1331e7d2ef424c3ddb1aecb1ff2798a",
+    "manifest_sha256": "b30c10594c0e6f746e84d8c4315db472dd35b3c9265fabca9cb0cf72ddf5ad90",
+    "provenance_capsule_sha256": "5bef12f0c0ebbbce33318f9a40980548c01e580775e0e26d5ad71beb5d973688",
+    "canonical_documents_in_this_archive": 9,
+    "published_documents_in_this_archive": 9,
+    "historical_pending_manifest_preserved": true,
+    "prior_and_published_archive_ids_equal_live_ids": true,
+    "live_canonical_document_count": 281,
+    "all_seeded_unique_pdf": 265,
+    "cache_bytes": 111988370,
+    "source_stops_preserved": true,
+    "source_review_receipt_sha256": "586d87697cd399b7d6042b011f60cbdd9f9221d890c76e305f4e7409fd107af4",
+    "seed_proof_sha256": "571a708850ac0b34af654c1cae818e4ca8dbb92e94d2fa1bccc8b52b8d1f9c16"
+  },
+  "public_acceptance": {
+    "cards_checked": 4,
+    "whole_pdf_document_routes_checked": 4,
+    "unique_original_pdf_sha256_checked": 4,
+    "server_html_and_pdf_bytes_verified": true,
+    "proof_sha256": "4bcdc74ea51cf7e0beaa66c7fb077d7a2bb1b48d36359c132f45a1866f9a5646"
+  },
+  "scope_note": "Coverage is confirmed in the live database and public card HTML/PDF routes. Whole PDF originals and verified inline text are counted separately. Remaining unverified variants have no claimed instruction coverage.",
+  "read_service_update_proof_sha256": "90a123bf8aa205f055e8b2ef6f92841f0c1a08830b822f2d250402dc37beb1cc"
+}
