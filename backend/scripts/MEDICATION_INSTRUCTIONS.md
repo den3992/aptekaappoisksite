@@ -141,5 +141,26 @@ background threads after client cancellation. Access denials or actual browser
 challenges stop further source access; they are never bypassed. A transient
 upstream failure returns 503 without claiming instruction coverage from OCR.
 
+If an existing price parser is still running through `docker compose exec backend`,
+keep that backend container alive. The temporary
+`deploy/docker-compose.instructions.yml` overlay starts `backend_instructions`
+from the reviewed `instructions-69e1746` image, with one worker, 256 MiB RAM and
+one CPU. It inherits the existing private environment and persistent PDF cache;
+it has no published ports. Use both compose files with `--no-deps` to start only
+`backend_instructions`, verify its Mongo-backed readiness and memory use, then
+replace only `next`. The overlay points Next server requests at that read service.
+Restart `edge` after replacing Next so nginx resolves its current container IP.
+Never run an unrestricted compose `up` or rebuild/recreate `backend` during this
+sequence. Require at least 600 MiB `MemAvailable` before starting the read service,
+and at least 300 MiB afterward; abort or restore the old Next image if readiness,
+resource bounds or the original backend/parser identity checks fail.
+
+The overlay is temporary: a standard Next deployment using only the base compose
+file returns its internal API to `backend`. After the price job has finished,
+update the main backend with the reviewed image and restart `edge` before removing
+the temporary read service. For an earlier rollback, restore the saved Next image
+using only the base compose file, restart `edge`, verify it against the original
+backend, then stop `backend_instructions`. Retain the archive and PDF cache volume.
+
 Rebuild backend images after script changes, rebuild Next after UI changes, and
 restart `edge` after recreating backend. Keep rollback images and import receipts.

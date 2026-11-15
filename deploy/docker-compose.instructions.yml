@@ -1,0 +1,21 @@
+# Temporary read service while a price parser still runs in the main backend.
+# Use together with docker-compose.yml; never recreate backend to enable it.
+services:
+  backend_instructions:
+    extends:
+      file: docker-compose.yml
+      service: backend
+    image: deploy-backend:instructions-69e1746
+    pull_policy: never
+    profiles: [instructions]
+    command: [uvicorn, server:app, --host, 0.0.0.0, --port, "8001", --workers, "1"]
+    mem_limit: 256m
+    cpus: 1.0
+    pids_limit: 96
+    read_only: true
+    tmpfs:
+      - /tmp:rw,size=32m,mode=1777
+
+  next:
+    environment:
+      BACKEND_INTERNAL_URL: http://backend_instructions:8001
