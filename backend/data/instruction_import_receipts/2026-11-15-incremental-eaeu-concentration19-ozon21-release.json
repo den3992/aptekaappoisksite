@@ -1,0 +1,106 @@
+{
+  "status": "publicly_verified",
+  "verified_at": "2026-11-15T11:33:43.098381+00:00",
+  "backend_runtime_revision": "e0acf2412e95fdf7e2812062952dc00e1fd3f457",
+  "next_runtime_revision": "278e18156b69cdec38ea167482b3f31039c80ee6",
+  "previous_public_release_receipt": "2026-11-15-incremental-solopharm2-vertex-release.json",
+  "added_instruction_documents": {
+    "inline": 0,
+    "whole_original_pdf": 40
+  },
+  "added_cards": 49,
+  "added_covered_variants": 80,
+  "batch_id": "instructions-20261115T112831Z-e8bb6c3f",
+  "coverage": {
+    "verified_documents": 71,
+    "verified_original_documents": 267,
+    "cards_with_instructions": 87,
+    "cards_with_original_pdf": 316,
+    "cards_with_either_format": 394,
+    "fully_covered_cards": 14,
+    "covered_variants": 729,
+    "original_covered_variants": 694,
+    "combined_covered_variants": 1375,
+    "combined_fully_covered_cards": 174
+  },
+  "source_archive": {
+    "sha256": "cedf03fd2f42b47300d49071fa91da03509ad61ccda12c268d4db10813c7fddb",
+    "manifest_sha256": "40cc4aa87a250cfbf0623d82b07fe75651f398f1ddf421f58bab7ab7481eb17c",
+    "canonical_documents": 40,
+    "unique_original_pdf": 40,
+    "original_pdf_bytes": 18960529,
+    "PDF_pages": 391,
+    "combined_wrapper_sha256": "3a87f7500d5b60c4d8eefee674fd3648d171f1754dc2eb0096b41d31fb3b7e8e",
+    "reviewed_wrapper_paths_sha256": [
+      {
+        "bytes": 515615,
+        "path": "/tmp/aptekaa-instructions-20261115/eaeu/concentration-nineteen-candidates-20261115/pending-verified.jsonl",
+        "sha256": "1bc612770194609384fdf326cbc83fb412a192c3896b88dfa84dd2f20ec40729"
+      },
+      {
+        "bytes": 796273,
+        "path": "/tmp/aptekaa-instructions-20261115/eaeu-ozon-prefix-pending21-20261115/ozon-prefix-pending-verified.jsonl",
+        "sha256": "4a9ee9d33957cc88b88aa1843927914f4f47e0678ff3004a9cf49f71e89a66de"
+      }
+    ],
+    "provenance_capsule_sha256": "8b732cffd4427c1c851c1bd12cfe4db973824956ecdd7ae5567bceaf5fb4edb0",
+    "provenance_manifest_sha256": "9a85643419cc79d291f0cb0d0acc97dbdaf616a0e9b8a4657201eaee6bac3f5e",
+    "independent_DATA_reviews": [
+      {
+        "bytes": 2952,
+        "path": "/tmp/aptekaa-instructions-20261115/eaeu/concentration-nineteen-candidates-20261115/independent-data-review.json",
+        "sha256": "49afaf648da56759aac8ebdbc35a7bac960ad66997a22e598a2a38f19c71d0d9"
+      },
+      {
+        "bytes": 2932,
+        "path": "/tmp/aptekaa-instructions-20261115/eaeu-ozon-prefix-pending21-20261115/independent-data-review.json",
+        "sha256": "b0fe4f037698ecbf0e8c4dc728a440890e6c7da077f7245af36d4ceea1354a58"
+      }
+    ],
+    "native_actual128_proof_sha256": "0b5b16f6673c4218da8b22a6d9cdb6e98de6573e469b96bb51e665d9a74513a5",
+    "independent_artifact_review_sha256": "0d8a42fc2a569224ce36c4b20f75aa9230028d0e20a1d508a20534927ea7540d",
+    "live_canonical_document_count": 338,
+    "all_live_document_ids_equal_reviewed_archived_ids": true,
+    "automatically_extracted_clinical_text_published": false
+  },
+  "permanent_original_store": {
+    "unique_pdf": 320,
+    "logical_bytes": 137902310,
+    "limit_bytes": 536870912,
+    "read_only_runtime": true,
+    "seed320_existing_pdf": 280,
+    "seed320_hardlinked": 40,
+    "seed320_copied": 0,
+    "native_ready_proof_sha256": "d0cc3cddca2d072f0e3aa3be0b88c7f62bf36e56d11fae5389cf1ac77bb4f116",
+    "old_LRU_unique_pdf": 280,
+    "old_LRU_bytes": 118941781,
+    "old_LRU_seeded_by_this_release": false
+  },
+  "runtime_release": {
+    "image_archive_sha256": "b6ced789a24ff1ab75bdefabdd21711c2288c0a3d706215b1b805e378883f188",
+    "metadata_sha256": "814c67c0dc90ef8d34cd82862be5ee1589d88bcbbb0689fdbd28f2d6bd607050",
+    "thin_image_transport_sha256": "a3c1d2a03c182d1c2f6923ec81be2aa901217df87dbfcbddeba76c1a960697fc",
+    "actual_thin_stage_proof_sha256": "4beb51048cb76ef8772075e754472a2f983bf7d60601be2aa1dbf7511ab125cb",
+    "runtime_confirmation_proof_sha256": "e08e5b739072d20152cbf44e20162bf3ea2bcf580d5b9132983a977042580771",
+    "confirmed_rollout_state_sha256": "6b29f4152c81afa9a352ae38411e80dfd1337f988239c7964307a1cffee475c7",
+    "main_safe_tests": 587,
+    "main_safe_subtests": 640,
+    "runtime_memory_limit_bytes": 268435456,
+    "original_backend_next_edge_actions": 0,
+    "previous_failed_switch_log_sha256": "599f30a34048cbe096651e6ce46550c3ed4d4ad5cc0c3d687d9c5474fa400bcc",
+    "exact_original_edge_mount_order_proof_sha256": "2fe1241667c48061a83a3356b9e2e988413599e556171075dc7da2844fbf2f06"
+  },
+  "publication_fence": {
+    "path": "/home/ubuntu/aptekaa-release/instruction-profile-publication-e0acf24-started.json",
+    "sha256": "53a321f144f9c6e2588779754fc93db6af6bab2714949fac9ae944e40cde3d06",
+    "rollback357_forbidden": true
+  },
+  "public_acceptance": {
+    "new_cards_checked": 49,
+    "unique_new_PDF_SHA_checked": 40,
+    "server_HTML_and_PDF_bytes_verified": true,
+    "proof_sha256": "e9da4d7e3a1773cfc42bd2d7d65683137299123bbd5d0c8b1ee981d7fa0b055e",
+    "old5_regression_sha256": "50038162c35c8ff466f451f8eb3bf5c7579ac3c506bbe862d08e3c1df886b01f"
+  },
+  "scope_note": "Live coverage is verified against current variant identities. Whole official PDF originals and inline text are counted separately. Exact current registration, form, strength and manufacturer evidence are required; unmatched variants remain uncovered. Unknown instruction revision dates are not called latest. New-profile recovery requires E0-compatible code and the readonly permanent store."
+}
