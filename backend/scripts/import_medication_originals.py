@@ -20,6 +20,7 @@ class OriginalCollections:
         self.medications = database.medications
         self.instruction_documents = database.instruction_original_documents
         self.medication_instruction_bindings = database.medication_original_bindings
+        self.raw_database = database
 
 
 def validate_archive(document, path: Path):

@@ -115,9 +115,8 @@ def make_router(db: AsyncIOMotorDatabase) -> APIRouter:
             doc = validate_original_document(raw)
         except (ValueError, KeyError, TypeError):
             raise HTTPException(404, 'Instruction original not found') from None
-        active = await db.medication_original_bindings.find_one({
-            'document_id': document_id, 'record_type': 'binding', 'status': 'verified', 'active': True,
-        }, {'_id': 0, 'binding_id': 1}, max_time_ms=1500)
+        from .mdlp_original_authorization import authorize
+        active = await authorize(db, doc, original_service.raw_source)
         if not active:
             raise HTTPException(404, 'Instruction original not found')
         try:

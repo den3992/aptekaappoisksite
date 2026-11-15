@@ -28,6 +28,7 @@ from api.eaeu_variant_form_evidence import (
     MODE as VARIANT_FILM_MODE, GENERIC_FORM, FILM_FORM,
     build_evidence as build_variant_form_evidence, reviewed_variant_facts,
 )
+from api import mdlp_variant_form_evidence as mdlp
 from api.medication_instructions import _identity, _ru
 from api.medication_original_pdfs import (
     MAX_PAGES, MAX_PDF_BYTES, canonical_hash, match_original_to_medication,
@@ -145,9 +146,13 @@ def _document_type(binary, attachment):
 
 
 def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
-                      manufacturer_proof_mode=None, dosage_proof_mode=None, variant_form_proof_mode=None):
+                      manufacturer_proof_mode=None, dosage_proof_mode=None, variant_form_proof_mode=None,
+                      raw_catalog_lineage=None):
     """Build a wrapper after the caller's full-registry uniqueness preflight."""
     _check_variant_form_mode(variant_form_proof_mode, manufacturer_proof_mode, dosage_proof_mode)
+    if variant_form_proof_mode==mdlp.MODE and (not isinstance(raw_catalog_lineage,dict)
+            or set(raw_catalog_lineage)!={'by_slug','pins'}):
+        raise OriginalPreparationError('reviewed original-catalog lineage context is required')
     folder = Path(folder)
     candidate = proof.get('candidate') or {}
     snapshot, selected = candidate.get('source') or {}, candidate.get('document') or {}
@@ -185,7 +190,7 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
         if not any(_ru(v.get('ru_number') or med.get('ru_number')) == ru_key for v in med.get('variants') or []):
             continue
         scope = {'ru_number': registration_number, 'form': med.get('form'), 'dosage': med.get('dosage')}
-        if variant_form_proof_mode == VARIANT_FILM_MODE:
+        if variant_form_proof_mode in (VARIANT_FILM_MODE,mdlp.MODE):
             # Source scope is precise; do not mutate the medication to make the
             # existing strict matcher appear to accept its generic form.
             scope['form'] = snapshot.get('form')
@@ -193,7 +198,11 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
                 if (_identity(scope['form']) != FILM_FORM
                         or _identity(med.get('form')) != GENERIC_FORM):
                     raise ValueError('EAEU film profile requires the observed precise/generic form pair')
-                reviewed_variant_facts(med, registration['trade_name'], scope)
+                if variant_form_proof_mode==mdlp.MODE:
+                    reviewed=raw_catalog_lineage['by_slug'].get(med['slug'],[])
+                    mdlp.catalog_variants(med,scope,[r['raw_projection']for r in reviewed])
+                else:
+                    reviewed_variant_facts(med, registration['trade_name'], scope)
             except (ValueError, TypeError, KeyError, AttributeError) as error:
                 rejected_targets.append({'slug': med['slug'], 'reason': str(error)})
                 continue
@@ -283,11 +292,19 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
     matches, binding_proofs = [], []
     for med in eligible_meds:
         binding_proof = None
+        extra = {}
         if variant_form_proof_mode == VARIANT_FILM_MODE:
             scope = next(s for s in scopes if _identity(s['dosage']) == _identity(med.get('dosage')))
             binding_proof = build_variant_form_evidence(document, med, scope)
             binding_proofs.append(binding_proof)
-        match = match_original_to_medication(document, med, variant_form_evidence=binding_proof)
+        elif variant_form_proof_mode==mdlp.MODE:
+            scope=next(s for s in document['scopes']if _identity(s['dosage'])==_identity(med.get('dosage')))
+            scope={key:scope[key]for key in ('ru_number','form','dosage')}
+            binding_proof=mdlp.build_evidence(document,med,scope,
+                raw_catalog_lineage['by_slug'].get(med['slug'],[]),raw_catalog_lineage['pins'])
+            binding_proofs.append(binding_proof)
+            extra={'raw_source_rows':mdlp.expected_rows(binding_proof)}
+        match = match_original_to_medication(document, med, variant_form_evidence=binding_proof, **extra)
         if not match['matched']:
             raise OriginalPreparationError('validated source tuple did not bind its exact catalog variant')
         matches.append({'slug': med['slug'], 'covered_variants': match['covered_variants'],
@@ -307,7 +324,7 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
 
 
 def _check_variant_form_mode(mode, manufacturer_mode, dosage_mode):
-    if mode not in (None, VARIANT_FILM_MODE):
+    if mode not in (None, VARIANT_FILM_MODE,mdlp.MODE):
         raise OriginalPreparationError('unsupported variant-form proof mode')
     if mode is not None and (manufacturer_mode not in (None, PAIRED_ENTITY_MODE)
                              or dosage_mode != STRUCTURED_DOSE_MODE):
@@ -316,8 +333,17 @@ def _check_variant_form_mode(mode, manufacturer_mode, dosage_mode):
 
 def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_path, *,
                    registry_index_path, registry_validation_path, max_candidates=None,
-                   manufacturer_proof_mode=None, dosage_proof_mode=None, variant_form_proof_mode=None):
+                   manufacturer_proof_mode=None, dosage_proof_mode=None, variant_form_proof_mode=None,
+                   raw_catalog_lineage_path=None,raw_catalog_lineage_sha256=None):
     _check_variant_form_mode(variant_form_proof_mode, manufacturer_proof_mode, dosage_proof_mode)
+    raw_catalog_lineage=None
+    if variant_form_proof_mode==mdlp.MODE:
+        if not raw_catalog_lineage_path or not raw_catalog_lineage_sha256:
+            raise OriginalPreparationError('pinned original-catalog lineage is required')
+        from scripts.prepare_mdlp_variant_form_evidence import load_lineage
+        raw_catalog_lineage=load_lineage(raw_catalog_lineage_path,raw_catalog_lineage_sha256)
+    elif raw_catalog_lineage_path or raw_catalog_lineage_sha256:
+        raise OriginalPreparationError('raw lineage is only supported by the explicit original-catalog mode')
     if manufacturer_proof_mode not in {None, PAIRED_ENTITY_MODE, OZON_PREFIX_MODE}:
         raise OriginalPreparationError('unsupported manufacturer proof mode')
     if dosage_proof_mode not in (None, STRUCTURED_DOSE_MODE, CONCENTRATION_DOSE_MODE):
@@ -352,7 +378,13 @@ def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_
                 raise OriginalPreparationError('current RU has absent/ambiguous records in full registry index')
             if current_records[0] != {key: snapshot.get(key) for key in ['record_id', 'metadata_sha256']}:
                 raise OriginalPreparationError('candidate source differs from the current full registry index')
-            if (manufacturer_proof_mode is not None or dosage_proof_mode == CONCENTRATION_DOSE_MODE
+            if variant_form_proof_mode==mdlp.MODE:
+                # Any nonadditive upgrade must already exist in a separately
+                # retained/reviewed generation. Never relabel old normalization
+                # as an additive overlay or replace its provenance here.
+                if snapshot!=source_snapshots[snapshot['record_id']]:
+                    raise OriginalPreparationError('original-catalog mode requires an explicit exact current source generation')
+            elif (manufacturer_proof_mode is not None or dosage_proof_mode == CONCENTRATION_DOSE_MODE
                     or variant_form_proof_mode is not None):
                 current_snapshot = source_snapshots[snapshot['record_id']]
                 legacy_snapshot = {key: value for key, value in current_snapshot.items()
@@ -372,7 +404,8 @@ def prepare_corpus(corpus_root, catalog_path, grls_path, output_path, rejection_
             wrapper, preview = prepare_candidate(proof, path.parent, catalog_by_ru[ru], grls_by_ru[ru],
                                                   manufacturer_proof_mode=manufacturer_proof_mode,
                                                   dosage_proof_mode=dosage_proof_mode,
-                                                  variant_form_proof_mode=variant_form_proof_mode)
+                                                  variant_form_proof_mode=variant_form_proof_mode,
+                                                  raw_catalog_lineage=raw_catalog_lineage)
             if wrapper['document']['id'] in seen_ids:
                 counts['duplicate_document'] += 1
                 continue
@@ -411,8 +444,10 @@ def main(argv=None):
                         help='Explicitly enable primary same-stage25 long/brief entity pairs; legacy is unchanged')
     parser.add_argument('--dosage-proof-mode', choices=[STRUCTURED_DOSE_MODE, CONCENTRATION_DOSE_MODE], default=None,
                         help='Explicit single-active solid or direct O25/kind04 concentration proof; no unit conversions')
-    parser.add_argument('--variant-form-proof-mode', choices=[VARIANT_FILM_MODE], default=None,
+    parser.add_argument('--variant-form-proof-mode', choices=[VARIANT_FILM_MODE,mdlp.MODE], default=None,
                         help='Opt-in per-GTIN complete literal film-form label; source scopes remain precise')
+    parser.add_argument('--raw-catalog-lineage')
+    parser.add_argument('--raw-catalog-lineage-sha256')
     parser.add_argument('--output', required=True)
     parser.add_argument('--rejections', required=True)
     parser.add_argument('--report', required=True)
@@ -426,7 +461,9 @@ def main(argv=None):
                             max_candidates=args.max_candidates,
                             manufacturer_proof_mode=args.manufacturer_proof_mode,
                             dosage_proof_mode=args.dosage_proof_mode,
-                            variant_form_proof_mode=args.variant_form_proof_mode)
+                            variant_form_proof_mode=args.variant_form_proof_mode,
+                            raw_catalog_lineage_path=args.raw_catalog_lineage,
+                            raw_catalog_lineage_sha256=args.raw_catalog_lineage_sha256)
     Path(args.report).write_text(json.dumps(report, ensure_ascii=False, indent=2))
     print(json.dumps({key: value for key, value in report.items() if key != 'previews'}, ensure_ascii=False))
 

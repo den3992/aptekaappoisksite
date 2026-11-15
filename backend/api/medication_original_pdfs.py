@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
+import asyncio
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -189,7 +190,7 @@ def validate_original_document(raw):
     }
 
 
-def match_original_to_medication(document, med, *, variant_form_evidence=None):
+def match_original_to_medication(document, med, *, variant_form_evidence=None, raw_source_rows=None):
     doc = validate_original_document(document)
     variants = med.get('variants') or []
     result = {'matched': False, 'bindings': [], 'total_variants': len(variants), 'covered_variants': 0,
@@ -204,7 +205,7 @@ def match_original_to_medication(document, med, *, variant_form_evidence=None):
     if variant_form_evidence is not None:
         from .eaeu_variant_form_evidence import eligible_variant_keys
         try:
-            form_keys = eligible_variant_keys(doc, med, variant_form_evidence)
+            form_keys = eligible_variant_keys(doc, med, variant_form_evidence, raw_source_rows=raw_source_rows)
         except (ValueError, KeyError, TypeError, AttributeError):
             # Optional evidence cannot invalidate an ordinary strict binding.
             pass
@@ -234,15 +235,52 @@ class MedicationOriginalService:
             raise ValueError('original PDF cache bounds must be positive')
         self.db, self.ttl, self.capacity, self.load_timeout = db, ttl, capacity, load_timeout
         self.cache = OrderedDict()
+        self.raw_hints = OrderedDict()
+        from .mdlp_raw_source import AsyncRawSource
+        self.raw_source = AsyncRawSource(db)
 
-    async def _load(self, med):
+    def _key(self, med):
+        from .canon_variant_form_evidence import label_identity_digest
+        return (med['slug'], medication_identity_fingerprint(med), label_identity_digest(med))
+
+    async def _load(self, med, *, authorize_raw=False):
+        from . import mdlp_variant_form_evidence as mdlp
         fingerprint = medication_identity_fingerprint(med)
         rows = await self.db.medication_original_bindings.find({
             'medicine_slug': med['slug'], 'identity_fingerprint': fingerprint,
             'status': 'verified', 'active': True,
-        }, {'_id': 0}).max_time_ms(1500).to_list(MAX_BINDINGS + 1)
+        }, {}).max_time_ms(1500).to_list(MAX_BINDINGS + 1)
         if len(rows) > MAX_BINDINGS:
             raise ValueError('too many original PDF bindings')
+        raw_rows = None
+        if any(mdlp.is_row(row) for row in rows):
+            key = self._key(med)
+            self.raw_hints[key] = True
+            self.raw_hints.move_to_end(key)
+            while len(self.raw_hints) > self.capacity:
+                self.raw_hints.popitem(last=False)
+            if authorize_raw:
+                try:
+                    current = await self.db.medications.find_one({'slug':med['slug']},
+                        {'_id':0,'slug':1,'name':1,'manufacturer':1,'form':1,'dosage':1,
+                         'ru_number':1,'variants':{'$slice':129},'is_canonical':1},max_time_ms=1500)
+                    if (not current or not isinstance(current.get('variants'),list)
+                            or len(current['variants'])>128
+                            or self._key(current) != self._key(med)):
+                        raise ValueError('current canonical identity or literal labels changed')
+                    gtins = set()
+                    for row in rows:
+                        if mdlp.is_row(row):
+                            try:
+                                gtins.update(v['gtin'] for v in mdlp.expected_rows(row.get('variant_form_evidence')))
+                            except (ValueError,TypeError,KeyError,AttributeError):
+                                continue
+                    if not 1 <= len(gtins) <= mdlp.MAX_PAIRS:
+                        raise ValueError('too many optional raw identities')
+                    raw_rows = await self.raw_source.get(sorted(gtins))
+                except Exception:
+                    # Optional lookup failure cannot discard an ordinary binding.
+                    raw_rows = None
         ids = list(dict.fromkeys(row.get('document_id') for row in rows if row.get('document_id')))
         if len(ids) > MAX_DOCUMENTS:
             raise ValueError('too many original PDFs')
@@ -262,11 +300,26 @@ class MedicationOriginalService:
             for row in rows:
                 if row.get('document_id') != doc['id']:
                     continue
+                if mdlp.is_row(row) and not authorize_raw:
+                    # Even a strict variant carried by an MDLP binding row
+                    # must not enter the ordinary positive payload cache.
+                    continue
                 # Each row must justify its own fallback. Never union one row's
                 # label proof into another row that merely names the same PDF.
                 allowed = {_variant_key(v): v for v in strict_match['bindings']}
                 proof = row.get('variant_form_evidence')
-                if proof is not None:
+                if mdlp.is_row(row):
+                    try:
+                        proof = mdlp.validate_binding_row(row, doc, med)
+                        if raw_rows is not None:
+                            wanted = {v['gtin'] for v in mdlp.expected_rows(proof)}
+                            subset = [v for v in raw_rows if v.get('gtin') in wanted]
+                            match = match_original_to_medication(doc, med, variant_form_evidence=proof,
+                                                                raw_source_rows=subset)
+                            allowed.update({_variant_key(v): v for v in match['bindings']})
+                    except (ValueError, KeyError, TypeError, AttributeError):
+                        continue
+                elif proof is not None:
                     from .eaeu_variant_form_evidence import evidence_digest, form_binding_id
                     try:
                         if (row.get('variant_form_evidence_sha256') != evidence_digest(proof)
@@ -299,8 +352,7 @@ class MedicationOriginalService:
         med['instruction_original_coverage'] = {'total_variants': len(variants), 'covered_variants': 0, 'fully_covered': False}
         if not med.get('slug'):
             return med
-        from .canon_variant_form_evidence import label_identity_digest
-        key = (med['slug'], medication_identity_fingerprint(med), label_identity_digest(med))
+        key = self._key(med)
         if key not in self.cache:
             self.cache[key] = AsyncTTLValue(lambda: self._load(med), ttl=self.ttl, load_timeout=self.load_timeout,
                                             name='official instruction originals')
@@ -312,6 +364,14 @@ class MedicationOriginalService:
         except Exception:
             logger.warning('Official original lookup failed for %s', med.get('slug'))
             return med
+        if self.raw_hints.get(key):
+            try:
+                # Cached results contain ordinary bindings only. MDLP positives
+                # are computed afresh and are never written into that cache.
+                originals = await asyncio.wait_for(
+                    self._load(med, authorize_raw=True), timeout=self.load_timeout)
+            except Exception:
+                logger.warning('Optional original catalog lookup unavailable')
         keys = {_variant_key(v) for doc in originals for v in doc['matched_variants']}
         covered = sum(_variant_key(_variant(med, v)) in keys for v in variants)
         med['instruction_originals'] = originals

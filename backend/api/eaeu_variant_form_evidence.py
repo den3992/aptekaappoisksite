@@ -41,6 +41,9 @@ def _scope(value):
 
 
 def validate_evidence_shape(proof):
+    from . import mdlp_variant_form_evidence as mdlp
+    if mdlp.is_proof(proof):
+        return mdlp.validate_evidence_shape(proof)
     if not _is_eaeu(proof):
         return canon.validate_evidence_shape(proof)
     if set(proof) != _FIELDS:
@@ -78,12 +81,18 @@ def validate_evidence_shape(proof):
 
 
 def evidence_digest(proof):
+    from . import mdlp_variant_form_evidence as mdlp
+    if mdlp.is_proof(proof):
+        return mdlp.evidence_digest(proof)
     if not _is_eaeu(proof):
         return canon.evidence_digest(proof)
     return canon._hash(validate_evidence_shape(proof))
 
 
 def form_binding_id(document_id, slug, fingerprint, bindings, proof):
+    from . import mdlp_variant_form_evidence as mdlp
+    if mdlp.is_proof(proof):
+        return mdlp.form_binding_id(document_id, slug, fingerprint, bindings, proof)
     if not _is_eaeu(proof):
         return canon.form_binding_id(document_id, slug, fingerprint, bindings, proof)
     if not isinstance(bindings, list) or not 1 <= len(bindings) <= MAX_VARIANTS:
@@ -135,7 +144,10 @@ def reviewed_variant_facts(med, trade_name, scope):
     return result
 
 
-def eligible_variant_keys(document, med, proof):
+def eligible_variant_keys(document, med, proof, *, raw_source_rows=None):
+    from . import mdlp_variant_form_evidence as mdlp
+    if mdlp.is_proof(proof):
+        return mdlp.eligible_variant_keys(document, med, proof, raw_source_rows=raw_source_rows)
     if not _is_eaeu(proof):
         return canon.eligible_variant_keys(document, med, proof)
     validate_evidence_shape(proof)

@@ -150,7 +150,7 @@ def find_overlaps(bindings, existing_bindings=()):
 
 def build_plan(records, medications, *, existing_bindings=(), existing_state_checked=False,
                validator=validate_document, matcher=match_document_to_medication, archive_validator=None,
-               allow_variant_form_evidence=False):
+               allow_variant_form_evidence=False, allow_mdlp_raw_form=False):
     """Pure indexed preview; does not create clients, write files or touch MongoDB."""
     index = CandidateIndex(medications)
     documents, rejected, blocked_ids = {}, [], set()
@@ -174,6 +174,9 @@ def build_plan(records, medications, *, existing_bindings=(), existing_state_che
                 by_slug = {}
                 for proof in proofs:
                     validate_evidence_shape(proof)
+                    from api.mdlp_variant_form_evidence import is_proof
+                    if is_proof(proof) and not allow_mdlp_raw_form:
+                        raise ImportConflict('original-catalog form proof requires explicit opt-in')
                     if proof['medicine_slug'] in by_slug:
                         raise ImportConflict('duplicate variant-form medication evidence')
                     by_slug[proof['medicine_slug']] = proof
@@ -208,9 +211,13 @@ def build_plan(records, medications, *, existing_bindings=(), existing_state_che
             try:
                 if proof is not None:
                     from api.eaeu_variant_form_evidence import eligible_variant_keys
-                    eligible_variant_keys(document, med, proof)
+                    from api import mdlp_variant_form_evidence as mdlp
+                    extra = {'raw_source_rows': mdlp.expected_rows(proof)} if mdlp.is_proof(proof) else {}
+                    # Offline preview only: live apply replaces this retained
+                    # expected snapshot with a fresh bounded DB projection.
+                    eligible_variant_keys(document, med, proof, **extra)
                     reviewed_slugs.add(med['slug'])
-                    match = matcher(document, med, variant_form_evidence=proof)
+                    match = matcher(document, med, variant_form_evidence=proof, **extra)
                     if not match['matched']:
                         raise ImportConflict('reviewed variant-form evidence did not match its source identity')
                 else:
@@ -229,6 +236,9 @@ def build_plan(records, medications, *, existing_bindings=(), existing_state_che
                 from api.eaeu_variant_form_evidence import evidence_digest
                 row['variant_form_evidence'] = proof
                 row['variant_form_evidence_sha256'] = evidence_digest(proof)
+                from api import mdlp_variant_form_evidence as mdlp
+                if mdlp.is_proof(proof):
+                    row[mdlp.MARKER] = mdlp.MODE
             row["binding_id"] = binding_id(document_id, med["slug"], match["identity_fingerprint"], match["bindings"],
                                            variant_form_evidence=proof)
             document_bindings.append(row)
@@ -319,23 +329,35 @@ def _read_medication(db, slug):
     return db.medications.find_one({"slug": slug}, IDENTITY_PROJECTION, max_time_ms=TIMEOUT_MS)
 
 
-def _verify_live_binding(row, document, med, *, matcher=match_document_to_medication):
+def _verify_live_binding(row, document, med, *, matcher=match_document_to_medication, db=None):
+    from api import mdlp_variant_form_evidence as mdlp
+    extra = {}
+    if mdlp.is_row(row):
+        try:
+            proof = mdlp.validate_binding_row(row, document, med)
+            from api.mdlp_raw_source import read_raw
+            gtins = [v['gtin'] for v in mdlp.expected_rows(proof)]
+            extra = {'raw_source_rows': read_raw(db.raw_database, gtins)}
+        except Exception:
+            raise ImportConflict('fresh original-catalog source unavailable or changed') from None
     proof = row.get('variant_form_evidence')
     if proof is not None:
         from api.eaeu_variant_form_evidence import eligible_variant_keys, evidence_digest
         try:
-            eligible_variant_keys(document, med, proof)
+            eligible_variant_keys(document, med, proof, **extra)
             if row.get('variant_form_evidence_sha256') != evidence_digest(proof):
                 raise ValueError('optional binding evidence digest differs')
         except (ValueError, TypeError, KeyError, AttributeError):
             raise ImportConflict('reviewed variant-form label/source identity changed') from None
-        matched = matcher(document, med, variant_form_evidence=proof)
+        matched = matcher(document, med, variant_form_evidence=proof, **extra)
     else:
         if 'variant_form_evidence' in row or 'variant_form_evidence_sha256' in row:
             raise ImportConflict('optional binding evidence is missing')
         matched = matcher(document, med)
     expected_keys = sorted(_variant_key(variant) for variant in matched["bindings"])
     actual_keys = sorted(_variant_key(variant) for variant in row["variant_bindings"])
+    if not matched['matched']:
+        raise ImportConflict('proposed binding no longer matches the live document/variant identity')
     expected_id = binding_id(document["id"], med["slug"], matched["identity_fingerprint"], matched["bindings"],
                              variant_form_evidence=proof)
     if (
@@ -350,7 +372,7 @@ def _verify_live_binding(row, document, med, *, matcher=match_document_to_medica
 
 def apply_plan(db, plan, *, batch_id=None, validator=validate_document,
                matcher=match_document_to_medication, archive_validator=None,
-               allow_variant_form_evidence=False):
+               allow_variant_form_evidence=False, allow_mdlp_raw_form=False):
     """Recheck live identity and conflicts; never update medication or price data."""
     if plan.get("plan_hash") != _digest({"documents": plan["documents"], "bindings": plan["bindings"]}):
         raise ImportConflict("preview plan changed; regenerate and review it")
@@ -358,6 +380,9 @@ def apply_plan(db, plan, *, batch_id=None, validator=validate_document,
         raise ImportConflict("preview contains rejected rows or overlapping documents")
     if not allow_variant_form_evidence and any('variant_form_evidence' in row for row in plan['bindings']):
         raise ImportConflict('variant-form bindings require the explicit original-only importer')
+    from api import mdlp_variant_form_evidence as mdlp
+    if not allow_mdlp_raw_form and any(mdlp.is_row(row) for row in plan['bindings']):
+        raise ImportConflict('original-catalog form bindings require explicit opt-in')
     batch_id = batch_id or "instructions-" + _now().strftime("%Y%m%dT%H%M%SZ-") + uuid.uuid4().hex[:8]
     if not plan["bindings"]:
         return {"mode": "apply", "batch_id": batch_id, "added_documents": 0, "added_bindings": 0}
@@ -373,7 +398,7 @@ def apply_plan(db, plan, *, batch_id=None, validator=validate_document,
                 raise ImportConflict(f"medication identity changed: {slug}")
             live_medications[slug] = med
         for row in plan["bindings"]:
-            _verify_live_binding(row, document_by_id[row["document_id"]], live_medications[row["medicine_slug"]], matcher=matcher)
+            _verify_live_binding(row, document_by_id[row["document_id"]], live_medications[row["medicine_slug"]], matcher=matcher, db=db)
         existing_rows = read_existing_bindings(db, fingerprints)
         if find_overlaps(plan["bindings"], existing_rows):
             raise ImportConflict("live active instructions overlap the proposed variants")
@@ -395,6 +420,8 @@ def apply_plan(db, plan, *, batch_id=None, validator=validate_document,
             equality_fields = ["medicine_slug", "document_id", "identity_fingerprint", "variant_bindings"]
             if 'variant_form_evidence' in row:
                 equality_fields += ['variant_form_evidence', 'variant_form_evidence_sha256']
+            if mdlp.is_row(row):
+                equality_fields += [mdlp.MARKER]
             if existing and any(existing.get(key) != row.get(key) for key in equality_fields):
                 raise ImportConflict("deterministic binding id has a different payload")
         audit_id = "batch:" + batch_id
@@ -422,11 +449,20 @@ def apply_plan(db, plan, *, batch_id=None, validator=validate_document,
                 med = _read_medication(db, row["medicine_slug"])
                 if not med or medication_identity_fingerprint(med) != row["identity_fingerprint"]:
                     raise ImportConflict(f"medication identity changed before binding: {row['medicine_slug']}")
-                _verify_live_binding(row, document_by_id[row["document_id"]], med, matcher=matcher)
+                _verify_live_binding(row, document_by_id[row["document_id"]], med, matcher=matcher, db=db)
                 updated = db.medication_instruction_bindings.update_one({"binding_id": row["binding_id"]}, {
                     "$setOnInsert": {**row, "_id": row["binding_id"], "record_type": "binding", "batch_id": batch_id, "created_at": _now()},
                 }, upsert=True)
                 added_bindings += updated.upserted_id is not None
+            # Separate-time rechecks are honest about the non-atomic raw/med
+            # collections; an observed change disables this batch's new rows.
+            for row in plan['bindings']:
+                if mdlp.is_row(row):
+                    renew()
+                    med = _read_medication(db, row['medicine_slug'])
+                    if not med:
+                        raise ImportConflict('current canonical medication disappeared')
+                    _verify_live_binding(row, document_by_id[row['document_id']], med, matcher=matcher, db=db)
         except Exception as error:
             disabled = db.medication_instruction_bindings.update_many({
                 "record_type": "binding", "batch_id": batch_id, "active": True,
@@ -467,9 +503,13 @@ def main(argv=None, *, validator=validate_document, matcher=match_document_to_me
     parser.add_argument("--documents", type=Path)
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--apply", action="store_true")
+    parser.add_argument('--allow-mdlp-raw-form', action='store_true',
+                        help='Explicit original-only current raw catalog precision revalidation')
     parser.add_argument("--rollback", metavar="BATCH_ID")
     parser.add_argument("--report", type=Path)
     args = parser.parse_args(argv)
+    if args.allow_mdlp_raw_form and not allow_variant_form_evidence:
+        parser.error('--allow-mdlp-raw-form is only supported by the original-only importer')
     if args.rollback and (args.documents or args.manifest or not args.apply):
         parser.error("--rollback requires --apply and cannot be combined with documents or manifest")
     if not args.rollback and not args.documents:
@@ -493,7 +533,8 @@ def main(argv=None, *, validator=validate_document, matcher=match_document_to_me
             ).batch_size(250).max_time_ms(TIMEOUT_MS))
             report = build_plan(records, medications, validator=validator, matcher=matcher,
                                 archive_validator=archive_validator,
-                                allow_variant_form_evidence=allow_variant_form_evidence)
+                                allow_variant_form_evidence=allow_variant_form_evidence,
+                                allow_mdlp_raw_form=args.allow_mdlp_raw_form)
             if db is not None:
                 existing = read_existing_bindings(db, {row["medicine_slug"] for row in report["bindings"]})
                 report["overlaps"] = find_overlaps(report["bindings"], existing)
@@ -502,7 +543,8 @@ def main(argv=None, *, validator=validate_document, matcher=match_document_to_me
             if args.apply:
                 report["applied"] = apply_plan(db, report, validator=validator, matcher=matcher,
                                                archive_validator=archive_validator,
-                                               allow_variant_form_evidence=allow_variant_form_evidence)
+                                               allow_variant_form_evidence=allow_variant_form_evidence,
+                                               allow_mdlp_raw_form=args.allow_mdlp_raw_form)
                 report["mode"] = "apply"
         if args.report:
             args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
