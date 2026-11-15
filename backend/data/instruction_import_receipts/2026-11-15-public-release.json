@@ -1,0 +1,76 @@
+{
+  "status": "publicly_verified",
+  "switched_at": "2026-11-15T07:38:21.321639+00:00",
+  "verified_at": "2026-11-15T07:42:29.544674+00:00",
+  "production_origin": "https://aptekaa.ru",
+  "backend_runtime_revision": "69e17464fb1c8f0ba10c7a992cdce6e156fec306",
+  "next_runtime_revision": "278e18156b69cdec38ea167482b3f31039c80ee6",
+  "next_revision_at_checkout": "7e269eaf92524088789cb338c2a8ad1c8accfa50",
+  "runtime_layout": {
+    "instruction_api": "bounded temporary backend_instructions service",
+    "original_backend_recreated_or_restarted": false,
+    "original_price_process_identities_preserved": true,
+    "nginx_configuration_changed": false,
+    "public_medication_data_route": "/catalog-data/medications/<slug>",
+    "public_original_pdf_route": "/instrukcii/originaly/<documentId>",
+    "legacy_public_api_remains_on_original_backend": true
+  },
+  "source_archive": {
+    "sha256": "a4d96aad443c9b1ea16967440670a9bb51ad180a7f98255c4212a3c2305b569b",
+    "manifest_sha256": "0058b6651b07f564c3350001c4003c9e9feacb6436ed13f31172fb8d717ab6a1",
+    "live_document_ids_equal_immutable_archive": true,
+    "archived_canonical_documents": 258,
+    "seeded_unique_original_pdf_files": 252,
+    "seeded_pdf_bytes": 88505717,
+    "source_stop_markers_preserved": true
+  },
+  "coverage_snapshot": {
+    "verified_documents": 69,
+    "verified_original_documents": 189,
+    "cards_with_instructions": 85,
+    "cards_with_original_pdf": 229,
+    "cards_with_either_format": 305,
+    "covered_variants": 719,
+    "original_covered_variants": 475,
+    "combined_covered_variants": 1146,
+    "combined_fully_covered_cards": 136
+  },
+  "public_acceptance": {
+    "all_inline_cards_checked": 85,
+    "unique_inline_documents_checked": 69,
+    "every_original_inline_section_present_in_server_html": true,
+    "sample_cards_checked": 11,
+    "sample_exact_original_pdf_files_checked": 9,
+    "actual_browser_hydration_city_spa_and_original_sha_verified": true,
+    "yandexbot_server_html_matches_ordinary_complete_instruction": true,
+    "yandexbot_canonical_and_price_index_policy_verified": true,
+    "yandexbot_representative_checks": [
+      {
+        "slug": "deksametazon-reneval-1-mg-ml-kapli-glaznye",
+        "canonical_verified": true,
+        "same_complete_instruction_html": true,
+        "seo_indexable": false,
+        "robots_noindex": true,
+        "existing_price_comparison_index_policy_preserved": true
+      },
+      {
+        "slug": "anespum-40-mg-kapsuly",
+        "canonical_verified": true,
+        "same_complete_instruction_html": true,
+        "seo_indexable": true,
+        "robots_noindex": false,
+        "existing_price_comparison_index_policy_preserved": true
+      }
+    ],
+    "source_pdf_fetches_during_public_acceptance": 0,
+    "proof_sha256": {
+      "public-instruction-acceptance-278e181.json": "c7768d48981867fa9f59ef9b079812f3f16b4531ea1344231e817b469e2d13a1",
+      "public-all-inline-acceptance-278e181.json": "bbfc0be18f10ef002fd3de20efa8b3322552e85248f1b123e0a13a67989c69e0",
+      "public-browser-278e181/status.json": "9734050a62808c5b47ed0a7169a1e40a178bc4cd33e123c831c101592fced61e",
+      "yandexbot-instruction.html": "24461cebc3e860457a11c8e4aa5bc150624703a0947adce35e9d7d719ab0564c",
+      "yandexbot-indexable-instruction.html": "c07d1775d498961a9ad57a19a488dd92b5135a6f7d64fc4f6db0449622800dd4",
+      "source-archive-live-completeness-proof.json": "c2471ae9802d51ceafd77c050fd923c6f0eb6feda9daa0e1391722b738f1a656"
+    }
+  },
+  "scope_note": "Full reviewed inline text and complete official PDF originals remain distinct formats. This release confirms only the listed coverage, not every medicine. PDF originals are not counted as transcribed page text. Additional source and variant gaps remain."
+}

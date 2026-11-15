@@ -1,7 +1,7 @@
 {
   "verified_at": "2026-11-15T07:29:47.813236+00:00",
   "verified_live_database": true,
-  "public_deployment_pending": true,
+  "public_deployment_pending": false,
   "validation_revision": "69e17464fb1c8f0ba10c7a992cdce6e156fec306",
   "inventory": {
     "canonical_cards": 22377,
@@ -4659,5 +4659,6 @@
       "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T072450Z-9faa1073"
     }
   ],
-  "scope_note": "Coverage is verified against current live variant identities. Text and complete official PDF originals are counted separately; combined coverage uses the union of variant identities. Unverified registrations and manufacturers remain uncovered. Database imports are confirmed; public application deployment is pending."
+  "scope_note": "Coverage is verified against current live variant identities. Text and complete official PDF originals are counted separately; combined coverage uses the union of variant identities. Unverified registrations and manufacturers remain uncovered. Database imports and public application deployment are confirmed by the separate public release receipt.",
+  "public_release_receipt": "2026-11-15-public-release.json"
 }
