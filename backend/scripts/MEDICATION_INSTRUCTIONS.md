@@ -55,14 +55,24 @@ eaeu_structured_solid_v1` (single-active solid form, exact quantity/mass unit,
 explicit zero scale, pinned public classifiers, no unit conversions). The default
 literal path and its old immutable payloads stay unchanged.
 
-The separate `official_manufacturer` profile explicitly supports **Renewal** and
-**Canon**; other providers, group companies and CDNs are not inferred.
+The separate `official_manufacturer` profile explicitly supports **Renewal**,
+**Canon**, and **Solopharm**; other providers, group companies and CDNs are not inferred.
 It requires a visually reviewed complete PDF and exact current GRLS identity,
 including a finished-product manufacturer stage. Store the raw official product
 HTML beside `original_file` as `<html_sha256>.html`; both preview and apply verify
 its hash and the actual selected href. Unknown additional product PDFs require
 version review; Renewal excludes only its two reviewed legal footer links.
 An unknown clinical revision date stays null. Conflicting versions remain draft.
+
+Solopharm accepts only `https://solopharm.com`, product pages under `/products/`,
+and PDFs under `/storage/files/products/`. Its selected empty-text anchor must
+retain the literal `data-title="Читать инструкцию"` separately from inner text.
+Additional PDF/document links, embedded documents, conflicting attributes or
+unknown versions require review. Its producer address must literally agree with
+the current GRLS finished-product entity; no new company aliases are inferred.
+Scanned originals need the same complete physical visual review as other manual
+originals. Original revision and approval dates stay null when unknown; the
+version records the SHA. Provider support alone never approves a document.
 
 Canon accepts only `https://canonpharma.ru` or `https://www.canonpharma.ru` on
 port 443, product pages under `/catalog/`, and static PDFs under `/upload/`.
@@ -123,7 +133,8 @@ start per second. The complete bounded file is checked against its recorded
 length and SHA **before** any bytes are sent. A source revision with a new SHA
 requires a new audit; it cannot silently replace an existing document.
 
-Renewal and Canon use explicit fixed-host HTTPS `/upload/*.pdf` branches with
+Renewal and Canon use explicit fixed-host HTTPS `/upload/*.pdf` branches;
+Solopharm uses its separate `/storage/files/products/` branch, with
 redirects disabled and the same byte/hash/cache/concurrency limits. Each has an
 independent persistent source-stop marker; a denial does not stop the other
 manufacturer or EAEU. The shared source lock and request-rate limit still apply.

@@ -17,6 +17,7 @@ from .medication_instructions import _identity, _object, _required_text, _ru, _s
 MAX_HTML_BYTES = 3 * 1024 * 1024
 HOSTS = ('renewal.ru', 'www.renewal.ru')
 CANON_HOSTS = ('canonpharma.ru', 'www.canonpharma.ru')
+SOLOPHARM_HOSTS = ('solopharm.com',)
 # Explicitly reviewed nonmedical footer documents on the retained product pages.
 # A new/renamed footer PDF is intentionally reviewed before this list changes.
 LEGAL_FOOTER_PDFS = {
@@ -31,6 +32,10 @@ MANUFACTURER_PROFILES = {
     # profile; labels do not authorize choosing one over another.
     'canon': {'name': 'Canon', 'hosts': CANON_HOSTS, 'product_prefix': '/catalog/',
               'footer_pdfs': {}},
+    # This is the single observed public origin, not a domain-family alias.
+    'solopharm': {'name': 'Solopharm', 'hosts': SOLOPHARM_HOSTS,
+                  'product_prefix': '/products/', 'pdf_prefix': '/storage/files/products/',
+                  'footer_pdfs': {}},
 }
 PHYSICAL_FINISHED_STAGE_MODE = 'physical_pdf_finished_stage_v1'
 _GRLS_FINISHED_ROLE = (r'производитель\s*\((?:готовой\s+лф|все\s+стадии)\)'
@@ -60,8 +65,10 @@ def _manufacturer_url(value, provider, *, prefix=None, pdf=False):
     if (parsed.scheme != 'https' or parsed.hostname not in profile['hosts'] or port not in (None, 443)
             or parsed.username or parsed.password or '?' in value or '#' in value
             or '\\' in value or re.search(r'%2e|%2f|%5c|%00', value, re.I)
-            or (provider == 'canon' and re.search(r'[\x00-\x20\x7f]|%25', value, re.I))):
+            or (provider in ('canon', 'solopharm') and re.search(r'[\x00-\x20\x7f]|%25', value, re.I))):
         raise ValueError('only public HTTPS ' + label + ' URLs on port 443 are supported')
+    if provider == 'solopharm' and '.' in parsed.path.split('/'):
+        raise ValueError('Solopharm static paths cannot contain dot segments')
     decoded = parsed.path
     for _ in range(4):
         decoded = unquote(decoded)
@@ -87,7 +94,7 @@ def canon_pdf_url(value):
 
 
 def manufacturer_pdf_url(provider, value):
-    return _manufacturer_url(value, provider, prefix='/upload/', pdf=True)
+    return _manufacturer_url(value, provider, prefix=_profile(provider).get('pdf_prefix', '/upload/'), pdf=True)
 
 
 def _canon_href(product_url, href):
@@ -214,6 +221,9 @@ class _ProductLinks(HTMLParser):
 
 def validate_product_html(document, body):
     provider = document['source']['provider']
+    if provider == 'solopharm':
+        from .solopharm_original_pdfs import validate_solopharm_product_html
+        return validate_solopharm_product_html(document, body)
     profile = _profile(provider)
     if not isinstance(body, bytes) or not 1 <= len(body) <= MAX_HTML_BYTES:
         raise ValueError('retained ' + profile['name'] + ' product HTML is absent or too large')
@@ -303,8 +313,13 @@ def validate_manufacturer_original_document(raw):
         raise ValueError('product page evidence differs from the selected source')
     _sha256(product.get('html_sha256'), 'product_page.html_sha256')
     href = _literal(product.get('actual_href'), 'product_page.actual_href')
-    resolved_href = (_canon_href(product_url, href) if provider == 'canon'
-                     else manufacturer_pdf_url(provider, urljoin(product_url, href)))
+    if provider == 'solopharm':
+        from .solopharm_original_pdfs import solopharm_href, validate_solopharm_product_proof
+        validate_solopharm_product_proof(product)
+        resolved_href = solopharm_href(product_url, href)
+    else:
+        resolved_href = (_canon_href(product_url, href) if provider == 'canon'
+                         else manufacturer_pdf_url(provider, urljoin(product_url, href)))
     if resolved_href != pdf_url:
         raise ValueError('observed product href does not resolve to the selected PDF')
     if provider == 'canon':
@@ -413,6 +428,9 @@ def validate_manufacturer_original_document(raw):
         raise ValueError('visual PDF role does not prove the finished-product manufacturer')
     if mode == PHYSICAL_FINISHED_STAGE_MODE:
         _validate_physical_finished_stage(evidence, proofs['manufacturer'], fragment, parts[0].strip(), sha, pages)
+    if provider == 'solopharm':
+        from .solopharm_original_pdfs import validate_solopharm_physical_proof
+        validate_solopharm_physical_proof(doc, proofs['manufacturer'], parts)
     verification = _object(doc.get('verification'), 'verification')
     if verification.get('status') != 'verified' or verification.get('method') != 'manual_visual_manufacturer_original':
         raise ValueError('only verified original PDF metadata is public')
