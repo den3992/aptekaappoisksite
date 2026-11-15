@@ -1,23 +1,23 @@
 {
-  "verified_at": "2026-11-15T09:42:42.015658+00:00",
+  "verified_at": "2026-11-15T10:08:39.899898+00:00",
   "verified_live_database": true,
   "public_deployment_pending": false,
-  "validation_revision": "b3b6d29437e752ae45fc79209aaefc1e7719c7b1",
+  "validation_revision": "3578240ad1bc6cb4bb096cc7766ca08fdf89d6c4",
   "inventory": {
     "canonical_cards": 22377,
     "total_variants": 72058
   },
   "coverage": {
     "verified_documents": 71,
-    "verified_original_documents": 224,
+    "verified_original_documents": 227,
     "cards_with_instructions": 87,
-    "cards_with_original_pdf": 264,
-    "cards_with_either_format": 342,
+    "cards_with_original_pdf": 267,
+    "cards_with_either_format": 345,
     "fully_covered_cards": 14,
     "covered_variants": 729,
-    "original_covered_variants": 607,
-    "combined_covered_variants": 1288,
-    "combined_fully_covered_cards": 155
+    "original_covered_variants": 614,
+    "combined_covered_variants": 1295,
+    "combined_fully_covered_cards": 156
   },
   "batches": [
     {
@@ -5393,8 +5393,72 @@
         }
       ],
       "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T094044Z-26bef804"
+    },
+    {
+      "batch_id": "instructions-20261115T100659Z-3772ccad",
+      "plan_hash": "29c2a97442966c937c3946f376f2d21bb5724405a39bd892915f8046c3478ebc",
+      "content_format": "official_original_pdf",
+      "added_documents": 3,
+      "added_bindings": 3,
+      "documents": [
+        {
+          "id": "solopharm-original-f712fb4233228757dc6d3f69-a2d2b1f4f28a",
+          "title": "Листок-вкладыш: Атревозол® — 10 мг",
+          "registration_numbers": [
+            "ЛП-№(006628)-(РГ-RU)"
+          ],
+          "original_sha256": "f712fb4233228757dc6d3f69857c4c2e13fbb0f549102b32e667c0adf5ec89d9",
+          "content_format": "official_original_pdf",
+          "page_count": 7,
+          "original_bytes": 246474,
+          "source": {
+            "kind": "official_manufacturer",
+            "name": "Официальный производитель — ООО «Гротекс» (Solopharm)",
+            "pdf_url": "https://solopharm.com/storage/files/products/jevckoFijxBYn8vUXLj4fl9MM9JpFceLLkv6TbNO.pdf",
+            "provider": "solopharm",
+            "url": "https://solopharm.com/products/atrevozol/tabletki-10-mg-60-1"
+          }
+        },
+        {
+          "id": "solopharm-original-ab75a66b13554ab76142b16a-cd5c112f2e39",
+          "title": "Инструкция по медицинскому применению: Пентоксифиллин — 20 мг/мл",
+          "registration_numbers": [
+            "ЛП-№(009058)-(РГ-RU)"
+          ],
+          "original_sha256": "ab75a66b13554ab76142b16a71ccc423d386334beff8a961a1897e17d85d8e0c",
+          "content_format": "official_original_pdf",
+          "page_count": 10,
+          "original_bytes": 287049,
+          "source": {
+            "kind": "official_manufacturer",
+            "name": "Официальный производитель — ООО «Гротекс» (Solopharm)",
+            "pdf_url": "https://solopharm.com/storage/files/products/flTvgY51GvlZRbRkxn2XGwSWesO3nCyBKCgTU5fS.pdf",
+            "provider": "solopharm",
+            "url": "https://solopharm.com/products/pentoksifillin/20-mgml-ampuly-5-ml"
+          }
+        },
+        {
+          "id": "vertex-original-b7dd6ba6a2556532e1e7afe9-0e95ae0de01f",
+          "title": "Листок-вкладыш: Гинкго Билоба — 80 мг, капсулы",
+          "registration_numbers": [
+            "ЛП-№(002790)-(РГ-RU)"
+          ],
+          "original_sha256": "b7dd6ba6a2556532e1e7afe9e5df1d65e4040bc6c887a00af3dad30b6092097d",
+          "content_format": "official_original_pdf",
+          "page_count": 8,
+          "original_bytes": 755457,
+          "source": {
+            "name": "Официальный производитель — АО «ВЕРТЕКС»",
+            "url": "https://vertex.spb.ru/products/otc-medicines/ginkgo-biloba/",
+            "kind": "official_manufacturer",
+            "provider": "vertex",
+            "pdf_url": "https://vertex.spb.ru/upload/medialibrary/474/ynjviprwywq0fdgixjdksijs8na3tqeu.pdf"
+          }
+        }
+      ],
+      "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T100659Z-3772ccad"
     }
   ],
-  "scope_note": "Coverage is confirmed in the live database and public card HTML/PDF routes. Whole PDF originals and verified inline text are counted separately. Exact current RU, form, strength and source/GRLS manufacturer evidence are required; registrations, strengths or variants without reviewed matches remain uncovered.",
-  "public_release_receipt": "2026-11-15-incremental-eaeu3-release.json"
+  "scope_note": "Coverage is confirmed in the live database and public card HTML/PDF routes. Whole official PDF originals and verified inline text are counted separately. Exact current RU, form, strength and source/GRLS manufacturer evidence are required. Unmatched variants remain uncovered; unknown instruction revision dates are not called latest.",
+  "public_release_receipt": "2026-11-15-incremental-solopharm2-vertex-release.json"
 }

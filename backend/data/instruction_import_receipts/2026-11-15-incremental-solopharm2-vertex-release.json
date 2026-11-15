@@ -1,0 +1,76 @@
+{
+  "status": "publicly_verified",
+  "verified_at": "2026-11-15T10:08:00.389216+00:00",
+  "backend_runtime_revision": "3578240ad1bc6cb4bb096cc7766ca08fdf89d6c4",
+  "next_runtime_revision": "278e18156b69cdec38ea167482b3f31039c80ee6",
+  "previous_public_release_receipt": "2026-11-15-incremental-eaeu3-release.json",
+  "added_instruction_documents": {
+    "inline": 0,
+    "whole_original_pdf": 3
+  },
+  "added_cards": 3,
+  "added_covered_variants": 7,
+  "added_fully_covered_cards": 1,
+  "batch_id": "instructions-20261115T100659Z-3772ccad",
+  "coverage": {
+    "verified_documents": 71,
+    "verified_original_documents": 227,
+    "cards_with_instructions": 87,
+    "cards_with_original_pdf": 267,
+    "cards_with_either_format": 345,
+    "covered_variants": 729,
+    "original_covered_variants": 614,
+    "combined_covered_variants": 1295,
+    "combined_fully_covered_cards": 156
+  },
+  "source_archive": {
+    "sha256": "c37ac0f28f0e31464362d13a6e25133f16b44c9b8e706ffcbbb46849f9d14cf5",
+    "manifest_sha256": "112f693f5b434e1bedafc16014ab84bd824b389e210d5030c02d36d0b545b313",
+    "canonical_documents": 3,
+    "unique_original_pdf": 3,
+    "original_pdf_bytes": 1288980,
+    "combined_wrapper_sha256": "cf002a49852eb7e96106732ff61d90d12d02bcd8de66caa19fcd534819bdfdf3",
+    "reviewed_wrapper_sha256": [
+      "4bf11ee4a77300adddab490dadc0bff5eb81e530e94a60a6b14d430c58cc4555",
+      "95df36db6faea4eab13689a2d4955737043084a7689bb9f01b92a578ca9e9117"
+    ],
+    "provenance_capsule_sha256": "c4bb6bbaec5929cb6c39f839de5a86aba920d2e13e36e2276dd5f3a1991af9c6",
+    "provenance_manifest_sha256": "7a2a617a6af576059e1f3bd8af8ec621c03599f67bf18d9319dfa2db214393dc",
+    "independent_data_review_sha256": [
+      "071bf91bcbbc986ce1c083557ccad424e6cda471c50b312edf28953a2a9de294",
+      "5e02905d1a841955172422f9662bbef202796c4fc57a57dd7f6bcb1b14823385"
+    ],
+    "native_actual128_proof_sha256": [
+      "9b7d7c56a7dc3ebe7847cf42ea6522c4ad58872f9c02fdfc230be3bb0e3084b6",
+      "307ade02f5d7752f39c36d85580cc8ddbdc2b375eca4bbaccd0be8d6d0fc7395"
+    ],
+    "independent_artifact_review_sha256": "67ba9d108165c7979328ee8712331cc58bbbb264bd3f590d42929a6d00b9aa2a",
+    "root_artifact_review_sha256": "9c58b2e30b2710a383e403aeb8dba4a9c34654a61e42175feed45ecbb32ba8ba",
+    "seed_proof_sha256": "13ff5ab1780983dbf6623d096b233a897cfb6e64e8c65403e7ba7a47b42aee8b",
+    "all_seeded_unique_pdf": 280,
+    "cache_bytes": 118941781,
+    "source_stops_preserved": true,
+    "all_live_document_ids_equal_reviewed_archived_ids": true,
+    "live_canonical_document_count": 298,
+    "source_PDF_pages_viewed_for_identity": 25,
+    "automatically_extracted_clinical_text_published": false
+  },
+  "runtime_release": {
+    "image_archive_sha256": "3b48a30e26190c51d6d0adc88d8b4d3bb0d569326af2061270fa9fa6b36f10a0",
+    "metadata_sha256": "4e82ba9defb056ec75daae2d37bb1fca1a7fc8c58dd584aeb14d03e5515d0940",
+    "sidecar_switch_proof_sha256": "eff164a3e61f821960d0a1c7212fff47edd946929164722ac10ee0c410b2232f",
+    "independent_runtime_eligibility_review_sha256": "febe30783c1d02c47e4f7ceabcbc3c75c6c1116bfcd3966d094f5a6abc682a48",
+    "main_safe_tests": 348,
+    "main_safe_subtests": 640,
+    "exact_real_data_runtime_memory_limit_bytes": 268435456,
+    "original_backend_next_edge_actions": 0
+  },
+  "public_acceptance": {
+    "cards_checked": 3,
+    "whole_pdf_document_routes_checked": 3,
+    "unique_original_pdf_sha256_checked": 3,
+    "server_html_and_pdf_bytes_verified": true,
+    "proof_sha256": "e7cf4565152b739148e2b03bcc8b841c8aa7f96618a56a1c2c75b9c4f7d4e35a"
+  },
+  "scope_note": "Coverage is confirmed in the live database and public card HTML/PDF routes. Whole official PDF originals and verified inline text are counted separately. Exact current RU, form, strength and source/GRLS manufacturer evidence are required. Unmatched variants remain uncovered; unknown instruction revision dates are not called latest."
+}
