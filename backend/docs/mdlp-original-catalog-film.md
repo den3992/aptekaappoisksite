@@ -50,7 +50,13 @@ variant carried by that row; a missing discovery hint cannot revive it.
 The fixed indexed-GTIN aggregate projects bounded raw fields on the server,
 before deserialization: strings only, each at most 1024 UTF8 bytes and sum at most
 8192 bytes; invalid rows become a small sentinel. Queries cap at 32 GTINs,
-N+1 rows, one batch, 300ms server time and 450ms PyMongo CSOT. Database.command
+N+1 rows, one batch, 300ms server time and 300ms PyMongo CSOT. PyMongo 4.9.2
+rewrites maxTimeMS from the remaining CSOT budget; the driver budget must not
+raise the explicit 300ms command bound. A command-local dict guard rejects any
+driver rewrite outside exact integer 1..300 before assignment and BSON encoding,
+including a sub-millisecond remaining budget rounded to zero. It applies only
+to this fixed raw aggregate; no driver-global hooks are installed. Actual wire
+checks still require positive maxTimeMS <=300. Database.command
 avoids the retryable-read helper; there is no application retry/getMore loop.
 An N+1 row is an overflow sentinel: the complete optional query is rejected,
 even with a closed cursor, because the limit could hide another duplicate.

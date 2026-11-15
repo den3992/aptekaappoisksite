@@ -4,6 +4,7 @@ The semaphore follows concurrent.futures worker completion, not cancellation of
 an asyncio wrapper. Normal fixed aggregate is a single non-retried DB command.
 """
 import asyncio
+from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 import json
 import threading
@@ -12,9 +13,19 @@ from .mdlp_variant_form_evidence import FIELDS,MAX_FIELD_BYTES,MAX_ROW_BYTES
 MAX_PAIRS = 32
 MAX_RESULT_BYTES = 256 * 1024
 MONGO_MS = 300
-DRIVER_SECONDS = .45
+# PyMongo 4.9.2 rewrites maxTimeMS from CSOT; never raise the 300ms bound.
+DRIVER_SECONDS = .3
 RESOLVER_SECONDS = .5
 _PROCESS_SLOTS = threading.BoundedSemaphore(2)
+
+
+class _RawAggregateCommand(OrderedDict):
+    def __setitem__(self, key, value):
+        # CSOT rewrites this value immediately before encoding. Zero would
+        # remove the server deadline, so reject it on this fixed command only.
+        if key == 'maxTimeMS' and (type(value) is not int or not 1 <= value <= MONGO_MS):
+            raise TimeoutError('raw aggregate server deadline outside bound')
+        super().__setitem__(key, value)
 
 
 def pipeline(gtins):
@@ -37,9 +48,9 @@ def read_raw(database, gtins):
     # PyMongo Database.command does not use the retryable-read API. CSOT bounds
     # driver/server selection and network work, not just the awaiter's lifetime.
     with timeout(DRIVER_SECONDS):
-        reply = database.command({'aggregate':'medications_raw','pipeline':stages,
+        reply = database.command(_RawAggregateCommand({'aggregate':'medications_raw','pipeline':stages,
                                   'cursor':{'batchSize':len(gtins)+1},'maxTimeMS':MONGO_MS,
-                                  'hint':{'gtin':1},'allowDiskUse':False})
+                                  'hint':{'gtin':1},'allowDiskUse':False}))
         cursor = reply.get('cursor',{})
         if cursor.get('id') != 0:
             if type(cursor.get('id')) is int and cursor['id']:
