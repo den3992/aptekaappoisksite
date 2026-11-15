@@ -4,6 +4,7 @@ import { before, after, test } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 
@@ -94,8 +95,11 @@ before(async () => {
   const port = await listen(temporary);
   await new Promise(resolve => temporary.close(resolve));
   origin = `http://127.0.0.1:${port}`;
-  app = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '-H', '127.0.0.1', '-p', String(port)], {
-    cwd, env:{...process.env, NODE_ENV:'production', BACKEND_INTERNAL_URL:`http://127.0.0.1:${apiPort}`}, stdio:['ignore','pipe','pipe'],
+  // Production Docker ships Next's standalone entrypoint without the CLI.
+  const entrypoint = existsSync(new URL('../server.js', import.meta.url))
+    ? ['server.js'] : ['node_modules/next/dist/bin/next', 'start', '-H', '127.0.0.1', '-p', String(port)];
+  app = spawn(process.execPath, entrypoint, {
+    cwd, env:{...process.env, NODE_ENV:'production', HOSTNAME:'127.0.0.1', PORT:String(port), BACKEND_INTERNAL_URL:`http://127.0.0.1:${apiPort}`}, stdio:['ignore','pipe','pipe'],
   });
   app.stdout.on('data', data => { output += data; });
   app.stderr.on('data', data => { output += data; });
