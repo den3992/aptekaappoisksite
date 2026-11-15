@@ -6,14 +6,16 @@ from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 from api.instruction_original_delivery import OfficialPdfCache, OriginalUnavailable
-from api.manufacturer_original_pdfs import renewal_pdf_url, validate_product_html
+from api.manufacturer_original_pdfs import renewal_pdf_url, validate_product_html, validate_manufacturer_archive
 from api.medication_original_pdfs import MedicationOriginalService, canonical_hash, match_original_to_medication, validate_original_document
 from scripts.import_medication_originals import OriginalCollections, validate_archive
 from scripts.import_medication_instructions import apply_plan, build_plan, rollback_batch
 from test_instruction_import import Collection
 from test_instruction_originals import AsyncCollection, Clock, Reply, Session, fixture, workflow
+from test_instruction_original_binary import project_pdf_bytes
 
 
 def manufacturer_fixture():
@@ -63,6 +65,21 @@ def write_archive(folder, doc, body, html):
 
 
 class ManufacturerValidationTests(unittest.TestCase):
+    def test_actual_project_pdf_blocks_renewal_after_real_retained_html_guard(self):
+        doc, _, _, html = manufacturer_fixture()
+        body = project_pdf_bytes()
+        digest = hashlib.sha256(body).hexdigest()
+        doc.update(original_sha256=digest, original_bytes=len(body), version='reviewed-SHA-' + digest)
+        doc['evidence']['visual_identity'].update(original_sha256=digest, version=doc['version'])
+        validate_original_document(doc)
+        self.assertEqual(doc['source']['kind'], 'official_manufacturer')
+        with tempfile.TemporaryDirectory() as directory:
+            path = write_archive(Path(directory), doc, body, html)
+            with patch('api.manufacturer_original_pdfs.validate_manufacturer_archive', wraps=validate_manufacturer_archive) as html_guard:
+                with self.assertRaisesRegex(ValueError, 'physical first page.*project/draft'):
+                    validate_archive(doc, path)
+                html_guard.assert_called_once_with(doc, path)
+
     def test_separate_profile_is_idempotent_and_matches_only_exact_variants(self):
         doc, med, _, html = manufacturer_fixture()
         result = validate_original_document(doc)

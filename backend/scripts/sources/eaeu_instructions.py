@@ -156,8 +156,11 @@ def normalize_record(record: Mapping[str, Any], retrieved_at: str) -> dict:
                     "created_at": _date(document.get("docCreationDate")),
                     "valid_until": _date(document.get("docValidityDate")),
                     "uploaded_at": _date(document.get("createdCustomDate")),
-                    "review_flags": ["source_document_name_mentions_project"]
-                        if re.search(r"проект|draft", str(document.get("docName") or ""), re.I) else [],
+                    "review_flags": (["source_document_name_mentions_project"]
+                        if re.search(r"проект|draft|project|proekt", str(document.get("docName") or ""), re.I)
+                        else ["source_attachment_mentions_project"]
+                        if any(re.search(r"проект|draft|project|proekt", str(value or ""), re.I)
+                               for value in (file.get("name"), path)) else []),
                     "download_request": {
                         "job_id": DOWNLOAD_JOB,
                         "payload": {"uri": ATTACHMENT_URI + oid + "/files?" + urlencode({"file": path}), "gp": "g"},

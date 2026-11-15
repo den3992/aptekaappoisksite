@@ -63,6 +63,8 @@ def validate_archive(document, path: Path):
         if (any(result.get(k) != document[k] for k in ['original_sha256', 'original_bytes', 'page_count'])
                 or result.get('all_pages_resolved') is not True or result.get('encrypted') is not False):
             raise ValueError('retained original structure differs from verified PDF metadata')
+        if result.get('header_has_project_marker') is not False:
+            raise ValueError('retained original physical first page must explicitly have no project/draft marker')
         _CHECKED.add(signature)
     finally:
         if child.poll() is None:

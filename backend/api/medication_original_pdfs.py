@@ -28,6 +28,16 @@ def canonical_hash(value):
                                      separators=(',', ':')).encode()).hexdigest()
 
 
+def instruction_attachment_needs_review(attachment):
+    """Recheck source facts independently of old normalization and claims."""
+    if not isinstance(attachment, dict) or attachment.get('review_flags'):
+        return True
+    # Filenames often use underscores or transliterated dossier labels. A word
+    # boundary would miss those markers; final/stamp labels cannot override one.
+    return any(re.search(r'проект|draft|project|proekt', str(attachment.get(field) or ''), re.I)
+               for field in ['name', 'file_name', 'uploaded_file_path'])
+
+
 def _future_or_absent(value, field):
     if not value:
         return
@@ -108,6 +118,8 @@ def validate_original_document(raw):
     if len(matching) != 1:
         raise ValueError('the original is not an unambiguous actual USAGE_INSTRUCTION attachment')
     attachment = matching[0]
+    if instruction_attachment_needs_review(attachment):
+        raise ValueError('source instruction attachment has a project/draft marker or unresolved review flags')
     _future_or_absent(attachment.get('valid_until'), 'attachment.valid_until')
     if type(attachment.get('size')) is int and attachment['size'] != size:
         raise ValueError('PDF size differs from official attachment metadata')

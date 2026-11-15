@@ -129,6 +129,26 @@ class EaeuMetadataTests(unittest.TestCase):
         doc["uploadedFile"]["path"] = "../private/fixture.pdf"
         self.assertEqual(normalize_record(raw, "date")["russian_registrations"][0]["documents"], [])
 
+    def test_project_markers_in_all_observed_attachment_fields_are_flagged(self):
+        for field in ['docName', 'name', 'path']:
+            for marker in ['PrOjEcT', '_proekt_', 'ПРОЕКТ', 'Draft']:
+                with self.subTest(field=field, marker=marker):
+                    raw = record()
+                    doc = raw['drugCountryRegistrationDetails'][0]['drugDocumentsDetails']['drugDocumentList'][0]
+                    if field == 'docName':
+                        doc[field] = 'fixture_' + marker + '_final_штамп МЗ.pdf'
+                    else:
+                        doc['uploadedFile'][field] = 'fixture-folder/fixture_' + marker + '_final.pdf'
+                    normalized = normalize_record(raw, '2026-11-15T10:00:00+00:00')
+                    attachment = normalized['russian_registrations'][0]['documents'][0]
+                    self.assertTrue(attachment['review_flags'])
+
+    def test_benign_normalization_remains_repeatable_without_review_flags(self):
+        first = normalize_record(record(), '2026-11-15T10:00:00+00:00')
+        second = normalize_record(record(), '2026-11-15T10:00:00+00:00')
+        self.assertEqual(first, second)
+        self.assertEqual(first['russian_registrations'][0]['documents'][0]['review_flags'], [])
+
     def test_checkpoint_resume_has_no_network_and_total_is_truthful(self):
         session = Session([Response({"result": [record()], "matchedDocuments": 1})])
         client = EaeuInstructionClient(session=session, limiter=Limiter())

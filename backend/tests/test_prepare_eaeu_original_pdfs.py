@@ -7,7 +7,7 @@ from pypdf.generic import (ArrayObject, ByteStringObject, ContentStream, Diction
                            NameObject, NumberObject)
 import pytest
 
-from scripts.prepare_eaeu_original_pdfs import OriginalPreparationError, prepare_candidate, prepare_corpus
+from scripts.prepare_eaeu_original_pdfs import OriginalPreparationError, check_original_pdf, prepare_candidate, prepare_corpus
 from api.instruction_original_evidence import PAIRED_ENTITY_MODE
 from test_instruction_original_evidence import original_document, original_medication, paired_document
 
@@ -219,3 +219,38 @@ def test_nonadditive_source_upgrade_is_never_silently_accepted(tmp_path):
         manufacturer_proof_mode=PAIRED_ENTITY_MODE)
     assert report['counts'].get('verified_original_documents', 0) == 0
     assert 'not additive' in json.loads((tmp_path / 'drafts.jsonl').read_text())['reason']
+
+
+@pytest.mark.parametrize('field', ['name', 'file_name', 'uploaded_file_path', 'review_flags'])
+def test_source_project_metadata_or_any_review_flag_is_rejected_before_pdf(tmp_path, field):
+    folder, proof, grls, med = corpus_fixture(tmp_path)
+    attachment = proof['candidate']['document']
+    attachment[field] = ['unresolved_source_review'] if field == 'review_flags' else 'fixture_proekt_final_штамп.pdf'
+    with pytest.raises(OriginalPreparationError, match='project/draft marker|unresolved review flags'):
+        prepare_candidate(proof, folder, [med], [grls])
+
+
+@pytest.mark.parametrize('marker', ['_PrOjEcT_', '_proekt_', '_draft_', '_ПРОЕКТ_'])
+def test_physical_first_page_project_marker_after_twelve_thousand_chars_is_rejected(tmp_path, marker):
+    folder, proof, grls, med = corpus_fixture(tmp_path)
+    text = 'ИНСТРУКЦИЯ ПО МЕДИЦИНСКОМУ ПРИМЕНЕНИЮ ' + 'x' * 12050 + marker
+    _replace_original(folder, proof, text)
+    binary = check_original_pdf(folder / 'original.pdf', proof['candidate']['document'], proof['download']['sha256'])
+    assert binary['header_document_type'] == 'medical_instruction'
+    assert binary['header_has_project_marker'] is True
+    with pytest.raises(OriginalPreparationError, match='project/draft marker'):
+        prepare_candidate(proof, folder, [med], [grls])
+
+
+def test_new_project_review_flags_cannot_be_smuggled_through_additive_entity_upgrade(tmp_path):
+    folder, proof, index, validation, catalog, grls_path = _paired_corpus_inputs(tmp_path)
+    source = json.loads(index.read_text())
+    source['russian_registrations'][0]['documents'][0]['review_flags'] = ['source_attachment_mentions_project']
+    index, validation = _registry_files(tmp_path, [source])
+    before = (folder / 'source-proof.json').read_bytes()
+    report = prepare_corpus(folder.parent, catalog, grls_path, tmp_path / 'verified.jsonl',
+        tmp_path / 'drafts.jsonl', registry_index_path=index, registry_validation_path=validation,
+        manufacturer_proof_mode=PAIRED_ENTITY_MODE)
+    assert report['counts'].get('verified_original_documents', 0) == 0
+    assert 'not additive' in json.loads((tmp_path / 'drafts.jsonl').read_text())['reason']
+    assert (folder / 'source-proof.json').read_bytes() == before

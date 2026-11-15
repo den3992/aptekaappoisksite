@@ -25,7 +25,7 @@ from api.instruction_original_structured_dose import PROOF_MODE as STRUCTURED_DO
 from api.medication_instructions import _identity, _ru
 from api.medication_original_pdfs import (
     MAX_PAGES, MAX_PDF_BYTES, canonical_hash, match_original_to_medication,
-    validate_original_document,
+    instruction_attachment_needs_review, validate_original_document,
 )
 from scripts.sources.renewal_instructions import _worker_rss_kib
 
@@ -130,9 +130,8 @@ def _document_type(binary, attachment):
     # PDF metadata confirms USAGE_INSTRUCTION, but not whether the actual
     # document is an old-format instruction or a patient leaflet. Require a
     # literal embedded heading; scanned documents need separate manual proof.
-    source_name = str(attachment.get('name') or '').casefold()
     if (binary.get('header_has_project_marker') is not False
-            or re.search(r'\b(?:проект|draft)\b', source_name)):
+            or instruction_attachment_needs_review(attachment)):
         raise OriginalPreparationError('document has a project/draft marker')
     if binary.get('header_document_type') in {'patient_leaflet', 'medical_instruction'}:
         return binary['header_document_type']
@@ -156,8 +155,10 @@ def prepare_candidate(proof, folder, medications, grls_rows, *, checked_at=None,
             or registration.get('cancelled_at')):
         raise OriginalPreparationError('source registration is not current Russian registration')
     usages = [d for d in registration.get('documents') or [] if d.get('kind') == 'USAGE_INSTRUCTION']
-    if len(usages) != 1 or usages[0] != selected or selected.get('review_flags'):
+    if len(usages) != 1 or usages[0] != selected:
         raise OriginalPreparationError('current instruction version/path requires independent selection')
+    if instruction_attachment_needs_review(selected):
+        raise OriginalPreparationError('source instruction attachment has a project/draft marker or unresolved review flags')
     rows = [r for r in grls_rows if r.get('source_status_book') == 'Действующий' and not r.get('cancelled_at')]
     if len(rows) != 1:
         raise OriginalPreparationError('exact current GRLS registration row is absent or ambiguous')

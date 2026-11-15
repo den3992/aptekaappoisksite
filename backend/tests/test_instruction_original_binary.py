@@ -1,8 +1,10 @@
 """Real PDF structure regressions, including unresolved scan and nested form data."""
 import hashlib
+import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import Mock, patch
 
 from scripts.import_medication_originals import validate_archive
 
@@ -22,6 +24,11 @@ def pdf_bytes(resources='<< >>', content=b'q Q', extra_objects=()):
         data.extend(f'{offset:010d} 00000 n \n'.encode())
     data.extend(b'trailer\n<< /Size ' + str(len(offsets)).encode() + b' /Root 1 0 R >>\nstartxref\n' + str(xref).encode() + b'\n%%EOF\n')
     return bytes(data)
+
+
+def project_pdf_bytes():
+    resources = '<< /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >>'
+    return pdf_bytes(resources, b'BT /F1 12 Tf (' + b'x' * 12050 + b'_PROJECT_final_) Tj ET')
 
 
 class OriginalBinaryTests(unittest.TestCase):
@@ -87,6 +94,23 @@ class OriginalBinaryTests(unittest.TestCase):
     def test_truncated_original_is_rejected_before_any_parser(self):
         with self.assertRaisesRegex(ValueError, 'EOF'):
             self.check(pdf_bytes()[:-20])
+
+    def test_actual_first_page_project_after_twelve_thousand_chars_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, 'physical first page.*project/draft'):
+            self.check(project_pdf_bytes())
+
+    def test_missing_or_nonboolean_actual_project_check_is_rejected(self):
+        body = pdf_bytes()
+        result = {'original_sha256': hashlib.sha256(body).hexdigest(), 'original_bytes': len(body),
+                  'page_count': 1, 'all_pages_resolved': True, 'encrypted': False}
+        for fields in [{}, {'header_has_project_marker': None}, {'header_has_project_marker': 0},
+                       {'header_has_project_marker': 'false'}]:
+            child = Mock(returncode=0)
+            child.poll.return_value = 0
+            child.communicate.return_value = (json.dumps({**result, **fields}).encode(), None)
+            with self.subTest(fields=fields), patch('scripts.import_medication_originals.subprocess.Popen', return_value=child):
+                with self.assertRaisesRegex(ValueError, 'physical first page.*project/draft'):
+                    self.check(body)
 
 
 if __name__ == '__main__':

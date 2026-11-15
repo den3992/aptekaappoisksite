@@ -18,7 +18,7 @@ from api.medication_instructions import medication_identity_fingerprint
 from scripts.import_medication_instructions import apply_plan, build_plan, rollback_batch
 from scripts.import_medication_originals import OriginalCollections, validate_archive
 from test_instruction_import import Collection, matches
-from test_instruction_original_binary import pdf_bytes
+from test_instruction_original_binary import pdf_bytes, project_pdf_bytes
 from test_instruction_original_evidence import original_document, original_medication
 
 
@@ -143,7 +143,50 @@ class DeliveryTests(unittest.TestCase):
                 validate_original_document(doc)
 
 
+class OriginalProjectMarkerTests(unittest.TestCase):
+    def test_attachment_markers_cannot_be_overridden_by_stale_true_claims(self):
+        for field in ['name', 'file_name', 'uploaded_file_path']:
+            for marker in ['_PrOjEcT_', '_proekt_', 'ПРОЕКТ', 'draft']:
+                if field == 'uploaded_file_path' and marker == 'ПРОЕКТ':
+                    continue  # The observed-path ASCII guard already rejects it.
+                doc, _, _ = fixture()
+                snapshot = doc['evidence']['registry_snapshot']
+                attachment = snapshot['russian_registrations'][0]['documents'][0]
+                attachment[field] = ('fixture-folder/fixture_' + marker + '_final.pdf' if field == 'uploaded_file_path'
+                                     else 'fixture_' + marker + '_final_штамп.pdf')
+                if field == 'uploaded_file_path':
+                    doc['source']['uploaded_file_path'] = attachment[field]
+                doc['evidence']['registry_snapshot_sha256'] = canonical_hash(snapshot)
+                self.assertIs(doc['evidence']['not_unapproved_project'], True)
+                with self.subTest(field=field, marker=marker), self.assertRaisesRegex(ValueError, 'project/draft marker'):
+                    validate_original_document(doc)
+
+    def test_any_nonempty_review_flags_block_even_without_a_known_project_marker(self):
+        for flags in [['independent_review_required'], {'unresolved': True}, 'needs_review']:
+            doc, _, _ = fixture()
+            snapshot = doc['evidence']['registry_snapshot']
+            snapshot['russian_registrations'][0]['documents'][0]['review_flags'] = flags
+            doc['evidence']['registry_snapshot_sha256'] = canonical_hash(snapshot)
+            with self.subTest(flags=flags), self.assertRaisesRegex(ValueError, 'unresolved review flags'):
+                validate_original_document(doc)
+
+    def test_benign_legacy_payload_validation_is_idempotent(self):
+        doc, _, _ = fixture()
+        first = validate_original_document(doc)
+        self.assertEqual(first, validate_original_document(first))
+
+
 class OriginalImportTests(unittest.TestCase):
+    def test_actual_project_pdf_blocks_eaeu_original_despite_valid_old_metadata_claims(self):
+        doc, _, body = fixture(project_pdf_bytes())
+        validate_original_document(doc)
+        self.assertEqual(doc['source']['kind'], 'official_registry')
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'original.pdf'
+            path.write_bytes(body)
+            with self.assertRaisesRegex(ValueError, 'physical first page.*project/draft'):
+                validate_archive(doc, path)
+
     def test_import_and_rollback_touch_only_original_collections(self):
         doc, med, body = fixture()
         with tempfile.TemporaryDirectory() as directory:

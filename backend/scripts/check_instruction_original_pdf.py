@@ -96,7 +96,9 @@ def main():
         print(json.dumps({'original_sha256': hashlib.sha256(body).hexdigest(), 'original_bytes': len(body),
                           'page_count': len(reader.pages), 'all_pages_resolved': True, 'encrypted': False,
                           'header_document_type': profile,
-                          'header_has_project_marker': bool(re.search(r'\b(?:проект|draft)\b', first_page[:12000], re.I)),
+                          # Check the whole bounded physical first page. Source
+                          # draw order can place a project label after 12k chars.
+                          'header_has_project_marker': bool(re.search(r'проект|draft|project|proekt', first_page, re.I)),
                           'first_page_letters': len(re.findall(r'[A-Za-zА-Яа-яЁё]', first_page))}))
         return 0
     except Exception:
