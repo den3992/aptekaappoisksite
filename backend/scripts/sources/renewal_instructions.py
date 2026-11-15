@@ -232,7 +232,7 @@ def parse_product_html(html, url, provider=RENEWAL):
             continue
         links[target] = {'url': target, 'label': link['text']}
     title = ' '.join(' '.join(parser.h1).split())
-    if not title and provider.key == 'vertex':
+    if not title and provider.key in {'vertex', 'akrikhin'}:
         title = ' '.join(' '.join(parser.document_title).split()) or parser.og_title.strip()
     return {'product_url': public_url(url, provider=provider), 'title': title, 'pdf_links': list(links.values())}
 
@@ -307,10 +307,13 @@ def discover(client, directory):
         root = ET.fromstring(body)
         urls = []
         for element in root.iter():
-            if element.tag.endswith('}loc') and element.text:
+            if element.tag.rsplit('}', 1)[-1] == 'loc' and element.text:
                 if target := supported_url(element.text, metadata['url']):
                     urls.append(target)
-        if root.tag.endswith('}sitemapindex'):
+        root_kind = root.tag.rsplit('}', 1)[-1]
+        if root_kind not in {'sitemapindex', 'urlset'}:
+            raise RenewalSourceError('official sitemap has an unsupported root element')
+        if root_kind == 'sitemapindex':
             pending.extend(urls)
         else:
             products.update(url for url in urls if urlsplit(url).path.startswith(provider.product_prefix) and urlsplit(url).path != provider.product_prefix)

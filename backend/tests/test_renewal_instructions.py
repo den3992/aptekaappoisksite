@@ -31,6 +31,37 @@ class Opener:
 
 
 class RenewalTests(unittest.TestCase):
+    def test_observed_akrikhin_product_uses_document_title_without_h1(self):
+        provider = Provider('akrikhin', 'https://akrikhin.ru', ('akrikhin.ru',),
+                            '/catalog/', ('/upload/',), ('акрихин',))
+        html = '<title>Тестовый препарат (крем для наружного применения) 0,1 %</title><a href="/upload/pil.pdf">Инструкция</a>'
+        parsed = parse_product_html(html, 'https://akrikhin.ru/catalog/fixture/', provider)
+        self.assertEqual(parsed['title'], 'Тестовый препарат (крем для наружного применения) 0,1 %')
+        self.assertEqual(len(parsed['pdf_links']), 1)
+
+    def test_plain_official_sitemap_index_follows_only_observed_child_and_product(self):
+        class PlainClient:
+            provider = Provider('fixture', 'https://manufacturer.test', ('manufacturer.test',),
+                                '/products/', ('/files/',), ('fixture',))
+
+            def __init__(self):
+                self.calls = []
+
+            def get(self, url, **kwargs):
+                self.calls.append(url)
+                bodies = {
+                    'https://manufacturer.test/robots.txt': b'User-agent: *\nSitemap: https://manufacturer.test/sitemap.xml\n',
+                    'https://manufacturer.test/sitemap.xml': b'<sitemapindex><sitemap><loc>https://manufacturer.test/sitemap-ru.xml</loc></sitemap></sitemapindex>',
+                    'https://manufacturer.test/sitemap-ru.xml': b'<urlset><url><loc>https://manufacturer.test/products/fixture/</loc></url><url><loc>https://foreign.test/products/other/</loc></url></urlset>',
+                }
+                return bodies[url], {'url': url, 'sha256': 'synthetic'}
+
+        with tempfile.TemporaryDirectory() as temporary:
+            client = PlainClient()
+            urls = discover(client, Path(temporary))
+            self.assertEqual(urls, ['https://manufacturer.test/products/fixture/'])
+            self.assertEqual(len(client.calls), 3)
+
     def test_explicit_provider_policy_upgrades_observed_http_redirect_using_tls(self):
         class SequenceOpener:
             def __init__(self, destination):
