@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-11-15T07:21:16.379026+00:00",
+  "verified_at": "2026-11-15T07:29:47.813236+00:00",
   "verified_live_database": true,
   "public_deployment_pending": true,
   "validation_revision": "69e17464fb1c8f0ba10c7a992cdce6e156fec306",
@@ -9,15 +9,15 @@
   },
   "coverage": {
     "verified_documents": 69,
-    "verified_original_documents": 181,
+    "verified_original_documents": 189,
     "cards_with_instructions": 85,
-    "cards_with_original_pdf": 221,
-    "cards_with_either_format": 298,
+    "cards_with_original_pdf": 229,
+    "cards_with_either_format": 305,
     "fully_covered_cards": 14,
     "covered_variants": 719,
-    "original_covered_variants": 442,
-    "combined_covered_variants": 1116,
-    "combined_fully_covered_cards": 132
+    "original_covered_variants": 475,
+    "combined_covered_variants": 1146,
+    "combined_fully_covered_cards": 136
   },
   "batches": [
     {
@@ -4493,6 +4493,170 @@
         }
       ],
       "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T071127Z-2bb97e24"
+    },
+    {
+      "batch_id": "instructions-20261115T072348Z-eefd621d",
+      "plan_hash": "fc2eb9e2f1399e5ed4f8073248f598df960131a520523a61494479d45395e43d",
+      "content_format": "official_original_pdf",
+      "added_documents": 4,
+      "added_bindings": 4,
+      "documents": [
+        {
+          "id": "canon-original-f0b1118205130744a9902be7-6832dc439a8a",
+          "title": "Алендронат Канон — официальная инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(004176)-(РГ-RU)"
+          ],
+          "original_sha256": "f0b1118205130744a9902be779acdfc6132d0e06c691a25876ba0696d6d81ba1",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 296328,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/alendronat_kanon_70mg/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/953/ablwsoldt2att73qlqprxovvzhx2xv07.pdf"
+          }
+        },
+        {
+          "id": "canon-original-7892e2128875c1bd27b7c111-32e3ed30b9f7",
+          "title": "Анэспум — официальная инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(005595)-(РГ-RU)"
+          ],
+          "original_sha256": "7892e2128875c1bd27b7c111c7dd31e2eca6e1e1e074498abba96a513c92a672",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 165591,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/anespum_kapsuly/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/6c0/sdm1tpyco39pl9v560ha2kxgfcnw72o0.pdf"
+          }
+        },
+        {
+          "id": "canon-original-5c8f20f5bec08fa789a593eb-2eb435e596d5",
+          "title": "Пальмапрост — официальная инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(006146)-(РГ-RU)"
+          ],
+          "original_sha256": "5c8f20f5bec08fa789a593eb410b49bb24cf5866b42ef8e5af89720cedaa91f4",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 213048,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/palmaprost/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/6ea/e0kpjj5rixtwm4iiz35b9v2qxouh40k3.pdf"
+          }
+        },
+        {
+          "id": "canon-original-e9bab10d80bbcb9f606979f0-da91fb5c28ee",
+          "title": "Амброксол — официальная инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(006634)-(РГ-RU)"
+          ],
+          "original_sha256": "e9bab10d80bbcb9f606979f0d2665bee25ae721caa58a9fa646e2e08a7aaf408",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 223518,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/ambroksol_30mg/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/21d/4x12368yylqhgwd4adpp8orq7f5psko4.pdf"
+          }
+        }
+      ],
+      "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T072348Z-eefd621d"
+    },
+    {
+      "batch_id": "instructions-20261115T072450Z-9faa1073",
+      "plan_hash": "7bc466892a7e99cfe747bb7feb1d363046d705a814a3ee40df06e6132092ea10",
+      "content_format": "official_original_pdf",
+      "added_documents": 4,
+      "added_bindings": 4,
+      "documents": [
+        {
+          "id": "canon-original-591bbb81ebf6ecd7afba3c6a-e160dcd8866c",
+          "title": "Атомоксетин Канон — официальная инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(004835)-(РГ-RU)"
+          ],
+          "original_sha256": "591bbb81ebf6ecd7afba3c6a6b2a4c11e49d331606faf89096d06382bc46f2e6",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 325543,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/atomoksetin_kanon_10_mg_18_mg_25mg/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/56e/2sda3yr1upg76ydfd8v38mc32mtglvkb.pdf"
+          }
+        },
+        {
+          "id": "canon-original-dbbf60637269764c2cc6e12d-d7428a30e2f6",
+          "title": "Эксхол — официальная инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(004119)-(РГ-RU)"
+          ],
+          "original_sha256": "dbbf60637269764c2cc6e12d4143ee4386f677afc8f47672d0eb02411e3f6e81",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 245369,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/ekskhol_250mg/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/868/mg2i4cou19pq6g1n4v1k9nh62mrza2ll.pdf"
+          }
+        },
+        {
+          "id": "canon-original-541b60a63c98f1c764a4421f-33dbc8c81cc9",
+          "title": "Ибупрофен Канон — официальная инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(005268)-(РГ-RU)"
+          ],
+          "original_sha256": "541b60a63c98f1c764a4421f2b4d684c8198c18641ec4ccd10e80e2b18824797",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 292616,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/ibuprofen_kanon_200_mg_400_mg/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/be3/m0s1pu8q4gxga31svhgom2hpg3grewz3.pdf"
+          }
+        },
+        {
+          "id": "canon-original-4a92d33452f1b2278c14873c-d7af34b747ce",
+          "title": "Тримебутин Канон — официальная инструкция по медицинскому применению",
+          "registration_numbers": [
+            "ЛП-№(004609)-(РГ-RU)"
+          ],
+          "original_sha256": "4a92d33452f1b2278c14873cfc8e05bfc866623aac1cdae644daf2576fccd398",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 235380,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/trimebutin_kanon/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/eec/6djb6gfoupk2ut107g0bqhfp7yqydx28.pdf"
+          }
+        }
+      ],
+      "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T072450Z-9faa1073"
     }
   ],
   "scope_note": "Coverage is verified against current live variant identities. Text and complete official PDF originals are counted separately; combined coverage uses the union of variant identities. Unverified registrations and manufacturers remain uncovered. Database imports are confirmed; public application deployment is pending."
