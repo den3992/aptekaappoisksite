@@ -43,6 +43,7 @@ class Provider:
     product_prefix: str
     pdf_prefixes: tuple[str, ...]
     manufacturer_tokens: tuple[str, ...]
+    upgrade_allowlisted_http_redirects: bool = False
 
     @classmethod
     def from_file(cls, path):
@@ -82,7 +83,12 @@ def digest(value):
 
 def public_url(value, base=None, provider=RENEWAL):
     parsed = urlsplit(urljoin(base or provider.origin, value))
-    if parsed.scheme != 'https' or parsed.hostname not in provider.allowed_hosts or parsed.username or parsed.password or parsed.query:
+    try:
+        port = parsed.port
+    except ValueError:
+        raise RenewalSourceError('link has an invalid public HTTPS port') from None
+    if (parsed.scheme != 'https' or parsed.hostname not in provider.allowed_hosts or port not in {None, 443}
+            or parsed.username or parsed.password or parsed.query):
         raise RenewalSourceError('link is not a public canonical provider URL')
     # Public PDF names may contain a literal percent sign (e.g. "0,1% 10 мл").
     # Preserve existing escapes, but encode raw percent signs before quoting.
@@ -107,6 +113,7 @@ class RenewalClient:
 
     def get(self, url, *, limit=MAX_HTML_BYTES):
         url = public_url(url, provider=self.provider)
+        transport_upgrades = []
         for _ in range(4):
             if self.robots and not self.robots.can_fetch(USER_AGENT, url):
                 raise RenewalSourceError('robots.txt disallows this URL')
@@ -122,7 +129,15 @@ class RenewalClient:
                 if status in {401, 403, 429}:
                     raise RenewalAccessError(f'official source returned HTTP {status}; source stopped')
                 if status in {301, 302, 303, 307, 308}:
-                    url = public_url(response.headers.get('Location', ''), url, self.provider)
+                    location = urljoin(url, response.headers.get('Location', ''))
+                    target = urlsplit(location)
+                    if (self.provider.upgrade_allowlisted_http_redirects
+                            and target.scheme == 'http' and target.hostname in self.provider.allowed_hosts
+                            and target.port is None and not target.username and not target.password and not target.query):
+                        upgraded = urlunsplit(target._replace(scheme='https'))
+                        transport_upgrades.append({'advertised_location': location, 'requested_https': upgraded})
+                        location = upgraded
+                    url = public_url(location, url, self.provider)
                     continue
                 if status != 200:
                     raise RenewalSourceError(f'official source returned HTTP {status}')
@@ -136,10 +151,13 @@ class RenewalClient:
                 declared_length = response.headers.get('Content-Length')
                 if declared_length and int(declared_length) != len(body):
                     raise RenewalSourceError('source response length differs from Content-Length')
-                return body, {'url': url, 'retrieved_at': now(), 'sha256': digest(body),
+                metadata = {'url': url, 'retrieved_at': now(), 'sha256': digest(body),
                               'content_type': response.headers.get('Content-Type'),
                               'declared_bytes': int(declared_length) if declared_length else None,
                               'last_modified': response.headers.get('Last-Modified')}
+                if transport_upgrades:
+                    metadata['https_transport_upgrades'] = transport_upgrades
+                return body, metadata
             finally:
                 response.close()
         raise RenewalSourceError('too many source redirects')

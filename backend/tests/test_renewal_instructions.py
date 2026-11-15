@@ -31,6 +31,36 @@ class Opener:
 
 
 class RenewalTests(unittest.TestCase):
+    def test_explicit_provider_policy_upgrades_observed_http_redirect_using_tls(self):
+        class SequenceOpener:
+            def __init__(self, destination):
+                self.destination, self.calls = destination, []
+
+            def open(self, request, timeout):
+                self.calls.append(request.full_url)
+                return (Response(b'', 301, {'Location': self.destination}) if len(self.calls) == 1
+                        else Response(b'official product'))
+
+        provider = Provider('fixture', 'https://manufacturer.test', ('manufacturer.test',),
+                            '/catalog/', ('/upload/',), ('fixture',), True)
+        opener = SequenceOpener('http://manufacturer.test/catalog/current/')
+        with patch('scripts.sources.renewal_instructions.time.sleep'):
+            body, metadata = RenewalClient(opener, provider=provider).get('https://manufacturer.test/catalog/old/')
+        self.assertEqual(body, b'official product')
+        self.assertEqual(opener.calls, ['https://manufacturer.test/catalog/old/', 'https://manufacturer.test/catalog/current/'])
+        self.assertEqual(metadata['https_transport_upgrades'][0]['advertised_location'], opener.destination)
+        for target in ['http://foreign.test/catalog/current/', 'http://manufacturer.test:8080/current/',
+                       'http://manufacturer.test/current/?role=doctor', 'http://user@manufacturer.test/current/']:
+            with self.subTest(target=target), patch('scripts.sources.renewal_instructions.time.sleep'):
+                bad = SequenceOpener(target)
+                with self.assertRaises(RenewalSourceError):
+                    RenewalClient(bad, provider=provider).get('https://manufacturer.test/catalog/old/')
+                self.assertEqual(len(bad.calls), 1)
+        strict = Provider('fixture', 'https://manufacturer.test', ('manufacturer.test',),
+                          '/catalog/', ('/upload/',), ('fixture',))
+        with self.assertRaises(RenewalSourceError):
+            RenewalClient(SequenceOpener(opener.destination), provider=strict).get('https://manufacturer.test/catalog/old/')
+
     def test_only_actual_official_instruction_links_are_kept(self):
         html = '''<h1>Тестовый препарат Реневал 10 мг</h1>
         <a href="/upload/iblock/fixture/test.pdf">Скачать инструкцию</a>
@@ -65,7 +95,8 @@ class RenewalTests(unittest.TestCase):
         self.assertEqual(opener.calls[0].get_method(), 'GET')
         self.assertNotIn('Cookie', opener.calls[0].headers)
         self.assertNotIn('Authorization', opener.calls[0].headers)
-        for url in ['https://other.test/file.pdf', ORIGIN + '/?role=doctor', 'javascript:alert(1)']:
+        for url in ['https://other.test/file.pdf', ORIGIN + '/?role=doctor', 'javascript:alert(1)',
+                    ORIGIN + ':8080/upload/file.pdf', ORIGIN + ':invalid/upload/file.pdf']:
             with self.assertRaises(RenewalSourceError):
                 public_url(url)
 
