@@ -377,6 +377,11 @@ class EaeuInstructionClient:
             raise ValueError("max_bytes must be between 1 and 100000000")
         if type(declared_size) is int and declared_size > max_bytes:
             raise EaeuSourceError("Declared EAEU attachment exceeds the download limit")
+        # The official SPA constructs this URI with `files?file=` + x.path.
+        # Its workflow does not consistently decode percent-encoded slashes.
+        # Validate the metadata query above, then send the observed source
+        # format using the actual uploaded path, never a guessed PDF address.
+        payload = {**payload, "uri": ATTACHMENT_URI + resource.group(1) + "/files?file=" + actual_path}
         response = self._request("POST", DOWNLOAD_BASE + "/executewithjson", params={"jobid": DOWNLOAD_JOB, "operation": "update"},
                                  data=_canonical(payload), headers={"Content-Type": "plain/text;charset=utf-8"})
         try:
@@ -396,7 +401,8 @@ class EaeuInstructionClient:
         else:
             raise EaeuSourceError("EAEU download workflow exceeded bounded polling")
         if status.get("status") != 0 or status.get("instanceid") != instance_id:
-            raise EaeuSourceError("EAEU download workflow failed")
+            raise EaeuSourceError(f"EAEU download workflow failed: status={status.get('status')!r}; "
+                                  f"instance_matches={status.get('instanceid') == instance_id}")
         response = self._request("GET", DOWNLOAD_BASE + "/gettoken", params={"instanceid": instance_id})
         try:
             token = response.json()

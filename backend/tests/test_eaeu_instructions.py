@@ -209,6 +209,8 @@ class EaeuMetadataTests(unittest.TestCase):
             self.assertEqual(result["verification_status"], "candidate")
         self.assertEqual(session.calls[0]["url"], DOWNLOAD_BASE + "/executewithjson")
         self.assertEqual(session.calls[0]["params"]["jobid"], DOWNLOAD_JOB)
+        self.assertEqual(json.loads(session.calls[0]["data"])["uri"], ATTACHMENT_URI +
+                         "0123456789abcdef01234567/files?file=fixture-folder/fixture.pdf")
         self.assertTrue(all(not call["allow_redirects"] for call in session.calls))
 
     def test_pdf_request_cannot_change_source_resource_or_exceed_declared_limit(self):
