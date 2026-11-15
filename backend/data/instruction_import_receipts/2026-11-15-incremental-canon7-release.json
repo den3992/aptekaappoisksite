@@ -1,0 +1,91 @@
+{
+  "status": "publicly_verified",
+  "verified_at": "2026-11-15T09:24:12.943182+00:00",
+  "backend_runtime_revision": "b3b6d29437e752ae45fc79209aaefc1e7719c7b1",
+  "next_runtime_revision": "278e18156b69cdec38ea167482b3f31039c80ee6",
+  "previous_public_release_receipt": "2026-11-15-incremental-solopharm-next4-release.json",
+  "added_instruction_documents": {
+    "inline": 0,
+    "whole_original_pdf": 7
+  },
+  "added_cards": 7,
+  "added_covered_variants": 41,
+  "batch_id": "instructions-20261115T092300Z-84078d9e",
+  "coverage": {
+    "verified_documents": 71,
+    "verified_original_documents": 221,
+    "cards_with_instructions": 87,
+    "cards_with_original_pdf": 261,
+    "cards_with_either_format": 339,
+    "covered_variants": 729,
+    "original_covered_variants": 601,
+    "combined_covered_variants": 1282,
+    "combined_fully_covered_cards": 152
+  },
+  "source_archive": {
+    "sha256": "6e0e61b95d90cd04efb0c52d55efe7e8740c1d0027ca94c8483b9484ad390c88",
+    "manifest_sha256": "7e62ac50162f33eac1b5c79e9fce35a1abcf60b81e87599990708d580ec7792d",
+    "canonical_documents": 7,
+    "unique_original_pdf": 5,
+    "original_pdf_bytes": 1205056,
+    "wrapper_sha256": "4c0ccb3bb4d1991e831b1a1f87c9b5adfa9b0dd2742e598efeb2ea2c869e258a",
+    "provenance_capsule_sha256": "107ecae447e79179723001ce8191aa4062664e3ae8e9b707a3e5e993758cf937",
+    "provenance_manifest_sha256": "71ad369bf5adc92d56b5dfb1596ec9ada69ad2dd8d009d9d6efa05abb9f7e020",
+    "independent_data_review_sha256": "590c42b7849f4cb1b04b37067cfd16fd6b44859262727fe5dd92dedaf2610cea",
+    "seed_proof_sha256": "4b7951b8806f56dedade3252cf03b18d67c269572b64952c7025e9f2d610ab03",
+    "all_seeded_unique_pdf": 274,
+    "cache_bytes": 114380993,
+    "source_stops_preserved": true,
+    "all_live_document_ids_equal_reviewed_archived_ids": true,
+    "live_canonical_document_count": 292
+  },
+  "variant_form_evidence": {
+    "mode": "canon_variant_label_film_v1",
+    "binding_evidence_in_canonical_documents": false,
+    "bindings": [
+      {
+        "medicine_slug": "tolperizon-kanon-50-mg-tabletki-pokrytye-obolochkoy",
+        "evidence_sha256": "872d0e3255eeb94d4d0a6964d1c82d5f2f0f1d6daeaff007aa8647e0d39769c0"
+      },
+      {
+        "medicine_slug": "tolperizon-kanon-150-mg-tabletki-pokrytye-obolochkoy",
+        "evidence_sha256": "99b040062bf943d72d40414395cc43f79a02438f9852a636b9cc98120f0a7792"
+      },
+      {
+        "medicine_slug": "ekshol-forte-500-mg-tabletki-pokrytye-obolochkoy",
+        "evidence_sha256": "f24145f90cc6d8ecc39096a4955b8e8741b3d70f7a084449b6e3831d7f05374d"
+      },
+      {
+        "medicine_slug": "teriflunomid-kanon-14-mg-tabletki-pokrytye-obolochkoy",
+        "evidence_sha256": "b602f6fe2259b5c3a347972d34d7b1aa30256ef89a0d1ac3b8dd7b8af0ea87c5"
+      },
+      {
+        "medicine_slug": "topiramat-kanon-100-mg-tabletki-pokrytye-obolochkoy",
+        "evidence_sha256": "60db1a84f467abcb873514dae0a9be71523b1a7d6c6347cb0f42eae5a30d082f"
+      },
+      {
+        "medicine_slug": "topiramat-kanon-25-mg-tabletki-pokrytye-obolochkoy",
+        "evidence_sha256": "19c478d0eb50798d31ef40d99249d1ce7638d28580110bc1b9b3cf993269a289"
+      },
+      {
+        "medicine_slug": "rebamipid-kanon-100-mg-tabletki-pokrytye-obolochkoy",
+        "evidence_sha256": "5b4cad23307ea3d081fbf5ceee3d7f8bd3e82d86451fe4df822ae49bc94c8361"
+      }
+    ],
+    "fresh_live_identity_label_and_final_prewrite_checks": true
+  },
+  "runtime_release": {
+    "sidecar_switch_proof_sha256": "baabdd8170a6b6ec032f3d4ef0d9c58f254ffa1f4e6b0053d89f48f7fcc905d6",
+    "exact_archive_reconstruction_proof_sha256": "a8590be37ad6b73b3e63860d944b7796ef937e952d8c4a999f446ad758adbfa7",
+    "previous_public_cards_regression_proof_sha256": "3a3364fe1f10968d2202370836bd5aa55ecd12378b219487c65e31a29a5ae210",
+    "original_backend_next_edge_actions": 0
+  },
+  "public_acceptance": {
+    "cards_checked": 7,
+    "whole_pdf_document_routes_checked": 7,
+    "unique_original_pdf_sha256_checked": 5,
+    "server_html_and_pdf_bytes_verified": true,
+    "proof_sha256": "21ba82e9e140e8cf41d1380a29278ffc560c11381a9a780be6c92815da3798f3"
+  },
+  "scope_note": "Coverage is confirmed in the live database and public card HTML/PDF routes. Whole PDF originals and verified inline text are counted separately. Form evidence is bound to exact current variant labels, registrations and product identifiers; registrations, strengths or variants without reviewed matches remain uncovered."
+}

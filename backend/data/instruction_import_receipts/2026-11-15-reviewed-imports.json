@@ -1,23 +1,23 @@
 {
-  "verified_at": "2026-11-15T08:56:07.823815+00:00",
+  "verified_at": "2026-11-15T09:25:34.060430+00:00",
   "verified_live_database": true,
   "public_deployment_pending": false,
-  "validation_revision": "01eedb1665618647f7689103f7edfc0fdfa28e0d",
+  "validation_revision": "b3b6d29437e752ae45fc79209aaefc1e7719c7b1",
   "inventory": {
     "canonical_cards": 22377,
     "total_variants": 72058
   },
   "coverage": {
     "verified_documents": 71,
-    "verified_original_documents": 214,
+    "verified_original_documents": 221,
     "cards_with_instructions": 87,
-    "cards_with_original_pdf": 254,
-    "cards_with_either_format": 332,
+    "cards_with_original_pdf": 261,
+    "cards_with_either_format": 339,
     "fully_covered_cards": 14,
     "covered_variants": 729,
-    "original_covered_variants": 560,
-    "combined_covered_variants": 1241,
-    "combined_fully_covered_cards": 145
+    "original_covered_variants": 601,
+    "combined_covered_variants": 1282,
+    "combined_fully_covered_cards": 152
   },
   "batches": [
     {
@@ -5187,8 +5187,144 @@
         }
       ],
       "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T085403Z-810c3dd8"
+    },
+    {
+      "batch_id": "instructions-20261115T092300Z-84078d9e",
+      "plan_hash": "aee31728351987ecaf96c2ae6ee3b0d1137beb5bd876416eb036a31b151a9e5a",
+      "content_format": "official_original_pdf",
+      "added_documents": 7,
+      "added_bindings": 7,
+      "documents": [
+        {
+          "id": "canon-original-c353a24afd191aca70f37a61-791114982e6b",
+          "title": "Эксхол® Форте — официальная инструкция по медицинскому применению, 500 мг",
+          "registration_numbers": [
+            "ЛП-№(003798)-(РГ-RU)"
+          ],
+          "original_sha256": "c353a24afd191aca70f37a611b55f4c5064f444fdb396d01a3b58c485658eb06",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 277887,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/ekskhol_forte_tabletki_500_mg/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/e55/tkx4ov7hv121v7voutd1izo98z9tzka8.pdf"
+          }
+        },
+        {
+          "id": "canon-original-2c0dd1551f1c59132641c1c6-38d9fc4484b0",
+          "title": "Ребамипид Канон — официальная инструкция по медицинскому применению, 100 мг",
+          "registration_numbers": [
+            "ЛП-№(005232)-(РГ-RU)"
+          ],
+          "original_sha256": "2c0dd1551f1c59132641c1c6be664ac60b184074a6c54be12e75777fc03b2e34",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 226325,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/rebamipid_kanon/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/4ed/3oge9uxlivcnygta1iff7lzzsdixoe97.pdf"
+          }
+        },
+        {
+          "id": "canon-original-56f4369738ea649859d55ddc-66d8fd4bf167",
+          "title": "Терифлуномид Канон — официальная инструкция по медицинскому применению, 14 мг",
+          "registration_numbers": [
+            "ЛП-№(003107)-(РГ-RU)"
+          ],
+          "original_sha256": "56f4369738ea649859d55ddccd234a18ee89ff3ae8b7f319a6ad7e9d5e833392",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 289266,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/teriflunomid_kanon/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/005/2u2u223v6ft7hgwliu3yqv9tjovjpe7o.pdf"
+          }
+        },
+        {
+          "id": "canon-original-945c2a20138b108e18ee530e-2a7b82f7f5ba",
+          "title": "Толперизон Канон — официальная инструкция по медицинскому применению, 150 мг",
+          "registration_numbers": [
+            "ЛП-№(005318)-(РГ-RU)"
+          ],
+          "original_sha256": "945c2a20138b108e18ee530e0d3c2863a84423517e9927e3a37e9fee10bd5234",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 242518,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/tolperizon_kanon/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/eb9/glqh9lmrux1kn1gempmtuyt1a5xrwb6c.pdf"
+          }
+        },
+        {
+          "id": "canon-original-945c2a20138b108e18ee530e-c29ea4c07059",
+          "title": "Толперизон Канон — официальная инструкция по медицинскому применению, 50 мг",
+          "registration_numbers": [
+            "ЛП-№(005318)-(РГ-RU)"
+          ],
+          "original_sha256": "945c2a20138b108e18ee530e0d3c2863a84423517e9927e3a37e9fee10bd5234",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 242518,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/tolperizon_kanon/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/eb9/glqh9lmrux1kn1gempmtuyt1a5xrwb6c.pdf"
+          }
+        },
+        {
+          "id": "canon-original-c72d6d8a96465aea78f5e5ab-71c3dbdef94c",
+          "title": "Топирамат Канон — официальная инструкция по медицинскому применению, 100 мг",
+          "registration_numbers": [
+            "ЛП-№(003916)-(РГ-RU)"
+          ],
+          "original_sha256": "c72d6d8a96465aea78f5e5abb6b09071c2bfb8bf5491a82f39383e2c8fad61fb",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 169060,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/topiramat_kanon_25mg_100mg/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/811/34779j71frle80shbdayyil223lmjhex.pdf"
+          }
+        },
+        {
+          "id": "canon-original-c72d6d8a96465aea78f5e5ab-f419470f25e0",
+          "title": "Топирамат Канон — официальная инструкция по медицинскому применению, 25 мг",
+          "registration_numbers": [
+            "ЛП-№(003916)-(РГ-RU)"
+          ],
+          "original_sha256": "c72d6d8a96465aea78f5e5abb6b09071c2bfb8bf5491a82f39383e2c8fad61fb",
+          "content_format": "official_original_pdf",
+          "page_count": 2,
+          "original_bytes": 169060,
+          "source": {
+            "name": "Канонфарма — официальный производитель",
+            "url": "https://www.canonpharma.ru/catalog/topiramat_kanon_25mg_100mg/",
+            "kind": "official_manufacturer",
+            "provider": "canon",
+            "pdf_url": "https://www.canonpharma.ru/upload/iblock/811/34779j71frle80shbdayyil223lmjhex.pdf"
+          }
+        }
+      ],
+      "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T092300Z-84078d9e"
     }
   ],
-  "scope_note": "Coverage is confirmed in the live database and public card HTML/PDF routes. Whole PDF originals and verified inline text are counted separately; registrations, strengths or variants without reviewed matches have no claimed coverage.",
-  "public_release_receipt": "2026-11-15-incremental-solopharm-next4-release.json"
+  "scope_note": "Coverage is confirmed in the live database and public card HTML/PDF routes. Whole PDF originals and verified inline text are counted separately. Form evidence is bound to exact current variant labels, registrations and product identifiers; registrations, strengths or variants without reviewed matches remain uncovered.",
+  "public_release_receipt": "2026-11-15-incremental-canon7-release.json"
 }
