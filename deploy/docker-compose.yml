@@ -27,6 +27,8 @@ services:
       # Фото отзывов: backend пишет сюда WebP, edge отдаёт их по /img/reviews/*
       # (та же live-папка ../next/public/img смонтирована в edge на чтение).
       - ../next/public/img/reviews:/app/review_photos
+      # Bounded SHA-verified PDF cache survives backend image/container updates.
+      - instruction_pdf_cache:/tmp/aptekaa-official-instruction-pdfs
     environment:
       MONGO_URL: "mongodb://${MONGO_APP_USER}:${MONGO_APP_PASSWORD}@mongo:27017/${MONGO_DB}?authSource=admin"
       DB_NAME: ${MONGO_DB}
@@ -153,6 +155,7 @@ services:
 
 volumes:
   mongo_data:
+  instruction_pdf_cache:
   certbot_webroot:
   certbot_etc:
 

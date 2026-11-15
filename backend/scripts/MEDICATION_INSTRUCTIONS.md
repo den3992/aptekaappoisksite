@@ -129,7 +129,14 @@ independent persistent source-stop marker; a denial does not stop the other
 manufacturer or EAEU. The shared source lock and request-rate limit still apply.
 
 Only a reconstructible cache under `/tmp/aptekaa-official-instruction-pdfs` is
-written by the API (128 MiB maximum). Requests have bounded concurrency, including
+written by the API (128 MiB maximum). Compose mounts `instruction_pdf_cache` there
+so cache entries and source-stop markers survive container updates. Retain an
+independent immutable archive of imported PDF originals, source HTML and document
+metadata outside this LRU cache. Before the first mount, preserve any existing
+`.source-stopped*` markers. Seed only SHA-verified PDF files atomically with mode
+0600 before backend startup or under `.source.lock`; the union of existing and
+seeded unique PDF bytes must fit the cache limit. Do not seed HTML/JSON into it.
+Requests have bounded concurrency, including
 background threads after client cancellation. Access denials or actual browser
 challenges stop further source access; they are never bypassed. A transient
 upstream failure returns 503 without claiming instruction coverage from OCR.
