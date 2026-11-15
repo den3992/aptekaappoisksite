@@ -180,6 +180,30 @@ class RenewalTests(unittest.TestCase):
              patch('scripts.sources.renewal_instructions.subprocess.run', side_effect=FileNotFoundError):
             self.assertIsNone(_worker_rss_kib(123))
 
+    def test_linux_exec_transition_requires_real_rss_after_bounded_retry(self):
+        starting = 'Name:\tpython\nState:\tR (running)\nThreads:\t1\n'
+        ready = starting + 'VmRSS:\t123456 kB\n'
+        with patch('scripts.sources.renewal_instructions.sys.platform', 'linux'), \
+             patch.object(Path, 'read_text', side_effect=[starting, starting, ready]) as read, \
+             patch('scripts.sources.renewal_instructions.time.sleep') as sleep:
+            self.assertEqual(_worker_rss_kib(123), 123456)
+            self.assertEqual(read.call_count, 3)
+            self.assertEqual([call.args for call in sleep.call_args_list], [(0.01,), (0.01,)])
+        with patch('scripts.sources.renewal_instructions.sys.platform', 'linux'), \
+             patch.object(Path, 'read_text', return_value=starting) as read, \
+             patch('scripts.sources.renewal_instructions.time.sleep') as sleep:
+            self.assertIsNone(_worker_rss_kib(123))
+            self.assertEqual(read.call_count, 3)
+            self.assertEqual(sleep.call_count, 2)
+
+    def test_linux_confirmed_zombie_or_dead_task_has_zero_resident_memory(self):
+        for state in ['Z (zombie)', 'X (dead)']:
+            with patch('scripts.sources.renewal_instructions.sys.platform', 'linux'), \
+                 patch.object(Path, 'read_text', return_value='Name:\tpython\nState:\t' + state + '\n'), \
+                 patch('scripts.sources.renewal_instructions.time.sleep') as sleep:
+                self.assertEqual(_worker_rss_kib(123), 0)
+                sleep.assert_not_called()
+
 
 if __name__ == '__main__':
     unittest.main()

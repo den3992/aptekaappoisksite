@@ -471,12 +471,23 @@ def _extract_job(job):
 def _worker_rss_kib(pid):
     """Linux slim images lack ps; both paths measure resident memory in KiB."""
     if sys.platform.startswith('linux'):
-        try:
-            status = Path(f'/proc/{pid}/status').read_text()
-        except OSError:
-            return None
-        match = re.search(r'^VmRSS:\s+(\d+)\s+kB\s*$', status, re.M)
-        return int(match.group(1)) if match else None
+        for attempt in range(3):
+            try:
+                status = Path(f'/proc/{pid}/status').read_text()
+            except OSError:
+                return None
+            match = re.search(r'^VmRSS:\s+(\d+)\s+kB\s*$', status, re.M)
+            if match:
+                return int(match.group(1))
+            state = re.search(r'^State:\s+([A-Z])\b', status, re.M)
+            if state and state.group(1) in {'Z', 'X'}:
+                return 0  # A confirmed exited task has no resident address space.
+            # Linux may briefly expose no mm during exec/binfmt setup. Obtain a
+            # real sample; a running task without one still fails closed after
+            # at most two 10 ms delays. Existing RSS/CPU/wall bounds are unchanged.
+            if attempt < 2:
+                time.sleep(0.01)
+        return None
     try:
         sample = subprocess.run(['ps', '-o', 'rss=', '-p', str(pid)], capture_output=True, text=True)
     except OSError:
