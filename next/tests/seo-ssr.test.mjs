@@ -14,19 +14,35 @@ const item = { slug: 'nurofen-test', name: 'Нурофен', form: 'таблет
 // Artificial fixture strings only: these are not medical instructions.
 const instructionDocuments = [
   {
-    id:'fixture-document-1', title:'Тестовая инструкция первого РУ', registration_numbers:['РУ-ТЕСТ-1'], version:'fixture-v1',
+    id:'fixture-document-1', title:'Тестовая инструкция первого РУ', original_sha256:'a'.repeat(64), registration_numbers:['РУ-ТЕСТ-1'], version:'fixture-v1',
     approved_at:'2026-01-02', retrieved_at:'2026-11-15T00:00:00Z',
     source:{name:'Тестовый официальный источник',url:'https://example.test/registry/1'}, original_url:'https://example.test/instruction-1.pdf',
     sections:[{key:'fixture',title:'Тестовый раздел',text:'Первый тестовый абзац.\n\n• Первый пункт\n• Второй пункт\n\n<script>alert("fixture")</script>'}],
     bindings:[{gtin:'00000000000001',ru_number:'РУ-ТЕСТ-1',pack_size:'20 шт',form:'тестовая форма А',dosage:'тестовая дозировка А'}],
   },
   {
-    id:'fixture-document-2', title:'Тестовый документ второго РУ', document_type:'patient_leaflet', registration_numbers:['РУ-ТЕСТ-2'],
+    id:'fixture-document-2', title:'Тестовый документ второго РУ', original_sha256:'b'.repeat(64), document_type:'patient_leaflet', registration_numbers:['РУ-ТЕСТ-2'],
     source:{name:'Второй тестовый источник',url:'javascript:alert(1)'}, original_url:'javascript:alert(2)',
     sections:[{key:'fixture-two',title:'Второй тестовый раздел',text:'Текст второго документа.\n\n3. Третий пункт\n4. Четвёртый пункт'}],
     bindings:[{gtin:'00000000000002',ru_number:'РУ-ТЕСТ-2',pack_size:'20 шт',form:'тестовая форма Б',dosage:'тестовая дозировка Б'}],
   },
 ];
+const originalPdf = {
+  id:'fixture-pdf-only', title:'Отдельный документ в PDF', document_type:'patient_leaflet',
+  content_format:'official_original_pdf', registration_numbers:['РУ-ТЕСТ-PDF'], version:'fixture-pdf-v1', approved_at:null,
+  original_sha256:'c'.repeat(64), download_url:'/api/instructions/originals/fixture-pdf-only.pdf',
+  source:{name:'Тестовый официальный источник PDF',url:'https://example.test/manufacturer'},
+  matched_variants:[{gtin:'00000000000003',ru_number:'РУ-ТЕСТ-PDF'}], verification:{status:'verified',verified_at:'2026-11-15T00:00:00Z'},
+  sections:[{key:'not-inline',title:'Не является текстом инструкции',text:'Текст PDF не должен стать опубликованным текстом на странице.'}],
+};
+const sameHashPdf = {
+  ...originalPdf, id:'fixture-same-file', title:'Тот же файл для дополнительных вариантов',
+  original_sha256:'A'.repeat(64), download_url:'/api/instructions/originals/fixture-same-file.pdf',
+  registration_numbers:['РУ-ТЕСТ-1'], matched_variants:[
+    {gtin:'00000000000001',ru_number:'РУ-ТЕСТ-1'},
+    {gtin:'00000000000004',ru_number:'РУ-ТЕСТ-1'},
+  ],
+};
 const listen = server => new Promise(resolve => server.listen(0, '127.0.0.1', () => resolve(server.address().port)));
 
 before(async () => {
@@ -51,13 +67,21 @@ before(async () => {
       response.end(JSON.stringify({total, page:Number(url.searchParams.get('page') || 1), page_size:Number(url.searchParams.get('page_size')), items:total ? [item] : []}));
     } else if (url.pathname === '/api/search/suggest') {
       response.end(JSON.stringify([item]));
-    } else if (['/api/medications/instruction-test','/api/medications/instruction-pending'].includes(url.pathname)) {
-      const hasInstructions = url.pathname.endsWith('/instruction-test');
+    } else if (['/api/medications/instruction-test','/api/medications/instruction-pending','/api/medications/instruction-original-only','/api/medications/instruction-original-partial','/api/medications/instruction-original-union'].includes(url.pathname)) {
+      const partialOriginal = url.pathname.endsWith('/instruction-original-partial');
+      const unionOriginal = url.pathname.endsWith('/instruction-original-union');
+      const hasInstructions = url.pathname.endsWith('/instruction-test') || partialOriginal || unionOriginal;
+      const onlyOriginal = url.pathname.endsWith('/instruction-original-only');
       response.end(JSON.stringify({
-        ...item, slug:hasInstructions ? 'instruction-test' : 'instruction-pending',
+        ...item, slug:url.pathname.split('/').pop(),
         variants:[{pack_size:'20 шт'}], prices_by_city:{}, seo_indexable:false,
-        instructions:hasInstructions ? instructionDocuments : [],
+        instructions:unionOriginal ? [...instructionDocuments, {...instructionDocuments[0],id:'fixture-document-union',bindings:[{gtin:'00000000000004',ru_number:'РУ-ТЕСТ-1'}]}] : hasInstructions ? instructionDocuments : [],
         instruction_coverage:{total_variants:3,covered_variants:hasInstructions ? 2 : 0,fully_covered:false},
+        instruction_originals:partialOriginal || unionOriginal ? [sameHashPdf] : hasInstructions ? [
+          {...originalPdf,id:'fixture-duplicate',title:'Дублирующий PDF первого документа',original_sha256:'A'.repeat(64),download_url:'/api/instructions/originals/fixture-duplicate.pdf',matched_variants:[{gtin:'00000000000001',ru_number:'РУ-ТЕСТ-1'}]},
+          originalPdf,
+        ] : onlyOriginal ? [originalPdf] : [{...originalPdf,verification:{status:'draft',verified_at:'2026-11-15T00:00:00Z'}}],
+        instruction_original_coverage:{total_variants:3,covered_variants:hasInstructions ? 3 : onlyOriginal ? 1 : 0,fully_covered:hasInstructions},
         instruction_candidates:[{document_type:'patient_leaflet',title:'Непроверенный черновой листок',verification:{status:'draft'},sections:[{key:'draft',title:'Черновик',text:'Этот черновик не подтверждает покрытие.'}]}],
         enrichment:{summary:'Тестовое старое описание.',indications:['Тестовые старые показания.'],contraindications:['Тестовые старые противопоказания.'],how_to_take:'Тестовый старый способ применения.'},
       }));
@@ -182,4 +206,54 @@ test('legacy enrichment is not presented as an official instruction', async () =
   assert.ok(section);
   assert.match(section, /Официальная инструкция для вариантов этого препарата ещё не подтверждена/);
   assert.doesNotMatch(section, /med-instruction-document|Тестовые старые показания|Тестовый старый способ применения/);
+  assert.doesNotMatch(html, /data-testid="med-instruction-originals"/);
+});
+
+test('verified original PDF is SSR-visible with separate partial coverage and no generated clinical text', async () => {
+  const {status,html} = await page('/msk/preparaty/instruction-original-only');
+  assert.equal(status,200);
+  const inline = html.match(/<section id="instrukciya"[\s\S]*?<\/section>/)?.[0];
+  const original = html.match(/<section id="instrukciya-pdf"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(inline && original);
+  assert.match(inline,/Полный текст на странице ещё не опубликован/);
+  assert.doesNotMatch(inline,/med-instruction-document|Инструкции подтверждены для/);
+  assert.match(original, /Официальная инструкция \(PDF\)/);
+  assert.match(original, /Листок-вкладыш \(PDF\)/);
+  assert.match(original.replace(/<!-- -->/g,''), /Официальные PDF подтверждены для 1 из 3 вариантов/);
+  assert.match(original,/href="\/api\/instructions\/originals\/fixture-pdf-only\.pdf"/);
+  for (const text of ['Отдельный документ в PDF','Тестовый официальный источник PDF','fixture-pdf-v1','РУ-ТЕСТ-PDF','00000000000003','Открыть полную инструкцию (PDF)','Скачать PDF']) assert.ok(original.includes(text),text);
+  assert.doesNotMatch(original,/Текст PDF не должен стать опубликованным текстом/);
+  const legacy = html.match(/<section id="o-preparate"[\s\S]*?<\/section>/)?.[0] || '';
+  assert.doesNotMatch(legacy,/Тестовое старое описание|Тестовые старые показания|Тестовые старые противопоказания|Тестовый старый способ применения/);
+});
+
+test('an original is deduplicated when both file SHA and every exact variant are represented inline', async () => {
+  const {html} = await page('/msk/preparaty/instruction-test');
+  const original = html.match(/<section id="instrukciya-pdf"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(original);
+  assert.equal((original.match(/data-testid="med-instruction-original"/g)||[]).length,1);
+  assert.match(original,/Отдельный документ в PDF/);
+  assert.doesNotMatch(original,/Дублирующий PDF первого документа|fixture-duplicate\.pdf/);
+  const inline = html.match(/<section id="instrukciya"[\s\S]*?<\/section>/)?.[0];
+  assert.match(inline.replace(/<!-- -->/g,''),/Инструкции подтверждены для 2 из 3 вариантов/);
+});
+
+test('equal file SHA preserves the PDF when inline text covers only some of its exact variants', async () => {
+  const {html} = await page('/msk/preparaty/instruction-original-partial');
+  const original = html.match(/<section id="instrukciya-pdf"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(original);
+  assert.match(original,/fixture-same-file\.pdf/);
+  assert.match(original,/00000000000001/);
+  assert.match(original,/00000000000004/);
+  const inline = html.match(/<section id="instrukciya"[\s\S]*?<\/section>/)?.[0];
+  assert.match(inline.replace(/<!-- -->/g,''),/Инструкции подтверждены для 2 из 3 вариантов/);
+});
+
+test('exact variant coverage can be united across inline documents with the same file SHA', async () => {
+  const {html} = await page('/msk/preparaty/instruction-original-union');
+  assert.doesNotMatch(html,/data-testid="med-instruction-originals"/);
+  const inline = html.match(/<section id="instrukciya"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(inline);
+  assert.equal((inline.match(/data-testid="med-instruction-document"/g)||[]).length,3);
+  assert.match(inline,/00000000000004/);
 });

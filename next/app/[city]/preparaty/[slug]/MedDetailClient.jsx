@@ -11,6 +11,7 @@ import { medFaqItems } from '../../../../lib/schemas';
 import LeadModal from '../../../../components/LeadModal';
 import ReviewsSection from '../../../../components/ReviewsSection';
 import MedicationInstructions, { hasMedicationInstructions } from '../../../../components/MedicationInstructions';
+import MedicationInstructionOriginals, { hasMedicationInstructionOriginals, visibleMedicationInstructionOriginals } from '../../../../components/MedicationInstructionOriginals';
 // map: Leaflet + OSM (no API key needed)
 
 // Capitalize first letter, lowercase the rest.
@@ -1028,7 +1029,9 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
   const networkStr = networkNames.length <= 1 ? (networkNames[0] || '') : networkNames.slice(0, -1).join(', ') + ' и ' + networkNames.slice(-1);
   const networkWord = networkNames.length > 1 ? 'в сетях' : 'в сети';
   const formLower = (med.form || '').toLowerCase();
-  const hasOfficialInstructions = hasMedicationInstructions(med.instructions);
+  const hasOfficialOriginals = hasMedicationInstructionOriginals(med.instruction_originals);
+  const hasVisibleOriginals = visibleMedicationInstructionOriginals(med.instruction_originals, med.instructions).length > 0;
+  const hasOfficialInstructions = hasMedicationInstructions(med.instructions) || hasOfficialOriginals;
 
   // (Schema.org Drug рендерится в SSR-обёртке page.jsx через medGraphJsonLd.)
 
@@ -1327,6 +1330,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
           {prices.length > 0 && <a href="#nalichie" className="text-emerald-700 hover:underline">Цены и наличие в {city.inLoc}</a>}
           {prices.length === 0 && historicalPrices.length > 0 && <a href="#poslednyaya-tsena" className="text-emerald-700 hover:underline">Последняя зафиксированная цена</a>}
           <a href="#instrukciya" className="text-emerald-700 hover:underline">Инструкция по применению</a>
+          {hasVisibleOriginals && <a href="#instrukciya-pdf" className="text-emerald-700 hover:underline">Официальная инструкция (PDF)</a>}
           {med.enrichment && <a href="#o-preparate" className="text-emerald-700 hover:underline">О препарате</a>}
           {med.mnn && <a href="#analogi" className="text-emerald-700 hover:underline">Аналоги</a>}
           <a href="#voprosy" className="text-emerald-700 hover:underline">Вопросы и ответы</a>
@@ -1563,7 +1567,8 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
         </section>
       )}
 
-      <MedicationInstructions instructions={med.instructions} coverage={med.instruction_coverage} />
+      <MedicationInstructions instructions={med.instructions} coverage={med.instruction_coverage} hasVerifiedOriginal={hasOfficialOriginals} />
+      <MedicationInstructionOriginals originals={med.instruction_originals} instructions={med.instructions} coverage={med.instruction_original_coverage} />
 
       {/* Legacy catalogue context must not duplicate an official instruction. */}
       {med.enrichment && (

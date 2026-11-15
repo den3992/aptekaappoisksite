@@ -41,7 +41,7 @@ function InstructionText({ text }) {
   });
 }
 
-export default function MedicationInstructions({ instructions, coverage }) {
+export default function MedicationInstructions({ instructions, coverage, hasVerifiedOriginal = false }) {
   const documents = Array.isArray(instructions) ? instructions.filter(document => hasMedicationInstructions([document])) : [];
   const partial = documents.length > 0 && coverage?.fully_covered === false;
   return (
@@ -49,7 +49,7 @@ export default function MedicationInstructions({ instructions, coverage }) {
       <div className="rounded-2xl border border-slate-100 bg-white p-5 md:p-8">
         <h2 className="mb-3 text-xl font-bold text-slate-900 md:text-2xl">Инструкция по применению</h2>
         {!documents.length ? (
-          <p className="text-sm leading-relaxed text-slate-600" data-testid="med-instructions-pending">Официальная инструкция для вариантов этого препарата ещё не подтверждена.</p>
+          <p className="text-sm leading-relaxed text-slate-600" data-testid="med-instructions-pending">{hasVerifiedOriginal ? 'Подтверждённые оригиналы инструкций доступны в PDF ниже. Полный текст на странице ещё не опубликован.' : 'Официальная инструкция для вариантов этого препарата ещё не подтверждена.'}</p>
         ) : (
           <>
             {partial && <p className="mb-5 rounded-lg bg-slate-50 px-4 py-3 text-sm leading-relaxed text-slate-600" data-testid="med-instructions-partial">Инструкции подтверждены для {coverage.covered_variants} из {coverage.total_variants} вариантов. Для остальных вариантов инструкция ещё не подтверждена. Сверяйте регистрационный номер, форму выпуска и дозировку.</p>}
