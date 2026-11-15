@@ -1,0 +1,53 @@
+{
+  "status": "publicly_verified",
+  "verified_at": "2026-11-15T08:56:58.888576+00:00",
+  "backend_runtime_revision": "01eedb1665618647f7689103f7edfc0fdfa28e0d",
+  "next_runtime_revision": "278e18156b69cdec38ea167482b3f31039c80ee6",
+  "previous_public_release_receipt": "2026-11-15-incremental-solopharm4-release.json",
+  "added_instruction_documents": {
+    "inline": 0,
+    "whole_original_pdf": 4
+  },
+  "added_cards": 4,
+  "added_covered_variants": 17,
+  "batch_id": "instructions-20261115T085403Z-810c3dd8",
+  "coverage": {
+    "verified_documents": 71,
+    "verified_original_documents": 214,
+    "cards_with_instructions": 87,
+    "cards_with_original_pdf": 254,
+    "cards_with_either_format": 332,
+    "covered_variants": 729,
+    "original_covered_variants": 560,
+    "combined_covered_variants": 1241,
+    "combined_fully_covered_cards": 145
+  },
+  "source_archive": {
+    "sha256": "28839b18359935fa87af48d83ce6cf7320a78d0d26d670ef4f63cc66f19f668e",
+    "manifest_sha256": "ec46fa3030c233383aa83318bd0ba166a6b135b68b72fc6e8f0a260c9dbec691",
+    "canonical_documents": 4,
+    "unique_original_pdf": 4,
+    "original_pdf_bytes": 1187567,
+    "wrapper_sha256": "74dead349f2b8dc822f6873d594645b7ab7e6aab86c7f70443b49de62fb5c1c1",
+    "native128_combined_proof_sha256": "3bcd643809e33ec845e66fd26a042c84d563e119f33cada7921ec9a1bd9f74c5",
+    "individual_native128_proof_sha256": {
+      "solopharm-lidocaine-native128-proof.json": "e39a29ccba355d424c100ef25f062c1c4357f0a1be13907b663c0327cf9ad98c",
+      "solopharm-next3-native128-proof.json": "90094a3ab5f3de91afa630119f46e737d626a3d5fee8c749d46e33b75db6369e"
+    },
+    "independent_archive_review_sha256": "bf0353c65c285a0803cd5e6c44075360b5d5f66cf14f67c87ee1c61e85003cc5",
+    "seed_proof_sha256": "37d521f0b8186a8b3c283df42762544b90e0c1e888f2dbca482edc14250d5d39",
+    "all_seeded_unique_pdf": 269,
+    "cache_bytes": 113175937,
+    "source_stops_preserved": true,
+    "all_live_document_ids_equal_reviewed_archived_ids": true,
+    "live_canonical_document_count": 285
+  },
+  "public_acceptance": {
+    "cards_checked": 4,
+    "whole_pdf_document_routes_checked": 4,
+    "unique_original_pdf_sha256_checked": 4,
+    "server_html_and_pdf_bytes_verified": true,
+    "proof_sha256": "6511f68e74507c268358a40a429f266f789d12be585931d1ab9f7feefca1b823"
+  },
+  "scope_note": "Coverage is confirmed in the live database and public card HTML/PDF routes. Whole PDF originals and verified inline text are counted separately; registrations, strengths or variants without reviewed matches have no claimed coverage."
+}

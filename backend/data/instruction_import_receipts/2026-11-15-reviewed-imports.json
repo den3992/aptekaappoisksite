@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-11-15T08:48:38.686328+00:00",
+  "verified_at": "2026-11-15T08:56:07.823815+00:00",
   "verified_live_database": true,
   "public_deployment_pending": false,
   "validation_revision": "01eedb1665618647f7689103f7edfc0fdfa28e0d",
@@ -9,14 +9,14 @@
   },
   "coverage": {
     "verified_documents": 71,
-    "verified_original_documents": 210,
+    "verified_original_documents": 214,
     "cards_with_instructions": 87,
-    "cards_with_original_pdf": 250,
-    "cards_with_either_format": 328,
+    "cards_with_original_pdf": 254,
+    "cards_with_either_format": 332,
     "fully_covered_cards": 14,
     "covered_variants": 729,
-    "original_covered_variants": 543,
-    "combined_covered_variants": 1224,
+    "original_covered_variants": 560,
+    "combined_covered_variants": 1241,
     "combined_fully_covered_cards": 145
   },
   "batches": [
@@ -5105,8 +5105,90 @@
         }
       ],
       "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T084710Z-a787ed7c"
+    },
+    {
+      "batch_id": "instructions-20261115T085403Z-810c3dd8",
+      "plan_hash": "3e49ee00cf7222263645f5ccdb123dc45f7fb9ba71781bad30c8467a1dd17646",
+      "content_format": "official_original_pdf",
+      "added_documents": 4,
+      "added_bindings": 4,
+      "documents": [
+        {
+          "id": "solopharm-original-bb5ee1a28b82ec4b29fa9290-feb4df60b41a",
+          "title": "Инструкция по медицинскому применению: Рибоксин — 20 мг/мл",
+          "registration_numbers": [
+            "ЛП-№(002849)-(РГ-RU)"
+          ],
+          "original_sha256": "bb5ee1a28b82ec4b29fa92907f38bd7e8b5edb66386ca4103868a0a4a3f12a19",
+          "content_format": "official_original_pdf",
+          "page_count": 5,
+          "original_bytes": 243532,
+          "source": {
+            "kind": "official_manufacturer",
+            "name": "Официальный производитель — ООО «Гротекс» (Solopharm)",
+            "pdf_url": "https://solopharm.com/storage/files/products/V031u1Xctn1Cpou1XTZYx7PwBBxYjd4VsvAcnPt8.pdf",
+            "provider": "solopharm",
+            "url": "https://solopharm.com/products/riboksin/20-mgml-ampuly-10-ml"
+          }
+        },
+        {
+          "id": "solopharm-original-52a88e63f31d7b0b3c6a2151-751eee04adce",
+          "title": "Инструкция по медицинскому применению: Дротаверин-СОЛОфарм — 20 мг/мл",
+          "registration_numbers": [
+            "ЛП-№(001360)-(РГ-RU)"
+          ],
+          "original_sha256": "52a88e63f31d7b0b3c6a215130f6ec9f30a95ec90d24acd47c9e9fea8fc525c0",
+          "content_format": "official_original_pdf",
+          "page_count": 7,
+          "original_bytes": 273038,
+          "source": {
+            "kind": "official_manufacturer",
+            "name": "Официальный производитель — ООО «Гротекс» (Solopharm)",
+            "pdf_url": "https://solopharm.com/storage/files/products/Y5DH4suAvvuMMr58iNojVMgdzFatPvcmzgjCO6XB.pdf",
+            "provider": "solopharm",
+            "url": "https://solopharm.com/products/drotaverin-solofarm/20-mgml-ampuly-2-ml-2"
+          }
+        },
+        {
+          "id": "solopharm-original-153951951155678f886fc275-a01c8600eb21",
+          "title": "Инструкция по медицинскому применению: Пирацетам — 200 мг/мл",
+          "registration_numbers": [
+            "ЛП-№(007751)-(РГ-RU)"
+          ],
+          "original_sha256": "153951951155678f886fc275767533b5c59a8feacc2a9f57cf46fe0306c576fe",
+          "content_format": "official_original_pdf",
+          "page_count": 10,
+          "original_bytes": 312911,
+          "source": {
+            "kind": "official_manufacturer",
+            "name": "Официальный производитель — ООО «Гротекс» (Solopharm)",
+            "pdf_url": "https://solopharm.com/storage/files/products/XDyvd8fvpxZnf9x1D7RAbyR7p95eKm2Q0EiB6lRD.pdf",
+            "provider": "solopharm",
+            "url": "https://solopharm.com/products/piracetam/200-mgml-ampuly-5-ml"
+          }
+        },
+        {
+          "id": "solopharm-original-2ab9eb7b9fbd190f5bc8c04c-e5ca5669999e",
+          "title": "Инструкция по медицинскому применению: Лидокаин — 20 мг/мл",
+          "registration_numbers": [
+            "ЛП-№(003421)-(РГ-RU)"
+          ],
+          "original_sha256": "2ab9eb7b9fbd190f5bc8c04cbb812dede37b3d45a3738f5bebb633421fda67b6",
+          "content_format": "official_original_pdf",
+          "page_count": 13,
+          "original_bytes": 358086,
+          "source": {
+            "kind": "official_manufacturer",
+            "name": "Официальный производитель — ООО «Гротекс» (Solopharm)",
+            "pdf_url": "https://solopharm.com/storage/files/products/SeqpvaGa4KKqS41Vy66LvvPWo2NkoaKpiyxsH524.pdf",
+            "provider": "solopharm",
+            "url": "https://solopharm.com/products/lidokain/20-mgml-ampuly-2-ml"
+          }
+        }
+      ],
+      "rollback_command": "python scripts/import_medication_originals.py --apply --rollback instructions-20261115T085403Z-810c3dd8"
     }
   ],
-  "scope_note": "Coverage is confirmed in the live database and public card HTML/PDF routes. Whole PDF originals and verified inline text are counted separately. Remaining unverified variants have no claimed instruction coverage.",
-  "public_release_receipt": "2026-11-15-incremental-solopharm4-release.json"
+  "scope_note": "Coverage is confirmed in the live database and public card HTML/PDF routes. Whole PDF originals and verified inline text are counted separately; registrations, strengths or variants without reviewed matches have no claimed coverage.",
+  "public_release_receipt": "2026-11-15-incremental-solopharm-next4-release.json"
 }
