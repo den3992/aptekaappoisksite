@@ -10,6 +10,7 @@ import { fetchMed, fetchAnalogs, fetchPharmacies, fetchCategories, fetchGorzdrav
 import { medFaqItems } from '../../../../lib/schemas';
 import LeadModal from '../../../../components/LeadModal';
 import ReviewsSection from '../../../../components/ReviewsSection';
+import MedicationInstructions, { hasMedicationInstructions } from '../../../../components/MedicationInstructions';
 // map: Leaflet + OSM (no API key needed)
 
 // Capitalize first letter, lowercase the rest.
@@ -1027,6 +1028,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
   const networkStr = networkNames.length <= 1 ? (networkNames[0] || '') : networkNames.slice(0, -1).join(', ') + ' и ' + networkNames.slice(-1);
   const networkWord = networkNames.length > 1 ? 'в сетях' : 'в сети';
   const formLower = (med.form || '').toLowerCase();
+  const hasOfficialInstructions = hasMedicationInstructions(med.instructions);
 
   // (Schema.org Drug рендерится в SSR-обёртке page.jsx через medGraphJsonLd.)
 
@@ -1324,6 +1326,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
           <a href="#harakteristiki" className="text-emerald-700 hover:underline">Характеристики</a>
           {prices.length > 0 && <a href="#nalichie" className="text-emerald-700 hover:underline">Цены и наличие в {city.inLoc}</a>}
           {prices.length === 0 && historicalPrices.length > 0 && <a href="#poslednyaya-tsena" className="text-emerald-700 hover:underline">Последняя зафиксированная цена</a>}
+          <a href="#instrukciya" className="text-emerald-700 hover:underline">Инструкция по применению</a>
           {med.enrichment && <a href="#o-preparate" className="text-emerald-700 hover:underline">О препарате</a>}
           {med.mnn && <a href="#analogi" className="text-emerald-700 hover:underline">Аналоги</a>}
           <a href="#voprosy" className="text-emerald-700 hover:underline">Вопросы и ответы</a>
@@ -1560,7 +1563,9 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
         </section>
       )}
 
-      {/* Reviewed reference content: indications, precautions and sources. */}
+      <MedicationInstructions instructions={med.instructions} coverage={med.instruction_coverage} />
+
+      {/* Legacy catalogue context must not duplicate an official instruction. */}
       {med.enrichment && (
         <section id="o-preparate" className="mb-8 md:mb-12 scroll-mt-32" data-testid="enrichment-section">
           <div className="bg-white border border-slate-100 rounded-2xl p-5 md:p-8">
@@ -1595,7 +1600,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
                 </p>
               );
             })()}
-            {med.enrichment.summary && (
+            {!hasOfficialInstructions && med.enrichment.summary && (
               <p className="text-slate-700 leading-relaxed mb-6">{med.enrichment.summary}</p>
             )}
             <div className="mb-6 overflow-hidden rounded-xl border border-slate-200" data-testid="med-facts-table">
@@ -1608,7 +1613,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
               </dl>
             </div>
             <div className="grid md:grid-cols-2 gap-6">
-              {med.enrichment.indications?.length > 0 && (
+              {!hasOfficialInstructions && med.enrichment.indications?.length > 0 && (
                 <div>
                   <h3 className="text-sm font-semibold text-emerald-800 uppercase tracking-wide mb-2">Основные области применения</h3>
                   <ul className="space-y-1.5 text-sm text-slate-700">
@@ -1618,7 +1623,7 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
                   </ul>
                 </div>
               )}
-              {med.enrichment.contraindications?.length > 0 && (
+              {!hasOfficialInstructions && med.enrichment.contraindications?.length > 0 && (
                 <div>
                   <h3 className="text-sm font-semibold text-rose-800 uppercase tracking-wide mb-2">Противопоказания и важные ограничения</h3>
                   <ul className="space-y-1.5 text-sm text-slate-700">
@@ -1629,21 +1634,21 @@ export default function MedDetail({ initialMed = null, initialCategories = [] })
                 </div>
               )}
             </div>
-            {med.enrichment.medical_details_status === 'catalog-summary-only' && (
+            {!hasOfficialInstructions && med.enrichment.medical_details_status === 'catalog-summary-only' && (
               <p className="mt-6 rounded-lg bg-slate-50 px-4 py-3 text-xs leading-relaxed text-slate-600">
                 Подробные медицинские сведения не публикуются, пока к карточке не привязана инструкция именно этой упаковки. Сверяйте показания, противопоказания и способ применения по листку-вкладышу препарата.
               </p>
             )}
-            {med.enrichment.how_to_take && (
+            {!hasOfficialInstructions && med.enrichment.how_to_take && (
               <div className="mt-6 pt-6 border-t border-slate-100">
                 <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-2">Способ применения</h3>
                 <p className="text-sm text-slate-700 leading-relaxed">{med.enrichment.how_to_take}</p>
               </div>
             )}
-            {med.enrichment.disclaimer && (
+            {!hasOfficialInstructions && med.enrichment.disclaimer && (
               <p className="mt-5 rounded-lg bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-900">{med.enrichment.disclaimer}</p>
             )}
-            {med.enrichment.sources?.length > 0 && (
+            {!hasOfficialInstructions && med.enrichment.sources?.length > 0 && (
               <div className="mt-6 border-t border-slate-100 pt-5" data-testid="med-sources">
                 <h3 className="text-sm font-semibold text-slate-900">Источники информации</h3>
                 <ul className="mt-2 space-y-1.5 text-sm text-slate-600">

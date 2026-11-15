@@ -11,6 +11,22 @@ const cwd = fileURLToPath(new URL('..', import.meta.url));
 const counts = new Map();
 let server, app, origin, output = '';
 const item = { slug: 'nurofen-test', name: 'Нурофен', form: 'таблетки', dosage: '200 мг', manufacturer: 'Test', variants_count: 1 };
+// Artificial fixture strings only: these are not medical instructions.
+const instructionDocuments = [
+  {
+    id:'fixture-document-1', title:'Тестовая инструкция первого РУ', registration_numbers:['РУ-ТЕСТ-1'], version:'fixture-v1',
+    approved_at:'2026-01-02', retrieved_at:'2026-11-15T00:00:00Z',
+    source:{name:'Тестовый официальный источник',url:'https://example.test/registry/1'}, original_url:'https://example.test/instruction-1.pdf',
+    sections:[{key:'fixture',title:'Тестовый раздел',text:'Первый тестовый абзац.\n\n• Первый пункт\n• Второй пункт\n\n<script>alert("fixture")</script>'}],
+    bindings:[{gtin:'00000000000001',ru_number:'РУ-ТЕСТ-1',pack_size:'20 шт',form:'тестовая форма А',dosage:'тестовая дозировка А'}],
+  },
+  {
+    id:'fixture-document-2', title:'Тестовая инструкция второго РУ', registration_numbers:['РУ-ТЕСТ-2'],
+    source:{name:'Второй тестовый источник',url:'javascript:alert(1)'}, original_url:'javascript:alert(2)',
+    sections:[{key:'fixture-two',title:'Второй тестовый раздел',text:'Текст второго документа.\n\n3. Третий пункт\n4. Четвёртый пункт'}],
+    bindings:[{gtin:'00000000000002',ru_number:'РУ-ТЕСТ-2',pack_size:'20 шт',form:'тестовая форма Б',dosage:'тестовая дозировка Б'}],
+  },
+];
 const listen = server => new Promise(resolve => server.listen(0, '127.0.0.1', () => resolve(server.address().port)));
 
 before(async () => {
@@ -35,6 +51,15 @@ before(async () => {
       response.end(JSON.stringify({total, page:Number(url.searchParams.get('page') || 1), page_size:Number(url.searchParams.get('page_size')), items:total ? [item] : []}));
     } else if (url.pathname === '/api/search/suggest') {
       response.end(JSON.stringify([item]));
+    } else if (['/api/medications/instruction-test','/api/medications/instruction-pending'].includes(url.pathname)) {
+      const hasInstructions = url.pathname.endsWith('/instruction-test');
+      response.end(JSON.stringify({
+        ...item, slug:hasInstructions ? 'instruction-test' : 'instruction-pending',
+        variants:[{pack_size:'20 шт'}], prices_by_city:{}, seo_indexable:false,
+        instructions:hasInstructions ? instructionDocuments : [],
+        instruction_coverage:{total_variants:3,covered_variants:hasInstructions ? 2 : 0,fully_covered:false},
+        enrichment:{summary:'Тестовое старое описание.',indications:['Тестовые старые показания.'],contraindications:['Тестовые старые противопоказания.'],how_to_take:'Тестовый старый способ применения.'},
+      }));
     } else {
       response.writeHead(404); response.end('{}');
     }
@@ -125,4 +150,32 @@ test('failure of optional popular lookups does not fail the homepage', async () 
   const {status,html} = await page('/rnd');
   assert.equal(status, 200);
   assert.match(html, /href="\/rnd\/kategorii\/obezbolivayuschie"/);
+});
+
+test('complete instructions, provenance and every exact binding appear before JavaScript', async () => {
+  const {status,html} = await page('/msk/preparaty/instruction-test');
+  assert.equal(status, 200);
+  const section = html.match(/<section id="instrukciya"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(section, 'instruction must be actual SSR HTML, not just an RSC prop');
+  assert.match(html, /href="#instrukciya"[^>]*>Инструкция по применению<\/a>/);
+  assert.equal((section.match(/data-testid="med-instruction-document"/g) || []).length, 2);
+  for (const expected of ['Первый тестовый абзац.','Первый пункт','Второй пункт','Текст второго документа.','3. Третий пункт','4. Четвёртый пункт','РУ-ТЕСТ-1','РУ-ТЕСТ-2','00000000000001','00000000000002','тестовая форма А','тестовая форма Б','тестовая дозировка А','тестовая дозировка Б','fixture-v1','02.01.2026','15.11.2026']) assert.ok(section.includes(expected), expected);
+  assert.match(section.replace(/<!-- -->/g, ''), /Инструкции подтверждены для 2 из 3 вариантов/);
+  assert.match(section, /href="https:\/\/example\.test\/registry\/1"/);
+  assert.match(section, /href="https:\/\/example\.test\/instruction-1\.pdf"/);
+  assert.match(section, /&lt;script&gt;alert\(&quot;fixture&quot;\)&lt;\/script&gt;/);
+  assert.doesNotMatch(section, /<script|href="javascript:/);
+  assert.match(section, /<ul\b[\s\S]*?<li>Первый пункт<\/li>/);
+  assert.match(section, /<ol\b[\s\S]*?<li>3\. Третий пункт<\/li>/);
+  const legacy = html.match(/<section id="o-preparate"[\s\S]*?<\/section>/)?.[0] || '';
+  assert.doesNotMatch(legacy, /Тестовое старое описание|Тестовые старые показания|Тестовые старые противопоказания|Тестовый старый способ применения/);
+});
+
+test('legacy enrichment is not presented as an official instruction', async () => {
+  const {status,html} = await page('/msk/preparaty/instruction-pending');
+  assert.equal(status, 200);
+  const section = html.match(/<section id="instrukciya"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(section);
+  assert.match(section, /Официальная инструкция для вариантов этого препарата ещё не подтверждена/);
+  assert.doesNotMatch(section, /med-instruction-document|Тестовые старые показания|Тестовый старый способ применения/);
 });
