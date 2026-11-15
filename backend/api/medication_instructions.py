@@ -202,6 +202,34 @@ def _official_omissions(document, completeness, profile, sections, declared_requ
     }
 
 
+def _verification_provenance(verification, original_sha256):
+    """Optional deterministic evidence; absent fields preserve legacy bytes."""
+    if "method" not in verification:
+        return {}
+    if verification["method"] != "deterministic_pdf":
+        raise ValueError("unknown verification method")
+    version = _required_text(verification.get("verifier_version"), "verification.verifier_version")
+    references = verification.get("reference_sha256")
+    if not isinstance(references, list) or not 1 <= len(references) <= 64:
+        raise ValueError("deterministic verification requires calibrated original references")
+    references = [_sha256(value, "verification.reference_sha256") for value in references]
+    if len(set(references)) != len(references):
+        raise ValueError("deterministic references must be unique")
+    if _sha256(verification.get("original_sha256"), "verification.original_sha256") != original_sha256:
+        raise ValueError("deterministic evidence refers to a different original")
+    if type(verification.get("page_count")) is not int or not 1 <= verification["page_count"] <= 64:
+        raise ValueError("deterministic page_count is outside supported bounds")
+    if verification.get("verified_by") != "deterministic:" + version:
+        raise ValueError("deterministic verification must not claim manual review")
+    return {
+        "method": "deterministic_pdf", "verifier_version": version,
+        "configuration_sha256": _sha256(verification.get("configuration_sha256"), "verification.configuration_sha256"),
+        "evidence_sha256": _sha256(verification.get("evidence_sha256"), "verification.evidence_sha256"),
+        "original_sha256": original_sha256, "page_count": verification["page_count"],
+        "reference_sha256": references,
+    }
+
+
 def validate_document(document: dict) -> dict:
     """Return a validated plain-text copy; reject draft, partial or unscoped data."""
     if not isinstance(document, dict):
@@ -309,7 +337,10 @@ def validate_document(document: dict) -> dict:
         "original_sha256": _sha256(document.get("original_sha256"), "original_sha256"),
         "content_hash": content_hash, "identity": identity, "scopes": validated_scopes,
         "sections": sections,
-        "verification": {"status": "verified", "verified_at": verified_at, "verified_by": verified_by},
+        "verification": {
+            "status": "verified", "verified_at": verified_at, "verified_by": verified_by,
+            **_verification_provenance(verification, _sha256(document.get("original_sha256"), "original_sha256")),
+        },
         "completeness": {
             "is_complete": True, "full_document_confirmed": True,
             "required_sections": declared_required, "missing_sections": [],
@@ -441,7 +472,7 @@ class MedicationInstructionService:
                 published.append({
                     **{key: document[key] for key in (
                         "id", "title", "registration_numbers", "version", "approved_at", "retrieved_at",
-                        "original_url", "sections",
+                        "original_url", "original_sha256", "sections",
                     )},
                     "document_type": document.get("document_type", MEDICAL_INSTRUCTION),
                     "source": {key: document["source"][key] for key in ("name", "url")},

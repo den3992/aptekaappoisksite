@@ -1,0 +1,4 @@
+# Offline verification only; production FastAPI requirements are unchanged.
+pypdf==7.1.0
+pdfplumber==0.11.10
+fonttools==4.68.0
