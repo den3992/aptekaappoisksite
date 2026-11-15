@@ -1,4 +1,4 @@
-"""Renewal-only original PDFs: literal current GRLS and human visual provenance.
+"""Explicit manufacturer originals: literal current GRLS and visual provenance.
 
 This profile verifies the whole original and its identity, never a clinical
 transcription. It is deliberately independent of the EAEU evidence derivation.
@@ -16,44 +16,98 @@ from .medication_instructions import _identity, _object, _required_text, _ru, _s
 
 MAX_HTML_BYTES = 3 * 1024 * 1024
 HOSTS = ('renewal.ru', 'www.renewal.ru')
+CANON_HOSTS = ('canonpharma.ru', 'www.canonpharma.ru')
 # Explicitly reviewed nonmedical footer documents on the retained product pages.
 # A new/renamed footer PDF is intentionally reviewed before this list changes.
 LEGAL_FOOTER_PDFS = {
     '/upload/alsem.areas/ad4/privacy.pdf': 'Правила пользования сайтом',
     '/upload/alsem.areas/47c/privacy.pdf': 'Политика конфиденциальности',
 }
+MANUFACTURER_PROFILES = {
+    'renewal': {'name': 'Renewal', 'hosts': HOSTS, 'product_prefix': '/products/',
+                'footer_pdfs': LEGAL_FOOTER_PDFS},
+    # Retained Canon product pages have no observed recurring legal PDF links.
+    # Multiple patient/healthcare PDFs remain ambiguous under this sole-PDF
+    # profile; labels do not authorize choosing one over another.
+    'canon': {'name': 'Canon', 'hosts': CANON_HOSTS, 'product_prefix': '/catalog/',
+              'footer_pdfs': {}},
+}
+PHYSICAL_FINISHED_STAGE_MODE = 'physical_pdf_finished_stage_v1'
+_GRLS_FINISHED_ROLE = (r'производитель\s*\((?:готовой\s+лф|все\s+стадии)\)'
+                       r'|производство\s+готовой\s+лекарственной\s+формы')
 
 
 def _hash(value):
     return hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
 
 
-def _renewal_url(value, *, prefix=None, pdf=False):
+def _profile(provider):
+    if not isinstance(provider, str) or provider not in MANUFACTURER_PROFILES:
+        raise ValueError('unknown official manufacturer provider')
+    return MANUFACTURER_PROFILES[provider]
+
+
+def _manufacturer_url(value, provider, *, prefix=None, pdf=False):
+    profile = _profile(provider)
+    label = profile['name']
     if not isinstance(value, str) or len(value) > 2048:
-        raise ValueError('a bounded official Renewal URL is required')
+        raise ValueError('a bounded official ' + label + ' URL is required')
     parsed = urlsplit(value)
     try:
         port = parsed.port
     except ValueError:
-        raise ValueError('invalid official Renewal port') from None
-    if (parsed.scheme != 'https' or parsed.hostname not in HOSTS or port not in (None, 443)
+        raise ValueError('invalid official ' + label + ' port') from None
+    if (parsed.scheme != 'https' or parsed.hostname not in profile['hosts'] or port not in (None, 443)
             or parsed.username or parsed.password or '?' in value or '#' in value
-            or '\\' in value or re.search(r'%2e|%2f|%5c|%00', value, re.I)):
-        raise ValueError('only public HTTPS Renewal URLs on port 443 are supported')
+            or '\\' in value or re.search(r'%2e|%2f|%5c|%00', value, re.I)
+            or (provider == 'canon' and re.search(r'[\x00-\x20\x7f]|%25', value, re.I))):
+        raise ValueError('only public HTTPS ' + label + ' URLs on port 443 are supported')
     decoded = parsed.path
     for _ in range(4):
         decoded = unquote(decoded)
         if '..' in decoded.split('/') or '\\' in decoded or '\x00' in decoded:
-            raise ValueError('Renewal URL has an encoded static-path escape')
+            raise ValueError(label + ' URL has an encoded static-path escape')
     if (re.search(r'%2e|%2f|%5c|%00', decoded, re.I)
             or (prefix and (not parsed.path.startswith(prefix) or parsed.path == prefix))
             or (pdf and not parsed.path.lower().endswith('.pdf'))):
-        raise ValueError('Renewal URL is outside the permitted static path')
+        raise ValueError(label + ' URL is outside the permitted static path')
     return value
+
+
+def _renewal_url(value, *, prefix=None, pdf=False):
+    return _manufacturer_url(value, 'renewal', prefix=prefix, pdf=pdf)
 
 
 def renewal_pdf_url(value):
     return _renewal_url(value, prefix='/upload/', pdf=True)
+
+
+def canon_pdf_url(value):
+    return _manufacturer_url(value, 'canon', prefix='/upload/', pdf=True)
+
+
+def manufacturer_pdf_url(provider, value):
+    return _manufacturer_url(value, provider, prefix='/upload/', pdf=True)
+
+
+def _canon_href(product_url, href):
+    # Preserve and validate raw static-path components before urljoin could
+    # normalize away traversal segments. Observed links are root-relative or
+    # absolute public HTTPS files; protocol-relative hosts are not inferred.
+    if not isinstance(href, str) or len(href) > 2048:
+        raise ValueError('a bounded actual Canon PDF href is required')
+    if href.startswith('/upload/'):
+        return canon_pdf_url('https://' + urlsplit(product_url).netloc + href)
+    return canon_pdf_url(href)
+
+
+def _canon_project_guard(*values):
+    for value in values:
+        text = unicodedata.normalize('NFKC', str(value))
+        for _ in range(4):
+            text = unquote(text)
+        if re.search(r'проект|draft|project|proekt', text, re.I):
+            raise ValueError('Canon project/draft source requires quarantine, regardless of final/stamp claims')
 
 
 def _literal(value, field):
@@ -74,7 +128,7 @@ def _aliases(company):
     return {_legal(value) for value in result}
 
 
-def _pdf_manufacturer_matches(raw, company, evidence):
+def _pdf_manufacturer_matches(raw, company, evidence, provider='renewal'):
     if _legal(raw) in _aliases(company):
         if evidence.get('manufacturer_legal_form_equivalence') is not None:
             raise ValueError('unnecessary manufacturer legal-form exception')
@@ -83,7 +137,8 @@ def _pdf_manufacturer_matches(raw, company, evidence):
     full_company = company[:short.start()].strip() if short else company
     # One reviewed provider-specific legal-form spelling, not a general company
     # normalizer. The actual PDF and GRLS literals remain immutable evidence.
-    if (_legal(raw) != _legal('Акционерное общество «Производственная фармацевтическая компания Обновление»')
+    if (provider != 'renewal'
+            or _legal(raw) != _legal('Акционерное общество «Производственная фармацевтическая компания Обновление»')
             or _legal(full_company) != _legal('АО «Производственная фармацевтическая компания Обновление»')):
         return False
     expected = {'rule': 'renewal_ao_full_name_v1', 'pdf_literal': raw, 'grls_literal': full_company}
@@ -102,6 +157,37 @@ def _visual_field(fields, key, page_count):
     return item
 
 
+def _validate_physical_finished_stage(evidence, manufacturer, fragment, grls_role, sha, pages):
+    proof = _object(evidence.get('physical_pdf_finished_stage'), 'physical_pdf_finished_stage')
+    indices = proof.get('page_indices')
+    if (proof.get('original_sha256') != sha or type(proof.get('page_count')) is not int
+            or proof['page_count'] != pages or not isinstance(indices, list) or not indices
+            or any(type(index) is not int or not 1 <= index <= pages for index in indices)
+            or len(set(indices)) != len(indices) or indices != manufacturer['page_indices']):
+        raise ValueError('physical finished-stage proof must match the same original and manufacturer pages')
+    # Keep the actual GRLS role (including QA) separate from the physical PDF
+    # role. This opt-in never relabels a GRLS quality-control/packaging stage.
+    if (proof.get('grls_role_raw') != grls_role or proof.get('grls_production_fragment') != fragment):
+        raise ValueError('physical finished-stage proof differs from the literal GRLS role/fragment')
+    company = _literal(proof.get('pdf_manufacturer_raw'), 'physical_pdf_finished_stage.pdf_manufacturer_raw')
+    role = _literal(proof.get('pdf_role_raw'), 'physical_pdf_finished_stage.pdf_role_raw')
+    if (company != manufacturer['raw'] or role != manufacturer.get('raw_role')
+            or not re.fullmatch(r'производство\s+готовой\s+лекарственной\s+формы\s*:?', role, re.I)):
+        raise ValueError('an explicit physical PDF finished dosage-form role for the same manufacturer is required')
+    block = _literal(proof.get('pdf_producer_block_raw'), 'physical_pdf_finished_stage.pdf_producer_block_raw')
+    if block.count(company) != 1 or block.count(role) != 1:
+        raise ValueError('one literal company and finished stage must occur in the same physical producer block')
+    company_at, role_at = block.index(company), block.index(role)
+    prefix, between = block[:company_at], block[company_at + len(company):role_at]
+    # Only the observed Canon layout is supported: explicit producer heading,
+    # literal company, optional country, then its finished-dosage-form stage.
+    # A role elsewhere on the page cannot be borrowed for this company.
+    if (company_at >= role_at or not re.fullmatch(r'производитель\s*:?\s*', prefix.strip(), re.I)
+            or not re.fullmatch(r'[\s,;]*(?:(?:Российская\s+Федерация|Россия)[\s,;]*)?', between, re.I)
+            or re.search(r'упаков|контрол|держател|владел', block, re.I)):
+        raise ValueError('physical finished-stage evidence must be one producer block, without unrelated roles/entities')
+
+
 class _ProductLinks(HTMLParser):
     def __init__(self):
         super().__init__(convert_charrefs=True)
@@ -113,6 +199,9 @@ class _ProductLinks(HTMLParser):
             self.bases.append(values['href'])
         if tag == 'a':
             self.current = {'href': values.get('href', ''), 'text': [values.get('title', ''), values.get('aria-label', '')]}
+            # Retain even an unclosed anchor: malformed markup must not hide an
+            # additional unknown PDF from the sole-instruction check.
+            self.links.append(self.current)
 
     def handle_data(self, data):
         if self.current:
@@ -120,23 +209,24 @@ class _ProductLinks(HTMLParser):
 
     def handle_endtag(self, tag):
         if tag == 'a' and self.current:
-            self.links.append(self.current)
             self.current = None
 
 
 def validate_product_html(document, body):
+    provider = document['source']['provider']
+    profile = _profile(provider)
     if not isinstance(body, bytes) or not 1 <= len(body) <= MAX_HTML_BYTES:
-        raise ValueError('retained Renewal product HTML is absent or too large')
+        raise ValueError('retained ' + profile['name'] + ' product HTML is absent or too large')
     proof = document['evidence']['product_page']
     if hashlib.sha256(body).hexdigest() != proof['html_sha256']:
-        raise ValueError('retained Renewal product HTML hash differs')
+        raise ValueError('retained ' + profile['name'] + ' product HTML hash differs')
     parser = _ProductLinks()
     parser.feed(body.decode('utf-8'))
     base = proof['url']
     if len(parser.bases) > 1:
         raise ValueError('ambiguous product HTML base')
     if parser.bases:
-        base = _renewal_url(urljoin(base, parser.bases[0]))
+        base = _manufacturer_url(urljoin(base, parser.bases[0]), provider)
     candidates, selected = set(), False
     for link in parser.links:
         label = ' '.join(link['text']) + ' ' + link['href']
@@ -146,14 +236,20 @@ def validate_product_html(document, body):
         if not unquote(parsed.path).lower().endswith('.pdf') and not looks_like_instruction:
             continue
         try:
-            target = renewal_pdf_url(resolved)
+            target = (_canon_href(base, link['href']) if provider == 'canon'
+                      else manufacturer_pdf_url(provider, resolved))
         except ValueError:
             raise ValueError('unknown or nonallowlisted product document href requires explicit review') from None
-        footer_label = LEGAL_FOOTER_PDFS.get(urlsplit(target).path)
+        footer_label = profile['footer_pdfs'].get(urlsplit(target).path)
         if footer_label and _identity(' '.join(link['text'])) == _identity(footer_label):
             continue
         candidates.add(target)
         if link['href'] == proof['actual_href'] and target == proof['pdf_url']:
+            if provider == 'canon':
+                actual_label = ' '.join(' '.join(link['text']).split())
+                _canon_project_guard(link['href'], target, actual_label)
+                if actual_label != proof.get('actual_label'):
+                    raise ValueError('retained Canon PDF link label differs from the source proof')
             selected = True
     if not selected or candidates != {proof['pdf_url']}:
         raise ValueError('actual product href or sole selected instruction version is not proven')
@@ -183,10 +279,12 @@ def validate_manufacturer_original_document(raw):
         raise ValueError('manufacturer PDF binary bounds are invalid')
     sha = _sha256(doc.get('original_sha256'), 'original_sha256')
     source = _object(doc.get('source'), 'source')
-    if source.get('kind') != 'official_manufacturer' or source.get('provider') != 'renewal':
-        raise ValueError('only the explicit official Renewal manufacturer profile is supported')
-    product_url = _renewal_url(source.get('url'), prefix='/products/')
-    pdf_url = renewal_pdf_url(source.get('pdf_url'))
+    if source.get('kind') != 'official_manufacturer':
+        raise ValueError('an explicit official manufacturer profile is required')
+    provider = source.get('provider')
+    profile = _profile(provider)
+    product_url = _manufacturer_url(source.get('url'), provider, prefix=profile['product_prefix'])
+    pdf_url = manufacturer_pdf_url(provider, source.get('pdf_url'))
     evidence = _object(doc.get('evidence'), 'evidence')
     if len(json.dumps(evidence, ensure_ascii=False).encode()) > 256 * 1024:
         raise ValueError('manufacturer evidence is too large')
@@ -205,8 +303,13 @@ def validate_manufacturer_original_document(raw):
         raise ValueError('product page evidence differs from the selected source')
     _sha256(product.get('html_sha256'), 'product_page.html_sha256')
     href = _literal(product.get('actual_href'), 'product_page.actual_href')
-    if renewal_pdf_url(urljoin(product_url, href)) != pdf_url:
+    resolved_href = (_canon_href(product_url, href) if provider == 'canon'
+                     else manufacturer_pdf_url(provider, urljoin(product_url, href)))
+    if resolved_href != pdf_url:
         raise ValueError('observed product href does not resolve to the selected PDF')
+    if provider == 'canon':
+        label = _literal(product.get('actual_label'), 'product_page.actual_label')
+        _canon_project_guard(href, pdf_url, label)
     numbers = doc.get('registration_numbers')
     if not isinstance(numbers, list) or len(numbers) != 1 or not isinstance(numbers[0], str) or not _ru(numbers[0]):
         raise ValueError('one exact current Russian registration is required')
@@ -235,12 +338,30 @@ def validate_manufacturer_original_document(raw):
     if registered > today or (expiry and expiry <= today):
         raise ValueError('GRLS registration is not current')
     fragment = _literal(evidence.get('grls_production_fragment'), 'grls_production_fragment')
-    if fragment not in [line.strip() for line in re.split(r'_x000D_|[\r\n]+', grls.get('production_stages') or '') if line.strip()]:
+    grls_fragments = [line.strip() for line in re.split(r'_x000D_|[\r\n]+', grls.get('production_stages') or '') if line.strip()]
+    if fragment not in grls_fragments:
         raise ValueError('finished-product stage is absent from the exact GRLS row')
     parts = fragment.split(',', 2)
-    if (len(parts) != 3 or not re.fullmatch(
-            r'производитель\s*\((?:готовой\s+лф|все\s+стадии)\)|производство\s+готовой\s+лекарственной\s+формы', parts[0].strip(), re.I)):
+    if len(parts) != 3:
+        raise ValueError('GRLS production fragment must identify a literal role and company')
+    mode = evidence.get('manufacturer_proof_mode')
+    if mode is not None and (mode != PHYSICAL_FINISHED_STAGE_MODE or provider != 'canon'):
+        raise ValueError('unknown or non-Canon manufacturer proof mode')
+    if mode is None and 'physical_pdf_finished_stage' in evidence:
+        raise ValueError('physical finished-stage evidence requires its explicit proof mode')
+    if mode is None and not re.fullmatch(_GRLS_FINISHED_ROLE, parts[0].strip(), re.I):
         raise ValueError('GRLS stage does not explicitly identify finished dosage-form manufacture')
+    if mode == PHYSICAL_FINISHED_STAGE_MODE:
+        if not parts[0].strip() or re.search(r'держател|владел', parts[0], re.I):
+            raise ValueError('a GRLS production-company role is required; holder alone is insufficient')
+        # No implicit version resolution: any explicit finished manufacturer in
+        # this current GRLS record makes this fallback unnecessary or conflicting.
+        for line in grls_fragments:
+            stage = line.split(',', 2)
+            if re.fullmatch(_GRLS_FINISHED_ROLE, stage[0].strip(), re.I):
+                same = len(stage) >= 2 and _legal(stage[1].strip()) in _aliases(parts[1].strip())
+                raise ValueError('physical finished-stage mode is unnecessary for an explicit GRLS finished company'
+                                 if same else 'current GRLS has a conflicting explicit finished manufacturer')
     legal_aliases = _aliases(parts[1].strip())
     if any(_legal(alias) not in legal_aliases for alias in manufacturers):
         raise ValueError('manufacturer alias is not literally supported by GRLS finished-product company')
@@ -284,12 +405,14 @@ def validate_manufacturer_original_document(raw):
     scope = validated_scopes[0]
     if (_ru(proofs['registration_number']['raw']) != number or _identity(proofs['trade_name']['raw']) != _identity(name)
             or _identity(proofs['form']['raw']) != _identity(scope['form']) or _identity(proofs['dosage']['raw']) != _identity(scope['dosage'])
-            or not _pdf_manufacturer_matches(proofs['manufacturer']['raw'], parts[1].strip(), evidence)):
+            or not _pdf_manufacturer_matches(proofs['manufacturer']['raw'], parts[1].strip(), evidence, provider)):
         raise ValueError('literal physical PDF identity differs from exact GRLS scopes/manufacturer')
     role = _literal(proofs['manufacturer'].get('raw_role'), 'visual manufacturer raw_role')
     if (not re.search(r'\bпроизводител[ья]\b|производство\s+готовой', role, re.I)
             or re.search(r'держател|владел|упаков|контрол|выпускающ', role, re.I)):
         raise ValueError('visual PDF role does not prove the finished-product manufacturer')
+    if mode == PHYSICAL_FINISHED_STAGE_MODE:
+        _validate_physical_finished_stage(evidence, proofs['manufacturer'], fragment, parts[0].strip(), sha, pages)
     verification = _object(doc.get('verification'), 'verification')
     if verification.get('status') != 'verified' or verification.get('method') != 'manual_visual_manufacturer_original':
         raise ValueError('only verified original PDF metadata is public')
@@ -301,7 +424,7 @@ def validate_manufacturer_original_document(raw):
         'approved_at': None, 'revision_date': revision, 'retrieved_at': _timestamp(doc.get('retrieved_at'), 'retrieved_at'),
         'original_sha256': sha, 'original_bytes': size, 'page_count': pages,
         'source': {'name': _required_text(source.get('name'), 'source.name'), 'url': product_url,
-                   'kind': 'official_manufacturer', 'provider': 'renewal', 'pdf_url': pdf_url},
+                   'kind': 'official_manufacturer', 'provider': provider, 'pdf_url': pdf_url},
         'identity': {'trade_name': name, 'manufacturers': manufacturers}, 'scopes': validated_scopes,
         'verification': {'status': 'verified', 'verified_at': _timestamp(verification.get('verified_at'), 'verification.verified_at'),
                          'verified_by': _required_text(verification.get('verified_by'), 'verification.verified_by'),

@@ -55,13 +55,42 @@ eaeu_structured_solid_v1` (single-active solid form, exact quantity/mass unit,
 explicit zero scale, pinned public classifiers, no unit conversions). The default
 literal path and its old immutable payloads stay unchanged.
 
-The separate `official_manufacturer` profile currently supports **Renewal only**.
+The separate `official_manufacturer` profile explicitly supports **Renewal** and
+**Canon**; other providers, group companies and CDNs are not inferred.
 It requires a visually reviewed complete PDF and exact current GRLS identity,
 including a finished-product manufacturer stage. Store the raw official product
 HTML beside `original_file` as `<html_sha256>.html`; both preview and apply verify
 its hash and the actual selected href. Unknown additional product PDFs require
-version review; only two explicitly reviewed legal footer links are excluded.
+version review; Renewal excludes only its two reviewed legal footer links.
 An unknown clinical revision date stays null. Conflicting versions remain draft.
+
+Canon accepts only `https://canonpharma.ru` or `https://www.canonpharma.ru` on
+port 443, product pages under `/catalog/`, and static PDFs under `/upload/`.
+Its retained HTML must prove the exact `actual_href`, literal `actual_label`,
+resolved `pdf_url` and HTML SHA. Canon has no footer-PDF exceptions. A page with
+both patient and healthcare PDFs remains draft under the sole-PDF profile;
+labels do not select one automatically. Any project/draft/proekt/проект marker
+in the href, PDF path or link label quarantines it, including encoded markers
+and filenames also saying final/stamp. The bounded original checker must also
+explicitly find no such marker on the actual first physical PDF page. These
+checks cannot be replaced by an approval/recovery claim. Canon has no legal-name
+equivalence exception: manufacturer aliases must occur literally in the current
+GRLS finished-product entity and in the manually reviewed PDF identity proof.
+
+Canon-only `evidence.manufacturer_proof_mode=physical_pdf_finished_stage_v1` is
+an explicit alternative when current GRLS lists the same literal production
+company only in another role, such as quality control. It does not relabel that
+GRLS role. The separate `physical_pdf_finished_stage` proof retains
+`grls_role_raw` and `grls_production_fragment`, plus the actual
+`pdf_manufacturer_raw`, `pdf_role_raw` and `pdf_producer_block_raw`. Its
+`original_sha256`, `page_count` and `page_indices` must match the original and
+the physical manufacturer identity field. The observed single producer block
+must explicitly say **Производство готовой лекарственной формы** for that
+literal company; a generic producer heading, QA, packaging or holder alone is
+insufficient. Any explicit GRLS finished manufacturer makes this mode unnecessary
+or conflicting and is rejected; there is no implicit version resolution. Missing
+or unknown opt-in modes are rejected, and the default GRLS-finished-stage path
+and existing Renewal/EAEU immutable payloads stay unchanged.
 
 ## Apply and rollback
 
@@ -94,9 +123,10 @@ start per second. The complete bounded file is checked against its recorded
 length and SHA **before** any bytes are sent. A source revision with a new SHA
 requires a new audit; it cannot silently replace an existing document.
 
-Renewal uses a separate fixed-host HTTPS `/upload/*.pdf` branch with redirects
-disabled and the same byte/hash/cache/concurrency limits. A denial stops only
-that source; it does not stop the independent EAEU source.
+Renewal and Canon use explicit fixed-host HTTPS `/upload/*.pdf` branches with
+redirects disabled and the same byte/hash/cache/concurrency limits. Each has an
+independent persistent source-stop marker; a denial does not stop the other
+manufacturer or EAEU. The shared source lock and request-rate limit still apply.
 
 Only a reconstructible cache under `/tmp/aptekaa-official-instruction-pdfs` is
 written by the API (128 MiB maximum). Requests have bounded concurrency, including

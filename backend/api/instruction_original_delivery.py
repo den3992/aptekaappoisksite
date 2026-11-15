@@ -192,9 +192,12 @@ class OfficialPdfCache:
             session.close()
 
     def _download_manufacturer(self, doc, deadline):
-        from .manufacturer_original_pdfs import renewal_pdf_url
-        url = renewal_pdf_url(doc['source']['pdf_url'])
-        stopped = self.directory / '.source-stopped-renewal'
+        from .manufacturer_original_pdfs import manufacturer_pdf_url
+        provider = doc['source']['provider']
+        url = manufacturer_pdf_url(provider, doc['source']['pdf_url'])
+        # The URL validator accepts only fixed explicit profiles, so this marker
+        # cannot be selected by an arbitrary path or host from a public request.
+        stopped = self.directory / ('.source-stopped-' + provider)
         if stopped.exists():
             raise OriginalUnavailable('official manufacturer source access is temporarily unavailable')
         next_path = self.directory / '.next-request-at'
